@@ -1,0 +1,40 @@
+{
+  "name": "rest-api-firewall",
+  "version": "0.8.0b",
+  "description": "A minimal WordPress theme designed exclusively for headless CMS usage.",
+  "main": "./src/index.js",
+  "scripts": {
+    "start": "wp-scripts start --webpack-copy-php",
+    "build": "wp-scripts build --webpack-copy-php",
+    "plugin-zip": "wp-scripts plugin-zip",
+    "format": "wp-scripts format",
+    "lint:css": "wp-scripts lint-style",
+    "lint:js": "wp-scripts lint-js",
+    "packages-update": "wp-scripts packages-update"
+  },
+  "author": "Cédric Moris Kelly",
+  "license": "GPL-2.0-or-later",
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^7",
+    "@mui/material": "^7",
+    "@mui/utils": "^7.3.3",
+    "@mui/x-tree-view": "^8.0.0",
+    "@wordpress/element": "^6.18.0",
+    "@wordpress/i18n": "^5.18.0",
+    "@wordpress/scripts": "^31.1.0",
+    "babel-loader": "^9.2.1",
+    "dayjs": "^1.11.18",
+    "dompurify": "^3.2.7"
+  },
+  "devDependencies": {
+    "css-loader": "^6.11.0",
+    "css-minimizer-webpack-plugin": "^5.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sass": "^1.80.2",
+    "style-loader": "^3.3.3",
+    "webpack-bundle-analyzer": "^4.10.2"
+  }
+}

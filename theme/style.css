@@ -1,0 +1,17 @@
+/*
+Theme Name:        REST API Firewall Theme
+Theme URI:         https://www.blank-plugins.com/wordpress-rest-api-firewall-theme
+Version:           0.8.0b
+Description:       Theme extension to REST API Firewall plugin. Provides a blank theme and options to handle WordPress front.
+Tags:              blank, redirect, rest api, rest, headless, webhook
+Author:            Cédric Moris Kelly
+Author URI:        https://www.moris-kelly.com
+Version:           0.8.0b
+Tested up to:      6.9.2
+Requires PHP:      7.4
+Requires at least: 6.0
+License:           GNU General Public License v2 or later
+License URI:       http://www.gnu.org/licenses/gpl-2.0.html
+Domain Path:       /languages
+Text Domain:       rest-api-firewall
+*/

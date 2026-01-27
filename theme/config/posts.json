@@ -1,0 +1,18 @@
+{
+  "posts": [
+    {
+      "name": "Projets",
+      "singular_name": "Projet",
+      "slug": "portfolio",
+      "rewrite": "realisations",
+      "taxonomies": ["portfolio-category"],
+      "menu_icon": "dashicons-art",
+      "supports": ["title","editor","thumbnail","excerpt","revisions","custom-fields"],
+      "public": true,
+      "publicly_queryable": true,
+      "show_in_rest": true,
+      "has_archive": true,
+      "hierarchical": false
+    }
+  ]
+}

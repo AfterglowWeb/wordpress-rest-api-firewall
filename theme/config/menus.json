@@ -1,0 +1,14 @@
+ {"menus": [
+    {
+        "slug": "main_menu",
+        "name": "Main Menu"
+    },
+    {
+        "slug": "footer_menu_main",
+        "name": "Footer Main"
+    },
+    {
+        "slug": "footer_menu_secondary",
+        "name": "Footer Secondary"
+    }
+]}
