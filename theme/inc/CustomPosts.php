@@ -2,6 +2,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
+use cmk\RestApiFirewall\Core\FileUtils;
 use cmk\RestApiFirewall\Core\Utils;
 
 class CustomPosts {
@@ -96,7 +97,7 @@ class CustomPosts {
 
 	public static function register_custom_posts(): void {
 
-		$json_content = Utils::read_file( realpath( REST_API_FIREWALL_DIR . '/config/posts.json' ) );
+		$json_content = FileUtils::read_file( realpath( REST_API_FIREWALL_DIR . '/config/posts.json' ) );
 		if ( ! $json_content ) {
 			return;
 		}
@@ -168,7 +169,7 @@ class CustomPosts {
 
 	public static function register_custom_taxonomies(): void {
 
-		$json_content = Utils::read_file( realpath( REST_API_FIREWALL_DIR . '/config/taxonomies.json' ) );
+		$json_content = FileUtils::read_file( realpath( REST_API_FIREWALL_DIR . '/config/taxonomies.json' ) );
 		if ( ! $json_content ) {
 			return;
 		}

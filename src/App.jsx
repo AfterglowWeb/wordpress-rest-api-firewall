@@ -15,13 +15,14 @@ import Box from '@mui/material/Box';
 import ConfirmDialog from './components/ConfirmDialog';
 import Webhook from './components/Webhook';
 import RestContentSettings from './components/RestContentSettings';
-import CoreSettings from './components/CoreSettings';
+import ThemeSettings from './components/ThemeSettings';
 import Firewall from './components/Firewall/Firewall';
+import DeployTheme from './components/DeployTheme';
 
 function TabPanel({ value, index, children }) {
 	return (
 		<div role="tabpanel" hidden={value !== index}>
-			{value === index && <Box maxWidth="xl" py={2}>{children}</Box>}
+			{value === index && <Box maxWidth="xl" minHeight={'calc(100vh - 340px)'} py={2}>{children}</Box>}
 		</div>
 	);
 }
@@ -33,7 +34,8 @@ function AppContent() {
 
 	const [ postTypes, setPostTypes ] = useState( [] );
 	const [ tabIndex, setTabIndex ] = useState(0);
-
+	const [ themeStatus, setThemeStatus] = useState(null);
+	
 	const {
 		form,
 		setField,
@@ -113,7 +115,7 @@ function AppContent() {
 					<Tab label={__('REST API Firewall', 'rest-api-firewall')} />
 					<Tab label={__('REST API Content', 'rest-api-firewall')} />
 					<Tab label={__('Application Webhook', 'rest-api-firewall')} />
-					<Tab label={__('Core Options', 'rest-api-firewall')} />
+					<Tab label={__('Theme Options', 'rest-api-firewall')} />
 				</Tabs>
 
 				<TabPanel value={tabIndex} index={0}>
@@ -139,7 +141,6 @@ function AppContent() {
 					/>
 				</TabPanel>
 
-
 				<TabPanel value={tabIndex} index={2}>
 					<Stack direction={"row"} justifyContent={"space-between"} gap={2} py={3} flexWrap={"wrap"} alignItems={"center"}>
 						<Typography variant="h6" fontWeight={600}>
@@ -152,22 +153,51 @@ function AppContent() {
 				</TabPanel>
 
 				<TabPanel value={tabIndex} index={3}>
+					<Box py={3}>
+						<DeployTheme 
+						status={ themeStatus } 
+						setStatus={ setThemeStatus } />
+					</Box>
+
+					{themeStatus && themeStatus?.deployed ? (
+					<>
 					<Stack direction={"row"} justifyContent={"space-between"} gap={2} py={3} flexWrap={"wrap"} alignItems={"center"}>
 						<Typography variant="h6" fontWeight={600}>
-							{ __( 'Core Options', 'rest-api-firewall' ) }
+							{ __( 'Theme Options', 'rest-api-firewall' ) }
 						</Typography>
+
+
 						<Button
 							type="submit"
 							variant="contained"
 							sx={{ml:3}}
+							disabled={!themeStatus?.active}
 							>
-							{ __( 'Save Core Options', 'rest-api-firewall' ) }
+							{ __( 'Save Theme Options', 'rest-api-firewall' ) }
 						</Button>
 					</Stack>
-					<CoreSettings
+					{themeStatus && !themeStatus?.active && (
+						<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+							{ __( 'Activate the theme to enable these options.', 'rest-api-firewall' ) }
+						</Typography>
+					)}
+					<ThemeSettings
 					form={ form }
 					setField={ setField }
-					setSlider={setSlider} />
+					setSlider={setSlider}
+					disabled={!themeStatus?.active} />
+					</>) :
+					(
+						<Stack spacing={1} maxWidth="sm">
+							<Typography component="p" >
+							{ __( 'REST API Firewall Theme is bundled with the plugin.', 'rest-api-firewall' ) }<br/>
+							{ __( 'You need to deploy and activate it to access theme options.', 'rest-api-firewall' ) }
+							</Typography>
+						</Stack>
+					)}
+
+					
+
 				</TabPanel>
 
 

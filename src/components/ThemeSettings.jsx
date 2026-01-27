@@ -15,11 +15,11 @@ import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 
-export default function CoreSettings( { form, setField, setSlider } ) {
+export default function ThemeSettings( { form, setField, setSlider, disabled = false } ) {
 	const { __ } = wp.i18n || {};
 	const theme = useTheme();
 	const { adminData } = useAdminData();
-	const redirectPresetUrlOptions = adminData?.redirect_preset_url_options || {};
+	const redirectPresetUrlOptions = adminData?.redirect_preset_url_options || [];
 
 	const valueLabelFormat = ( value ) =>
 		value >= 1024 ? `${ value / 1024 } MB` : `${ value } KB`;
@@ -32,7 +32,7 @@ export default function CoreSettings( { form, setField, setSlider } ) {
 					{ __( 'Redirect Templates', 'rest-api-firewall' ) }
 				</Typography>
 
-				<FormControl>
+				<FormControl disabled={disabled}>
 					<FormControlLabel
 						control={
 							<Switch
@@ -41,6 +41,7 @@ export default function CoreSettings( { form, setField, setSlider } ) {
 								}
 								name="core_redirect_templates_enabled"
 								onChange={ setField }
+								disabled={disabled}
 							/>
 						}
 						label={ __( 'Enable Redirect Templates', 'rest-api-firewall' ) }
@@ -48,7 +49,7 @@ export default function CoreSettings( { form, setField, setSlider } ) {
 					<FormHelperText>{ __( 'Redirect theme templates to front page, blog page, login page or a custom URL', 'rest-api-firewall' ) }</FormHelperText>
 				</FormControl>
 
-				<FormControl>
+				<FormControl disabled={disabled}>
 					<FormControlLabel
 						control={
 							<Switch
@@ -57,7 +58,7 @@ export default function CoreSettings( { form, setField, setSlider } ) {
 								}
 								name="core_redirect_templates_free_url_enabled"
 								onChange={ setField }
-								disabled={ ! form.core_redirect_templates_enabled }
+								disabled={ disabled || ! form.core_redirect_templates_enabled }
 							/>
 						}
 						label={ __( 'Custom URL', 'rest-api-firewall' ) }
@@ -65,7 +66,7 @@ export default function CoreSettings( { form, setField, setSlider } ) {
 					<FormHelperText>{ __( 'Redirect theme templates to a custom url', 'rest-api-firewall' ) }</FormHelperText>
 				</FormControl>
 
-				<FormControl>
+				<FormControl disabled={disabled}>
 					<InputLabel id="redirect-templates-preset-url-label">
 						{ __( 'WordPress Pages', 'rest-api-firewall' ) }
 					</InputLabel>
@@ -76,12 +77,12 @@ export default function CoreSettings( { form, setField, setSlider } ) {
 						value={ form.core_redirect_templates_preset_url }
 						label={ __( 'Redirect Page', 'rest-api-firewall' ) }
 						onChange={ setField }
-						disabled={ ! form.core_redirect_templates_enabled || form.core_redirect_templates_free_url_enabled }
+						disabled={ disabled || ! form.core_redirect_templates_enabled || form.core_redirect_templates_free_url_enabled }
 					>
 						<MenuItem value={ 0 }>
 							<em>{ __( 'Select a Page', 'rest-api-firewall' ) }</em>
 						</MenuItem>
-						{ redirectPresetUrlOptions && redirectPresetUrlOptions.map( ( presetUrl ) =>
+						{ redirectPresetUrlOptions && redirectPresetUrlOptions.length > 0 && redirectPresetUrlOptions.map( ( presetUrl ) =>
 							presetUrl.value && presetUrl.label ? (
 								<MenuItem key={ presetUrl.value } value={ presetUrl.value }>
 									{ presetUrl.label }
@@ -101,7 +102,7 @@ export default function CoreSettings( { form, setField, setSlider } ) {
 					name="core_redirect_templates_free_url"
 					value={ form.core_redirect_templates_free_url }
 					onChange={ setField }
-					disabled={ ! form.core_redirect_templates_enabled || ! form.core_redirect_templates_free_url_enabled }
+					disabled={ disabled || ! form.core_redirect_templates_enabled || ! form.core_redirect_templates_free_url_enabled }
 					fullWidth
 				/>
 			</Stack>
@@ -112,7 +113,7 @@ export default function CoreSettings( { form, setField, setSlider } ) {
 				<Typography variant="subtitle1" fontWeight={600} sx={ { mb: 2 } }>
 						{ __( 'Post Content', 'rest-api-firewall' ) }
 				</Typography>
-				<FormControl>
+				<FormControl disabled={disabled}>
 					<FormControlLabel
 						control={
 							<Switch
@@ -121,6 +122,7 @@ export default function CoreSettings( { form, setField, setSlider } ) {
 								}
 								name="core_disable_gutenberg_enabled"
 								onChange={ setField }
+								disabled={disabled}
 							/>
 						}
 						label={ __( 'Disable Gutenberg', 'rest-api-firewall' ) }
@@ -128,7 +130,7 @@ export default function CoreSettings( { form, setField, setSlider } ) {
 					<FormHelperText>{ __( 'Use WordPress legacy editor as post editor', 'rest-api-firewall' ) }</FormHelperText>
 				</FormControl>
 
-				<FormControl>
+				<FormControl disabled={disabled}>
 					<FormControlLabel
 						control={
 							<Switch
@@ -137,6 +139,7 @@ export default function CoreSettings( { form, setField, setSlider } ) {
 								}
 								name="core_remove_empty_p_tags_enabled"
 								onChange={ setField }
+								disabled={disabled}
 							/>
 						}
 						label={ __( 'Remove empty p tags', 'rest-api-firewall' ) }
@@ -145,12 +148,12 @@ export default function CoreSettings( { form, setField, setSlider } ) {
 				</FormControl>
 
 			</Stack>
-			
+
 			<Stack spacing={3}>
 				<Typography variant="subtitle1" fontWeight={600} sx={ { mb: 2 } }>
 						{ __( 'Comments', 'rest-api-firewall' ) }
 				</Typography>
-				<FormControl>
+				<FormControl disabled={disabled}>
 					<FormControlLabel
 						control={
 							<Switch
@@ -159,6 +162,7 @@ export default function CoreSettings( { form, setField, setSlider } ) {
 								}
 								name="core_disable_comments_enabled"
 								onChange={ setField }
+								disabled={disabled}
 							/>
 						}
 						label={ __( 'Disable Comments', 'rest-api-firewall' ) }
@@ -174,7 +178,7 @@ export default function CoreSettings( { form, setField, setSlider } ) {
 
 			<Box>
 
-				<FormControl>
+				<FormControl disabled={disabled}>
 					<FormControlLabel
 						control={
 							<Switch
@@ -183,6 +187,7 @@ export default function CoreSettings( { form, setField, setSlider } ) {
 								}
 								name="core_svg_webp_support_enabled"
 								onChange={ setField }
+								disabled={disabled}
 							/>
 						}
 						label={ __( 'Enable SVG and Webp Support', 'rest-api-firewall' ) }
@@ -190,7 +195,7 @@ export default function CoreSettings( { form, setField, setSlider } ) {
 					<FormHelperText>{ __( 'Enable .svg and .webp image files format support', 'rest-api-firewall' ) }</FormHelperText>
 				</FormControl>
 
-				<FormControl>
+				<FormControl disabled={disabled}>
 
 					<Stack direction={ { xs: 'column', sm: 'row' } }>
 						<FormControlLabel
@@ -201,6 +206,7 @@ export default function CoreSettings( { form, setField, setSlider } ) {
 									}
 									name="core_max_upload_weight_enabled"
 									onChange={ setField }
+									disabled={disabled}
 								/>
 							}
 							label={ __(
@@ -215,9 +221,9 @@ export default function CoreSettings( { form, setField, setSlider } ) {
 								mb: 0,
 							} }
 							color={
-								form.core_max_upload_weight_enabled
-									? theme.palette.primary.main
-									: theme.palette.text.disabled
+								disabled || !form.core_max_upload_weight_enabled
+									? theme.palette.text.disabled
+									: theme.palette.primary.main
 							}
 							id="max-upload-weight-slider"
 							gutterBottom
@@ -234,7 +240,7 @@ export default function CoreSettings( { form, setField, setSlider } ) {
 						min={ 1 }
 						max={ 1024 }
 						step={ 1 }
-						disabled={ ! form.core_max_upload_weight_enabled }
+						disabled={ disabled || ! form.core_max_upload_weight_enabled }
 						getAriaValueText={ valueLabelFormat }
 						valueLabelFormat={ valueLabelFormat }
 						onChange={ ( _, value ) =>

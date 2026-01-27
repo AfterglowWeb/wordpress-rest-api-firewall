@@ -1,16 +1,14 @@
 <?php
 namespace cmk\RestApiFirewall\Admin;
 
-use cmk\RestApiFirewall\Core\Utils;
+use cmk\RestApiFirewall\Core\FileUtils;
 
+use League\CommonMark\MarkdownConverter;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\SmartPunct\SmartPunctExtension;
 use League\CommonMark\Extension\Strikethrough\StrikethroughExtension;
-use League\CommonMark\MarkdownConverter;
-
 use League\CommonMark\Extension\HeadingPermalink\HeadingPermalinkExtension;
 use League\CommonMark\Extension\HeadingPermalink\HeadingPermalinkRenderer;
-
 
 class Documentation {
 	protected static $instance = null;
@@ -28,7 +26,7 @@ class Documentation {
 
 		$docs_dir = REST_API_FIREWALL_DIR . '/docs';
 
-		if ( ! Utils::is_dir( $docs_dir ) ) {
+		if ( ! FileUtils::is_dir( $docs_dir ) ) {
 			return [];
 		}
 
@@ -77,11 +75,11 @@ class Documentation {
 
 			$file = realpath( $docs_dir . '/' . $page['slug'] . '.md' );
 
-			if ( false === Utils::is_readable( $file ) ) {
+			if ( false === FileUtils::is_readable( $file ) ) {
 				continue;
 			}
 
-			$markdown = Utils::read_file( $file );
+			$markdown = FileUtils::read_file( $file );
 			if ( ! $markdown ) {
 				continue;
 			}

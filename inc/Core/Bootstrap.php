@@ -24,12 +24,7 @@ final class Bootstrap {
 	private function __construct() {
 
 		CoreOptions::get_instance();
-		//PostContent::get_instance();
-		//ImageFiles::get_instance();
-		//RedirectTemplates::get_instance();
-		//CustomPosts::get_instance();
-		//DisableComments::get_instance();
-		
+
 		Acf::get_instance();
 		if ( is_admin() ) {
 			AdminPage::get_instance();
@@ -43,6 +38,14 @@ final class Bootstrap {
 		add_filter( 'rest_pre_dispatch', array( $this, 'check_ip_filter' ), 5, 3 );
 
 		WebhookService::get_instance();
+
+		DeployTheme::get_instance();
+
+		//PostContent::get_instance();
+		//ImageFiles::get_instance();
+		//RedirectTemplates::get_instance();
+		//CustomPosts::get_instance();
+		//DisableComments::get_instance()
 
 	}
 

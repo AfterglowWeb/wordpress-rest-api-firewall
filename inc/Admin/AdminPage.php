@@ -4,8 +4,9 @@ namespace cmk\RestApiFirewall\Admin;
 defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Core\CoreOptions;
-use cmk\RestApiFirewall\Admin\Permissions;
+use cmk\RestApiFirewall\Core\FileUtils;
 use cmk\RestApiFirewall\Core\Utils;
+use cmk\RestApiFirewall\Admin\Permissions;
 
 class AdminPage {
 	protected static $instance = null;
@@ -222,7 +223,7 @@ class AdminPage {
 
 	private static function load_script_config( $file_path ): array {
 		$config = array();
-		if ( Utils::is_readable( $file_path ) ) {
+		if ( FileUtils::is_readable( $file_path ) ) {
 			$raw_config             = include realpath( $file_path );
 			$config['dependencies'] = isset( $raw_config['dependencies'] ) ? array_map( 'sanitize_key', $raw_config['dependencies'] ) : array();
 			$config['version']      = isset( $raw_config['version'] ) ? sanitize_text_field( $raw_config['version'] ) : '1.0.0';
