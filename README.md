@@ -1,4 +1,4 @@
-# REST API Firewall
+# WordPress REST API Firewall
 
 A WordPress plugin focused exclusively on REST API security and filtering.
 
@@ -11,7 +11,7 @@ It integrates seamlessly with external applications built with Next.js, React, V
 ## Requirements
 
 - WordPress 6.0+
-- PHP 8.0+
+- PHP 7.4+
 
 ## Installation
 
@@ -69,7 +69,7 @@ It integrates seamlessly with external applications built with Next.js, React, V
 ### Upcoming in Alpha
 - UI: Wording and layout improvements
 - Auto-blacklist IPs on rate limit
-- UI: Test results display, model application results, submit button rationalization
+- UI: Test results display, model application results, submit buttons rationalization
 
 ## Changelog
 
