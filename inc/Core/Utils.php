@@ -18,7 +18,7 @@ class Utils {
 		$users = get_users( array( 'role__in' => array( 'administrator' ) ) );
 
 		if ( empty( $users ) ) {
-			return [];
+			return array();
 		}
 
 		return array_map(
@@ -51,7 +51,7 @@ class Utils {
 		);
 
 		if ( empty( $post_types ) ) {
-			return [];
+			return array();
 		}
 
 		$list = array_map(
@@ -80,7 +80,7 @@ class Utils {
 		);
 
 		if ( empty( $taxonomies ) ) {
-			return [];
+			return array();
 		}
 
 		$list = array_map(
@@ -133,6 +133,6 @@ class Utils {
 			throw new JsonException( json_last_error_msg() );
 		}
 
-		return $data ?? [];
+		return $data ?? array();
 	}
 }

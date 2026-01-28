@@ -56,7 +56,7 @@ class RateLimit {
 
 	private static function get_client_ip(): string {
 		$headers = array(
-			'HTTP_CF_CONNECTING_IP',// Cloudflare.
+			'HTTP_CF_CONNECTING_IP', // Cloudflare.
 			'HTTP_X_FORWARDED_FOR',
 			'HTTP_X_REAL_IP',
 			'REMOTE_ADDR',

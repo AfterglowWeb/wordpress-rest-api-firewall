@@ -21,15 +21,13 @@ class Acf {
 			return;
 		}
 
-		if (true === CoreOptions::read_option( 'rest_firewall_with_acf_enabled' ) ) {
+		if ( true === CoreOptions::read_option( 'rest_firewall_with_acf_enabled' ) ) {
 			add_filter( 'rest_firewall_model_post_acf', array( self::class, 'get_acf_fields' ), 10, 1 );
 			add_filter( 'rest_firewall_model_term_acf', array( self::class, 'get_acf_fields' ), 10, 1 );
 			add_filter( 'rest_firewall_model_menu_item_acf', array( self::class, 'get_acf_fields' ), 10, 1 );
 			add_filter( 'rest_firewall_model_image_acf', array( self::class, 'get_acf_fields' ), 10, 1 );
 			add_filter( 'rest_firewall_model_site_data_acf', array( self::class, 'get_acf_fields' ), 10, 1 );
 		}
-
-		
 	}
 
 	public static function get_acf_fields( int $object_id ): array {

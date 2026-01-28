@@ -55,7 +55,7 @@ class Permissions {
 		return $result;
 	}
 
-	public static function rest_api_enforce_pre_dispatch_auth ( $result ) {
+	public static function rest_api_enforce_pre_dispatch_auth( $result ) {
 
 		if ( is_wp_error( $result ) ) {
 			return $result;

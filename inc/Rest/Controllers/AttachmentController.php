@@ -100,7 +100,7 @@ class AttachmentController {
 			)
 		);
 
-		$attachments_per_page = array_slice( $images, 0,CoreOptions::read_option( 'rest_api_attachments_per_page' ) );
+		$attachments_per_page = array_slice( $images, 0, CoreOptions::read_option( 'rest_api_attachments_per_page' ) );
 
 		return rest_ensure_response( $attachments_per_page );
 	}
