@@ -3,6 +3,8 @@
 defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Rest\Firewall\FirewallOptions;
+use WP_REST_Request;
+use WP_Error;
 
 class RateLimit {
 
@@ -14,19 +16,19 @@ class RateLimit {
 	 * @param int|false        $time_limit Optional time window (seconds). Falls back to global.
 	 * @return true|\WP_Error
 	 */
-	public static function check( \WP_REST_Request $request, $rate_limit = false, $time_limit = false ) {
+	public static function check( WP_REST_Request $request, $rate_limit = false, $time_limit = false ) {
 
 		$client_id        = self::get_client_identifier( $request );
 		$key              = 'rest_firewall_rl_' . md5( $client_id . $request->get_route() );
 		$firewall_options = FirewallOptions::get_options();
 
-		$rate_limit = ( $rate_limit !== false ) ? (int) $rate_limit : (int) $firewall_options['rate_limit'];
-		$time_limit = ( $time_limit !== false ) ? (int) $time_limit : (int) $firewall_options['rate_limit_time'];
+		$rate_limit = false !== $rate_limit ? (int) $rate_limit : (int) $firewall_options['rate_limit'];
+		$time_limit = false !== $time_limit ? (int) $time_limit : (int) $firewall_options['rate_limit_time'];
 
 		$count = (int) get_transient( $key );
 
 		if ( $count >= $rate_limit ) {
-			return new \WP_Error(
+			return new WP_Error(
 				'rest_firewall_rate_limited',
 				'Too many requests.',
 				array( 'status' => 429 )

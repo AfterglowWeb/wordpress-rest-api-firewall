@@ -20,7 +20,8 @@ class CoreOptions {
 	public static function options_config(): array {
 		return array(
 
-			// Models
+			// Models.
+
 			'rest_firewall_use_rest_models_enabled'        => array(
 				'default_value'     => true,
 				'type'              => 'bool',
@@ -84,7 +85,7 @@ class CoreOptions {
 				'rest_expose'       => false,
 			),
 
-			// Enforce preset on collections.
+			// Collections.
 
 			'rest_api_posts_per_page'                      => array(
 				'default_value'     => 100,
@@ -132,7 +133,7 @@ class CoreOptions {
 				'rest_expose'       => false,
 			),
 
-			// Core.
+			// Theme.
 
 			'core_redirect_templates_enabled'              => array(
 				'default_value'     => false,
@@ -379,19 +380,19 @@ class CoreOptions {
 			&& apply_filters( 'rest_firewall_use_multisite_options', false );
 	}
 
-	public static function multisite_get_option( string $option, $default = array() ): array {
+	public static function multisite_get_option( string $option_key, $default_value = array() ): array {
 		if ( self::is_multisite_mode() ) {
-			return get_site_option( $option, $default );
+			return get_site_option( $option_key, $default_value );
 		}
 
-		return get_option( $option, $default );
+		return get_option( $option_key, $default_value );
 	}
 
-	public static function multisite_update_option( string $option, $value ): bool {
+	public static function multisite_update_option( string $option_key, $value ): bool {
 		if ( self::is_multisite_mode() ) {
-			return update_site_option( $option, $value );
+			return update_site_option( $option_key, $value );
 		}
 
-		return update_option( $option, $value );
+		return update_option( $option_key, $value );
 	}
 }

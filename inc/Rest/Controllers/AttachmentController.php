@@ -23,7 +23,7 @@ class AttachmentController {
 		 */
 		add_filter(
 			'rest_firewall_model_relative_attachment_url',
-			function ( string $file, string $url ): string {
+			function ( string $file ): string {
 
 				if ( ! $file ) {
 					return '';
@@ -85,7 +85,7 @@ class AttachmentController {
 		$images = array();
 
 		foreach ( $query->posts as $post ) {
-			$images = array_merge( $images, self::attachments_per_post_flat( $post ) ); // Models::attachments_per_post( $post )
+			$images = array_merge( $images, self::attachments_per_post_flat( $post ) );
 		}
 
 		$images = array_filter( $images );

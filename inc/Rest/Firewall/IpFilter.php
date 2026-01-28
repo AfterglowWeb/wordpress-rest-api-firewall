@@ -27,7 +27,7 @@ class IpFilter {
 	public static function default_options(): array {
 		return array(
 			'enabled'   => false,
-			'mode'      => 'blacklist', // 'whitelist' or 'blacklist'
+			'mode'      => 'blacklist',
 			'whitelist' => array(),
 			'blacklist' => array(),
 		);
@@ -75,21 +75,20 @@ class IpFilter {
 		);
 	}
 
-	private static function sanitize_ip_list( $list ): array {
-		if ( ! is_array( $list ) ) {
-			$list = array_filter( array_map( 'trim', explode( "\n", (string) $list ) ) );
+	private static function sanitize_ip_list( $ip_list ): array {
+		if ( ! is_array( $ip_list ) ) {
+			$ip_list = array_filter( array_map( 'trim', explode( "\n", (string) $ip_list ) ) );
 		}
 
 		$sanitized = array();
 
-		foreach ( $list as $entry ) {
+		foreach ( $ip_list as $entry ) {
 			$entry = trim( sanitize_text_field( $entry ) );
 
 			if ( empty( $entry ) ) {
 				continue;
 			}
 
-			// Validate IP or CIDR.
 			if ( self::is_valid_ip_or_cidr( $entry ) ) {
 				$sanitized[] = $entry;
 			}
@@ -99,12 +98,11 @@ class IpFilter {
 	}
 
 	public static function is_valid_ip_or_cidr( string $entry ): bool {
-		// Check if it's a CIDR notation.
+
 		if ( strpos( $entry, '/' ) !== false ) {
 			return self::is_valid_cidr( $entry );
 		}
 
-		// Check if it's a valid IP.
 		return filter_var( $entry, FILTER_VALIDATE_IP ) !== false;
 	}
 
@@ -123,7 +121,6 @@ class IpFilter {
 
 		$mask = (int) $mask;
 
-		// IPv4 CIDR mask: 0-32, IPv6: 0-128.
 		if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
 			return $mask >= 0 && $mask <= 32;
 		}
@@ -151,11 +148,9 @@ class IpFilter {
 		$mode      = $options['mode'];
 
 		if ( 'whitelist' === $mode ) {
-			// Whitelist mode: block unless IP is in whitelist.
 			$whitelist = $options['whitelist'];
 
 			if ( empty( $whitelist ) ) {
-				// Empty whitelist with whitelist mode = block everyone (probably misconfigured).
 				return true;
 			}
 
@@ -167,7 +162,6 @@ class IpFilter {
 				);
 			}
 		} else {
-			// Blacklist mode: block if IP is in blacklist.
 			$blacklist = $options['blacklist'];
 
 			if ( self::ip_in_list( $client_ip, $blacklist ) ) {
@@ -182,18 +176,13 @@ class IpFilter {
 		return true;
 	}
 
-	/**
-	 * Check if an IP is in a list (supports CIDR ranges).
-	 */
-	public static function ip_in_list( string $ip, array $list ): bool {
-		foreach ( $list as $entry ) {
+	public static function ip_in_list( string $ip, array $ip_list ): bool {
+		foreach ( $ip_list as $entry ) {
 			if ( strpos( $entry, '/' ) !== false ) {
-				// CIDR range.
 				if ( self::ip_in_cidr( $ip, $entry ) ) {
 					return true;
 				}
 			} elseif ( $ip === $entry ) {
-				// Exact match.
 				return true;
 			}
 		}
@@ -201,13 +190,9 @@ class IpFilter {
 		return false;
 	}
 
-	/**
-	 * Check if an IP is within a CIDR range.
-	 */
 	public static function ip_in_cidr( string $ip, string $cidr ): bool {
 		list( $subnet, $mask ) = explode( '/', $cidr );
 
-		// IPv4.
 		if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) &&
 			filter_var( $subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
 
@@ -218,7 +203,6 @@ class IpFilter {
 			return ( $ip_long & $mask_long ) === ( $subnet_long & $mask_long );
 		}
 
-		// IPv6.
 		if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) &&
 			filter_var( $subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
 
@@ -226,7 +210,6 @@ class IpFilter {
 			$subnet_bin = inet_pton( $subnet );
 			$mask       = (int) $mask;
 
-			// Build the mask.
 			$mask_bin = str_repeat( "\xff", (int) ( $mask / 8 ) );
 
 			if ( $mask % 8 ) {
@@ -252,6 +235,7 @@ class IpFilter {
 		foreach ( $headers as $header ) {
 			if ( ! empty( $_SERVER[ $header ] ) ) {
 				$ip = sanitize_text_field( wp_unslash( $_SERVER[ $header ] ) );
+
 				// X-Forwarded-For can contain multiple IPs, take the first.
 				if ( strpos( $ip, ',' ) !== false ) {
 					$ip = trim( explode( ',', $ip )[0] );
@@ -295,24 +279,28 @@ class IpFilter {
 
 		$options = array();
 
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
 		if ( isset( $_POST['enabled'] ) ) {
-			$options['enabled'] = rest_sanitize_boolean( $_POST['enabled'] );
+			$options['enabled'] = rest_sanitize_boolean( wp_unslash( $_POST['enabled'] ) );
 		}
 
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
 		if ( isset( $_POST['mode'] ) ) {
 			$options['mode'] = sanitize_text_field( wp_unslash( $_POST['mode'] ) );
 		}
 
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
 		if ( isset( $_POST['whitelist'] ) ) {
-			$whitelist = wp_unslash( $_POST['whitelist'] );
+			$whitelist = sanitize_text_field( wp_unslash( $_POST['whitelist'] ) );
 			if ( is_string( $whitelist ) ) {
 				$whitelist = json_decode( $whitelist, true );
 			}
 			$options['whitelist'] = is_array( $whitelist ) ? $whitelist : array();
 		}
 
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
 		if ( isset( $_POST['blacklist'] ) ) {
-			$blacklist = wp_unslash( $_POST['blacklist'] );
+			$blacklist = sanitize_text_field( wp_unslash( $_POST['blacklist'] ) );
 			if ( is_string( $blacklist ) ) {
 				$blacklist = json_decode( $blacklist, true );
 			}

@@ -55,7 +55,6 @@ class PolicyRepository {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
-		// Check if pro is active - per-route policy editing requires Pro
 		$pro_active = apply_filters( 'rest_api_firewall_pro_active', false );
 		if ( ! $pro_active ) {
 			wp_send_json_error(
@@ -67,23 +66,47 @@ class PolicyRepository {
 			);
 		}
 
-		$tree = isset( $_POST['tree'] ) ? json_decode( stripslashes( $_POST['tree'] ), true ) : null;
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
+		if ( ! isset( $_POST['tree'] ) ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'Bad request error', 'rest-api-firewall' ),
+				),
+				400
+			);
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
+		$tree = json_decode( sanitize_text_field( wp_unslash( $_POST['tree'] ) ), true );
 
 		if ( ! is_array( $tree ) ) {
-			wp_send_json_error( array( 'message' => 'Invalid tree data' ), 400 );
+			wp_send_json_error(
+				array(
+					'message' => __( 'Bad request error', 'rest-api-firewall' ),
+				),
+				400
+			);
 		}
 
 		$diff  = self::extract_diff_from_tree( $tree );
 		$saved = self::save_diff( $diff );
 
 		if ( ! $saved ) {
-			wp_send_json_error( array( 'message' => 'Failed to save policy' ), 500 );
+			wp_send_json_error(
+				array(
+					'message' => __( 'Failed to save policy', 'rest-api-firewall' ),
+				),
+				500
+			);
 		}
 
-		wp_send_json_success( array( 'message' => 'Policy saved successfully' ), 200 );
+		wp_send_json_success(
+			array(
+				'message' => __( 'Policy saved successfully', 'rest-api-firewall' ),
+			),
+			200
+		);
 	}
-
-
 
 	/** Controller */
 	public static function save_diff( array $diff ): bool {
@@ -126,7 +149,6 @@ class PolicyRepository {
 		 */
 		$policy = apply_filters( 'rest_api_firewall_get_policy', $default );
 
-		// If no pro filter, fallback to free version storage
 		if ( $policy === $default ) {
 			return FirewallOptions::get_option( 'policy' );
 		}
@@ -145,42 +167,21 @@ class PolicyRepository {
 
 	private static function apply_node_diff( array &$node, array $diff ): void {
 
-		// Check if this is a route (HTTP method) or a path node
 		$is_method = isset( $node['isMethod'] ) && $node['isMethod'];
 
-		if ( $is_method ) {
-			// This is an HTTP method - check routes diff
-			if ( isset( $node['id'], $diff['routes'][ $node['id'] ] ) ) {
-				$saved_settings = $diff['routes'][ $node['id'] ];
+		if ( isset( $node['id'], $diff['routes'][ $node['id'] ] ) ) {
 
-				// Initialize settings array if it doesn't exist
-				if ( ! isset( $node['settings'] ) ) {
-					$node['settings'] = array();
-				}
-
-				// Merge saved settings into node settings structure
-				foreach ( $saved_settings as $key => $value ) {
-					$node['settings'][ $key ] = $value;
-				}
+			if ( ! isset( $node['settings'] ) ) {
+				$node['settings'] = array();
 			}
-		} else {
-			// This is a path node - check nodes diff
-			if ( isset( $node['id'], $diff['nodes'][ $node['id'] ] ) ) {
-				$saved_settings = $diff['nodes'][ $node['id'] ];
 
-				// Initialize settings array if it doesn't exist
-				if ( ! isset( $node['settings'] ) ) {
-					$node['settings'] = array();
-				}
+			$saved_settings = $is_method ? $diff['routes'][ $node['id'] ] : $diff['nodes'][ $node['id'] ];
 
-				// Merge saved settings into node settings structure
-				foreach ( $saved_settings as $key => $value ) {
-					$node['settings'][ $key ] = $value;
-				}
+			foreach ( $saved_settings as $key => $value ) {
+				$node['settings'][ $key ] = $value;
 			}
 		}
 
-		// Recurse into children (both route methods and path nodes are now in children)
 		if ( ! empty( $node['children'] ) ) {
 			foreach ( $node['children'] as &$child ) {
 				self::apply_node_diff( $child, $diff );
@@ -202,16 +203,13 @@ class PolicyRepository {
 	}
 
 	private static function extract_node_diff( array $node, array &$diff ): void {
-		// Extract node settings if they exist and are not default
+
 		if ( isset( $node['id'], $node['settings'] ) ) {
 			$settings = array();
 
-			// Only save settings that are not inherited (explicitly set by user)
 			if ( isset( $node['settings']['protect'] ) ) {
 				$protect = $node['settings']['protect'];
-				// JavaScript sends: { value: true, inherited: false }
 				if ( is_array( $protect ) && isset( $protect['value'] ) ) {
-					// Only save if NOT inherited (user explicitly set it)
 					if ( ! ( $protect['inherited'] ?? false ) ) {
 						$settings['protect'] = (bool) $protect['value'];
 					}
@@ -220,23 +218,18 @@ class PolicyRepository {
 
 			if ( isset( $node['settings']['disabled'] ) ) {
 				$disabled = $node['settings']['disabled'];
-				// JavaScript sends: { value: true, inherited: false }
 				if ( is_array( $disabled ) && isset( $disabled['value'] ) ) {
-					// Only save if NOT inherited (user explicitly set it)
 					if ( ! ( $disabled['inherited'] ?? false ) ) {
 						$settings['disabled'] = (bool) $disabled['value'];
 					}
 				}
 			}
 
-			// Save to appropriate array based on node type
 			if ( ! empty( $settings ) ) {
 				$is_method = isset( $node['isMethod'] ) && $node['isMethod'];
 				if ( $is_method ) {
-					// This is an HTTP method (route)
 					$diff['routes'][ $node['id'] ] = $settings;
 				} else {
-					// This is a path node
 					$diff['nodes'][ $node['id'] ] = $settings;
 				}
 			}
@@ -436,7 +429,7 @@ class PolicyRepository {
 
 			$current_node =& $current[ $segment ];
 
-			if ( $index === count( $segments ) - 1 ) {
+			if ( count( $segments ) - 1 === $index ) {
 
 				$existing_index = null;
 				foreach ( $current_node['routes'] as $i => $r ) {
