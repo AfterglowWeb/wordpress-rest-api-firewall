@@ -52,7 +52,7 @@ class PostController {
 		$posts = array();
 
 		foreach ( $query->posts as $post ) {
-			$posts[] = self::post_model( $post ); // Models::post_model( $post )
+			$posts[] = self::post_model( $post );
 		}
 
 		return rest_ensure_response( $posts );
@@ -113,7 +113,5 @@ class PostController {
 		}
 
 		return $factory->author( $user, $parent_post, $context );
-
-		return $user;
 	}
 }

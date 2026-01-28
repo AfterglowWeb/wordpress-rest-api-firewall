@@ -70,25 +70,17 @@ add_action(
 		}
 
 		if ( $requires_wp && version_compare( get_bloginfo( 'version' ), $requires_wp, '<' ) ) {
-			printf(
-				'<div class="notice notice-error"><p>%s %s</p></div>',
-				sprintf(
-					esc_html__( 'REST API Firewall requires WordPress version %s.', 'rest-api-firewall' ),
-					esc_html( $requires_wp )
-				),
-				esc_html__( 'Please update WordPress to the latest version.', 'rest-api-firewall' )
-			);
+			echo '<div class="notice notice-error"><p>';
+			/* translators: %s is the WordPress version */
+			printf( esc_html__( 'REST API Firewall requires WordPress version %s.', 'rest-api-firewall' ), esc_html( $requires_wp ) );
+			echo '</p></div>';
 		}
 
 		if ( $requires_php && version_compare( PHP_VERSION, $requires_php, '<' ) ) {
-			printf(
-				'<div class="notice notice-error"><p>%s %s</p></div>',
-				sprintf(
-					esc_html__( 'REST API Firewall requires PHP version %s.', 'rest-api-firewall' ),
-					esc_html( $requires_php )
-				),
-				esc_html__( 'Please update your PHP version.', 'rest-api-firewall' )
-			);
+			echo '<div class="notice notice-error"><p>';
+			/* translators: %s is the PHP version */
+			printf( esc_html__( 'REST API Firewall requires PHP version %s.', 'rest-api-firewall' ), esc_html( $requires_php ) );
+			echo '</p></div>';
 		}
 	}
 );

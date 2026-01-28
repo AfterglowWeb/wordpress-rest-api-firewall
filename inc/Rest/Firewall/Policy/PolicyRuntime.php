@@ -168,7 +168,7 @@ class PolicyRuntime {
 				if ( ! ( $value['inherited'] ?? false ) || isset( $base[ $key ] ) === false ) {
 					$base[ $key ] = $value['value'];
 				}
-			} elseif ( is_array( $value ) && $key === 'tags' ) {
+			} elseif ( is_array( $value ) && 'tags' === $key ) {
 				$base[ $key ] = array_values(
 					array_unique(
 						array_merge( $base[ $key ] ?? array(), $value )

@@ -238,6 +238,7 @@ class DeployTheme {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
 		$action = isset( $_POST['theme_action'] ) ? sanitize_key( wp_unslash( $_POST['theme_action'] ) ) : '';
 
 		switch ( $action ) {

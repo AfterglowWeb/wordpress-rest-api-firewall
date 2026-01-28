@@ -70,23 +70,23 @@ class RoutesRepository {
 		return $output;
 	}
 
-	private static function normalize_callable( $callable ) {
+	private static function normalize_callable( $callback_name ) {
 
-		if ( is_string( $callable ) ) {
-			return $callable;
+		if ( is_string( $callback_name ) ) {
+			return $callback_name;
 		}
 
-		if ( is_array( $callable ) && isset( $callable[0], $callable[1] ) ) {
-			if ( is_object( $callable[0] ) ) {
-				return get_class( $callable[0] ) . '::' . $callable[1];
+		if ( is_array( $callback_name ) && isset( $callback_name[0], $callback_name[1] ) ) {
+			if ( is_object( $callback_name[0] ) ) {
+				return get_class( $callback_name[0] ) . '::' . $callback_name[1];
 			}
 
-			if ( is_string( $callable[0] ) ) {
-				return $callable[0] . '::' . $callable[1];
+			if ( is_string( $callback_name[0] ) ) {
+				return $callback_name[0] . '::' . $callback_name[1];
 			}
 		}
 
-		if ( $callable instanceof \Closure ) {
+		if ( $callback_name instanceof \Closure ) {
 			return 'closure';
 		}
 

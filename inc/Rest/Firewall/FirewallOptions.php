@@ -27,9 +27,9 @@ class FirewallOptions {
 
 		add_action(
 			'rest_firewall_options_updated',
-			function ( array $new, array $old ) {
-				if ( ( $new['user_id'] ?? 0 ) !== ( $old['user_id'] ?? 0 ) ) {
-					Permissions::sync_rest_api_user( $new['user_id'], $old['user_id'] );
+			function ( array $new_user, array $old_user ) {
+				if ( ( $new_user['user_id'] ?? 0 ) !== ( $old_user['user_id'] ?? 0 ) ) {
+					Permissions::sync_rest_api_user( $new_user['user_id'], $old_user['user_id'] );
 				}
 			},
 			10,
@@ -84,22 +84,27 @@ class FirewallOptions {
 
 		$options = array();
 
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
 		if ( isset( $_POST['enforce_auth'] ) ) {
 			$options['enforce_auth'] = rest_sanitize_boolean( $_POST['enforce_auth'] );
 		}
 
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
 		if ( isset( $_POST['enforce_rate_limit'] ) ) {
 			$options['enforce_rate_limit'] = rest_sanitize_boolean( $_POST['enforce_rate_limit'] );
 		}
 
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
 		if ( isset( $_POST['user_id'] ) ) {
 			$options['user_id'] = absint( $_POST['user_id'] );
 		}
 
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
 		if ( isset( $_POST['rate_limit'] ) ) {
 			$options['rate_limit'] = absint( $_POST['rate_limit'] );
 		}
 
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
 		if ( isset( $_POST['rate_limit_time'] ) ) {
 			$options['rate_limit_time'] = absint( $_POST['rate_limit_time'] );
 		}

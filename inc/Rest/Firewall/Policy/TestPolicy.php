@@ -28,12 +28,14 @@ class TestPolicy {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
 		$route           = isset( $_POST['route'] ) ? sanitize_text_field( wp_unslash( $_POST['route'] ) ) : '';
 		$method          = isset( $_POST['method'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_POST['method'] ) ) ) : 'GET';
-		$test_sub_routes = isset( $_POST['test_sub_routes'] ) ? rest_sanitize_boolean( $_POST['test_sub_routes'] ) : false;
-		$use_auth        = isset( $_POST['use_auth'] ) ? rest_sanitize_boolean( $_POST['use_auth'] ) : true;
-		$use_rate_limit  = isset( $_POST['use_rate_limit'] ) ? rest_sanitize_boolean( $_POST['use_rate_limit'] ) : true;
-		$use_disabled    = isset( $_POST['use_disabled'] ) ? rest_sanitize_boolean( $_POST['use_disabled'] ) : true;
+		$test_sub_routes = isset( $_POST['test_sub_routes'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['test_sub_routes'] ) ) : false;
+		$use_auth        = isset( $_POST['use_auth'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['use_auth'] ) ) : true;
+		$use_rate_limit  = isset( $_POST['use_rate_limit'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['use_rate_limit'] ) ) : true;
+		$use_disabled    = isset( $_POST['use_disabled'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['use_disabled'] ) ) : true;
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		if ( empty( $route ) ) {
 			wp_send_json_error( array( 'message' => 'Route is required' ), 400 );
@@ -264,6 +266,7 @@ class TestPolicy {
 					// Generate a temporary application password for testing.
 					$app_pass = $this->get_or_create_test_app_password( $user_id );
 					if ( $app_pass ) {
+						// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Used for encoding API response data, not obfuscation
 						$args['headers']['Authorization'] = 'Basic ' . base64_encode( $user->user_login . ':' . $app_pass );
 					}
 				}

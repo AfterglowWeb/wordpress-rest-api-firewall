@@ -22,30 +22,23 @@ final class Bootstrap {
 	}
 
 	private function __construct() {
-
 		CoreOptions::get_instance();
-
 		Acf::get_instance();
+
 		if ( is_admin() ) {
 			AdminPage::get_instance();
 		}
+
 		Routes::register();
 		PolicyRepository::get_instance();
 		FirewallOptions::get_instance();
 		TestPolicy::get_instance();
-		IpFilter::get_instance();
 
-		add_filter( 'rest_pre_dispatch', array( $this, 'check_ip_filter' ), 5, 3 );
+		IpFilter::get_instance();
+		add_filter( 'rest_pre_dispatch', array( $this, 'check_ip_filter' ), 5, 1 );
 
 		WebhookService::get_instance();
-
 		DeployTheme::get_instance();
-
-		// PostContent::get_instance();
-		// ImageFiles::get_instance();
-		// RedirectTemplates::get_instance();
-		// CustomPosts::get_instance();
-		// DisableComments::get_instance()
 	}
 
 	/**
@@ -56,7 +49,7 @@ final class Bootstrap {
 	 * @param \WP_REST_Request $request Request used to generate the response.
 	 * @return mixed|\WP_Error
 	 */
-	public function check_ip_filter( $result, $server, $request ) {
+	public function check_ip_filter( $result ) {
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
