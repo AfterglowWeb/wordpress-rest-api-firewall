@@ -10,10 +10,16 @@ It integrates seamlessly with external applications built with Next.js, React, V
 
 - **Global Authentication** — Enforce WordPress application password authentication on all REST routes
 - **Global Rate Limiting** — Protect against abuse with configurable request limits
-- **Auto-Blacklist** — Automatically block IPs that exceed rate limits
+- **Auto-Blacklist IPs** — Automatically block IPs that exceed rate limits
 - **Content Filtering** — Remove WordPress domain from permalinks and media URLs
 - **Post Type Control** — Expose only selected post types via REST API
 - **Routes Explorer** — Visualize all REST API routes and understand what each plugin exposes
+- **Headless Theme** — Spinoff a theme to disable frontend rendering entirely with additional options:
+    - Redirect all templates to a page or custom URL
+    - Disable Gutenberg site-wide
+    - Disable comments site-wide
+    - Enable WebP and SVG support
+    - Limit upload file sizes
 
 # REST API Firewall Pro
 
@@ -36,9 +42,3 @@ It integrates seamlessly with external applications built with Next.js, React, V
 ## Advanced Options
 - **Field Mapping** — Remap post fields to custom keys for cleaner API responses
 - **Domain Stripping** — Remove all WordPress domain references from API output
-- **Headless Theme** — Disable frontend rendering entirely with additional options:
-    - Redirect all templates to a page or custom URL
-    - Disable Gutenberg site-wide
-    - Disable comments site-wide
-    - Enable WebP and SVG support
-    - Limit upload file sizes

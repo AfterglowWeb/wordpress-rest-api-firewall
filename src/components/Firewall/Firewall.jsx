@@ -242,180 +242,174 @@ export default function Firewall() {
 
 			<Stack>
 				<Stack my={3} spacing={3}>
-					<Typography variant="subtitle1" fontWeight={600} sx={ { mb: 2 } }>
-						{ __( 'Global Settings', 'rest-api-firewall' ) }
-					</Typography>
 
 					<Grid spacing={ 3 } container>
-
-						<Grid size={ 4 }>
+						<Grid size={ 7 } spacing={ 3 }>
+							<Typography variant="subtitle1" fontWeight={600}>
+								{ __( 'User Settings', 'rest-api-firewall' ) }
+							</Typography>
 							
-							<FormControl fullWidth>
-								<InputLabel id="user-id-label">
-									{ __( 'REST API User', 'rest-api-firewall' ) }
-								</InputLabel>
-								<Select
-									labelId="user-id-label"
-									id="user_id"
-									name="user_id"
-									value={ firewallOptions.user_id }
-									label={ __( 'REST API User', 'rest-api-firewall' ) }
-									onChange={ handleOptionChange }
-								>
-									<MenuItem value={ 0 }>
-										<em>{ __( 'Select User', 'rest-api-firewall' ) }</em>
-									</MenuItem>
-									{ users.map( ( user ) =>
-										user.value && user.label ? (
-											<MenuItem key={ user.value } value={ user.value }>
-												{ user.label }
-											</MenuItem>
-										) : null
-									) }
-								</Select>
-								<FormHelperText>
-									<>
+							<Stack direction={{xs:'column', lg:'row'}} my={3.6} gap={ 2 } justifyContent={'space-between'}>
+								
+								<FormControl>
+									<InputLabel id="user-id-label">
+										{ __( 'REST API User', 'rest-api-firewall' ) }
+									</InputLabel>
+									<Select
+										labelId="user-id-label"
+										id="user_id"
+										name="user_id"
+										value={ firewallOptions.user_id }
+										label={ __( 'REST API User', 'rest-api-firewall' ) }
+										onChange={ handleOptionChange }
+									>
+										<MenuItem value={ 0 }>
+											<em>{ __( 'Select User', 'rest-api-firewall' ) }</em>
+										</MenuItem>
+										{ users.map( ( user ) =>
+											user.value && user.label ? (
+												<MenuItem key={ user.value } value={ user.value }>
+													{ user.label }
+												</MenuItem>
+											) : null
+										) }
+									</Select>
+									<FormHelperText>
+										<>
+											{ firewallOptions.user_id &&
+											restApiUser &&
+											restApiUser?.label ?
+											<span>
+											{sprintf( __( 'Restrict authentication to %s.', 'rest-api-firewall'), restApiUser.label)}<br/>
+											{__( 'Ensure you safe saved the user application password.', 'rest-api-firewall')}
+											</span>
+											:
+											<span>
+											{__( 'Restrict authentication to one user.', 'rest-api-firewall')}<br/>
+											{__( 'Before selecting a user, you must first create an application password in its profile.', 'rest-api-firewall')}
+											</span>
+
+											}
+										</>
 										{ firewallOptions.user_id &&
-										restApiUser &&
-										restApiUser?.label ?
-										<span>
-										{sprintf( __( 'Restrict authentication to %s.', 'rest-api-firewall'), restApiUser.label)}<br/>
-										{__( 'Ensure you safe saved the user application password.', 'rest-api-firewall')}
-										</span>
-										:
-										<span>
-										{__( 'Restrict authentication to one user.', 'rest-api-firewall')}<br/>
-										{__( 'Before selecting a user, you must first create an application password in its profile.', 'rest-api-firewall')}
-										</span>
-
+											restApiUser &&
+											restApiUser?.admin_url ?
+												<Typography
+													component="a"
+													href={ restApiUser.admin_url }
+													variant="body.2"
+													target="_blank"
+													sx={ {
+														display: 'flex',
+														alignItems: 'center',
+														gap: '4px',
+														px: '14px',
+														fontSize: '12px',
+													} }
+												>
+													{ __( 'User profile', 'rest-api-firewall' ) }
+													<OpenInNewIcon fontSize="inherut" />
+												</Typography>
+											: <Typography
+													component="a"
+													href={ usersPageUrl }
+													variant="body.2"
+													target="_blank"
+													sx={ {
+														display: 'flex',
+														alignItems: 'center',
+														gap: '4px',
+														px: '14px',
+														fontSize: '12px',
+													} }
+												>
+													{ __( 'Users list', 'rest-api-firewall' ) }
+													<OpenInNewIcon fontSize="inherut" />
+												</Typography> }
+									</FormHelperText>
+								</FormControl>
+									
+								<FormControl sx={{minWidth:240}}>
+									<FormControlLabel
+										control={
+											<Switch
+												checked={ !! firewallOptions.enforce_auth }
+												name="enforce_auth"
+												size="small"
+												onChange={ handleOptionChange }
+											/>
 										}
-									</>
-									{ firewallOptions.user_id &&
-										restApiUser &&
-										restApiUser?.admin_url ?
-											<Typography
-												component="a"
-												href={ restApiUser.admin_url }
-												variant="body.2"
-												target="_blank"
-												sx={ {
-													display: 'flex',
-													alignItems: 'center',
-													gap: '4px',
-													px: '14px',
-													fontSize: '12px',
-												} }
-											>
-												{ __( 'User profile', 'rest-api-firewall' ) }
-												<OpenInNewIcon fontSize="inherut" />
-											</Typography>
-										: <Typography
-												component="a"
-												href={ usersPageUrl }
-												variant="body.2"
-												target="_blank"
-												sx={ {
-													display: 'flex',
-													alignItems: 'center',
-													gap: '4px',
-													px: '14px',
-													fontSize: '12px',
-												} }
-											>
-												{ __( 'Users list', 'rest-api-firewall' ) }
-												<OpenInNewIcon fontSize="inherut" />
-											</Typography> }
-								</FormHelperText>
-							</FormControl>
-
-						</Grid>
-
-						<Grid size={ 5 }>
-							
-							<Stack direction={{xs:'column', sm:'row'}} gap={ 2 }>
-								<TextField
-									label={ __( 'Rate Limit Requests', 'rest-api-firewall' ) }
-									type="number"
-									helperText={ __(
-										'Maximum requests before rate-limiting',
-										'rest-api-firewall'
-									) }
-									name="rate_limit"
-									value={ firewallOptions.rate_limit }
-									onChange={ handleOptionChange }
-									fullWidth
-								/>
-
-								<TextField
-									label={ __( 'Rate Limit Window (seconds)', 'rest-api-firewall' ) }
-									type="number"
-									helperText={ __(
-										'Time window for the request limit',
-										'rest-api-firewall'
-									) }
-									name="rate_limit_time"
-									value={ firewallOptions.rate_limit_time }
-									onChange={ handleOptionChange }
-									fullWidth
-								/>
+										label={ __( 'Enforce Authentication', 'rest-api-firewall' ) }
+									/>
+									<FormHelperText>
+										{ __('Enforce authentication on all routes', 'rest-api-firewall') }
+									</FormHelperText>
+								</FormControl>
 							</Stack>
 
+							<Typography variant="subtitle1" fontWeight={600}>
+								{ __( 'Rate Limiting', 'rest-api-firewall' ) }
+							</Typography>
+
+							<Stack direction={{xs:'column', lg:'row'}} my={3.6} gap={ 2 }  justifyContent={'space-between'}>
+								
+								<Stack direction={{xs:'column', sm:'row'}} gap={ 2 }>
+									<TextField
+										label={ __( 'Rate Limit Requests', 'rest-api-firewall' ) }
+										type="number"
+										helperText={ __(
+											'Maximum requests before rate-limiting',
+											'rest-api-firewall'
+										) }
+										name="rate_limit"
+										value={ firewallOptions.rate_limit }
+										onChange={ handleOptionChange }
+										fullWidth
+									/>
+
+									<TextField
+										label={ __( 'Rate Limit Window (seconds)', 'rest-api-firewall' ) }
+										type="number"
+										helperText={ __(
+											'Time window for the request limit',
+											'rest-api-firewall'
+										) }
+										name="rate_limit_time"
+										value={ firewallOptions.rate_limit_time }
+										onChange={ handleOptionChange }
+										fullWidth
+									/>
+								</Stack>
+
+								<FormControl sx={{minWidth:240}}>
+									<FormControlLabel
+										control={
+											<Switch
+												checked={ !! firewallOptions.enforce_rate_limit }
+												name="enforce_rate_limit"
+												onChange={ handleOptionChange }
+												size="small"
+											/>
+										}
+										label={ __( 'Enforce Rate Limiting', 'rest-api-firewall' ) }
+									/>
+									<FormHelperText>
+										{ __(
+											'Apply rate limiting to all routes',
+											'rest-api-firewall'
+										) }
+									</FormHelperText>
+								</FormControl>
+
+							</Stack>
 						</Grid>
-					</Grid>
-
-					<Grid spacing={ 3 } container>
-
-						<Grid size={ 4 }>
-							<FormControl>
-								<FormControlLabel
-									control={
-										<Switch
-											checked={ !! firewallOptions.enforce_auth }
-											name="enforce_auth"
-											size="small"
-											onChange={ handleOptionChange }
-										/>
-									}
-									label={ __( 'Enforce Authentication', 'rest-api-firewall' ) }
-								/>
-								<FormHelperText>
-									<Typography
-									variant="caption"
-									sx={ { color: 'text.secondary', fontSize: '0.7rem' } }
-									>
-										{ __('Enforce authentication on all routes', 'rest-api-firewall') }
-									</Typography>
-								</FormHelperText>
-							</FormControl>
-						</Grid>
-
 						<Grid size={ 5 }>
-							<FormControl>
-								<FormControlLabel
-									control={
-										<Switch
-											checked={ !! firewallOptions.enforce_rate_limit }
-											name="enforce_rate_limit"
-											onChange={ handleOptionChange }
-											size="small"
-										/>
-									}
-									label={ __( 'Enforce Rate Limiting', 'rest-api-firewall' ) }
-								/>
-								<FormHelperText>
-									{ __(
-										'Apply rate limiting to all routes',
-										'rest-api-firewall'
-									) }
-								</FormHelperText>
-							</FormControl>
+							<IpFilter />
 						</Grid>
 					</Grid>
+
+
 				</Stack>
-
-				<Divider sx={ { my: 2 } } />
-
-				<IpFilter />
 
 				<Divider sx={ { my: 2 } } />
 

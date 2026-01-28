@@ -217,6 +217,9 @@ class AdminPage {
 			min-height: auto;
 			height: 1.4375em;
 		}
+		#rest-api-firewall-admin-page input[type=checkbox]:disabled {
+			opacity:0;
+		}
 		';
 		echo '<style type="text/css">' . sanitize_text_field( $custom_css ) . '</style>';
 	}
