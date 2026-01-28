@@ -11,7 +11,7 @@ final class WebhookClient {
 		$options = CoreOptions::read_options();
 		$host    = rtrim( $options['application_host'], '/' );
 		$route   = ltrim( $route, '/' );
-		$secret  = get_option('rest_api_firewall_application_webhook_secret');
+		$secret  = get_option( 'rest_api_firewall_application_webhook_secret' );
 
 		if ( ! $host || ! $secret ) {
 			return new \WP_Error( 'config', 'Webhook not configured' );

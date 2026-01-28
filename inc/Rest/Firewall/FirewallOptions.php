@@ -39,15 +39,33 @@ class FirewallOptions {
 
 	private static function options_config(): array {
 		return array(
-			'enforce_auth'       => ['default_value' => false, 'sanitize_callback' => 'rest_sanitize_boolean'],
-			'enforce_rate_limit' => ['default_value' => false, 'sanitize_callback' => 'rest_sanitize_boolean'],
-			'user_id'            => ['default_value' => 0, 'sanitize_callback' => 'absint'],
-			'rate_limit'         => ['default_value' => 30, 'sanitize_callback' => 'absint'],
-			'rate_limit_time'    => ['default_value' => 60, 'sanitize_callback' => 'absint'],
-			'policy'             => ['default_value' => array(
-				'nodes'  => array(),
-				'routes' => array(),
-			), 'sanitize_callback' => ''],
+			'enforce_auth'       => array(
+				'default_value'     => false,
+				'sanitize_callback' => 'rest_sanitize_boolean',
+			),
+			'enforce_rate_limit' => array(
+				'default_value'     => false,
+				'sanitize_callback' => 'rest_sanitize_boolean',
+			),
+			'user_id'            => array(
+				'default_value'     => 0,
+				'sanitize_callback' => 'absint',
+			),
+			'rate_limit'         => array(
+				'default_value'     => 30,
+				'sanitize_callback' => 'absint',
+			),
+			'rate_limit_time'    => array(
+				'default_value'     => 60,
+				'sanitize_callback' => 'absint',
+			),
+			'policy'             => array(
+				'default_value'     => array(
+					'nodes'  => array(),
+					'routes' => array(),
+				),
+				'sanitize_callback' => '',
+			),
 		);
 	}
 
@@ -96,7 +114,7 @@ class FirewallOptions {
 			return self::$cache;
 		}
 
-		$stored = get_option( self::OPTION_KEY, null );
+		$stored      = get_option( self::OPTION_KEY, null );
 		self::$cache = wp_parse_args( $stored, self::default_options() );
 
 		return self::$cache;
@@ -129,7 +147,7 @@ class FirewallOptions {
 		self::$cache = null;
 	}
 
-		private static function default_options(): array {
+	private static function default_options(): array {
 		$defaults = array();
 
 		foreach ( self::options_config() as $key => $config ) {
@@ -189,6 +207,4 @@ class FirewallOptions {
 				return (string) call_user_func( $callback, $option_value );
 		}
 	}
-
-
 }

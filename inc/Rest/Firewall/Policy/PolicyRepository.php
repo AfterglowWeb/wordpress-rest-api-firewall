@@ -28,9 +28,9 @@ class PolicyRepository {
 
 	/** Services */
 	public static function get_routes_policy_tree(): array {
-		$flat = RoutesRepository::list_all_rest_routes();
-		$tree = self::build_policy_tree( $flat );
-		$diff = self::get_diff();
+		$flat   = RoutesRepository::list_all_rest_routes();
+		$tree   = self::build_policy_tree( $flat );
+		$diff   = self::get_diff();
 		$result = self::apply_diff( $tree, $diff );
 		return $result;
 	}
@@ -73,7 +73,7 @@ class PolicyRepository {
 			wp_send_json_error( array( 'message' => 'Invalid tree data' ), 400 );
 		}
 
-		$diff = self::extract_diff_from_tree( $tree );
+		$diff  = self::extract_diff_from_tree( $tree );
 		$saved = self::save_diff( $diff );
 
 		if ( ! $saved ) {
@@ -104,7 +104,7 @@ class PolicyRepository {
 
 		// Fallback to free version storage if no pro handler.
 		if ( ! $saved ) {
-			FirewallOptions::update_option('policy', $diff );
+			FirewallOptions::update_option( 'policy', $diff );
 			return true;
 		}
 
@@ -258,7 +258,7 @@ class PolicyRepository {
 	/** Tree Model */
 	public static function build_policy_tree( array $flat_routes ): array {
 
-		$tree = [];
+		$tree = array();
 
 		foreach ( $flat_routes as $route ) {
 
@@ -276,8 +276,8 @@ class PolicyRepository {
 					'id'       => self::node_id( '/' . $namespace ),
 					'label'    => $namespace,
 					'path'     => '/' . $namespace,
-					'children' => [],
-					'routes'   => [],
+					'children' => array(),
+					'routes'   => array(),
 				);
 			}
 
@@ -299,14 +299,14 @@ class PolicyRepository {
 	}
 
 	private static function normalize_tree( array $tree ): array {
-		$out = [];
+		$out = array();
 
 		foreach ( $tree as $node ) {
 			if ( ! isset( $node['id'] ) || ! $node['id'] ) {
 				$node['id'] = self::node_id( $node['path'] ?? uniqid() );
 			}
 
-			$all_children = [];
+			$all_children = array();
 
 			if ( ! empty( $node['routes'] ) ) {
 				foreach ( $node['routes'] as $route ) {
@@ -321,7 +321,7 @@ class PolicyRepository {
 						'callback'   => $route['callback'],
 						'permission' => $route['permission'],
 						'settings'   => $route['settings'],
-						'children'   => [],
+						'children'   => array(),
 					);
 				}
 				unset( $node['routes'] );
@@ -359,10 +359,10 @@ class PolicyRepository {
 
 		$route = trim( $route, '/' );
 		if ( '' === $route ) {
-			return [];
+			return array();
 		}
 
-		$segments = [];
+		$segments = array();
 		$buffer   = '';
 		$depth    = 0;
 		$length   = strlen( $route );
@@ -391,7 +391,7 @@ class PolicyRepository {
 
 		// Need at least namespace.
 		if ( count( $segments ) < 2 ) {
-			return [];
+			return array();
 		}
 
 		$namespace = $segments[0] . '/' . $segments[1];
@@ -429,8 +429,8 @@ class PolicyRepository {
 					'id'       => self::node_id( $path ),
 					'label'    => $segment,
 					'path'     => $path,
-					'children' => [],
-					'routes'   => [],
+					'children' => array(),
+					'routes'   => array(),
 				);
 			}
 
@@ -448,13 +448,13 @@ class PolicyRepository {
 
 				if ( null !== $existing_index ) {
 					$current_node['routes'][ $existing_index ]['settings'] = array_merge(
-						$current_node['routes'][ $existing_index ]['settings'] ?? [],
+						$current_node['routes'][ $existing_index ]['settings'] ?? array(),
 						array(
-							'protect'  => false,
-							'rate_limit' => false,
+							'protect'         => false,
+							'rate_limit'      => false,
 							'rate_limit_time' => false,
-							'disabled' => false,
-							'tags'     => [],
+							'disabled'        => false,
+							'tags'            => array(),
 						)
 					);
 				} else {
@@ -474,13 +474,13 @@ class PolicyRepository {
 			'route'      => $route['route'],
 			'params'     => $route['params'],
 			'settings'   => array(
-				'protect'    => false,
-				'rate_limit' => false,
+				'protect'         => false,
+				'rate_limit'      => false,
 				'rate_limit_time' => false,
-				'disabled'   => false,
-				'tags'     => [],
+				'disabled'        => false,
+				'tags'            => array(),
 			),
-			'callback' => $route['callback'],
+			'callback'   => $route['callback'],
 			'permission' => array(
 				'type'     => $route['permission_type'],
 				'callback' => $route['permission_callback'],
@@ -491,5 +491,4 @@ class PolicyRepository {
 	private static function route_uuid( array $route ): string {
 		return md5( $route['route'] . '|' . $route['method'] );
 	}
-
 }

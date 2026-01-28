@@ -8,7 +8,7 @@ use cmk\RestApiFirewall\Rest\Firewall\Policy\PolicyRepository;
 
 class PolicyRuntime {
 
-	protected static $cache = [];
+	protected static $cache = array();
 
 	public static function resolve_for_request( WP_REST_Request $request ): array {
 
@@ -34,7 +34,7 @@ class PolicyRuntime {
 
 		$node_chain = self::find_node_chain( $tree, $route );
 
-		$node_settings = [];
+		$node_settings = array();
 
 		foreach ( $node_chain as $node ) {
 			if ( ! empty( $node['settings'] ) ) {
@@ -63,7 +63,7 @@ class PolicyRuntime {
 		$namespace = $segments[0] . '/' . $segments[1];
 		$path      = '/' . $namespace;
 
-		$chain = [];
+		$chain = array();
 
 		foreach ( $tree as $node ) {
 			if ( $node['path'] === $path ) {
@@ -104,32 +104,32 @@ class PolicyRuntime {
 		$leaf = end( $node_chain );
 
 		if ( empty( $leaf['routes'] ) ) {
-			return [];
+			return array();
 		}
 
 		foreach ( $leaf['routes'] as $route_entry ) {
 			if ( $route_entry['uuid'] === $uuid ) {
-				return $route_entry['settings'] ?? [];
+				return $route_entry['settings'] ?? array();
 			}
 		}
 
-		return [];
+		return array();
 	}
 
 	protected static function resolve_settings( array $node_settings_chain, array $route_settings ): array {
 
-		$firewall_options        = FirewallOptions::get_options();
-		$global_enforce_auth     = (bool) ( $firewall_options['enforce_auth'] ?? false );
-		$global_enforce_rate     = (bool) ( $firewall_options['enforce_rate_limit'] ?? false );
-		$global_rate_limit       = (int) ( $firewall_options['rate_limit'] ?? 30 );
-		$global_rate_limit_time  = (int) ( $firewall_options['rate_limit_time'] ?? 60 );
+		$firewall_options       = FirewallOptions::get_options();
+		$global_enforce_auth    = (bool) ( $firewall_options['enforce_auth'] ?? false );
+		$global_enforce_rate    = (bool) ( $firewall_options['enforce_rate_limit'] ?? false );
+		$global_rate_limit      = (int) ( $firewall_options['rate_limit'] ?? 30 );
+		$global_rate_limit_time = (int) ( $firewall_options['rate_limit_time'] ?? 60 );
 
 		$resolved = array(
 			'disabled'        => false,
 			'protect'         => $global_enforce_auth,
 			'rate_limit'      => $global_enforce_rate ? $global_rate_limit : false,
 			'rate_limit_time' => $global_enforce_rate ? $global_rate_limit_time : false,
-			'tags'            => [],
+			'tags'            => array(),
 		);
 
 		foreach ( $node_settings_chain as $settings ) {
@@ -152,7 +152,7 @@ class PolicyRuntime {
 			'protect'         => $final['protect'],
 			'rate_limit'      => $final['rate_limit'],
 			'rate_limit_time' => $final['rate_limit_time'],
-			'tags'            => $final['tags'] ?? [],
+			'tags'            => $final['tags'] ?? array(),
 		);
 	}
 
@@ -171,7 +171,7 @@ class PolicyRuntime {
 			} elseif ( is_array( $value ) && $key === 'tags' ) {
 				$base[ $key ] = array_values(
 					array_unique(
-						array_merge( $base[ $key ] ?? [], $value )
+						array_merge( $base[ $key ] ?? array(), $value )
 					)
 				);
 			} else {

@@ -27,7 +27,7 @@ class Documentation {
 		$docs_dir = REST_API_FIREWALL_DIR . '/docs';
 
 		if ( ! FileUtils::is_dir( $docs_dir ) ) {
-			return [];
+			return array();
 		}
 
 		$pages = array(

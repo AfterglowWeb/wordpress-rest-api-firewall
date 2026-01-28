@@ -41,12 +41,11 @@ final class Bootstrap {
 
 		DeployTheme::get_instance();
 
-		//PostContent::get_instance();
-		//ImageFiles::get_instance();
-		//RedirectTemplates::get_instance();
-		//CustomPosts::get_instance();
-		//DisableComments::get_instance()
-
+		// PostContent::get_instance();
+		// ImageFiles::get_instance();
+		// RedirectTemplates::get_instance();
+		// CustomPosts::get_instance();
+		// DisableComments::get_instance()
 	}
 
 	/**
@@ -78,16 +77,20 @@ final class Bootstrap {
 			return;
 		}
 
-		$caps = [ 'rest_api_firewall_edit_options' ];
+		$caps = array( 'rest_api_firewall_edit_options' );
 
 		foreach ( $caps as $cap ) {
 			$role->add_cap( $cap );
 		}
 
 		if ( false === get_option( 'rest_api_firewall_options' ) ) {
-			update_option( 'rest_api_firewall_options', array(
-				'version' => REST_API_FIREWALL_VERSION,
-			), false );
+			update_option(
+				'rest_api_firewall_options',
+				array(
+					'version' => REST_API_FIREWALL_VERSION,
+				),
+				false
+			);
 		}
 
 		flush_rewrite_rules();
@@ -99,7 +102,7 @@ final class Bootstrap {
 			return;
 		}
 
-		$caps = [ 'rest_api_firewall_edit_options' ];
+		$caps = array( 'rest_api_firewall_edit_options' );
 
 		foreach ( $caps as $cap ) {
 			$role->remove_cap( $cap );
@@ -116,7 +119,7 @@ final class Bootstrap {
 			return;
 		}
 
-		$caps  = [ 'rest_api_firewall_edit_options', 'rest_firewall_api_access' ];
+		$caps  = array( 'rest_api_firewall_edit_options', 'rest_firewall_api_access' );
 		$roles = wp_roles()->roles;
 
 		foreach ( array_keys( $roles ) as $role_name ) {
@@ -143,5 +146,4 @@ final class Bootstrap {
 			)
 		);
 	}
-
 }

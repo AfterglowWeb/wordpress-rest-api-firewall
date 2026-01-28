@@ -257,15 +257,19 @@ class DeployTheme {
 				}
 
 				if ( $has_error ) {
-					wp_send_json_error( array(
-						'steps'  => $steps,
-						'status' => self::get_status(),
-					) );
+					wp_send_json_error(
+						array(
+							'steps'  => $steps,
+							'status' => self::get_status(),
+						)
+					);
 				} else {
-					wp_send_json_success( array(
-						'steps'  => $steps,
-						'status' => self::get_status(),
-					) );
+					wp_send_json_success(
+						array(
+							'steps'  => $steps,
+							'status' => self::get_status(),
+						)
+					);
 				}
 				break;
 
@@ -273,15 +277,19 @@ class DeployTheme {
 				$result = self::activate();
 
 				if ( $result['success'] ) {
-					wp_send_json_success( array(
-						'message' => $result['message'],
-						'status'  => self::get_status(),
-					) );
+					wp_send_json_success(
+						array(
+							'message' => $result['message'],
+							'status'  => self::get_status(),
+						)
+					);
 				} else {
-					wp_send_json_error( array(
-						'message' => $result['message'],
-						'status'  => self::get_status(),
-					) );
+					wp_send_json_error(
+						array(
+							'message' => $result['message'],
+							'status'  => self::get_status(),
+						)
+					);
 				}
 				break;
 

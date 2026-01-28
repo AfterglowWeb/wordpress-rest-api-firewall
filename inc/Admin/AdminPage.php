@@ -95,19 +95,19 @@ class AdminPage {
 				wp_send_json_error( array( 'error' => esc_html__( 'Invalid option data', 'rest-api-firewall' ) ), 422 );
 			}
 
-			$key = isset( $option['key'] ) && ! empty( $option['key'] ) ? $option['key'] : '';
+			$key   = isset( $option['key'] ) && ! empty( $option['key'] ) ? $option['key'] : '';
 			$value = isset( $option['value'] ) && ! empty( $option['value'] ) ? $option['value'] : null;
 
 			if ( empty( $key ) || empty( $value ) ) {
 				wp_send_json_error( array( 'error' => esc_html__( 'Invalid option data', 'rest-api-firewall' ) ), 422 );
 			}
 
-			$option = CoreOptions::update_option( $key,  $value );
+			$option = CoreOptions::update_option( $key, $value );
 
 			wp_send_json_success(
 				array(
 					'message' => esc_html__( 'Options saved', 'rest-api-firewall' ),
-					'option' => $option,
+					'option'  => $option,
 				)
 			);
 		} else {
@@ -161,28 +161,28 @@ class AdminPage {
 		}
 
 		$plugin_data = get_plugin_data( REST_API_FIREWALL_FILE );
-		$args = array(
-				'nonce'                       => wp_create_nonce( 'rest_api_firewall_update_options_nonce' ),
-				'ajaxurl'                     => admin_url( 'admin-ajax.php' ),
-				'users'                       => Utils::list_users(),
-				'post_types'                  => Utils::list_post_types(),
-				'admin_options'               => CoreOptions::read_options(),
-				'plugin_name'                 => sanitize_text_field( $plugin_data['Name'] ),
-				'plugin_version'              => sanitize_text_field( REST_API_FIREWALL_VERSION ),
-				'plugin_uri'                  => sanitize_url( $plugin_data['PluginURI'] ),
-				'home_url'                    => get_home_url( '/' ),
-			);
+		$args        = array(
+			'nonce'          => wp_create_nonce( 'rest_api_firewall_update_options_nonce' ),
+			'ajaxurl'        => admin_url( 'admin-ajax.php' ),
+			'users'          => Utils::list_users(),
+			'post_types'     => Utils::list_post_types(),
+			'admin_options'  => CoreOptions::read_options(),
+			'plugin_name'    => sanitize_text_field( $plugin_data['Name'] ),
+			'plugin_version' => sanitize_text_field( REST_API_FIREWALL_VERSION ),
+			'plugin_uri'     => sanitize_url( $plugin_data['PluginURI'] ),
+			'home_url'       => get_home_url( '/' ),
+		);
 
-		if(class_exists( '\cmk\RestApiFirewall\Theme\RedirectTemplates' ) ) {
+		if ( class_exists( '\cmk\RestApiFirewall\Theme\RedirectTemplates' ) ) {
 			$args['redirect_preset_url_options'] = \cmk\RestApiFirewall\Theme\RedirectTemplates::redirect_preset_url_options();
 		}
-		
+
 		wp_localize_script(
-				'rest-api-firewall-admin',
-				'restApiFirewallAdminData',
-				$args
-			);
-		}
+			'rest-api-firewall-admin',
+			'restApiFirewallAdminData',
+			$args
+		);
+	}
 
 	public function print_inline_styles() {
 		$hook = get_current_screen();

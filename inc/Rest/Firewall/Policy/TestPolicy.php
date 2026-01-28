@@ -78,7 +78,7 @@ class TestPolicy {
 	}
 
 	protected function find_sub_routes( array $tree, string $parent_route ): array {
-		$sub_routes = array();
+		$sub_routes         = array();
 		$parent_route_clean = rtrim( $parent_route, '/' );
 
 		foreach ( $tree as $node ) {
@@ -128,10 +128,10 @@ class TestPolicy {
 			$method = $route_info['method'];
 
 			$result = array(
-				'route'   => $route,
-				'method'  => $method,
-				'policy'  => $this->get_policy_for_route( $route, $method ),
-				'tests'   => array(),
+				'route'  => $route,
+				'method' => $method,
+				'policy' => $this->get_policy_for_route( $route, $method ),
+				'tests'  => array(),
 			);
 
 			if ( $use_disabled ) {
@@ -166,9 +166,9 @@ class TestPolicy {
 
 		if ( ! $is_disabled ) {
 			return array(
-				'skip'    => true,
-				'reason'  => 'Route is not disabled',
-				'pass'    => null,
+				'skip'   => true,
+				'reason' => 'Route is not disabled',
+				'pass'   => null,
 			);
 		}
 
