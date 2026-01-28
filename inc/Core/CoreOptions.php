@@ -21,14 +21,14 @@ class CoreOptions {
 		return array(
 
 			// Models
-			'rest_firewall_use_rest_models_enabled'             => array(
+			'rest_firewall_use_rest_models_enabled'        => array(
 				'default_value'     => true,
 				'type'              => 'bool',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 			),
 
-			'rest_firewall_relative_url_enabled'              => array(
+			'rest_firewall_relative_url_enabled'           => array(
 				'default_value'     => true,
 				'type'              => 'bool',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -42,42 +42,42 @@ class CoreOptions {
 				'rest_expose'       => false,
 			),
 
-			'rest_firewall_embed_post_attachments_enabled'    => array(
+			'rest_firewall_embed_post_attachments_enabled' => array(
 				'default_value'     => true,
 				'type'              => 'bool',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 			),
 
-			'rest_firewall_relative_attachment_url_enabled'   => array(
+			'rest_firewall_relative_attachment_url_enabled' => array(
 				'default_value'     => true,
 				'type'              => 'bool',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 			),
 
-			'rest_firewall_embed_terms_enabled'               => array(
+			'rest_firewall_embed_terms_enabled'            => array(
 				'default_value'     => true,
 				'type'              => 'bool',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 			),
 
-			'rest_firewall_embed_author_enabled'             => array(
+			'rest_firewall_embed_author_enabled'           => array(
 				'default_value'     => true,
 				'type'              => 'bool',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 			),
 
-			'rest_firewall_with_acf_enabled'                  => array(
+			'rest_firewall_with_acf_enabled'               => array(
 				'default_value'     => true,
 				'type'              => 'bool',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 			),
 
-			'rest_firewall_json_acf_fields_enabled'   => array(
+			'rest_firewall_json_acf_fields_enabled'        => array(
 				'default_value'     => true,
 				'type'              => 'bool',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -86,14 +86,14 @@ class CoreOptions {
 
 			// Enforce preset on collections.
 
-			'rest_api_posts_per_page'                 => array(
+			'rest_api_posts_per_page'                      => array(
 				'default_value'     => 100,
 				'type'              => 'int',
 				'sanitize_callback' => 'absint',
 				'rest_expose'       => false,
 			),
 
-			'rest_api_attachments_per_page'           => array(
+			'rest_api_attachments_per_page'                => array(
 				'default_value'     => 100,
 				'type'              => 'int',
 				'sanitize_callback' => 'absint',
@@ -102,14 +102,14 @@ class CoreOptions {
 
 			// Permissions.
 
-			'rest_api_restrict_post_types_enabled'    => array(
+			'rest_api_restrict_post_types_enabled'         => array(
 				'default_value'     => false,
 				'type'              => 'bool',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 			),
 
-			'rest_api_allowed_post_types'             => array(
+			'rest_api_allowed_post_types'                  => array(
 				'default_value'     => array( 'post', 'page' ),
 				'type'              => 'array',
 				'sanitize_callback' => 'sanitize_key',
@@ -118,14 +118,14 @@ class CoreOptions {
 
 			// Application.
 
-			'application_host'                        => array(
+			'application_host'                             => array(
 				'default_value'     => '',
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 				'rest_expose'       => false,
 			),
 
-			'application_webhook_endpoint'            => array(
+			'application_webhook_endpoint'                 => array(
 				'default_value'     => '',
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
@@ -134,70 +134,70 @@ class CoreOptions {
 
 			// Core.
 
-			'core_redirect_templates_enabled'          => array(
+			'core_redirect_templates_enabled'              => array(
 				'default_value'     => false,
 				'type'              => 'bool',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 			),
 
-			'core_redirect_templates_preset_url' => array(
+			'core_redirect_templates_preset_url'           => array(
 				'default_value'     => '',
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_key',
 				'rest_expose'       => false,
 			),
 
-			'core_redirect_templates_free_url_enabled' => array(
+			'core_redirect_templates_free_url_enabled'     => array(
 				'default_value'     => false,
 				'type'              => 'bool',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 			),
 
-			'core_redirect_templates_free_url'       => array(
+			'core_redirect_templates_free_url'             => array(
 				'default_value'     => '',
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_url',
 				'rest_expose'       => false,
 			),
 
-			'core_disable_gutenberg_enabled'          => array(
+			'core_disable_gutenberg_enabled'               => array(
 				'default_value'     => false,
 				'type'              => 'bool',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 			),
 
-			'core_disable_comments_enabled'           => array(
+			'core_disable_comments_enabled'                => array(
 				'default_value'     => true,
 				'type'              => 'bool',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 			),
 
-			'core_remove_empty_p_tags_enabled'        => array(
+			'core_remove_empty_p_tags_enabled'             => array(
 				'default_value'     => true,
 				'type'              => 'bool',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 			),
 
-			'core_svg_webp_support_enabled'           => array(
+			'core_svg_webp_support_enabled'                => array(
 				'default_value'     => true,
 				'type'              => 'bool',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 			),
 
-			'core_max_upload_weight'                    => array(
+			'core_max_upload_weight'                       => array(
 				'default_value'     => 1024, // KB.
 				'type'              => 'int',
 				'sanitize_callback' => 'absint',
 				'rest_expose'       => false,
 			),
 
-			'core_max_upload_weight_enabled'            => array(
+			'core_max_upload_weight_enabled'               => array(
 				'default_value'     => false,
 				'type'              => 'bool',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -341,7 +341,7 @@ class CoreOptions {
 
 	public static function read_option( string $option_key ) {
 		$option_key = sanitize_key( $option_key );
-		$options = self::sanitize_options( self::multisite_get_option( 'rest_api_firewall_options', array() ) );
+		$options    = self::sanitize_options( self::multisite_get_option( 'rest_api_firewall_options', array() ) );
 		return isset( $options[ $option_key ] ) ? $options[ $option_key ] : false;
 	}
 

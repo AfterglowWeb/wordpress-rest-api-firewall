@@ -1,6 +1,6 @@
 {
   "name": "rest-api-firewall",
-  "version": "0.8.0b",
+  "version": "0.1.0-alpha.1",
   "description": "A minimal WordPress theme designed exclusively for headless CMS usage.",
   "main": "./src/index.js",
   "scripts": {
