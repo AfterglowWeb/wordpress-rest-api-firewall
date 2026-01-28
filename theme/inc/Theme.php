@@ -3,7 +3,7 @@
 defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Core\CoreOptions;
-use cmk\RestApiFirewall\Core\Utils;
+use cmk\RestApiFirewall\Core\FileUtils;
 
 class Theme {
 
@@ -23,9 +23,10 @@ class Theme {
 		add_action( 'after_setup_theme', array( $this, 'theme_lang' ) );
 		add_filter( 'xmlrpc_enabled', '__return_false' );
 		add_filter( 'show_admin_bar', '__return_false' );
-		if ( true === CoreOptions::read_option( 'rest_firewall_json_acf_fields_enabled' ) 
-			&& Utils::mkdir_p( get_stylesheet_directory_uri() . '/config' ) ) {
-			
+
+		if ( true === CoreOptions::read_option( 'rest_firewall_json_acf_fields_enabled' )
+			&& FileUtils::mkdir_p( get_stylesheet_directory() . '/config' ) ) {
+
 			add_filter(
 				'acf/settings/save_json',
 				function () {
@@ -67,41 +68,41 @@ class Theme {
 	}
 
 	public function theme_menus(): void {
+		$json_file = get_stylesheet_directory() . '/config/menus.json';
+		$json_content = FileUtils::read_file( $json_file );
 
-		try {
-			$json_file = get_stylesheet_directory() . '/config/menus.json';
-			if ( ! file_exists( $json_file ) ) {
-				new \WP_Error( 'Custom menus configuration file not found' );
+		if ( ! $json_content ) {
+			return;
+		}
+
+		$menus = json_decode( $json_content, true );
+
+		if ( ! isset( $menus['menus'] ) || ! is_array( $menus['menus'] ) ) {
+			return;
+		}
+
+		$formatted_menus = array();
+
+		foreach ( $menus['menus'] as $menu ) {
+			if ( isset( $menu['slug'], $menu['name'] ) ) {
+				$formatted_menus[ sanitize_key( $menu['slug'] ) ] = sanitize_text_field( $menu['name'] );
 			}
+		}
 
-			$json_content = file_get_contents( $json_file );
-			$menus = json_decode( $json_content, true );
-
-			if ( ! isset( $menus['menus'] ) ) {
-				new \WP_Error( 'Invalid menus configuration' );
-			}
-
-			$formated_menus = array();
-
-			foreach ( $menus['menus'] as $menu ) {
-				$formated_menus[ $menu['slug'] ] = $menu['name'];
-			}
-
-			register_nav_menus( $formated_menus );
-
-		} catch ( \Exception $e ) {
-			new \WP_Error( 'Error loading custom menus: ' . $e->getMessage() );
+		if ( ! empty( $formatted_menus ) ) {
+			register_nav_menus( $formatted_menus );
 		}
 	}
 
 	public function theme_lang(): void {
 		$handle = false;
+
 		if ( defined( 'WP_LANG_DIR' ) ) {
 			$handle = load_theme_textdomain( 'rest-api-firewall' );
 		}
+
 		if ( false === $handle ) {
 			load_theme_textdomain( 'rest-api-firewall', get_stylesheet_directory() . '/languages' );
 		}
 	}
-
 }

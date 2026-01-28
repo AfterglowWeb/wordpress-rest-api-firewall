@@ -80,6 +80,7 @@ function NodeContent( {
 	enforceRateLimit,
 	globalRateLimit,
 	globalRateLimitTime,
+	proActive = true,
 	...props
 } ) {
 	useTreeItem( props );
@@ -159,11 +160,11 @@ function NodeContent( {
 	const getPermissionColor = ( type ) => {
 		switch ( type ) {
 			case 'public':
-				return 'success';
-			case 'protected':
-				return 'warning';
-			case 'forbidden':
 				return 'error';
+			case 'protected':
+				return 'success';
+			case 'forbidden':
+				return 'success';
 			case 'custom':
 				return 'info';
 			default:
@@ -189,11 +190,11 @@ function NodeContent( {
 							sx={ { ml: 1 } }
 							color={
 								node.method === 'GET'
-									? 'primary'
-									: node.method === 'POST'
 									? 'success'
-									: node.method === 'PUT'
+									: node.method === 'POST'
 									? 'warning'
+									: node.method === 'PUT'
+									? 'error'
 									: node.method === 'DELETE'
 									? 'error'
 									: 'default'
@@ -252,9 +253,9 @@ function NodeContent( {
 							size="small"
 							checked={ isAuthEnforced }
 							onChange={ handleToggle( 'protect' ) }
-							disabled={ enforceAuth }
+							disabled={ enforceAuth || ! proActive }
 							sx={ {
-								opacity: enforceAuth || nodeSettings.protect.inherited ? 0.6 : 1,
+								opacity: enforceAuth || nodeSettings.protect.inherited || ! proActive ? 0.6 : 1,
 							} }
 						/>
 					}
@@ -267,7 +268,9 @@ function NodeContent( {
 
 				<Tooltip
 					title={
-						enforceRateLimit
+						! proActive
+							? __( 'Pro version required', 'rest-api-firewall' )
+							: enforceRateLimit
 							? __( 'Rate limiting enforced globally', 'rest-api-firewall' )
 							: isRateLimitEnforced
 							? `${ effectiveRateLimit } requests / ${ effectiveRateLimitTime }s`
@@ -280,9 +283,9 @@ function NodeContent( {
 								size="small"
 								checked={ isRateLimitEnforced }
 								onChange={ handleToggle( 'rate_limit' ) }
-								disabled={ enforceRateLimit }
+								disabled={ enforceRateLimit || ! proActive }
 								sx={ {
-									opacity: enforceRateLimit || nodeSettings.rate_limit.inherited ? 0.6 : 1,
+									opacity: enforceRateLimit || nodeSettings.rate_limit.inherited || ! proActive ? 0.6 : 1,
 								} }
 							/>
 						}
@@ -300,8 +303,9 @@ function NodeContent( {
 							size="small"
 							checked={ nodeSettings.disabled.value }
 							onChange={ handleToggle( 'disabled' ) }
+							disabled={ ! proActive }
 							sx={ {
-								opacity: nodeSettings.disabled.inherited ? 0.6 : 1,
+								opacity: nodeSettings.disabled.inherited || ! proActive ? 0.6 : 1,
 							} }
 						/>
 					}
@@ -315,7 +319,9 @@ function NodeContent( {
 				{ hasChildren && (
 					<Tooltip
 						title={
-							isApplyToChildrenChecked
+							! proActive
+								? __( 'Pro version required', 'rest-api-firewall' )
+								: isApplyToChildrenChecked
 								? __( 'Settings applied to all descendants. Click to unlink.', 'rest-api-firewall' )
 								: descendantsMatchState === 'all'
 								? __( 'All descendants have same settings', 'rest-api-firewall' )
@@ -339,6 +345,7 @@ function NodeContent( {
 										! isApplyToChildrenChecked && descendantsMatchState === 'partial'
 									}
 									onChange={ handleApplyToAll }
+									disabled={ ! proActive }
 									sx={ { py: 0 } }
 								/>
 							}
@@ -373,6 +380,7 @@ const CustomTreeItem = forwardRef( function CustomTreeItem( props, ref ) {
 					enforceRateLimit: props.enforceRateLimit,
 					globalRateLimit: props.globalRateLimit,
 					globalRateLimitTime: props.globalRateLimitTime,
+					proActive: props.proActive,
 				},
 			} }
 		/>
@@ -493,6 +501,7 @@ export default function RoutesTree( {
 	enforceRateLimit = false,
 	globalRateLimit = 30,
 	globalRateLimitTime = 60,
+	proActive = true,
 } ) {
 	const [ nodes, dispatch ] = useReducer( treeReducer, treeData || [], normalizeTree );
 	const { __ } = wp.i18n || {};
@@ -551,6 +560,7 @@ export default function RoutesTree( {
 						enforceRateLimit: enforceRateLimit,
 						globalRateLimit: globalRateLimit,
 						globalRateLimitTime: globalRateLimitTime,
+						proActive: proActive,
 					},
 				} }
 			/>

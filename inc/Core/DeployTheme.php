@@ -2,6 +2,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
+use cmk\RestApiFirewall\Admin\Permissions;
+
 /**
  * DeployTheme handles deploying the bundled theme to wp-content/themes.
  *
@@ -38,7 +40,7 @@ class DeployTheme {
 
 	public static function is_deployed(): bool {
 		$target = self::get_target_dir();
-		return Utils::is_dir( $target ) && Utils::is_readable( $target . '/style.css' );
+		return FileUtils::is_dir( $target ) && FileUtils::is_readable( $target . '/style.css' );
 	}
 
 	public static function is_active(): bool {
@@ -49,18 +51,18 @@ class DeployTheme {
 		$current_theme = wp_get_theme();
 
 		return array(
-			'deployed'      => self::is_deployed(),
-			'active'        => self::is_active(),
-			'theme_slug'    => self::THEME_SLUG,
-			'theme_name'    => self::THEME_NAME,
-			'source_exists' => Utils::is_dir( self::get_source_dir() ),
-			'current_theme' => array(
-				'name'       => $current_theme->get( 'Name' ),
-				'slug'       => get_stylesheet(),
-				'version'    => $current_theme->get( 'Version' ),
-				'is_ours'    => get_stylesheet() === self::THEME_SLUG,
+			'deployed'         => self::is_deployed(),
+			'active'           => self::is_active(),
+			'theme_slug'       => self::THEME_SLUG,
+			'theme_name'       => self::THEME_NAME,
+			'source_exists'    => FileUtils::is_dir( self::get_source_dir() ),
+			'current_theme'    => array(
+				'name'    => $current_theme->get( 'Name' ),
+				'slug'    => get_stylesheet(),
+				'version' => $current_theme->get( 'Version' ),
+				'is_ours' => get_stylesheet() === self::THEME_SLUG,
 			),
-			'bundled_version' => self::get_bundled_version(),
+			'bundled_version'  => self::get_bundled_version(),
 			'deployed_version' => self::is_deployed() ? self::get_deployed_version() : null,
 		);
 	}
@@ -85,7 +87,8 @@ class DeployTheme {
 	 * Parse version from style.css header.
 	 */
 	private static function parse_theme_version( string $file_path ): ?string {
-		$content = Utils::read_file( $file_path );
+		$content = FileUtils::read_file( $file_path );
+
 		if ( ! $content ) {
 			return null;
 		}
@@ -114,7 +117,7 @@ class DeployTheme {
 			'message' => '',
 		);
 
-		if ( ! Utils::is_dir( $source ) ) {
+		if ( ! FileUtils::is_dir( $source ) ) {
 			$steps[0]['status']  = 'error';
 			$steps[0]['message'] = __( 'Source theme directory not found in plugin.', 'rest-api-firewall' );
 			return $steps;
@@ -130,8 +133,8 @@ class DeployTheme {
 			'message' => '',
 		);
 
-		if ( ! Utils::is_dir( $target ) ) {
-			if ( ! Utils::mkdir_p( $target ) ) {
+		if ( ! FileUtils::is_dir( $target ) ) {
+			if ( ! FileUtils::mkdir_p( $target ) ) {
 				$steps[1]['status']  = 'error';
 				$steps[1]['message'] = __( 'Failed to create theme directory.', 'rest-api-firewall' );
 				return $steps;
@@ -149,7 +152,7 @@ class DeployTheme {
 			'files'   => array(),
 		);
 
-		$copy_result = self::copy_directory( $source, $target );
+		$copy_result = FileUtils::copy_directory( $source, $target );
 
 		if ( is_wp_error( $copy_result ) ) {
 			$steps[2]['status']  = 'error';
@@ -157,8 +160,8 @@ class DeployTheme {
 			return $steps;
 		}
 
-		$steps[2]['status'] = 'done';
-		$steps[2]['files']  = $copy_result;
+		$steps[2]['status']  = 'done';
+		$steps[2]['files']   = $copy_result;
 		$steps[2]['message'] = sprintf(
 			/* translators: %d is the number of files */
 			__( 'Copied %d files successfully.', 'rest-api-firewall' ),
@@ -183,87 +186,6 @@ class DeployTheme {
 		$steps[3]['message'] = __( 'Theme deployed successfully.', 'rest-api-firewall' );
 
 		return $steps;
-	}
-
-	/**
-	 * Recursively copy a directory using WP_Filesystem.
-	 *
-	 * @return array|\WP_Error Array of copied files on success, WP_Error on failure.
-	 */
-	private static function copy_directory( string $source, string $target ) {
-		$wp_filesystem = Utils::wp_filesystem();
-
-		if ( ! $wp_filesystem ) {
-			return new \WP_Error( 'filesystem', __( 'WordPress filesystem not available.', 'rest-api-firewall' ) );
-		}
-
-		$copied_files = array();
-
-		// Get directory contents.
-		$files = $wp_filesystem->dirlist( $source );
-
-		if ( false === $files ) {
-			return new \WP_Error( 'read_error', __( 'Could not read source directory.', 'rest-api-firewall' ) );
-		}
-
-		foreach ( $files as $filename => $file_info ) {
-			$source_path = trailingslashit( $source ) . $filename;
-			$target_path = trailingslashit( $target ) . $filename;
-
-			if ( 'd' === $file_info['type'] ) {
-				// Directory: create and recurse.
-				if ( ! $wp_filesystem->is_dir( $target_path ) ) {
-					if ( ! $wp_filesystem->mkdir( $target_path, FS_CHMOD_DIR ) ) {
-						return new \WP_Error(
-							'mkdir_error',
-							sprintf(
-								/* translators: %s is the directory path */
-								__( 'Failed to create directory: %s', 'rest-api-firewall' ),
-								$target_path
-							)
-						);
-					}
-				}
-
-				$sub_result = self::copy_directory( $source_path, $target_path );
-
-				if ( is_wp_error( $sub_result ) ) {
-					return $sub_result;
-				}
-
-				$copied_files = array_merge( $copied_files, $sub_result );
-
-			} else {
-				// File: copy.
-				$content = $wp_filesystem->get_contents( $source_path );
-
-				if ( false === $content ) {
-					return new \WP_Error(
-						'read_error',
-						sprintf(
-							/* translators: %s is the file path */
-							__( 'Failed to read file: %s', 'rest-api-firewall' ),
-							$source_path
-						)
-					);
-				}
-
-				if ( ! $wp_filesystem->put_contents( $target_path, $content, FS_CHMOD_FILE ) ) {
-					return new \WP_Error(
-						'write_error',
-						sprintf(
-							/* translators: %s is the file path */
-							__( 'Failed to write file: %s', 'rest-api-firewall' ),
-							$target_path
-						)
-					);
-				}
-
-				$copied_files[] = str_replace( trailingslashit( $target ), '', $target_path );
-			}
-		}
-
-		return $copied_files;
 	}
 
 	/**
@@ -312,8 +234,8 @@ class DeployTheme {
 			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'rest-api-firewall' ) ), 403 );
 		}
 
-		if ( ! check_ajax_referer( 'rest_api_firewall_nonce', 'nonce', false ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid nonce', 'rest-api-firewall' ) ), 403 );
+		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
+			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
 		$action = isset( $_POST['theme_action'] ) ? sanitize_key( wp_unslash( $_POST['theme_action'] ) ) : '';
@@ -324,7 +246,7 @@ class DeployTheme {
 				break;
 
 			case 'deploy':
-				$steps = self::deploy();
+				$steps     = self::deploy();
 				$has_error = false;
 
 				foreach ( $steps as $step ) {

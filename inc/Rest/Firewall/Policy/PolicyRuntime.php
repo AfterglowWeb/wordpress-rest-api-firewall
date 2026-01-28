@@ -1,10 +1,10 @@
-<?php namespace cmk\RestApiFirewall\Rest\Firewall;
+<?php namespace cmk\RestApiFirewall\Rest\Firewall\Policy;
 
 defined( 'ABSPATH' ) || exit;
 
 use WP_REST_Request;
-use cmk\RestApiFirewall\Rest\Routes\RoutesRepository;
 use cmk\RestApiFirewall\Rest\Firewall\FirewallOptions;
+use cmk\RestApiFirewall\Rest\Firewall\Policy\PolicyRepository;
 
 class PolicyRuntime {
 
@@ -30,7 +30,7 @@ class PolicyRuntime {
 
 	protected static function resolve_for_route( string $route, string $method ): array {
 
-		$tree = RoutesRepository::get_rest_routes_tree();
+		$tree = PolicyRepository::get_routes_policy_tree();
 
 		$node_chain = self::find_node_chain( $tree, $route );
 

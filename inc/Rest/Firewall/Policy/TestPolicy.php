@@ -1,11 +1,11 @@
-<?php namespace cmk\RestApiFirewall\Rest\Firewall;
+<?php namespace cmk\RestApiFirewall\Rest\Firewall\Policy;
 
 defined( 'ABSPATH' ) || exit;
 
 use WP_REST_Request;
 use cmk\RestApiFirewall\Rest\Firewall\FirewallOptions;
-use cmk\RestApiFirewall\Rest\Firewall\PolicyRuntime;
-use cmk\RestApiFirewall\Rest\Routes\RoutesRepository;
+use cmk\RestApiFirewall\Rest\Firewall\Policy\PolicyRuntime;
+use cmk\RestApiFirewall\Rest\Firewall\Policy\PolicyRepository;
 use cmk\RestApiFirewall\Admin\Permissions;
 
 class TestPolicy {
@@ -24,7 +24,7 @@ class TestPolicy {
 	}
 
 	public function ajax_run_policy_test() {
-		if ( false === Permissions::validate_ajax_crud_rest_api_firewall_options() ) {
+		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
@@ -69,7 +69,7 @@ class TestPolicy {
 		);
 
 		if ( $include_sub_routes ) {
-			$tree       = RoutesRepository::get_rest_routes_tree();
+			$tree       = PolicyRepository::get_routes_policy_tree();
 			$sub_routes = $this->find_sub_routes( $tree, $route );
 			$routes     = array_merge( $routes, $sub_routes );
 		}

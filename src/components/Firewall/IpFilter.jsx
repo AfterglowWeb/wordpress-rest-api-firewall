@@ -324,6 +324,7 @@ export default function IpFilter() {
 					/>
 					<Button
 						variant="outlined"
+						sx={{ alignSelf: 'flex-start' }}
 						onClick={ handleAddIp }
 						disabled={ ! settings.enabled || ! newIp.trim() }
 						startIcon={ <AddIcon /> }

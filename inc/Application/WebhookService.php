@@ -57,7 +57,7 @@ class WebhookService {
 
 	public function ajax_has_application_webhook_secret(): void {
 
-		if ( false === Permissions::validate_ajax_crud_rest_api_firewall_options() ) {
+		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
@@ -73,7 +73,7 @@ class WebhookService {
 
 	public function ajax_update_application_webhook_secret(): void {
 
-		if ( false === Permissions::validate_ajax_crud_rest_api_firewall_options() ) {
+		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
@@ -94,7 +94,7 @@ class WebhookService {
 
 	public function ajax_delete_application_webhook_secret(): void {
 
-		if ( false === Permissions::validate_ajax_crud_rest_api_firewall_options() ) {
+		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 

@@ -6,7 +6,7 @@ use cmk\RestApiFirewall\Rest\Firewall\Permissions;
 use cmk\RestApiFirewall\Rest\Controllers\PostController;
 use cmk\RestApiFirewall\Rest\Controllers\SiteDataController;
 use cmk\RestApiFirewall\Rest\Controllers\AttachmentController;
-use cmk\RestApiFirewall\Rest\Firewall\PolicyRuntime;
+use cmk\RestApiFirewall\Rest\Firewall\Policy\PolicyRuntime;
 use cmk\RestApiFirewall\Core\CoreOptions;
 use WP_REST_Request;
 

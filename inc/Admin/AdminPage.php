@@ -4,8 +4,9 @@ namespace cmk\RestApiFirewall\Admin;
 defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Core\CoreOptions;
-use cmk\RestApiFirewall\Admin\Permissions;
+use cmk\RestApiFirewall\Core\FileUtils;
 use cmk\RestApiFirewall\Core\Utils;
+use cmk\RestApiFirewall\Admin\Permissions;
 
 class AdminPage {
 	protected static $instance = null;
@@ -48,7 +49,7 @@ class AdminPage {
 	}
 
 	public function ajax_read_options() {
-		if ( false === Permissions::validate_ajax_crud_rest_api_firewall_options() ) {
+		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
@@ -57,7 +58,7 @@ class AdminPage {
 	}
 
 	public function ajax_update_options() {
-		if ( false === Permissions::validate_ajax_crud_rest_api_firewall_options() ) {
+		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
@@ -83,7 +84,7 @@ class AdminPage {
 	}
 
 	public function ajax_update_option() {
-		if ( false === Permissions::validate_ajax_crud_rest_api_firewall_options() ) {
+		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
@@ -115,7 +116,7 @@ class AdminPage {
 	}
 
 	public function ajax_documentation() {
-		if ( false === Permissions::validate_ajax_crud_rest_api_firewall_options() ) {
+		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
@@ -216,13 +217,16 @@ class AdminPage {
 			min-height: auto;
 			height: 1.4375em;
 		}
+		#rest-api-firewall-admin-page input[type=checkbox]:disabled {
+			opacity:0;
+		}
 		';
 		echo '<style type="text/css">' . sanitize_text_field( $custom_css ) . '</style>';
 	}
 
 	private static function load_script_config( $file_path ): array {
 		$config = array();
-		if ( Utils::is_readable( $file_path ) ) {
+		if ( FileUtils::is_readable( $file_path ) ) {
 			$raw_config             = include realpath( $file_path );
 			$config['dependencies'] = isset( $raw_config['dependencies'] ) ? array_map( 'sanitize_key', $raw_config['dependencies'] ) : array();
 			$config['version']      = isset( $raw_config['version'] ) ? sanitize_text_field( $raw_config['version'] ) : '1.0.0';
