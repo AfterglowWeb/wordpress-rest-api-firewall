@@ -130,7 +130,7 @@ class Utils {
 		$data = json_decode( $json, true );
 
 		if ( JSON_ERROR_NONE !== json_last_error() ) {
-			throw new JsonException( json_last_error_msg() );
+			throw new JsonException( esc_html( json_last_error_msg() ) );
 		}
 
 		return $data ?? array();

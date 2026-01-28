@@ -43,7 +43,7 @@
       "@composer --no-plugins --no-interaction install --no-scripts --no-dev",
       "@composer --no-plugins --no-interaction archive"
     ],
-    "lint": "phpcs --standard=Wordpress --extensions=php inc/",
+    "lint": "phpcs",
     "fix": "phpcbf --standard=Wordpress --extensions=php inc/"
   },
   "scripts-descriptions": {

@@ -17,7 +17,7 @@ class AuthorModel {
 			$author
 		);
 
-		$data = $this->base_fields( $author, $context );
+		$data = $this->base_fields( $author );
 
 		$data = apply_filters(
 			'rest_firewall_model_author_build',
@@ -41,7 +41,7 @@ class AuthorModel {
 		);
 	}
 
-	protected function base_fields( WP_User $user, ModelContext $context ): array {
+	protected function base_fields( WP_User $user ): array {
 
 		$data = array(
 			'nickname'     => $user->get( 'nickname' ),
