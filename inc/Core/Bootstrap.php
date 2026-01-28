@@ -4,9 +4,9 @@ defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Admin\AdminPage;
 use cmk\RestApiFirewall\Rest\Routes\Routes;
-use cmk\RestApiFirewall\Rest\Routes\RoutesRepository;
 use cmk\RestApiFirewall\Rest\Firewall\FirewallOptions;
-use cmk\RestApiFirewall\Rest\Firewall\TestPolicy;
+use cmk\RestApiFirewall\Rest\Firewall\Policy\PolicyRepository;
+use cmk\RestApiFirewall\Rest\Firewall\Policy\TestPolicy;
 use cmk\RestApiFirewall\Rest\Firewall\IpFilter;
 use cmk\RestApiFirewall\Application\WebhookService;
 
@@ -30,7 +30,7 @@ final class Bootstrap {
 			AdminPage::get_instance();
 		}
 		Routes::register();
-		RoutesRepository::get_instance();
+		PolicyRepository::get_instance();
 		FirewallOptions::get_instance();
 		TestPolicy::get_instance();
 		IpFilter::get_instance();

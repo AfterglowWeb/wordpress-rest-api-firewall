@@ -49,7 +49,7 @@ class AdminPage {
 	}
 
 	public function ajax_read_options() {
-		if ( false === Permissions::validate_ajax_crud_rest_api_firewall_options() ) {
+		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
@@ -58,7 +58,7 @@ class AdminPage {
 	}
 
 	public function ajax_update_options() {
-		if ( false === Permissions::validate_ajax_crud_rest_api_firewall_options() ) {
+		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
@@ -84,7 +84,7 @@ class AdminPage {
 	}
 
 	public function ajax_update_option() {
-		if ( false === Permissions::validate_ajax_crud_rest_api_firewall_options() ) {
+		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
@@ -116,7 +116,7 @@ class AdminPage {
 	}
 
 	public function ajax_documentation() {
-		if ( false === Permissions::validate_ajax_crud_rest_api_firewall_options() ) {
+		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 

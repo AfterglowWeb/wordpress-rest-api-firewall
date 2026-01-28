@@ -17,7 +17,6 @@ import Webhook from './components/Webhook';
 import RestContentSettings from './components/RestContentSettings';
 import ThemeSettings from './components/ThemeSettings';
 import Firewall from './components/Firewall/Firewall';
-import DeployTheme from './components/DeployTheme';
 
 function TabPanel({ value, index, children }) {
 	return (
@@ -153,51 +152,29 @@ function AppContent() {
 				</TabPanel>
 
 				<TabPanel value={tabIndex} index={3}>
-					<Box py={3}>
-						<DeployTheme 
-						status={ themeStatus } 
-						setStatus={ setThemeStatus } />
-					</Box>
-
-					{themeStatus && themeStatus?.deployed ? (
-					<>
+					
+					{themeStatus && themeStatus?.active && 
 					<Stack direction={"row"} justifyContent={"space-between"} gap={2} py={3} flexWrap={"wrap"} alignItems={"center"}>
 						<Typography variant="h6" fontWeight={600}>
 							{ __( 'Theme Options', 'rest-api-firewall' ) }
 						</Typography>
 
-
 						<Button
 							type="submit"
 							variant="contained"
 							sx={{ml:3}}
-							disabled={!themeStatus?.active}
 							>
 							{ __( 'Save Theme Options', 'rest-api-firewall' ) }
 						</Button>
-					</Stack>
-					{themeStatus && !themeStatus?.active && (
-						<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-							{ __( 'Activate the theme to enable these options.', 'rest-api-firewall' ) }
-						</Typography>
-					)}
+					</Stack>}
+
 					<ThemeSettings
 					form={ form }
 					setField={ setField }
 					setSlider={setSlider}
-					disabled={!themeStatus?.active} />
-					</>) :
-					(
-						<Stack spacing={1} maxWidth="sm">
-							<Typography component="p" >
-							{ __( 'REST API Firewall Theme is bundled with the plugin.', 'rest-api-firewall' ) }<br/>
-							{ __( 'You need to deploy and activate it to access theme options.', 'rest-api-firewall' ) }
-							</Typography>
-						</Stack>
-					)}
-
-					
-
+					themeStatus={ themeStatus } 
+					setThemeStatus={ setThemeStatus }
+					/>
 				</TabPanel>
 
 

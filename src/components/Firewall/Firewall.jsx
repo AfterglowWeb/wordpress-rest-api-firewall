@@ -42,6 +42,7 @@ export default function Firewall() {
 	const [ firewallOptions, setFirewallOptions ] = useState( defaultFirewallOptions );
 	const [ users, setUsers ] = useState( [] );
 	const [ restApiUser, setRestApiUser ] = useState( [] );
+	const [ proActive, setProActive ] = useState( true );
 
 	const adminUrl = adminData?.ajaxurl?.split( 'admin-ajax.php' )[0] || '';
 	const usersPageUrl = `${ adminUrl }users.php`;
@@ -76,7 +77,7 @@ export default function Firewall() {
 					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
 				},
 				body: new URLSearchParams( {
-					action: 'list_rest_api_routes',
+					action: 'get_routes_policy_tree',
 					nonce: adminData.nonce,
 				} ),
 			} );
@@ -84,7 +85,8 @@ export default function Firewall() {
 			const result = await response.json();
 
 			if ( result?.success ) {
-				setRestRoutes( result.data );
+				setRestRoutes( result.data.tree );
+				setProActive( result.data.pro_active ?? true );
 			}
 		} catch ( error ) {
 			console.error( 'Error loading routes:', error );
@@ -176,7 +178,7 @@ export default function Firewall() {
 										'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
 									},
 									body: new URLSearchParams( {
-										action: 'save_rest_api_policy',
+										action: 'save_routes_policy_tree',
 										nonce: adminData.nonce,
 										tree: JSON.stringify( treeState ),
 									} ),
@@ -188,11 +190,20 @@ export default function Firewall() {
 					const optionsResult = await optionsResponse.json();
 					const policyResult = await policyResponse.json();
 
+					if ( ! policyResult?.success && policyResult?.data?.pro_required ) {
+						updateDialog( {
+							type: DIALOG_TYPES.SUCCESS,
+							title: __( ' Global Settings Saved', 'rest-api-firewall' ),
+							content: __( 'Global settings saved successfully. Go Pro to block and fine tune.', 'rest-api-firewall' ),
+						} );
+						return;
+					}
+
 					if ( optionsResult?.success && policyResult?.success ) {
 						updateDialog( {
 							type: DIALOG_TYPES.SUCCESS,
-							title: __( 'Success', 'rest-api-firewall' ),
-							content: __( 'Firewall settings saved successfully!', 'rest-api-firewall' ),
+							title: __( 'Firewall Settings Saved', 'rest-api-firewall' ),
+							content: __( 'Per-route policies saved successfully', 'rest-api-firewall' ),
 							autoClose: 2000,
 						} );
 						await loadRoutes();
@@ -434,6 +445,7 @@ export default function Firewall() {
 						enforceRateLimit={ firewallOptions.enforce_rate_limit }
 						globalRateLimit={ firewallOptions.rate_limit }
 						globalRateLimitTime={ firewallOptions.rate_limit_time }
+						proActive={ proActive }
 					/>
 				) }
 			</Stack>

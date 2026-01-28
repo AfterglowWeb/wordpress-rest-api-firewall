@@ -10,7 +10,7 @@ class FirewallOptions {
 
 	protected static $instance = null;
 
-	private const OPTION_KEY = 'rest_firewall_firewall_options';
+	private const OPTION_KEY = 'rest_firewall_options';
 
 	private static ?array $cache = null;
 
@@ -26,7 +26,7 @@ class FirewallOptions {
 		add_action( 'wp_ajax_save_firewall_options', array( $this, 'ajax_save_firewall_options' ) );
 
 		add_action(
-			'rest_firewall_firewall_options_updated',
+			'rest_firewall_options_updated',
 			function ( array $new, array $old ) {
 				if ( ( $new['user_id'] ?? 0 ) !== ( $old['user_id'] ?? 0 ) ) {
 					Permissions::sync_rest_api_user( $new['user_id'], $old['user_id'] );
@@ -37,95 +37,30 @@ class FirewallOptions {
 		);
 	}
 
-	public static function default_options(): array {
+	private static function options_config(): array {
 		return array(
-			'enforce_auth'       => false,
-			'enforce_rate_limit' => false,
-			'user_id'            => 0,
-			'rate_limit'         => 30,
-			'rate_limit_time'    => 60,
-			'policy'             => array(
+			'enforce_auth'       => ['default_value' => false, 'sanitize_callback' => 'rest_sanitize_boolean'],
+			'enforce_rate_limit' => ['default_value' => false, 'sanitize_callback' => 'rest_sanitize_boolean'],
+			'user_id'            => ['default_value' => 0, 'sanitize_callback' => 'absint'],
+			'rate_limit'         => ['default_value' => 30, 'sanitize_callback' => 'absint'],
+			'rate_limit_time'    => ['default_value' => 60, 'sanitize_callback' => 'absint'],
+			'policy'             => ['default_value' => array(
 				'nodes'  => array(),
 				'routes' => array(),
-			),
+			), 'sanitize_callback' => ''],
 		);
-	}
-
-	public static function get_options(): array {
-		if ( null !== self::$cache ) {
-			return self::$cache;
-		}
-
-		$stored = get_option( self::OPTION_KEY, null );
-		self::$cache = wp_parse_args( $stored, self::default_options() );
-
-		return self::$cache;
-	}
-
-	public static function get_option( string $key ) {
-		$options = self::get_options();
-		return $options[ $key ] ?? null;
-	}
-
-	public static function update_options( array $new_options ): array {
-		$current = self::get_options();
-		$merged  = wp_parse_args( $new_options, $current );
-
-		$sanitized = self::sanitize_options( $merged );
-
-		update_option( self::OPTION_KEY, $sanitized, false );
-		self::$cache = $sanitized;
-
-		do_action( 'rest_firewall_firewall_options_updated', $sanitized, $current );
-
-		return $sanitized;
-	}
-
-	public static function update_option( string $key, $value ): array {
-		return self::update_options( array( $key => $value ) );
-	}
-
-	public static function sanitize_options( array $options ): array {
-		$defaults = self::default_options();
-
-		return array(
-			'enforce_auth'    => (bool) ( $options['enforce_auth'] ?? $defaults['enforce_auth'] ),
-			'enforce_rate_limit'    => (bool) ( $options['enforce_rate_limit'] ?? $defaults['enforce_rate_limit'] ),
-			'user_id'         => absint( $options['user_id'] ?? $defaults['user_id'] ),
-			'rate_limit'      => absint( $options['rate_limit'] ?? $defaults['rate_limit'] ),
-			'rate_limit_time' => absint( $options['rate_limit_time'] ?? $defaults['rate_limit_time'] ),
-			'policy'          => array(
-				'nodes'  => is_array( $options['policy']['nodes'] ?? null ) ? $options['policy']['nodes'] : array(),
-				'routes' => is_array( $options['policy']['routes'] ?? null ) ? $options['policy']['routes'] : array(),
-			),
-		);
-	}
-
-	public static function flush(): void {
-		self::$cache = null;
 	}
 
 	public function ajax_get_firewall_options(): void {
-		if ( false === AdminPermissions::validate_ajax_crud_rest_api_firewall_options() ) {
+		if ( false === AdminPermissions::ajax_has_firewall_update_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
-		$options = self::get_options();
-
-		// Policy is loaded separately with routes.
-		$response = array(
-			'enforce_auth'       => $options['enforce_auth'],
-			'enforce_rate_limit' => $options['enforce_rate_limit'],
-			'user_id'            => $options['user_id'],
-			'rate_limit'         => $options['rate_limit'],
-			'rate_limit_time'    => $options['rate_limit_time'],
-		);
-
-		wp_send_json_success( $response, 200 );
+		wp_send_json_success( self::get_options(), 200 );
 	}
 
 	public function ajax_save_firewall_options(): void {
-		if ( false === AdminPermissions::validate_ajax_crud_rest_api_firewall_options() ) {
+		if ( false === AdminPermissions::ajax_has_firewall_update_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
@@ -156,25 +91,104 @@ class FirewallOptions {
 		wp_send_json_success( $updated, 200 );
 	}
 
-	/**
-	 * Update only the policy part (called from RoutesRepository)
-	 */
-	public static function save_policy( array $policy ): void {
-		$current = self::get_options();
-		$current['policy'] = array(
-			'nodes'  => $policy['nodes'] ?? array(),
-			'routes' => $policy['routes'] ?? array(),
-		);
+	public static function get_options(): array {
+		if ( null !== self::$cache ) {
+			return self::$cache;
+		}
 
-		update_option( self::OPTION_KEY, $current, false );
-		self::$cache = $current;
+		$stored = get_option( self::OPTION_KEY, null );
+		self::$cache = wp_parse_args( $stored, self::default_options() );
+
+		return self::$cache;
 	}
 
-	/**
-	 * Get only the policy part
-	 */
-	public static function get_policy(): array {
+	public static function get_option( string $key ) {
 		$options = self::get_options();
-		return $options['policy'] ?? array( 'nodes' => array(), 'routes' => array() );
+		return $options[ $key ] ?? null;
 	}
+
+	public static function update_options( array $new_options ): array {
+		$current = self::get_options();
+		$merged  = wp_parse_args( $new_options, $current );
+
+		$sanitized = self::sanitize_options( $merged );
+
+		update_option( self::OPTION_KEY, $sanitized, false );
+		self::$cache = $sanitized;
+
+		do_action( 'rest_firewall_options_updated', $sanitized, $current );
+
+		return $sanitized;
+	}
+
+	public static function update_option( string $key, $value ): array {
+		return self::update_options( array( $key => $value ) );
+	}
+
+	public static function flush(): void {
+		self::$cache = null;
+	}
+
+		private static function default_options(): array {
+		$defaults = array();
+
+		foreach ( self::options_config() as $key => $config ) {
+			$defaults[ $key ] = $config['default_value'];
+		}
+
+		return $defaults;
+	}
+
+	private static function sanitize_options( array $options ): array {
+		$options_config = self::options_config();
+		$default_values = self::default_options();
+
+		$options   = wp_parse_args( $options, $default_values );
+		$sanitized = array();
+
+		foreach ( $options_config as $option_key => $config ) {
+			$sanitized_key = sanitize_key( $option_key );
+			$value         = $options[ $option_key ];
+
+			$sanitized[ $sanitized_key ] = self::sanitize_option( $option_key, $value );
+		}
+
+		return $sanitized;
+	}
+
+	private static function sanitize_option( string $option_key, $option_value ) {
+		$options_config = self::options_config();
+
+		if ( ! isset( $options_config[ $option_key ] ) ) {
+			return null;
+		}
+
+		$config   = $options_config[ $option_key ];
+		$callback = $config['sanitize_callback'] ?? null;
+		$type     = $config['type'] ?? 'string';
+
+		if ( ! is_callable( $callback ) ) {
+			return $config['default_value'] ? $config['default_value'] : null;
+
+		}
+
+		switch ( $type ) {
+			case 'bool':
+				return (bool) call_user_func( $callback, $option_value );
+
+			case 'int':
+				return (int) call_user_func( $callback, $option_value );
+
+			case 'array':
+				return is_array( $option_value )
+					? array_map( $callback, $option_value )
+					: array();
+
+			case 'string':
+			default:
+				return (string) call_user_func( $callback, $option_value );
+		}
+	}
+
+
 }

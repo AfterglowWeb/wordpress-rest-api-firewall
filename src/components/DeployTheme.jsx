@@ -21,8 +21,8 @@ import ErrorIcon from '@mui/icons-material/Error';
 import PendingIcon from '@mui/icons-material/Pending';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import ColorLensIcon from '@mui/icons-material/ColorLens';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 
 const STEP_STATUS = {
 	pending: 'pending',
@@ -74,6 +74,10 @@ export default function DeployTheme({ setStatus, status }) {
 	const [error, setError] = useState(null);
 	const [expanded, setExpanded] = useState(false);
 	const [showActivateDialog, setShowActivateDialog] = useState(false);
+	const [showActivateSuccess, setShowActivateSuccess] = useState(false);
+	const [showRedeployConfirm, setShowRedeployConfirm] = useState(false);
+	const [showRedeployResult, setShowRedeployResult] = useState(false);
+	const [redeploySuccess, setRedeploySuccess] = useState(false);
 
 	const ajaxCall = useCallback(async (themeAction) => {
 		if (!adminData?.nonce || !adminData?.ajaxurl) {
@@ -148,7 +152,6 @@ export default function DeployTheme({ setStatus, status }) {
 				const errorStep = result.steps.find((s) => s.status === STEP_STATUS.error);
 				setError(errorStep?.message || 'Deployment failed');
 			} else if (result.status && !result.status.active) {
-				// Show activation dialog after successful deployment
 				setShowActivateDialog(true);
 			}
 		} catch (err) {
@@ -168,11 +171,60 @@ export default function DeployTheme({ setStatus, status }) {
 
 			if (result.status) {
 				setStatus(result.status);
+				if (result.status.active) {
+					setShowActivateSuccess(true);
+				}
 			}
 		} catch (err) {
 			setError(err.message);
 		} finally {
 			setActivating(false);
+		}
+	}, [ajaxCall]);
+
+	const handleRedeploy = useCallback(async () => {
+		setShowRedeployConfirm(false);
+		setDeploying(true);
+		setExpanded(true);
+		setError(null);
+		setSteps([]);
+		setProgress(0);
+
+		try {
+			const progressInterval = setInterval(() => {
+				setProgress((prev) => Math.min(prev + 10, 90));
+			}, 200);
+
+			const result = await ajaxCall('deploy');
+
+			clearInterval(progressInterval);
+
+			if (result.steps) {
+				setSteps(result.steps);
+				const completedSteps = result.steps.filter((s) => s.status === STEP_STATUS.done).length;
+				const totalSteps = result.steps.length;
+				setProgress((completedSteps / totalSteps) * 100);
+			}
+
+			if (result.status) {
+				setStatus(result.status);
+			}
+
+			const hasError = result.steps?.some((s) => s.status === STEP_STATUS.error);
+			setRedeploySuccess(!hasError);
+			setShowRedeployResult(true);
+
+			if (hasError) {
+				const errorStep = result.steps.find((s) => s.status === STEP_STATUS.error);
+				setError(errorStep?.message || 'Deployment failed');
+			}
+		} catch (err) {
+			setError(err.message);
+			setProgress(0);
+			setRedeploySuccess(false);
+			setShowRedeployResult(true);
+		} finally {
+			setDeploying(false);
 		}
 	}, [ajaxCall]);
 
@@ -182,11 +234,10 @@ export default function DeployTheme({ setStatus, status }) {
 		}
 	}, [status, checkStatus]);
 
-	// Auto-collapse when deployed and not actively processing
 	useEffect(() => {
 		if (status?.deployed && !deploying && !activating) {
 			setExpanded(false);
-			setSteps([]); // Clear steps when collapsing
+			setSteps([]);
 		}
 		if (status && !status.deployed) {
 			setExpanded(true);
@@ -196,15 +247,20 @@ export default function DeployTheme({ setStatus, status }) {
 	const isProcessing = loading || deploying || activating;
 
 	return (
-		<Box
-			maxWidth="sm"
-		>
-			<Typography sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-				<ColorLensIcon />
-				{__('Deploy Theme', 'rest-api-firewall')}
-			</Typography>
-
+		<Stack maxWidth="sm" my={3}>
+			
 			<Box>
+                <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ColorLensIcon />
+                    {status && ! status?.active ? __('Deploy Theme', 'rest-api-firewall') : __('Theme Status', 'rest-api-firewall') }
+                </Typography>
+                
+                {status && ! status?.active &&
+                <Alert severity="info" sx={{my:3}}>
+                { __( 'REST API Firewall Theme is bundled with the plugin.', 'rest-api-firewall' ) }<br/>
+                { __( 'You need to deploy and activate it to access theme options.', 'rest-api-firewall' ) }
+                </Alert>}
+
 				{loading && !status && (
 					<Box sx={{ py: 2 }}>
 						<LinearProgress />
@@ -222,17 +278,10 @@ export default function DeployTheme({ setStatus, status }) {
 
 				{status && (
 					<Stack spacing={2}>
-						{/* Collapsed Summary View - shown when deployed */}
+
 						{status.deployed && (
 							<Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap>
-								<Typography variant="body1" fontWeight={500}>
-									{status.theme_name}
-								</Typography>
-								{status.deployed_version && (
-									<Typography variant="body2" color="text.secondary">
-										v{status.deployed_version}
-									</Typography>
-								)}
+								
 								<Chip
 									icon={<CheckCircleIcon />}
 									label={__('Deployed', 'rest-api-firewall')}
@@ -246,7 +295,37 @@ export default function DeployTheme({ setStatus, status }) {
 									variant={status.active ? 'filled' : 'outlined'}
 									size="small"
 								/>
-								{status.active && (
+								
+								<IconButton
+									size="small"
+									onClick={() => setExpanded(!expanded)}
+									aria-label={expanded ? __('Collapse', 'rest-api-firewall') : __('Expand', 'rest-api-firewall')}
+								>
+									{expanded ? <ExpandLessIcon /> : <MoreHorizIcon />}
+								</IconButton>
+							</Stack>
+						)}
+
+						<Collapse in={expanded || ! status.deployed}>
+							<Stack spacing={2}>
+								
+                                <Box>
+                                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                        {__('Bundled Theme', 'rest-api-firewall')}
+                                    </Typography>
+                                    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                                        <Typography variant="body1" fontWeight={500}>
+                                            {status.theme_name}
+                                        </Typography>
+                                        {status.bundled_version && (
+                                            <Chip
+                                                label={`v${status.bundled_version}`}
+                                                size="small"
+                                                color="primary"
+                                                variant="outlined"
+                                            />
+                                        )}
+                                        {status.active && (
 									<Button
 										size="small"
 										href="themes.php"
@@ -254,65 +333,37 @@ export default function DeployTheme({ setStatus, status }) {
 										{__('Manage in Themes', 'rest-api-firewall')}
 									</Button>
 								)}
-								<IconButton
-									size="small"
-									onClick={() => setExpanded(!expanded)}
-									aria-label={expanded ? __('Collapse', 'rest-api-firewall') : __('Expand', 'rest-api-firewall')}
-								>
-									{expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-								</IconButton>
-							</Stack>
-						)}
+                                    </Stack>
+                                </Box>
 
-						<Collapse in={expanded || !status.deployed}>
-							<Stack spacing={2}>
-								<Box>
-									<Typography variant="subtitle2" color="text.secondary" gutterBottom>
-										{__('Bundled Theme', 'rest-api-firewall')}
-									</Typography>
-									<Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-										<Typography variant="body1" fontWeight={500}>
-											{status.theme_name}
-										</Typography>
-										{status.bundled_version && (
-											<Chip
-												label={`v${status.bundled_version}`}
-												size="small"
-												color="primary"
-												variant="outlined"
-											/>
-										)}
-									</Stack>
-								</Box>
+                                { ! status.deployed && (<>
+                                    
+                                    <Divider />
 
-								<Divider />
+                                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                                        <Chip
+                                            icon={status.deployed ? <CheckCircleIcon /> : <PendingIcon />}
+                                            label={status.deployed ? __('Deployed', 'rest-api-firewall') : __('Not Deployed', 'rest-api-firewall')}
+                                            color={status.deployed ? 'success' : 'default'}
+                                            variant={status.deployed ? 'filled' : 'outlined'}
+                                            size="small"
+                                        />
+                                        <Chip
+                                            icon={status.active ? <CheckCircleIcon /> : <PendingIcon />}
+                                            label={status.active ? __('Active', 'rest-api-firewall') : __('Inactive', 'rest-api-firewall')}
+                                            color={status.active ? 'success' : 'default'}
+                                            variant={status.active ? 'filled' : 'outlined'}
+                                            size="small"
+                                        />
+                                    </Stack>
+                                </>)}
 
-								{/* Status Chips */}
-								<Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-									<Chip
-										icon={status.deployed ? <CheckCircleIcon /> : <PendingIcon />}
-										label={status.deployed ? __('Deployed', 'rest-api-firewall') : __('Not Deployed', 'rest-api-firewall')}
-										color={status.deployed ? 'success' : 'default'}
-										variant={status.deployed ? 'filled' : 'outlined'}
-										size="small"
-									/>
-									<Chip
-										icon={status.active ? <CheckCircleIcon /> : <PendingIcon />}
-										label={status.active ? __('Active', 'rest-api-firewall') : __('Inactive', 'rest-api-firewall')}
-										color={status.active ? 'success' : 'default'}
-										variant={status.active ? 'filled' : 'outlined'}
-										size="small"
-									/>
-								</Stack>
-
-								{/* Version comparison */}
 								{status.deployed && status.deployed_version && status.bundled_version !== status.deployed_version && (
 									<Alert severity="info" variant="outlined">
 										{__('Update available: Deployed version', 'rest-api-firewall')} ({status.deployed_version}) → ({status.bundled_version})
 									</Alert>
 								)}
 
-								{/* Current Theme Info */}
 								{status.current_theme && !status.current_theme.is_ours && (
 									<Box>
 										<Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -324,7 +375,6 @@ export default function DeployTheme({ setStatus, status }) {
 									</Box>
 								)}
 
-								{/* Deployment Progress - only show when actively deploying */}
 								{deploying && (
 									<Box>
 										<Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -371,7 +421,7 @@ export default function DeployTheme({ setStatus, status }) {
 					{status && status.deployed && !status.active && (
 						<Stack direction="row" spacing={1}>
 							<Button
-								onClick={handleDeploy}
+								onClick={() => setShowRedeployConfirm(true)}
 								disabled={isProcessing}
 								variant="outlined"
 								color="secondary"
@@ -391,7 +441,7 @@ export default function DeployTheme({ setStatus, status }) {
 
 					{status && status.deployed && status.active && (
 						<Button
-							onClick={handleDeploy}
+							onClick={() => setShowRedeployConfirm(true)}
 							disabled={isProcessing}
 							variant="outlined"
 							color="secondary"
@@ -402,7 +452,7 @@ export default function DeployTheme({ setStatus, status }) {
 				</Box>
 			</Collapse>
 
-			{/* Activation Dialog - shown after successful deployment */}
+			{/* Activate prompt dialog - after deploy */}
 			<Dialog
 				open={showActivateDialog}
 				onClose={() => setShowActivateDialog(false)}
@@ -435,6 +485,100 @@ export default function DeployTheme({ setStatus, status }) {
 					</Button>
 				</DialogActions>
 			</Dialog>
-		</Box>
+
+			{/* Activate success dialog */}
+			<Dialog
+				open={showActivateSuccess}
+				onClose={() => setShowActivateSuccess(false)}
+			>
+				<DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+					<CheckCircleIcon color="success" />
+					{__('Theme Activated', 'rest-api-firewall')}
+				</DialogTitle>
+				<DialogContent>
+					<Typography>
+						{__('The theme has been activated successfully. You can now configure theme options below.', 'rest-api-firewall')}
+					</Typography>
+				</DialogContent>
+				<DialogActions>
+					<Button
+						onClick={() => setShowActivateSuccess(false)}
+						variant="contained"
+						autoFocus
+					>
+						{__('OK', 'rest-api-firewall')}
+					</Button>
+				</DialogActions>
+			</Dialog>
+
+			{/* Redeploy confirm dialog */}
+			<Dialog
+				open={showRedeployConfirm}
+				onClose={() => setShowRedeployConfirm(false)}
+			>
+				<DialogTitle>
+					{__('Redeploy Theme', 'rest-api-firewall')}
+				</DialogTitle>
+				<DialogContent>
+					<Typography>
+						{__('This will overwrite the current theme files with the bundled version. Are you sure you want to continue?', 'rest-api-firewall')}
+					</Typography>
+				</DialogContent>
+				<DialogActions>
+					<Button
+						onClick={() => setShowRedeployConfirm(false)}
+						color="inherit"
+					>
+						{__('Cancel', 'rest-api-firewall')}
+					</Button>
+					<Button
+						onClick={handleRedeploy}
+						variant="contained"
+						color="primary"
+						autoFocus
+					>
+						{__('Redeploy', 'rest-api-firewall')}
+					</Button>
+				</DialogActions>
+			</Dialog>
+
+			{/* Redeploy result dialog */}
+			<Dialog
+				open={showRedeployResult}
+				onClose={() => setShowRedeployResult(false)}
+			>
+				<DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+					{redeploySuccess ? (
+						<>
+							<CheckCircleIcon color="success" />
+							{__('Redeploy Successful', 'rest-api-firewall')}
+						</>
+					) : (
+						<>
+							<ErrorIcon color="error" />
+							{__('Redeploy Failed', 'rest-api-firewall')}
+						</>
+					)}
+				</DialogTitle>
+				<DialogContent>
+					<Typography>
+						{redeploySuccess
+							? __('The theme has been redeployed successfully.', 'rest-api-firewall')
+							: __('There was an error redeploying the theme. Please check the error message and try again.', 'rest-api-firewall')
+						}
+					</Typography>
+				</DialogContent>
+				<DialogActions>
+					<Button
+						onClick={() => setShowRedeployResult(false)}
+						variant="contained"
+						autoFocus
+					>
+						{__('OK', 'rest-api-firewall')}
+					</Button>
+				</DialogActions>
+			</Dialog>
+
+		</Stack>
 	);
 }

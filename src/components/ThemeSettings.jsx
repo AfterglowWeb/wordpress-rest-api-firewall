@@ -9,24 +9,33 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Slider from '@mui/material/Slider';
+import Divider from '@mui/material/Divider';
 
 import TextField from '@mui/material/TextField';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 
-export default function ThemeSettings( { form, setField, setSlider, disabled = false } ) {
+import DeployTheme from './DeployTheme';
+
+export default function ThemeSettings( { form, setField, setSlider, themeStatus, setThemeStatus } ) {
 	const { __ } = wp.i18n || {};
 	const theme = useTheme();
 	const { adminData } = useAdminData();
+	const disabled = ! themeStatus?.active;
 	const redirectPresetUrlOptions = adminData?.redirect_preset_url_options || [];
 
 	const valueLabelFormat = ( value ) =>
 		value >= 1024 ? `${ value / 1024 } MB` : `${ value } KB`;
 
 	return (
-		<Stack spacing={ 3 } maxWidth="sm">
+		<>
+		<DeployTheme status={ themeStatus } setStatus={ setThemeStatus } />
+				
 
+
+		<Stack spacing={ 3 } maxWidth="sm">
+		<Divider />
 			<Stack spacing={3}>
 				<Typography variant="subtitle1" fontWeight={600} sx={ { mb: 2 } }>
 					{ __( 'Redirect Templates', 'rest-api-firewall' ) }
@@ -107,8 +116,6 @@ export default function ThemeSettings( { form, setField, setSlider, disabled = f
 				/>
 			</Stack>
 			
-			
-
 			<Stack spacing={3}>
 				<Typography variant="subtitle1" fontWeight={600} sx={ { mb: 2 } }>
 						{ __( 'Post Content', 'rest-api-firewall' ) }
@@ -262,5 +269,6 @@ export default function ThemeSettings( { form, setField, setSlider, disabled = f
 			</Stack>
 
 		</Stack>
+		</>
 	);
 }
