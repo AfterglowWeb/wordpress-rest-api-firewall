@@ -1,10 +1,10 @@
-<?php namespace cmk\RestApiFirewall\Firewall\Policy;
+<?php namespace cmk\RestApiFirewall\Policy;
 
 defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Core\Permissions;
+use cmk\RestApiFirewall\Rest\Routes\RoutesRepository;
 use cmk\RestApiFirewall\Firewall\FirewallOptions;
-use cmk\RestApiFirewall\Firewall\Routes\RoutesRepository;
 
 class PolicyRepository {
 

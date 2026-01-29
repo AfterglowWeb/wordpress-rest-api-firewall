@@ -15,10 +15,42 @@ It integrates seamlessly with external applications built with Next.js, React, V
 
 ## Installation
 
-1. Download the latest release from GitHub
-2. Upload to `/wp-content/plugins/rest-api-firewall`
-3. Activate the plugin through the WordPress admin
-4. Navigate to **Settings > REST API Firewall** to configure
+### 1. Download or clone this repository into your `wp-content/plugins/` directory:
+```bash
+cd wp-content/plugins/
+git clone https://github.com/AfterglowWeb/wordpress-rest-api-firewall.git rest-api-firewall
+```
+### 2. Install the dependencies and build
+
+Navigate to `wp-content/plugins/rest-api-firewall` directory:
+
+```bash
+cd wp-content/plugins/rest-api-firewall
+```
+
+Install the PHP dependencies and build:
+
+```bash
+composer install
+composer build
+```
+
+Install the Javascript dependencies and build:
+
+```bash
+npm install
+npm run build
+```
+or
+```bash
+yarn
+yarn build
+```
+
+### 3. Activate the plugin through the WordPress admin
+
+### 4. Optional, install the headless theme  bundled with the plugin. 
+Navigate to the `Theme Options` tab in the **REST API Firewall** admin page and hit the Deploy button.
 
 ## Free Features
 
@@ -75,7 +107,7 @@ It integrates seamlessly with external applications built with Next.js, React, V
 
 ### 0.1.0-alpha.1
 - Initial release
-- Fork from Blank Headless Theme project
+- Fork from Blank, Wordpress Headless Theme repo: 
 - Major refactoring to plugin architecture
 
 ## Contributing

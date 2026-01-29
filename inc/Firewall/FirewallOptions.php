@@ -3,8 +3,9 @@ namespace cmk\RestApiFirewall\Firewall;
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Firewall\Permissions;
-use cmk\RestApiFirewall\Core\Permissions as AdminPermissions;
+use cmk\RestApiFirewall\Core\Permissions;
+use cmk\RestApiFirewall\Firewall\Auth;
+
 
 class FirewallOptions {
 
@@ -70,7 +71,7 @@ class FirewallOptions {
 	}
 
 	public function ajax_get_firewall_options(): void {
-		if ( false === AdminPermissions::ajax_has_firewall_update_caps() ) {
+		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
@@ -78,7 +79,7 @@ class FirewallOptions {
 	}
 
 	public function ajax_save_firewall_options(): void {
-		if ( false === AdminPermissions::ajax_has_firewall_update_caps() ) {
+		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 

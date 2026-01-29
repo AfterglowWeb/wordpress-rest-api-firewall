@@ -8,7 +8,7 @@ use cmk\RestApiFirewall\Firewall\RateLimit;
 use cmk\RestApiFirewall\Models\Controllers\PostController;
 use cmk\RestApiFirewall\Models\Controllers\SiteDataController;
 use cmk\RestApiFirewall\Models\Controllers\AttachmentController;
-use cmk\RestApiFirewall\Firewall\Policy\PolicyRuntime;
+use cmk\RestApiFirewall\Policy\PolicyRuntime;
 use cmk\RestApiFirewall\Core\CoreOptions;
 use WP_REST_Request;
 

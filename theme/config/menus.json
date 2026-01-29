@@ -4,11 +4,11 @@
         "name": "Main Menu"
     },
     {
-        "slug": "footer_menu_main",
-        "name": "Footer Main"
+        "slug": "footer_main_menu",
+        "name": "Footer Main Menu"
     },
     {
-        "slug": "footer_menu_secondary",
-        "name": "Footer Secondary"
+        "slug": "footer_secondary_menu",
+        "name": "Footer Secondary Menu" 
     }
 ]}
