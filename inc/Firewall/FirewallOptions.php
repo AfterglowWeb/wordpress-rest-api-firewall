@@ -29,7 +29,7 @@ class FirewallOptions {
 			'rest_firewall_options_updated',
 			function ( array $new_user, array $old_user ) {
 				if ( ( $new_user['user_id'] ?? 0 ) !== ( $old_user['user_id'] ?? 0 ) ) {
-					Permissions::sync_rest_api_user( $new_user['user_id'], $old_user['user_id'] );
+					Auth::sync_rest_api_user( $new_user['user_id'], $old_user['user_id'] );
 				}
 			},
 			10,
