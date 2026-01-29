@@ -2,7 +2,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Firewall\Permissions;
+use cmk\RestApiFirewall\Firewall\Auth;
+use cmk\RestApiFirewall\Firewall\PostTypesAllowed;
+use cmk\RestApiFirewall\Firewall\RateLimit;
 use cmk\RestApiFirewall\Models\Controllers\PostController;
 use cmk\RestApiFirewall\Models\Controllers\SiteDataController;
 use cmk\RestApiFirewall\Models\Controllers\AttachmentController;
