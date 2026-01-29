@@ -1,9 +1,9 @@
-<?php namespace cmk\RestApiFirewall\Rest\Controllers;
+<?php namespace cmk\RestApiFirewall\Models\Controllers;
 
 defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Core\CoreOptions;
-use cmk\RestApiFirewall\Rest\Models\Factory;
+use cmk\RestApiFirewall\Models\Factory;
 use WP_Post;
 use WP_REST_Request;
 use WP_REST_Response;

@@ -1,8 +1,8 @@
-<?php namespace cmk\RestApiFirewall\Rest\Firewall;
+<?php namespace cmk\RestApiFirewall\Firewall;
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Rest\Firewall\FirewallOptions;
+use cmk\RestApiFirewall\Firewall\FirewallOptions;
 use WP_REST_Request;
 use WP_Error;
 
@@ -30,7 +30,7 @@ class RateLimit {
 		if ( $count >= $rate_limit ) {
 			return new WP_Error(
 				'rest_firewall_rate_limited',
-				'Too many requests.',
+				esc_html__( 'Too many requests.', 'rest-api-firewall' ),
 				array( 'status' => 429 )
 			);
 		}
@@ -41,7 +41,7 @@ class RateLimit {
 	}
 
 
-	private static function get_client_identifier( \WP_REST_Request $request ): string {
+	private static function get_client_identifier( WP_REST_Request $request ): string {
 		$user = wp_get_current_user();
 
 		if ( $user && $user->exists() ) {
@@ -69,7 +69,10 @@ class RateLimit {
 				$ip = sanitize_text_field( wp_unslash( $_SERVER[ $header ] ) );
 				// X-Forwarded-For can contain multiple IPs, take the first.
 				if ( strpos( $ip, ',' ) !== false ) {
-					$ip = trim( explode( ',', $ip )[0] );
+					$ips = explode( ',', $ip );
+					if ( ! empty( $ips ) ) {
+						$ip = trim( $ips[0] );
+					}
 				}
 				if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {
 					return $ip;

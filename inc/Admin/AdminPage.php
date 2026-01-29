@@ -6,7 +6,7 @@ defined( 'ABSPATH' ) || exit;
 use cmk\RestApiFirewall\Core\CoreOptions;
 use cmk\RestApiFirewall\Core\FileUtils;
 use cmk\RestApiFirewall\Core\Utils;
-use cmk\RestApiFirewall\Admin\Permissions;
+use cmk\RestApiFirewall\Core\Permissions;
 
 class AdminPage {
 	protected static $instance = null;
@@ -109,7 +109,7 @@ class AdminPage {
 
 			wp_send_json_success(
 				array(
-					'message' => esc_html__( 'Options saved', 'rest-api-firewall' ),
+					'message' => esc_html__( 'Option saved', 'rest-api-firewall' ),
 					'option'  => $option,
 				)
 			);
@@ -139,7 +139,7 @@ class AdminPage {
 		$mui_config       = $this->load_script_config( REST_API_FIREWALL_DIR . '/build/mui.asset.php' );
 		$mui_dependencies = ! empty( $mui_config ) && isset( $mui_config['dependencies'] ) ? $mui_config['dependencies'] : array();
 		wp_enqueue_script(
-			'blank-theme-mui',
+			'rest-api-firewall-mui',
 			REST_API_FIREWALL_URL . '/build/mui.js',
 			$mui_dependencies,
 			$mui_config['version'],
@@ -153,7 +153,7 @@ class AdminPage {
 			REST_API_FIREWALL_URL . '/build/index.js',
 			array_merge(
 				$dependencies,
-				array( 'blank-theme-mui' )
+				array( 'rest-api-firewall-mui' )
 			),
 			$script_config['version'],
 			true

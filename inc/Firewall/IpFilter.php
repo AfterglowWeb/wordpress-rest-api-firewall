@@ -1,8 +1,9 @@
-<?php namespace cmk\RestApiFirewall\Rest\Firewall;
+<?php namespace cmk\RestApiFirewall\Firewall;
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Admin\Permissions;
+use cmk\RestApiFirewall\Core\Permissions;
+use WP_Error;
 
 class IpFilter {
 
@@ -155,7 +156,7 @@ class IpFilter {
 			}
 
 			if ( ! self::ip_in_list( $client_ip, $whitelist ) ) {
-				return new \WP_Error(
+				return new WP_Error(
 					'ip_not_whitelisted',
 					__( 'Your IP address is not allowed.', 'rest-api-firewall' ),
 					array( 'status' => 403 )
@@ -165,7 +166,7 @@ class IpFilter {
 			$blacklist = $options['blacklist'];
 
 			if ( self::ip_in_list( $client_ip, $blacklist ) ) {
-				return new \WP_Error(
+				return new WP_Error(
 					'ip_blacklisted',
 					__( 'Your IP address has been blocked.', 'rest-api-firewall' ),
 					array( 'status' => 403 )

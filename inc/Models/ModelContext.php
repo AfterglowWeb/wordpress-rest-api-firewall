@@ -1,4 +1,4 @@
-<?php namespace cmk\RestApiFirewall\Rest\Models;
+<?php namespace cmk\RestApiFirewall\Models;
 
 use cmk\RestApiFirewall\Core\CoreOptions;
 

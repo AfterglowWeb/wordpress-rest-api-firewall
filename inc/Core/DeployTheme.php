@@ -2,7 +2,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Admin\Permissions;
+use cmk\RestApiFirewall\Core\Permissions;
 
 /**
  * DeployTheme handles deploying the bundled theme to wp-content/themes.

@@ -40,10 +40,9 @@
   },
   "scripts": {
     "build": [
-      "@composer --no-plugins --no-interaction install --no-scripts --no-dev",
-      "@composer --no-plugins --no-interaction archive"
+      "@composer --no-plugins --no-interaction install --no-scripts --no-dev"
     ],
-    "lint": "phpcs",
+    "lint": "phpcs inc/",
     "fix": "phpcbf --standard=Wordpress --extensions=php inc/"
   },
   "scripts-descriptions": {
