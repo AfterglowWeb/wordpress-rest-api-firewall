@@ -1,10 +1,9 @@
 {
   "posts": [
     {
-      "name": "Projets",
-      "singular_name": "Projet",
+      "name": "Portfolios",
+      "singular_name": "Portfolio",
       "slug": "portfolio",
-      "rewrite": "realisations",
       "taxonomies": ["portfolio-category"],
       "menu_icon": "dashicons-art",
       "supports": ["title","editor","thumbnail","excerpt","revisions","custom-fields"],

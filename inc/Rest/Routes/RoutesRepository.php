@@ -1,4 +1,4 @@
-<?php namespace cmk\RestApiFirewall\Firewall\Routes;
+<?php namespace cmk\RestApiFirewall\Rest\Routes;
 
 defined( 'ABSPATH' ) || exit;
 
