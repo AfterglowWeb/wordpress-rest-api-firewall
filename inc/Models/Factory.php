@@ -1,11 +1,11 @@
-<?php namespace cmk\RestApiFirewall\Rest\Models;
+<?php namespace cmk\RestApiFirewall\Models;
 
-use cmk\RestApiFirewall\Rest\Models\ModelContext;
-use cmk\RestApiFirewall\Rest\Models\PostModel;
-use cmk\RestApiFirewall\Rest\Models\TermModel;
-use cmk\RestApiFirewall\Rest\Models\AttachmentModel;
-use cmk\RestApiFirewall\Rest\Models\AuthorModel;
-use cmk\RestApiFirewall\Rest\Models\MenuItemModel;
+use cmk\RestApiFirewall\Models\ModelContext;
+use cmk\RestApiFirewall\Models\PostModel;
+use cmk\RestApiFirewall\Models\TermModel;
+use cmk\RestApiFirewall\Models\AttachmentModel;
+use cmk\RestApiFirewall\Models\AuthorModel;
+use cmk\RestApiFirewall\Models\MenuItemModel;
 use WP_Post;
 use WP_Term;
 use WP_User;

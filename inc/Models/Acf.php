@@ -1,4 +1,4 @@
-<?php namespace cmk\RestApiFirewall\Core;
+<?php namespace cmk\RestApiFirewall\Models;
 
 defined( 'ABSPATH' ) || exit;
 

@@ -1,10 +1,10 @@
 <?php
-namespace cmk\RestApiFirewall\Rest\Firewall;
+namespace cmk\RestApiFirewall\Firewall;
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Rest\Firewall\Permissions;
-use cmk\RestApiFirewall\Admin\Permissions as AdminPermissions;
+use cmk\RestApiFirewall\Firewall\Permissions;
+use cmk\RestApiFirewall\Core\Permissions as AdminPermissions;
 
 class FirewallOptions {
 

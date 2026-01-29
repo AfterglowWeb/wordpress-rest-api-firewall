@@ -2,11 +2,11 @@
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Rest\Firewall\Permissions;
-use cmk\RestApiFirewall\Rest\Controllers\PostController;
-use cmk\RestApiFirewall\Rest\Controllers\SiteDataController;
-use cmk\RestApiFirewall\Rest\Controllers\AttachmentController;
-use cmk\RestApiFirewall\Rest\Firewall\Policy\PolicyRuntime;
+use cmk\RestApiFirewall\Firewall\Permissions;
+use cmk\RestApiFirewall\Models\Controllers\PostController;
+use cmk\RestApiFirewall\Models\Controllers\SiteDataController;
+use cmk\RestApiFirewall\Models\Controllers\AttachmentController;
+use cmk\RestApiFirewall\Firewall\Policy\PolicyRuntime;
 use cmk\RestApiFirewall\Core\CoreOptions;
 use WP_REST_Request;
 

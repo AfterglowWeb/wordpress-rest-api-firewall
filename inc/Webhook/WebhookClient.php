@@ -1,8 +1,9 @@
-<?php namespace cmk\RestApiFirewall\Application;
+<?php namespace cmk\RestApiFirewall\Webhook;
 
 defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Core\CoreOptions;
+use WP_Error;
 
 final class WebhookClient {
 
@@ -14,7 +15,7 @@ final class WebhookClient {
 		$secret  = get_option( 'rest_api_firewall_application_webhook_secret' );
 
 		if ( ! $host || ! $secret ) {
-			return new \WP_Error( 'config', 'Webhook not configured' );
+			return new WP_Error( 'config', 'Webhook not configured' );
 		}
 
 		$timestamp = time();

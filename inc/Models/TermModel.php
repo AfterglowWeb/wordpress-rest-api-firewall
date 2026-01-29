@@ -1,8 +1,8 @@
-<?php namespace cmk\RestApiFirewall\Rest\Models;
+<?php namespace cmk\RestApiFirewall\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Rest\Models\ModelContext;
+use cmk\RestApiFirewall\Models\ModelContext;
 use WP_Term;
 
 class TermModel {

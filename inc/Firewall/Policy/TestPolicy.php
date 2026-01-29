@@ -1,12 +1,12 @@
-<?php namespace cmk\RestApiFirewall\Rest\Firewall\Policy;
+<?php namespace cmk\RestApiFirewall\Firewall\Policy;
 
 defined( 'ABSPATH' ) || exit;
 
 use WP_REST_Request;
-use cmk\RestApiFirewall\Rest\Firewall\FirewallOptions;
-use cmk\RestApiFirewall\Rest\Firewall\Policy\PolicyRuntime;
-use cmk\RestApiFirewall\Rest\Firewall\Policy\PolicyRepository;
-use cmk\RestApiFirewall\Admin\Permissions;
+use cmk\RestApiFirewall\Firewall\FirewallOptions;
+use cmk\RestApiFirewall\Firewall\Policy\PolicyRuntime;
+use cmk\RestApiFirewall\Firewall\Policy\PolicyRepository;
+use cmk\RestApiFirewall\Core\Permissions;
 
 class TestPolicy {
 
