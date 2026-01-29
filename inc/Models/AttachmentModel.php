@@ -1,6 +1,6 @@
-<?php namespace cmk\RestApiFirewall\Rest\Models;
+<?php namespace cmk\RestApiFirewall\Models;
 
-use cmk\RestApiFirewall\Rest\Models\ModelContext;
+use cmk\RestApiFirewall\Models\ModelContext;
 
 class AttachmentModel {
 

@@ -1,9 +1,12 @@
-<?php namespace cmk\RestApiFirewall\Rest\Firewall;
+<?php namespace cmk\RestApiFirewall\Firewall;
 
 defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Core\CoreOptions;
-use cmk\RestApiFirewall\Rest\Firewall\FirewallOptions;
+use cmk\RestApiFirewall\Firewall\FirewallOptions;
+use WP_Error;
+use WP_User;
+use WP_REST_Request;
 
 class Permissions {
 
@@ -20,7 +23,7 @@ class Permissions {
 		}
 
 		$user = get_user_by( 'id', absint( $new_user_id ) );
-		if ( false === $user instanceof \WP_User ) {
+		if ( false === $user instanceof WP_User ) {
 			return;
 		}
 
@@ -29,7 +32,7 @@ class Permissions {
 
 	private static function remove_cap_from_user( int $user_id ): void {
 		$user = get_user_by( 'id', $user_id );
-		if ( $user instanceof \WP_User ) {
+		if ( $user instanceof WP_User ) {
 			$user->remove_cap( 'rest_firewall_api_access' );
 		}
 	}
@@ -45,9 +48,9 @@ class Permissions {
 		}
 
 		if ( false === self::validate_wp_application_password() ) {
-			return new \WP_Error(
+			return new WP_Error(
 				'rest_forbidden',
-				__( 'Authentication required.', 'rest-api-firewall' ),
+				esc_html__( 'Authentication required.', 'rest-api-firewall' ),
 				array( 'status' => 401 )
 			);
 		}
@@ -66,9 +69,9 @@ class Permissions {
 		}
 
 		if ( false === self::validate_wp_application_password() ) {
-			return new \WP_Error(
+			return new WP_Error(
 				'rest_forbidden',
-				__( 'Authentication required.', 'rest-api-firewall' ),
+				esc_html__( 'Authentication required.', 'rest-api-firewall' ),
 				array( 'status' => 401 )
 			);
 		}
@@ -84,7 +87,7 @@ class Permissions {
 	 * @param int|false        $time_limit Optional time window (seconds).
 	 * @return true|\WP_Error
 	 */
-	public static function rest_api_rate_limit_check( \WP_REST_Request $request, $rate_limit = false, $time_limit = false ) {
+	public static function rest_api_rate_limit_check( WP_REST_Request $request, $rate_limit = false, $time_limit = false ) {
 
 		$rate = RateLimit::check( $request, $rate_limit, $time_limit );
 		if ( is_wp_error( $rate ) ) {
@@ -127,7 +130,7 @@ class Permissions {
 		return true;
 	}
 
-	public static function filter_wp_rest_post_types( $result, $server, \WP_REST_Request $request ) {
+	public static function filter_wp_rest_post_types( $result, $server, WP_REST_Request $request ) {
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
@@ -145,9 +148,9 @@ class Permissions {
 		}
 
 		if ( false === self::is_post_type_allowed( $post_type ) ) {
-			return new \WP_Error(
+			return new WP_Error(
 				'forbidden_post_type',
-				__( 'This post type is not allowed.', 'rest-api-firewall' ),
+				esc_html__( 'This post type is not allowed.', 'rest-api-firewall' ),
 				array( 'status' => 403 )
 			);
 		}

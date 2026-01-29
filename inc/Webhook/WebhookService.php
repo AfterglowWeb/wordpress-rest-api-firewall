@@ -1,8 +1,8 @@
-<?php namespace cmk\RestApiFirewall\Application;
+<?php namespace cmk\RestApiFirewall\Webhook;
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Admin\Permissions;
+use cmk\RestApiFirewall\Core\Permissions;
 use cmk\RestApiFirewall\Core\CoreOptions;
 
 class WebhookService {
@@ -28,7 +28,12 @@ class WebhookService {
 	public function ajax_trigger_application_webhook(): void {
 
 		if ( false === Permissions::validate_ajax_crud_webhook() ) {
-			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
+			wp_send_json_error(
+				array(
+					'message' => esc_html__( 'Unauthorized', 'rest-api-firewall' ),
+				),
+				403
+			);
 		}
 
 		$payload = (array) apply_filters(
@@ -41,11 +46,20 @@ class WebhookService {
 			$sanitized_payload[ sanitize_key( $key ) ] = sanitize_text_field( $value );
 		}
 
-		$admin_options = CoreOptions::read_options();
+		$webhook_endpoint = CoreOptions::read_option( 'application_webhook_endpoint' );
+
+		if ( ! $webhook_endpoint ) {
+			wp_send_json_error(
+				array(
+					'message' => esc_html__( 'No webhook endpoint configured.', 'rest-api-firewall' ),
+				),
+				422
+			);
+		}
 
 		try {
 			$response = WebhookClient::post(
-				$admin_options['application_webhook_endpoint'],
+				$webhook_endpoint,
 				$sanitized_payload
 			);
 		} catch ( \WP_Error $error ) {

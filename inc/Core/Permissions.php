@@ -1,6 +1,8 @@
-<?php namespace cmk\RestApiFirewall\Admin;
+<?php namespace cmk\RestApiFirewall\Core;
 
 defined( 'ABSPATH' ) || exit;
+
+use WP_User;
 
 class Permissions {
 
@@ -34,7 +36,7 @@ class Permissions {
 
 		$user = wp_get_current_user();
 
-		if ( false === $user instanceof \WP_User ) {
+		if ( false === $user instanceof WP_User ) {
 			return false;
 		}
 

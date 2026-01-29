@@ -1,9 +1,9 @@
-<?php namespace cmk\RestApiFirewall\Rest\Models;
+<?php namespace cmk\RestApiFirewall\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Rest\Models\ModelContext;
-use cmk\RestApiFirewall\Rest\Controllers\AttachmentController;
+use cmk\RestApiFirewall\Models\ModelContext;
+use cmk\RestApiFirewall\Models\Controllers\AttachmentController;
 use WP_Post;
 
 class PostModel {

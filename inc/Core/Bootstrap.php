@@ -4,11 +4,12 @@ defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Admin\AdminPage;
 use cmk\RestApiFirewall\Rest\Routes\Routes;
-use cmk\RestApiFirewall\Rest\Firewall\FirewallOptions;
-use cmk\RestApiFirewall\Rest\Firewall\Policy\PolicyRepository;
-use cmk\RestApiFirewall\Rest\Firewall\Policy\TestPolicy;
-use cmk\RestApiFirewall\Rest\Firewall\IpFilter;
-use cmk\RestApiFirewall\Application\WebhookService;
+use cmk\RestApiFirewall\Firewall\FirewallOptions;
+use cmk\RestApiFirewall\Firewall\Policy\PolicyRepository;
+use cmk\RestApiFirewall\Firewall\Policy\TestPolicy;
+use cmk\RestApiFirewall\Firewall\IpFilter;
+use cmk\RestApiFirewall\Webhook\WebhookService;
+use cmk\RestApiFirewall\Models\Acf;
 
 final class Bootstrap {
 
