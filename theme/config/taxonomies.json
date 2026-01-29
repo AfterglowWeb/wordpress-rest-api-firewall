@@ -4,7 +4,6 @@
             "name": "Portfolio categories",
             "singular_name": "Portfolio category",
             "slug": "portfolio-category",
-            "rewrite": "categorie-realisations",
             "post_types": ["portfolio"],
             "hierarchical": true,
             "show_in_rest": true

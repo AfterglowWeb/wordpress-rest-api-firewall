@@ -1,10 +1,10 @@
-<?php namespace cmk\RestApiFirewall\Firewall\Policy;
+<?php namespace cmk\RestApiFirewall\Policy;
 
 defined( 'ABSPATH' ) || exit;
 
 use WP_REST_Request;
 use cmk\RestApiFirewall\Firewall\FirewallOptions;
-use cmk\RestApiFirewall\Firewall\Policy\PolicyRepository;
+use cmk\RestApiFirewall\Policy\PolicyRepository;
 
 class PolicyRuntime {
 
