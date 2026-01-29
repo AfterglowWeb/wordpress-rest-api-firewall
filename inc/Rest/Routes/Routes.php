@@ -2,7 +2,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Firewall\Permissions;
+use cmk\RestApiFirewall\Firewall\Auth;
+use cmk\RestApiFirewall\Firewall\PostTypesAllowed;
+use cmk\RestApiFirewall\Firewall\RateLimit;
 use cmk\RestApiFirewall\Models\Controllers\PostController;
 use cmk\RestApiFirewall\Models\Controllers\SiteDataController;
 use cmk\RestApiFirewall\Models\Controllers\AttachmentController;
@@ -18,14 +20,14 @@ class Routes {
 
 		add_filter(
 			'rest_authentication_errors',
-			array( Permissions::class, 'rest_api_enforce_auth' ),
+			array( Auth::class, 'wordpress_auth' ),
 			10,
 			3
 		);
 
 		add_filter(
 			'rest_pre_dispatch',
-			array( Permissions::class, 'filter_wp_rest_post_types' ),
+			array( PostTypesAllowed::class, 'filter_post_types' ),
 			10,
 			3
 		);
@@ -61,14 +63,14 @@ class Routes {
 				}
 
 				if ( ! empty( $policy['protect'] ) ) {
-					$auth_check = Permissions::rest_api_enforce_pre_dispatch_auth( $result );
+					$auth_check = Auth::wordpress_auth( $result );
 					if ( is_wp_error( $auth_check ) ) {
 						return $auth_check;
 					}
 				}
 
 				if ( ! empty( $policy['rate_limit'] ) ) {
-					$rate_check = Permissions::rest_api_rate_limit_check(
+					$rate_check = RateLimit::check(
 						$request,
 						$policy['rate_limit'],
 						$policy['rate_limit_time']
@@ -93,7 +95,7 @@ class Routes {
 					array(
 						'methods'             => 'GET',
 						'callback'            => array( SiteDataController::class, 'site_data' ),
-						'permission_callback' => array( Permissions::class, 'rest_api_rate_limit_check' ),
+						'permission_callback' => array( RateLimit::class, 'check' ),
 					)
 				);
 
@@ -103,12 +105,12 @@ class Routes {
 					array(
 						'methods'             => 'GET',
 						'callback'            => array( PostController::class, 'posts_per_post_type' ),
-						'permission_callback' => array( Permissions::class, 'rest_api_rate_limit_check' ),
+						'permission_callback' => array( RateLimit::class, 'check' ),
 						'args'                => array(
 							'post_type' => array(
 								'required'          => true,
 								'sanitize_callback' => 'sanitize_key',
-								'validate_callback' => array( Permissions::class, 'is_post_type_allowed' ),
+								'validate_callback' => array( PostTypesAllowed::class, 'is_allowed' ),
 							),
 						),
 					)
@@ -120,12 +122,12 @@ class Routes {
 					array(
 						'methods'             => 'GET',
 						'callback'            => array( AttachmentController::class, 'attachments_per_post_type' ),
-						'permission_callback' => array( Permissions::class, 'rest_api_rate_limit_check' ),
+						'permission_callback' => array( RateLimit::class, 'check' ),
 						'args'                => array(
 							'post_type' => array(
 								'required'          => true,
 								'sanitize_callback' => 'sanitize_key',
-								'validate_callback' => array( Permissions::class, 'is_post_type_allowed' ),
+								'validate_callback' => array( PostTypesAllowed::class, 'is_allowed' ),
 							),
 						),
 					)
