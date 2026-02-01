@@ -252,10 +252,16 @@ class CoreOptions {
 		return isset( $options[ $option_key ] ) ? $options[ $option_key ] : false;
 	}
 
+	/**
+	 * Update options with partial support.
+	 * Only provided options are updated, others keep their current values.
+	 *
+	 * @param array $new_options Options to update.
+	 */
 	public static function update_options( array $new_options ): array {
 
 		$old_options       = self::read_options();
-		$sanitized_options = self::sanitize_options( $new_options );
+		$sanitized_options = self::sanitize_options( $new_options, false );
 
 		MultiSite::multisite_update_option( 'rest_api_firewall_options', $sanitized_options );
 
@@ -319,11 +325,17 @@ class CoreOptions {
 		return $defaults;
 	}
 
-	private static function sanitize_options( array $options ): array {
+	/**
+	 * Sanitize options array.
+	 *
+	 * @param array $options        Options to sanitize.
+	 * @param bool  $use_defaults   If true, merge with defaults. If false, merge with current saved options.
+	 */
+	private static function sanitize_options( array $options, bool $use_defaults = true ): array {
 		$options_config = self::options_config();
-		$default_values = self::default_options();
+		$base_values    = $use_defaults ? self::default_options() : MultiSite::multisite_get_option( 'rest_api_firewall_options', self::default_options() );
 
-		$options   = wp_parse_args( $options, $default_values );
+		$options   = wp_parse_args( $options, $base_values );
 		$sanitized = array();
 
 		foreach ( $options_config as $option_key => $config ) {
