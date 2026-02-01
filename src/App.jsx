@@ -199,11 +199,12 @@ function AppContent() {
 						{ __( 'Application Webhook', 'rest-api-firewall' ) }
 					</Typography>
 					<Button
+						size="small"
 						variant="contained"
 						onClick={ handleSaveWebhook }
 						disabled={ saving }
 						>
-						{ __( 'Save Webhook Settings', 'rest-api-firewall' ) }
+						{ __( 'Save', 'rest-api-firewall' ) }
 					</Button>
 				</Stack>
 
