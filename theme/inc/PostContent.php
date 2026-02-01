@@ -22,7 +22,7 @@ class PostContent {
 
 	public function disable_gutenberg( bool $current_status, string $post_type ): bool {
 
-		$disable_gutenberg_enabled = CoreOptions::read_option( 'core_disable_gutenberg_enabled' );
+		$disable_gutenberg_enabled = CoreOptions::read_option( 'theme_disable_gutenberg' );
 
 		if ( empty( $disable_gutenberg_enabled ) ) {
 			return $current_status;
@@ -33,7 +33,7 @@ class PostContent {
 
 	public function remove_empty_p_tags( $content ): string {
 
-		$remove_empty_p_tags_enabled = CoreOptions::read_option( 'core_remove_empty_p_tags_enabled' );
+		$remove_empty_p_tags_enabled = CoreOptions::read_option( 'theme_remove_empty_p_tags_enabled' );
 
 		if ( empty( $remove_empty_p_tags_enabled ) ) {
 			return $content;

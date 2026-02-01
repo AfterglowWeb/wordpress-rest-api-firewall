@@ -17,12 +17,12 @@ class ImageFiles {
 
 	private function __construct() {
 		add_filter( 'mime_types', array( $this, 'mime_support' ), 10, 1 );
-		add_filter( 'wp_handle_upload_prefilter', array( $this, 'core_max_upload_weight' ), 10, 1 );
+		add_filter( 'wp_handle_upload_prefilter', array( $this, 'theme_max_upload_weight' ), 10, 1 );
 	}
 
 	public function mime_support( $mimes ): array {
 
-		$svg_webp_support_enabled = CoreOptions::read_option( 'core_svg_webp_support_enabled' );
+		$svg_webp_support_enabled = CoreOptions::read_option( 'theme_svg_webp_support_enabled' );
 
 		if ( empty( $svg_webp_support_enabled ) ) {
 			return $mimes;
@@ -33,7 +33,7 @@ class ImageFiles {
 		return $mimes;
 	}
 
-	public function core_max_upload_weight( $file ) {
+	public function theme_max_upload_weight( $file ) {
 
 		if ( ! isset( $file['type'] ) || ! isset( $file['size'] ) ) {
 			return $file;
@@ -43,14 +43,14 @@ class ImageFiles {
             return $file;
 		}
 
-		$max_upload_size_enabled = CoreOptions::read_option( 'core_max_upload_weight_enabled' );
+		$max_upload_size_enabled = CoreOptions::read_option( 'theme_max_upload_weight_enabled' );
 
 		if( empty ( $max_upload_size_enabled ) ) {
 			return $file;
 		}
 
 		$file_size        = absint( $file['size'] );
-		$max_upload_size  = absint(CoreOptions::read_option( 'core_max_upload_weight' ) );
+		$max_upload_size  = absint(CoreOptions::read_option( 'theme_max_upload_weight' ) );
 
 
 		if ( $file_size && $max_upload_size && $file_size > $max_upload_size ) {

@@ -1,8 +1,8 @@
-<?php namespace cmk\RestApiFirewall\Models\Controllers;
+<?php namespace cmk\RestApiFirewall\Controllers;
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Models\Factory;
+use cmk\RestApiFirewall\Controllers\Factory;
 use WP_REST_Response;
 
 class SiteDataController {

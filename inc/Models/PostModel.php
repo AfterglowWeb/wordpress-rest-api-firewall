@@ -2,85 +2,126 @@
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Models\ModelContext;
-use cmk\RestApiFirewall\Models\Controllers\AttachmentController;
-use WP_Post;
+use cmk\RestApiFirewall\Controllers\ModelContext;
+use cmk\RestApiFirewall\Schemas\SchemaFilters;
+use WP_User;
 
 class PostModel {
 
-	public function build( WP_Post $post, ModelContext $context ): array {
+	public function __invoke( array $post, ModelContext $context ): array {
 
-		$context = apply_filters(
-			'rest_firewall_model_post_context',
-			$context,
-			$post
-		);
-
-		$data = $this->base_fields( $post, $context );
-
-		$data = apply_filters(
-			'rest_firewall_model_post_build',
-			$data,
-			$post,
-			$context
-		);
-
-		$data = apply_filters(
-			'rest_firewall_model_post_fields',
-			$data,
-			$post,
-			$context
-		);
+		$post = $this->remove_disabled_properties( $post, $context );
+		$post = $this->apply_filters( $post, $context );
 
 		return apply_filters(
 			'rest_firewall_model_post',
-			$data,
 			$post,
 			$context
 		);
 	}
 
-	protected function base_fields( WP_Post $post, ModelContext $context ): array {
+	/**
+	 * Remove disabled properties from the post data.
+	 */
+	protected function remove_disabled_properties( array $post, ModelContext $context ): array {
 
-		$post = sanitize_post( $post );
-
-		$data = array(
-			'id'             => (int) $post->ID,
-			'type'           => $post->post_type,
-			'slug'           => $post->post_name,
-			'title'          => $post->post_title,
-			'link'           => get_the_permalink( $post ),
-			'date'           => get_the_date( 'c', $post ),
-			'modified'       => get_the_modified_date( 'c', $post ),
-			'featured_media' => (int) get_post_thumbnail_id( $post ),
-			'content'        => (string) apply_filters( 'the_content', $post->post_content ),
-			'excerpt'        => (string) apply_filters( 'the_excerpt', $post->post_excerpt ),
-			'terms'          => array(),
-			'attachments'    => array(),
-			'images'         => AttachmentController::attachments_per_post_flat( $post ), // Legacy.
-		);
-
-		if ( $context->with_acf ) {
-			$data['acf'] = apply_filters( 'rest_firewall_model_post_acf', $data['id'] );
+		foreach ( array_keys( $post ) as $property_key ) {
+			if ( $context->is_disabled( $property_key ) ) {
+				unset( $post[ $property_key ] );
+			}
 		}
 
-		if ( $context->relative_urls ) {
-			$data['link'] = apply_filters( 'rest_firewall_relative_url_enabled', $data['link'] );
+		return $post;
+	}
+
+	/**
+	 * Apply configured filters to the post data.
+	 */
+	protected function apply_filters( array $post, ModelContext $context ): array {
+
+		// Relative URL filters
+		if ( isset( $post['link'] ) && $context->should_relative_url( 'link' ) ) {
+			$post['link'] = SchemaFilters::relative_url( $post['link'] );
 		}
 
-		if ( $context->embed_attachments ) {
-			$data['featured_media'] = apply_filters( 'rest_firewall_embed_featured_attachment', $data['featured_media'], $post );
-			$data['attachements']   = apply_filters( 'rest_firewall_embed_post_attachments', $post );
+		if ( isset( $post['guid'] ) && $context->should_relative_url( 'guid' ) ) {
+			$post['guid'] = is_array( $post['guid'] )
+				? SchemaFilters::relative_url( $post['guid']['rendered'] ?? '' )
+				: SchemaFilters::relative_url( $post['guid'] );
 		}
 
-		if ( $context->embed_author ) {
-			$data['author'] = apply_filters( 'rest_firewall_embed_author', $post );
+		// Rendered filters
+		foreach ( [ 'title', 'excerpt', 'content', 'guid' ] as $rendered_prop ) {
+			if ( isset( $post[ $rendered_prop ] ) && $context->should_render( $rendered_prop ) ) {
+				if ( is_array( $post[ $rendered_prop ] ) && isset( $post[ $rendered_prop ]['rendered'] ) ) {
+					$post[ $rendered_prop ] = $post[ $rendered_prop ]['rendered'];
+				}
+			}
 		}
 
-		if ( $context->embed_terms ) {
-			$data['terms'] = apply_filters( 'rest_firewall_embed_terms', $post );
+		// Embed filters
+		if ( isset( $post['featured_media'] ) && $context->should_embed( 'featured_media' ) ) {
+			$attachment_model       = new AttachmentModel();
+			$post['featured_media'] = $attachment_model( (int) $post['featured_media'], $context );
 		}
 
-		return $data;
+		if ( isset( $post['author'] ) && $context->should_embed( 'author' ) ) {
+			$user = get_userdata( $post['author'] );
+			if ( $user instanceof WP_User ) {
+				$author_model   = new AuthorModel();
+				$post['author'] = $author_model( $user, $context );
+			}
+		}
+
+		if ( $context->should_embed( 'terms' ) ) {
+			$post['terms'] = $this->embed_terms( $post, $context );
+		}
+
+		// ACF fields
+		if ( $context->with_acf && isset( $post['id'] ) ) {
+			$post['acf'] = SchemaFilters::embed_acf_fields( $post['id'] );
+		}
+
+		// Remove _links if configured
+		if ( $context->remove_links_prop && isset( $post['_links'] ) ) {
+			unset( $post['_links'] );
+		}
+
+		// Remove empty props if configured
+		if ( $context->remove_empty_props ) {
+			$post = array_filter( $post, fn( $value ) => ! empty( $value ) || $value === 0 || $value === false );
+		}
+
+		return $post;
+	}
+
+	/**
+	 * Embed terms for the post.
+	 */
+	protected function embed_terms( array $post, ModelContext $context ): array {
+
+		if ( empty( $post['id'] ) ) {
+			return [];
+		}
+
+		$post_id    = (int) $post['id'];
+		$taxonomies = get_object_taxonomies( get_post_type( $post_id ), 'names' );
+		$terms_data = [];
+		$term_model = new TermModel();
+
+		foreach ( $taxonomies as $taxonomy ) {
+			$terms = wp_get_post_terms( $post_id, $taxonomy );
+
+			if ( is_wp_error( $terms ) || empty( $terms ) ) {
+				continue;
+			}
+
+			$terms_data[ $taxonomy ] = array_map(
+				fn( $term ) => $term_model( (array) $term, $context ),
+				$terms
+			);
+		}
+
+		return $terms_data;
 	}
 }
