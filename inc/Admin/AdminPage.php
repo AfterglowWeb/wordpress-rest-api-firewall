@@ -34,11 +34,11 @@ class AdminPage {
 	public function register_admin_page() {
 		add_menu_page(
 			__( 'REST API Firewall Admin', 'rest-api-firewall' ),
-			__( 'REST API Firewall', 'rest-api-firewall' ),
+			__( 'REST Firewall', 'rest-api-firewall' ),
 			'rest_api_firewall_edit_options',
 			'rest-api-firewall-admin',
 			array( $this, 'render_admin_page' ),
-			'dashicons-hidden',
+			'dashicons-rest-api',
 			99
 		);
 	}
