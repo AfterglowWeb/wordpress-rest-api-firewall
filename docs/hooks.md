@@ -182,8 +182,8 @@ add_filter('rest_firewall_model_menu_item', function($rest_firewall_menu_item, $
 
 WIP:
 ## `rest_firewall_redirect_url`
-## `rest_firewall_show_admin_options_in_rest`
+## `rest_api_firewall_show_admin_options_in_rest`
 ## `rest_api_firewall_%admin_option_key%`
-## `rest_firewall_use_multisite_options`
+## `rest_api_firewall_pro_multisite_enabled`
 ## `rest_firewall_model_api_posts_per_page`
 ## `rest_firewall_application_webhook_body_payload`

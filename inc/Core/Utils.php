@@ -67,9 +67,6 @@ class Utils {
 		return array_values( $list );
 	}
 
-	/**
-	 * List public taxonomies that are exposed in REST.
-	 */
 	public static function list_taxonomies(): array {
 		$taxonomies = get_taxonomies(
 			array(
@@ -96,9 +93,6 @@ class Utils {
 		return array_values( $list );
 	}
 
-	/**
-	 * Check if the current admin screen matches a given screen name.
-	 */
 	public static function is_current_screen( string $screen_name ): bool {
 		if ( ! is_admin() ) {
 			return false;
@@ -121,16 +115,12 @@ class Utils {
 		);
 	}
 
-	/**
-	 * Decode JSON with error handling.
-	 *
-	 * @throws JsonException If JSON is invalid.
-	 */
-	public static function json_decode( string $json ): array {
-		$data = json_decode( $json, true );
+	public static function json_decode( string $json, $associative = true ): array {
+		$data = json_decode( $json, $associative );
 
 		if ( JSON_ERROR_NONE !== json_last_error() ) {
-			throw new JsonException( esc_html( json_last_error_msg() ) );
+			error_log( esc_html( json_last_error_msg() ) );
+			return array();
 		}
 
 		return $data ?? array();

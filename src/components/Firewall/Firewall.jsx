@@ -22,12 +22,13 @@ import Typography from '@mui/material/Typography';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import RoutesTree from './RoutesTree';
-import IpFilter from './IpFilter';
+import IpBlackList from './IpBlackList';
 import Grid from '@mui/material/Grid';
 
 const defaultFirewallOptions = {
 	enforce_auth: false,
 	enforce_rate_limit: false,
+	hide_user_routes: false,
 	user_id: 0,
 	rate_limit: 30,
 	rate_limit_time: 60,
@@ -114,6 +115,7 @@ export default function Firewall() {
 				setFirewallOptions( {
 					enforce_auth: result.data.enforce_auth ?? false,
 					enforce_rate_limit: result.data.enforce_rate_limit ?? false,
+					hide_user_routes: result.data.hide_user_routes ?? false,
 					user_id: result.data.user_id ?? 0,
 					rate_limit: result.data.rate_limit ?? 30,
 					rate_limit_time: result.data.rate_limit_time ?? 60,
@@ -166,6 +168,7 @@ export default function Firewall() {
 								nonce: adminData.nonce,
 								enforce_auth: firewallOptions.enforce_auth ? '1' : '0',
 								enforce_rate_limit: firewallOptions.enforce_rate_limit ? '1' : '0',
+								hide_user_routes: firewallOptions.hide_user_routes ? '1' : '0',
 								user_id: String( firewallOptions.user_id ),
 								rate_limit: String( firewallOptions.rate_limit ),
 								rate_limit_time: String( firewallOptions.rate_limit_time ),
@@ -233,7 +236,7 @@ export default function Firewall() {
 		<Stack maxWidth="xl">
 			<Stack direction={"row"} justifyContent={"space-between"} gap={2} py={3} flexWrap={"wrap"} alignItems={"center"}>
 				<Typography variant="h6" fontWeight={600}>
-					{ __( 'REST API Firewall', 'rest-api-firewall' ) }
+					{ __( 'Firewall Settings', 'rest-api-firewall' ) }
 				</Typography>
 				<Button color="primary" variant="contained" onClick={ handleSave }>
 					{ __( 'Save Firewall Settings', 'rest-api-firewall' ) }
@@ -345,6 +348,23 @@ export default function Firewall() {
 										{ __('Enforce authentication on all routes', 'rest-api-firewall') }
 									</FormHelperText>
 								</FormControl>
+
+								<FormControl sx={{minWidth:240}}>
+									<FormControlLabel
+										control={
+											<Switch
+												checked={ !! firewallOptions.hide_user_routes }
+												name="hide_user_routes"
+												size="small"
+												onChange={ handleOptionChange }
+											/>
+										}
+										label={ __( 'Hide User Routes', 'rest-api-firewall' ) }
+									/>
+									<FormHelperText>
+										{ __('Block access to /wp/v2/users endpoint', 'rest-api-firewall') }
+									</FormHelperText>
+								</FormControl>
 							</Stack>
 
 							<Typography variant="subtitle1" fontWeight={600}>
@@ -404,7 +424,7 @@ export default function Firewall() {
 							</Stack>
 						</Grid>
 						<Grid size={ 5 }>
-							<IpFilter />
+							<IpBlackList />
 						</Grid>
 					</Grid>
 

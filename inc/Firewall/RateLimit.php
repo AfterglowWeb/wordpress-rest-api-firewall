@@ -2,46 +2,11 @@
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Firewall\FirewallOptions;
 use WP_REST_Request;
-use WP_Error;
 
 class RateLimit {
 
-	/**
-	 * Check rate limit for a request.
-	 *
-	 * @param \WP_REST_Request $request    The REST request.
-	 * @param int|false        $rate_limit Optional rate limit (requests). Falls back to global.
-	 * @param int|false        $time_limit Optional time window (seconds). Falls back to global.
-	 * @return true|\WP_Error
-	 */
-	public static function check( WP_REST_Request $request, $rate_limit = false, $time_limit = false ) {
-
-		$client_id        = self::get_client_identifier( $request );
-		$key              = 'rest_firewall_rl_' . md5( $client_id . $request->get_route() );
-		$firewall_options = FirewallOptions::get_options();
-
-		$rate_limit = false !== $rate_limit ? (int) $rate_limit : (int) $firewall_options['rate_limit'];
-		$time_limit = false !== $time_limit ? (int) $time_limit : (int) $firewall_options['rate_limit_time'];
-
-		$count = (int) get_transient( $key );
-
-		if ( $count >= $rate_limit ) {
-			return new WP_Error(
-				'rest_firewall_rate_limited',
-				esc_html__( 'Too many requests.', 'rest-api-firewall' ),
-				array( 'status' => 429 )
-			);
-		}
-
-		set_transient( $key, $count + 1, $time_limit );
-
-		return true;
-	}
-
-
-	private static function get_client_identifier( WP_REST_Request $request ): string {
+	public static function get_client_identifier( WP_REST_Request $request ): string {
 		$user = wp_get_current_user();
 
 		if ( $user && $user->exists() ) {
@@ -54,7 +19,6 @@ class RateLimit {
 
 		return 'anon_' . md5( $ip . $user_agent . $auth );
 	}
-
 
 	private static function get_client_ip(): string {
 		$headers = array(

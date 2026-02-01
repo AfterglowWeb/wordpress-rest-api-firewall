@@ -6,7 +6,7 @@ defined( 'ABSPATH' ) || exit;
 use cmk\RestApiFirewall\Core\CoreOptions;
 use cmk\RestApiFirewall\Core\FileUtils;
 use cmk\RestApiFirewall\Core\Utils;
-use cmk\RestApiFirewall\Core\Permissions;
+use cmk\RestApiFirewall\Schemas\SchemaRepo;
 
 class AdminPage {
 	protected static $instance = null;
@@ -29,11 +29,6 @@ class AdminPage {
 		add_action( 'admin_menu', array( $this, 'register_admin_page' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'admin_footer', array( $this, 'print_inline_styles' ), 20 );
-
-		add_action( 'wp_ajax_rest_api_firewall_update_options', array( $this, 'ajax_update_options' ) );
-		add_action( 'wp_ajax_rest_api_firewall_update_option', array( $this, 'ajax_update_option' ) );
-		add_action( 'wp_ajax_rest_api_firewall_read_options', array( $this, 'ajax_read_options' ) );
-		add_action( 'wp_ajax_rest_api_firewall_documentation', array( $this, 'ajax_documentation' ) );
 	}
 
 	public function register_admin_page() {
@@ -46,85 +41,6 @@ class AdminPage {
 			'dashicons-hidden',
 			99
 		);
-	}
-
-	public function ajax_read_options() {
-		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
-			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
-		}
-
-		$options = CoreOptions::read_options();
-		wp_send_json_success( $options );
-	}
-
-	public function ajax_update_options() {
-		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
-			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
-		}
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
-		if ( isset( $_POST['action'] ) && 'rest_api_firewall_update_options' === $_POST['action'] && isset( $_POST['options'] ) ) {
-
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
-			$options = json_decode( sanitize_text_field( wp_unslash( $_POST['options'] ) ), true );
-			if ( ! is_array( $options ) ) {
-				wp_send_json_error( array( 'error' => esc_html__( 'Invalid options data', 'rest-api-firewall' ) ), 400 );
-			}
-
-			$options = CoreOptions::update_options( $options );
-
-			wp_send_json_success(
-				array(
-					'message' => esc_html__( 'Options saved', 'rest-api-firewall' ),
-					'options' => $options,
-				)
-			);
-		} else {
-			$options = CoreOptions::read_options();
-			wp_send_json_success( $options );
-		}
-	}
-
-	public function ajax_update_option() {
-		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
-			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
-		}
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
-		if ( isset( $_POST['action'] ) && 'rest_api_firewall_update_option' === $_POST['action'] && isset( $_POST['option'] ) ) {
-
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
-			$option = json_decode( sanitize_text_field( wp_unslash( $_POST['option'] ) ), true );
-			if ( ! is_array( $option ) ) {
-				wp_send_json_error( array( 'error' => esc_html__( 'Invalid option data', 'rest-api-firewall' ) ), 422 );
-			}
-
-			$key   = isset( $option['key'] ) && ! empty( $option['key'] ) ? $option['key'] : '';
-			$value = isset( $option['value'] ) && ! empty( $option['value'] ) ? $option['value'] : null;
-
-			if ( empty( $key ) || empty( $value ) ) {
-				wp_send_json_error( array( 'error' => esc_html__( 'Invalid option data', 'rest-api-firewall' ) ), 422 );
-			}
-
-			$option = CoreOptions::update_option( $key, $value );
-
-			wp_send_json_success(
-				array(
-					'message' => esc_html__( 'Option saved', 'rest-api-firewall' ),
-					'option'  => $option,
-				)
-			);
-		} else {
-			wp_send_json_error( 'Unknown parameter', 422 );
-		}
-	}
-
-	public function ajax_documentation() {
-		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
-			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
-		}
-
-		$documentation_pages = Documentation::read_pages();
-		wp_send_json_success( $documentation_pages );
 	}
 
 	public function render_admin_page() {
@@ -165,15 +81,18 @@ class AdminPage {
 
 		$plugin_data = get_plugin_data( REST_API_FIREWALL_FILE );
 		$args        = array(
-			'nonce'          => wp_create_nonce( 'rest_api_firewall_update_options_nonce' ),
-			'ajaxurl'        => admin_url( 'admin-ajax.php' ),
-			'users'          => Utils::list_users(),
-			'post_types'     => Utils::list_post_types(),
-			'admin_options'  => CoreOptions::read_options(),
-			'plugin_name'    => sanitize_text_field( $plugin_data['Name'] ),
-			'plugin_version' => sanitize_text_field( REST_API_FIREWALL_VERSION ),
-			'plugin_uri'     => sanitize_url( $plugin_data['PluginURI'] ),
-			'home_url'       => get_home_url( '/' ),
+			'nonce'                   => wp_create_nonce( 'rest_api_firewall_update_options_nonce' ),
+			'ajaxurl'                 => admin_url( 'admin-ajax.php' ),
+			'users'                   => Utils::list_users(),
+			'post_types'              => Utils::list_post_types(),
+			'post_types_schemas'      => SchemaRepo::post_schemas(),
+			'taxonomies_schemas'      => SchemaRepo::taxonomy_schemas(),
+			'post_properties_filters' => SchemaRepo::properties_filters(),
+			'admin_options'           => CoreOptions::read_options(),
+			'plugin_name'             => sanitize_text_field( $plugin_data['Name'] ),
+			'plugin_version'          => sanitize_text_field( REST_API_FIREWALL_VERSION ),
+			'plugin_uri'              => sanitize_url( $plugin_data['PluginURI'] ),
+			'home_url'                => get_home_url( '/' ),
 		);
 
 		if ( class_exists( '\cmk\RestApiFirewall\Theme\RedirectTemplates' ) ) {

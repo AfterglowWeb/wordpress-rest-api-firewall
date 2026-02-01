@@ -2,36 +2,16 @@
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Models\ModelContext;
+use cmk\RestApiFirewall\Controllers\ModelContext;
+use cmk\RestApiFirewall\Schemas\SchemaFilters;
 use WP_User;
-use WP_Post;
 
 class AuthorModel {
 
-	public function build( WP_User $author, WP_Post $parent_post, ModelContext $context ): array {
+	public function __invoke( WP_User $author, ModelContext $context ): array {
 
-		$context = apply_filters(
-			'rest_firewall_model_author_context',
-			$context,
-			$parent_post,
-			$author
-		);
-
-		$data = $this->base_fields( $author );
-
-		$data = apply_filters(
-			'rest_firewall_model_author_build',
-			$data,
-			$author,
-			$context
-		);
-
-		$data = apply_filters(
-			'rest_firewall_model_author_fields',
-			$data,
-			$author,
-			$context
-		);
+		$data = $this->build_author_data( $author, $context );
+		$data = $this->remove_disabled_properties( $data, $context );
 
 		return apply_filters(
 			'rest_firewall_model_author',
@@ -41,14 +21,38 @@ class AuthorModel {
 		);
 	}
 
-	protected function base_fields( WP_User $user ): array {
+	/**
+	 * Build the author data array.
+	 */
+	protected function build_author_data( WP_User $user, ModelContext $context ): array {
 
-		$data = array(
+		$data = [
+			'id'           => $user->ID,
 			'nickname'     => $user->get( 'nickname' ),
 			'first_name'   => $user->get( 'first_name' ),
 			'last_name'    => $user->get( 'last_name' ),
 			'display_name' => $user->get( 'display_name' ),
-		);
+			'description'  => $user->get( 'description' ),
+		];
+
+		// ACF fields
+		if ( $context->with_acf ) {
+			$data['acf'] = SchemaFilters::embed_acf_fields( 'user_' . $user->ID );
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Remove disabled properties from the author data.
+	 */
+	protected function remove_disabled_properties( array $data, ModelContext $context ): array {
+
+		foreach ( array_keys( $data ) as $property_key ) {
+			if ( $context->is_disabled( $property_key ) ) {
+				unset( $data[ $property_key ] );
+			}
+		}
 
 		return $data;
 	}

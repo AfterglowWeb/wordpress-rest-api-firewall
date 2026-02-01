@@ -1,40 +1,38 @@
 import { useState, useEffect, useCallback } from '@wordpress/element';
+import { useLicense } from '../contexts/LicenseContext';
 
 export default function useSettingsForm( {
 	adminData,
 	updateAdminData,
 	action,
 } ) {
-	const [ adminOptions, setAdminOptions ] = useState( {} );
-	const [ form, setForm ] = useState( {
-		rest_firewall_use_rest_models_enabled: false,
-		rest_firewall_relative_url_enabled: false,
-		rest_firewall_embed_featured_attachment_enabled: false,
-		rest_firewall_embed_post_attachments_enabled: false,
-		rest_firewall_relative_attachment_url_enabled: false,
-		rest_firewall_embed_terms_enabled: false,
-		rest_firewall_embed_author_enabled: false,
-		rest_firewall_with_acf_enabled: false,
-		rest_firewall_json_acf_fields_enabled: false,
 
+	const [ adminOptions, setAdminOptions ] = useState( {} );
+	const { hasValidLicense } = useLicense();
+	const [ form, setForm ] = useState( {
+		/** Free core options */
+		rest_models_enabled: false,
+		rest_models_embed_featured_attachment_enabled: false,
+		rest_models_embed_post_attachments_enabled: false,
+		rest_models_resolve_rendered_props: false,
+		rest_models_embed_terms_enabled: false,
+		rest_models_embed_author_enabled: false,
+		rest_models_with_acf_enabled: false,
+		rest_firewall_remove_links_prop: false,
+		rest_models_remove_empty_props: false,
 		rest_api_posts_per_page: 100,
 		rest_api_attachments_per_page: 100,
-		rest_api_restrict_post_types_enabled: false,
-		rest_api_allowed_post_types: [],
-
 		application_host: '',
 		application_webhook_endpoint: '',
-
-		core_redirect_templates_enabled:false,
-		core_redirect_templates_preset_url:'',
-		core_redirect_templates_free_url_enabled: false,
-		core_redirect_templates_free_url: '',
-		core_disable_gutenberg_enabled: false,
-		core_disable_comments_enabled: false,
-		core_remove_empty_p_tags_enabled: false,
-		core_max_upload_weight: 1024,
-		core_max_upload_weight_enabled: false,
-		core_svg_webp_support_enabled: false,
+		theme_redirect_templates_enabled: false,
+		theme_redirect_templates_preset_url: '',
+		theme_disable_gutenberg: false,
+		theme_disable_comments: false,
+		theme_remove_empty_p_tags_enabled: false,
+		theme_max_upload_weight: 1024,
+		theme_max_upload_weight_enabled: false,
+		theme_svg_webp_support_enabled: false,
+		theme_json_acf_fields_enabled: false,
 	} );
 
 	useEffect( () => {
@@ -49,82 +47,95 @@ export default function useSettingsForm( {
 			return;
 		}
 
-		setForm( {
-			rest_firewall_use_rest_models_enabled: Boolean(
-				adminOptions.rest_firewall_use_rest_models_enabled
-			),
-			rest_firewall_embed_featured_attachment_enabled: Boolean(
-				adminOptions.rest_firewall_embed_featured_attachment_enabled
-			),
-			rest_firewall_embed_author_enabled: Boolean(
-				adminOptions.rest_firewall_embed_author_enabled
-			),
-			rest_firewall_relative_url_enabled: Boolean(
-				adminOptions.rest_firewall_relative_url_enabled
-			),
-			rest_firewall_embed_post_attachments_enabled: Boolean(
-				adminOptions.rest_firewall_embed_post_attachments_enabled
-			),
-			rest_firewall_relative_attachment_url_enabled: Boolean(
-				adminOptions.rest_firewall_relative_attachment_url_enabled
-			),
-			rest_firewall_embed_terms_enabled: Boolean(
-				adminOptions.rest_firewall_embed_terms_enabled
-			),
-			rest_firewall_with_acf_enabled: Boolean(
-				adminOptions.rest_firewall_with_acf_enabled
-			),
-			rest_firewall_json_acf_fields_enabled:Boolean(
-				adminOptions.rest_firewall_json_acf_fields_enabled
-			), 
+		const baseForm = {
 
-			rest_api_allowed_post_types: Array.isArray(
-				adminOptions.rest_api_allowed_post_types
-			)
-				? adminOptions.rest_api_allowed_post_types
-				: [],
+			rest_models_enabled: Boolean(
+				adminOptions.rest_models_enabled
+			),
+			rest_models_embed_featured_attachment_enabled: Boolean(
+				adminOptions.rest_models_embed_featured_attachment_enabled
+			),
+			rest_models_embed_author_enabled: Boolean(
+				adminOptions.rest_models_embed_author_enabled
+			),
+			rest_models_embed_post_attachments_enabled: Boolean(
+				adminOptions.rest_models_embed_post_attachments_enabled
+			),
+			rest_models_resolve_rendered_props: Boolean(
+				adminOptions.rest_models_resolve_rendered_props
+			),
+			rest_models_embed_terms_enabled: Boolean(
+				adminOptions.rest_models_embed_terms_enabled
+			),
+			rest_models_with_acf_enabled: Boolean(
+				adminOptions.rest_models_with_acf_enabled
+			),
+			rest_models_remove_empty_props: Boolean(
+				adminOptions.rest_models_remove_empty_props
+			),
+			rest_firewall_remove_links_prop: Boolean(
+				adminOptions.rest_firewall_remove_links_prop
+			),
 			rest_api_posts_per_page: Number(
 				adminOptions.rest_api_posts_per_page ?? 100
 			),
 			rest_api_attachments_per_page: Number(
 				adminOptions.rest_api_attachments_per_page ?? 100
 			),
-			rest_api_restrict_post_types_enabled: Boolean(
-				adminOptions.rest_api_restrict_post_types_enabled
-			),
 
 			application_host: adminOptions.application_host ?? '',
 			application_webhook_endpoint: adminOptions.application_webhook_endpoint ?? '',
 
-			core_redirect_templates_enabled: Boolean(
-				adminOptions.core_redirect_templates_enabled
+			theme_redirect_templates_enabled: Boolean(
+				adminOptions.theme_redirect_templates_enabled
 			),
-			core_redirect_templates_preset_url: adminOptions.core_redirect_templates_preset_url ?? '',
-			core_redirect_templates_free_url_enabled: Boolean(
-				adminOptions.core_redirect_templates_free_url_enabled
-			),
-			core_redirect_templates_free_url: adminOptions.core_redirect_templates_free_url ?? '',
+			theme_redirect_templates_preset_url: adminOptions.theme_redirect_templates_preset_url ?? '',
 
-			core_disable_gutenberg_enabled: Boolean(
-				adminOptions.core_disable_gutenberg_enabled
+			theme_disable_gutenberg: Boolean(
+				adminOptions.theme_disable_gutenberg
 			),
-			core_disable_comments_enabled: Boolean(
-				adminOptions.core_disable_comments_enabled
+			theme_disable_comments: Boolean(
+				adminOptions.theme_disable_comments
 			),
-			core_remove_empty_p_tags_enabled: Boolean(
-				adminOptions.core_remove_empty_p_tags_enabled
+			theme_remove_empty_p_tags_enabled: Boolean(
+				adminOptions.theme_remove_empty_p_tags_enabled
 			),
-			core_max_upload_weight: Number(
-				adminOptions.core_max_upload_weight ?? 1024
+			theme_max_upload_weight: Number(
+				adminOptions.theme_max_upload_weight ?? 1024
 			),
-			core_max_upload_weight_enabled: Boolean(
-				adminOptions.core_max_upload_weight_enabled
+			theme_max_upload_weight_enabled: Boolean(
+				adminOptions.theme_max_upload_weight_enabled
 			),
-			core_svg_webp_support_enabled: Boolean( 
-				adminOptions.core_svg_webp_support_enabled
-			)
-		} );
-	}, [ adminOptions ] );
+			theme_svg_webp_support_enabled: Boolean(
+				adminOptions.theme_svg_webp_support_enabled
+			),
+			theme_json_acf_fields_enabled: Boolean(
+				adminOptions.theme_json_acf_fields_enabled
+			),
+		};
+
+		if ( hasValidLicense ) {
+			baseForm.rest_models_relative_url_enabled = Boolean(
+				adminOptions.rest_models_relative_url_enabled ?? false
+			);
+			baseForm.rest_models_relative_attachment_url_enabled = Boolean(
+				adminOptions.rest_models_relative_attachment_url_enabled ?? false
+			);
+			baseForm.rest_api_restrict_post_types_enabled = Boolean(
+				adminOptions.rest_api_restrict_post_types_enabled ?? false
+			);
+			baseForm.rest_api_allowed_post_types = Array.isArray(
+				adminOptions.rest_api_allowed_post_types
+			) ? adminOptions.rest_api_allowed_post_types : [];
+			baseForm.theme_redirect_templates_free_url_enabled = Boolean(
+				adminOptions.theme_redirect_templates_free_url_enabled ?? false
+			);
+			baseForm.theme_redirect_templates_free_url =
+				adminOptions.theme_redirect_templates_free_url ?? '';
+		}
+
+		setForm( baseForm );
+	}, [ adminOptions, hasValidLicense ] );
 
 	const setField = useCallback( ( eventOrName, maybeValue ) => {
 		if ( eventOrName?.target ) {
@@ -160,55 +171,58 @@ export default function useSettingsForm( {
 	}, [] );
 
 	const mapFormToAdminOptions = useCallback(
-		( formData ) => ( {
-			rest_firewall_use_rest_models_enabled: 
-				formData.rest_firewall_use_rest_models_enabled,
-			rest_firewall_embed_featured_attachment_enabled:
-				formData.rest_firewall_embed_featured_attachment_enabled,
-			rest_firewall_relative_url_enabled: 
-				formData.rest_firewall_relative_url_enabled,
-			rest_firewall_embed_post_attachments_enabled:
-				formData.rest_firewall_embed_post_attachments_enabled,
-			rest_firewall_relative_attachment_url_enabled:
-				formData.rest_firewall_relative_attachment_url_enabled,
-			rest_firewall_embed_terms_enabled: 
-				formData.rest_firewall_embed_terms_enabled,
-			rest_firewall_embed_author_enabled: 
-				formData.rest_firewall_embed_author_enabled,
-			rest_firewall_with_acf_enabled: 
-				formData.rest_firewall_with_acf_enabled,
-			rest_firewall_json_acf_fields_enabled: 
-				formData.rest_firewall_json_acf_fields_enabled,
+		( formData ) => {
 
-			rest_api_allowed_post_types: formData.rest_api_allowed_post_types,
-			rest_api_restrict_post_types_enabled:
-				formData.rest_api_restrict_post_types_enabled,
-			rest_api_posts_per_page: formData.rest_api_posts_per_page,
-			rest_api_attachments_per_page: formData.rest_api_attachments_per_page,
+			const mapped = {
+				rest_models_enabled: formData.rest_models_enabled,
+				rest_models_embed_featured_attachment_enabled:
+					formData.rest_models_embed_featured_attachment_enabled,
+				rest_models_embed_post_attachments_enabled:
+					formData.rest_models_embed_post_attachments_enabled,
+				rest_models_resolve_rendered_props:
+					formData.rest_models_resolve_rendered_props,
+				rest_models_embed_terms_enabled: formData.rest_models_embed_terms_enabled,
+				rest_models_embed_author_enabled: formData.rest_models_embed_author_enabled,
+				rest_models_with_acf_enabled: formData.rest_models_with_acf_enabled,
+				rest_models_remove_empty_props: formData.rest_models_remove_empty_props,
+				rest_firewall_remove_links_prop: formData.rest_firewall_remove_links_prop,
 
-			application_host: formData.application_host,
-			application_webhook_endpoint: formData.application_webhook_endpoint,
+				rest_api_posts_per_page: formData.rest_api_posts_per_page,
+				rest_api_attachments_per_page: formData.rest_api_attachments_per_page,
 
-			core_redirect_templates_enabled: 
-				formData.core_redirect_templates_enabled,
-			core_redirect_templates_preset_url: formData.core_redirect_templates_preset_url,
-			core_redirect_templates_free_url_enabled: 
-				formData.core_redirect_templates_free_url_enabled,
-			core_redirect_templates_free_url: formData.core_redirect_templates_free_url,
+				application_host: formData.application_host,
+				application_webhook_endpoint: formData.application_webhook_endpoint,
 
-			core_svg_webp_support_enabled: formData.core_svg_webp_support_enabled,
-			core_max_upload_weight: formData.core_max_upload_weight,
-			core_max_upload_weight_enabled: 
-				formData.core_max_upload_weight_enabled,
+				theme_redirect_templates_enabled: formData.theme_redirect_templates_enabled,
+				theme_redirect_templates_preset_url: formData.theme_redirect_templates_preset_url,
 
-			core_disable_gutenberg_enabled: 
-				formData.core_disable_gutenberg_enabled,
-			core_disable_comments_enabled: 
-				formData.core_disable_comments_enabled,
-			core_remove_empty_p_tags_enabled:
-				formData.core_remove_empty_p_tags_enabled,
-		} ),
-		[]
+				theme_svg_webp_support_enabled: formData.theme_svg_webp_support_enabled,
+				theme_max_upload_weight: formData.theme_max_upload_weight,
+				theme_max_upload_weight_enabled: formData.theme_max_upload_weight_enabled,
+
+				theme_disable_gutenberg: formData.theme_disable_gutenberg,
+				theme_disable_comments: formData.theme_disable_comments,
+				theme_remove_empty_p_tags_enabled: formData.theme_remove_empty_p_tags_enabled,
+				theme_json_acf_fields_enabled: formData.theme_json_acf_fields_enabled,
+			};
+
+			if ( hasValidLicense ) {
+				mapped.rest_models_relative_url_enabled =
+					formData.rest_models_relative_url_enabled;
+				mapped.rest_models_relative_attachment_url_enabled =
+					formData.rest_models_relative_attachment_url_enabled;
+				mapped.rest_api_restrict_post_types_enabled =
+					formData.rest_api_restrict_post_types_enabled;
+				mapped.rest_api_allowed_post_types = formData.rest_api_allowed_post_types;
+				mapped.theme_redirect_templates_free_url_enabled =
+					formData.theme_redirect_templates_free_url_enabled;
+				mapped.theme_redirect_templates_free_url =
+					formData.theme_redirect_templates_free_url;
+			}
+
+			return mapped;
+		},
+		[ hasValidLicense ]
 	);
 
 	const submit = useCallback( async () => {

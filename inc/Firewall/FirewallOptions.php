@@ -3,8 +3,9 @@ namespace cmk\RestApiFirewall\Firewall;
 
 defined( 'ABSPATH' ) || exit;
 
+use cmk\RestApiFirewall\Core\MultiSite;
 use cmk\RestApiFirewall\Core\Permissions;
-use cmk\RestApiFirewall\Firewall\Auth;
+use cmk\RestApiFirewall\Firewall\WordpressAuth;
 
 
 class FirewallOptions {
@@ -30,7 +31,7 @@ class FirewallOptions {
 			'rest_firewall_options_updated',
 			function ( array $new_user, array $old_user ) {
 				if ( ( $new_user['user_id'] ?? 0 ) !== ( $old_user['user_id'] ?? 0 ) ) {
-					Auth::sync_rest_api_user( $new_user['user_id'], $old_user['user_id'] );
+					WordpressAuth::sync_rest_api_user( $new_user['user_id'], $old_user['user_id'] );
 				}
 			},
 			10,
@@ -42,22 +43,27 @@ class FirewallOptions {
 		return array(
 			'enforce_auth'       => array(
 				'default_value'     => false,
+				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 			),
 			'enforce_rate_limit' => array(
 				'default_value'     => false,
+				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 			),
 			'user_id'            => array(
 				'default_value'     => 0,
+				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
 			),
 			'rate_limit'         => array(
 				'default_value'     => 30,
+				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
 			),
 			'rate_limit_time'    => array(
 				'default_value'     => 60,
+				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
 			),
 			'policy'             => array(
@@ -65,7 +71,13 @@ class FirewallOptions {
 					'nodes'  => array(),
 					'routes' => array(),
 				),
+				'type'              => 'array',
 				'sanitize_callback' => '',
+			),
+			'hide_user_routes'   => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
 			),
 		);
 	}
@@ -84,31 +96,31 @@ class FirewallOptions {
 		}
 
 		$options = array();
-
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
 		if ( isset( $_POST['enforce_auth'] ) ) {
 			$options['enforce_auth'] = rest_sanitize_boolean( $_POST['enforce_auth'] );
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
 		if ( isset( $_POST['enforce_rate_limit'] ) ) {
 			$options['enforce_rate_limit'] = rest_sanitize_boolean( $_POST['enforce_rate_limit'] );
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
 		if ( isset( $_POST['user_id'] ) ) {
 			$options['user_id'] = absint( $_POST['user_id'] );
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
 		if ( isset( $_POST['rate_limit'] ) ) {
 			$options['rate_limit'] = absint( $_POST['rate_limit'] );
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
 		if ( isset( $_POST['rate_limit_time'] ) ) {
 			$options['rate_limit_time'] = absint( $_POST['rate_limit_time'] );
 		}
+
+		if ( isset( $_POST['hide_user_routes'] ) ) {
+			$options['hide_user_routes'] = rest_sanitize_boolean( $_POST['hide_user_routes'] );
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		$updated = self::update_options( $options );
 
@@ -137,7 +149,7 @@ class FirewallOptions {
 
 		$sanitized = self::sanitize_options( $merged );
 
-		update_option( self::OPTION_KEY, $sanitized, false );
+		MultiSite::multisite_update_option( self::OPTION_KEY, $sanitized );
 		self::$cache = $sanitized;
 
 		do_action( 'rest_firewall_options_updated', $sanitized, $current );
@@ -146,7 +158,17 @@ class FirewallOptions {
 	}
 
 	public static function update_option( string $key, $value ): array {
-		return self::update_options( array( $key => $value ) );
+		$sanitized = self::sanitize_option( $key, $value );
+
+		$current = self::get_options( );
+		$current[ $key ] = $sanitized;
+
+		MultiSite::multisite_update_option( self::OPTION_KEY, $current );
+		self::$cache = $current;
+
+		do_action( 'rest_firewall_option_updated', $key, $sanitized, $current );
+
+		return $current;
 	}
 
 	public static function flush(): void {
@@ -197,10 +219,10 @@ class FirewallOptions {
 		}
 
 		switch ( $type ) {
-			case 'bool':
+			case 'boolean':
 				return (bool) call_user_func( $callback, $option_value );
 
-			case 'int':
+			case 'integer':
 				return (int) call_user_func( $callback, $option_value );
 
 			case 'array':

@@ -7,15 +7,15 @@ import Stack from '@mui/material/Stack';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 
 import ConfirmDialog from './components/ConfirmDialog';
 import Webhook from './components/Webhook';
-import RestContentSettings from './components/RestContentSettings';
+
 import ThemeSettings from './components/ThemeSettings';
+import Models from './components/Models/Models';
 import Firewall from './components/Firewall/Firewall';
 
 function TabPanel({ value, index, children }) {
@@ -48,7 +48,15 @@ function AppContent() {
 
 	const handleTabChange = (_, newValue) => {
 		setTabIndex(newValue);
+		window.localStorage.setItem('rest_api_firewall_last_tab', newValue );
 	};
+
+	useEffect( () => {
+		const lastTab = window.localStorage.getItem('rest_api_firewall_last_tab') || null;
+		if ( lastTab ) {
+			setTabIndex( Number( lastTab ) );
+		}
+	}, [setTabIndex] );
 
 	const minDelay = ( ms ) => new Promise( ( resolve ) => setTimeout( resolve, ms ) );
 
@@ -111,10 +119,10 @@ function AppContent() {
 					scrollButtons="auto"
 					aria-label="REST API settings tabs"
 				>
-					<Tab label={__('REST API Firewall', 'rest-api-firewall')} />
-					<Tab label={__('REST API Content', 'rest-api-firewall')} />
-					<Tab label={__('Application Webhook', 'rest-api-firewall')} />
-					<Tab label={__('Theme Options', 'rest-api-firewall')} />
+					<Tab label={__('Firewall', 'rest-api-firewall')} />
+					<Tab label={__('Schemas', 'rest-api-firewall')} />
+					<Tab label={__('Webhook', 'rest-api-firewall')} />
+					<Tab label={__('Theme', 'rest-api-firewall')} />
 				</Tabs>
 
 				<TabPanel value={tabIndex} index={0}>
@@ -122,22 +130,28 @@ function AppContent() {
 				</TabPanel>
 
 				<TabPanel value={tabIndex} index={1}>
-					<Stack direction={"row"} justifyContent={"space-between"} gap={2} py={3} flexWrap={"wrap"} alignItems={"center"}>
+					<Stack 
+					direction={"row"} 
+					justifyContent={"space-between"} 
+					gap={2} py={3} 
+					flexWrap={"wrap"} alignItems={"center"}>
 						<Typography variant="h6" fontWeight={600}>
-							{ __( 'REST API Content', 'rest-api-firewall' ) }
+							{ __( 'Schemas Settings', 'rest-api-firewall' ) }
 						</Typography>
 						<Button
 							type="submit"
 							variant="contained"
 							>
-							{ __( 'Save Content Settings', 'rest-api-firewall' ) }
+							{ __( 'Save schemas Settings', 'rest-api-firewall' ) }
 						</Button>
 					</Stack>
-					<RestContentSettings
+
+					<Models
 						form={ form }
 						setField={ setField }
 						postTypes={ postTypes }
 					/>
+
 				</TabPanel>
 
 				<TabPanel value={tabIndex} index={2}>
@@ -146,9 +160,12 @@ function AppContent() {
 							{ __( 'Application Webhook', 'rest-api-firewall' ) }
 						</Typography>
 					</Stack>
+
 					<Webhook
-					form={ form }
-					setField={ setField } />
+						form={ form }
+						setField={ setField }
+					/>
+
 				</TabPanel>
 
 				<TabPanel value={tabIndex} index={3}>
@@ -169,12 +186,13 @@ function AppContent() {
 					</Stack>}
 
 					<ThemeSettings
-					form={ form }
-					setField={ setField }
-					setSlider={setSlider}
-					themeStatus={ themeStatus } 
-					setThemeStatus={ setThemeStatus }
+						form={ form }
+						setField={ setField }
+						setSlider={setSlider}
+						themeStatus={ themeStatus } 
+						setThemeStatus={ setThemeStatus }
 					/>
+
 				</TabPanel>
 
 

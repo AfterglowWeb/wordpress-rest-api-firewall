@@ -1,32 +1,21 @@
 <?php namespace cmk\RestApiFirewall\Models;
 
-use cmk\RestApiFirewall\Models\ModelContext;
+defined( 'ABSPATH' ) || exit;
+
+use cmk\RestApiFirewall\Controllers\ModelContext;
+use cmk\RestApiFirewall\Schemas\SchemaFilters;
 
 class AttachmentModel {
 
-	public function build( int $attachment_id, ModelContext $context, ?int $parent_id = null, string $field_key = '' ): array {
+	public function __invoke( int $attachment_id, ModelContext $context ): array {
 
-		$context = apply_filters(
-			'rest_firewall_model_attachment_context',
-			$context,
-			$attachment_id
-		);
+		$data = $this->build_attachment_data( $attachment_id, $context );
 
-		$data = $this->base_fields( $attachment_id, $context, $parent_id, $field_key );
+		if ( empty( $data ) ) {
+			return [];
+		}
 
-		$data = apply_filters(
-			'rest_firewall_model_attachment_build',
-			$data,
-			$attachment_id,
-			$context
-		);
-
-		$data = apply_filters(
-			'rest_firewall_model_attachment_fields',
-			$data,
-			$attachment_id,
-			$context
-		);
+		$data = $this->remove_disabled_properties( $data, $context );
 
 		return apply_filters(
 			'rest_firewall_model_attachment',
@@ -36,16 +25,19 @@ class AttachmentModel {
 		);
 	}
 
-	protected function base_fields( int $attachment_id, ModelContext $context, ?int $parent_id, string $field_key ): array {
+	/**
+	 * Build the attachment data array.
+	 */
+	protected function build_attachment_data( int $attachment_id, ModelContext $context ): array {
 
 		$meta = wp_get_attachment_metadata( $attachment_id );
 		$url  = wp_get_attachment_url( $attachment_id );
 
 		if ( ! $meta || ! $url ) {
-			return array();
+			return [];
 		}
 
-		$data = array(
+		$data = [
 			'id'        => $attachment_id,
 			'title'     => get_the_title( $attachment_id ),
 			'alt'       => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
@@ -53,16 +45,30 @@ class AttachmentModel {
 			'width'     => $meta['width'] ?? null,
 			'height'    => $meta['height'] ?? null,
 			'filesize'  => $meta['filesize'] ?? null,
-			'parent_id' => $parent_id,
-			'field_key' => $field_key,
-		);
+		];
 
+		// Handle src with relative URL option
 		$data['src'] = $context->relative_attachment_urls
-			? apply_filters( 'rest_firewall_model_relative_attachment_url', $meta['file'], $url )
+			? SchemaFilters::relative_attachment_url( $meta['file'] )
 			: $url;
 
+		// ACF fields
 		if ( $context->with_acf ) {
-			$data['acf'] = apply_filters( 'rest_firewall_model_attachment_acf', $attachment_id );
+			$data['acf'] = SchemaFilters::embed_acf_fields( $attachment_id );
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Remove disabled properties from the attachment data.
+	 */
+	protected function remove_disabled_properties( array $data, ModelContext $context ): array {
+
+		foreach ( array_keys( $data ) as $property_key ) {
+			if ( $context->is_disabled( $property_key ) ) {
+				unset( $data[ $property_key ] );
+			}
 		}
 
 		return $data;

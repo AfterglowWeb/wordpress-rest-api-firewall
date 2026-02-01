@@ -3,13 +3,13 @@
 defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Admin\AdminPage;
-use cmk\RestApiFirewall\Rest\Routes\Routes;
+use cmk\RestApiFirewall\Admin\Documentation;
+use cmk\RestApiFirewall\Routes\Routes;
 use cmk\RestApiFirewall\Firewall\FirewallOptions;
+use cmk\RestApiFirewall\Firewall\IpBlackList;
 use cmk\RestApiFirewall\Policy\PolicyRepository;
 use cmk\RestApiFirewall\Policy\TestPolicy;
-use cmk\RestApiFirewall\Firewall\IpFilter;
 use cmk\RestApiFirewall\Webhook\WebhookService;
-use cmk\RestApiFirewall\Models\Acf;
 
 final class Bootstrap {
 
@@ -23,47 +23,22 @@ final class Bootstrap {
 	}
 
 	private function __construct() {
+		
 		CoreOptions::get_instance();
-		Acf::get_instance();
-
-		if ( is_admin() ) {
-			AdminPage::get_instance();
-		}
-
+		FirewallOptions::get_instance();
+		IpBlackList::get_instance();
 		Routes::register();
 		PolicyRepository::get_instance();
-		FirewallOptions::get_instance();
-		TestPolicy::get_instance();
-
-		IpFilter::get_instance();
-		add_filter( 'rest_pre_dispatch', array( $this, 'check_ip_filter' ), 5, 1 );
-
 		WebhookService::get_instance();
-		DeployTheme::get_instance();
-	}
 
-	/**
-	 * Check IP filter before dispatching REST request.
-	 *
-	 * @param mixed            $result  Response to replace the requested version with.
-	 * @param \WP_REST_Server  $server  Server instance.
-	 * @param \WP_REST_Request $request Request used to generate the response.
-	 * @return mixed|\WP_Error
-	 */
-	public function check_ip_filter( $result ) {
-		if ( is_wp_error( $result ) ) {
-			return $result;
+		if ( is_admin() ) {
+			CoreOptionsService::get_instance();
+			AdminPage::get_instance();
+			Documentation::get_instance();
+			TestPolicy::get_instance();
+			DeployTheme::get_instance();
 		}
-
-		$ip_check = IpFilter::check_request();
-
-		if ( is_wp_error( $ip_check ) ) {
-			return $ip_check;
-		}
-
-		return $result;
 	}
-
 
 	public static function activate(): void {
 		$role = get_role( 'administrator' );
@@ -126,11 +101,7 @@ final class Bootstrap {
 		}
 
 		delete_option( 'rest_api_firewall_options' );
-		delete_option( 'blank_firewall_options' );
-		delete_option( 'blank_ip_filter' );
-
 		delete_transient( 'rest_api_firewall_routes_list' );
-		delete_transient( 'blank_rest_routes_list' );
 
 		global $wpdb;
 		$wpdb->query(

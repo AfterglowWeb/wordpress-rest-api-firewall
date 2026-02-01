@@ -3,7 +3,7 @@
 defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Core\Permissions;
-use cmk\RestApiFirewall\Rest\Routes\RoutesRepository;
+use cmk\RestApiFirewall\Routes\RoutesRepository;
 use cmk\RestApiFirewall\Firewall\FirewallOptions;
 
 class PolicyRepository {
@@ -53,17 +53,6 @@ class PolicyRepository {
 	public function ajax_save_routes_policy_tree(): void {
 		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
-		}
-
-		$pro_active = apply_filters( 'rest_api_firewall_pro_active', false );
-		if ( ! $pro_active ) {
-			wp_send_json_error(
-				array(
-					'message'      => __( 'Pro version required to edit route policies', 'rest-api-firewall' ),
-					'pro_required' => true,
-				),
-				403
-			);
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
@@ -246,7 +235,6 @@ class PolicyRepository {
 		FirewallOptions::flush();
 		delete_transient( 'rest_firewall_routes_list' );
 	}
-
 
 	/** Tree Model */
 	public static function build_policy_tree( array $flat_routes ): array {

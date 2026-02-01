@@ -17,7 +17,7 @@ class DisableComments {
 
 	private function __construct() {
 
-		if ( true === CoreOptions::read_option('core_disable_comments_enabled' ) ) {
+		if ( true === CoreOptions::read_option('theme_disable_comments' ) ) {
 			add_filter( 'comments_open', '__return_false', 20, 2 );
 			add_filter( 'pings_open', '__return_false', 20, 2 );
 			add_filter( 'comments_array', '__return_empty_array', 10, 2 );
@@ -27,7 +27,7 @@ class DisableComments {
 			'admin_init',
 			function (): void {
 
-				if ( empty( CoreOptions::read_option('core_disable_comments_enabled' ) ) ) {
+				if ( empty( CoreOptions::read_option('theme_disable_comments' ) ) ) {
 					return;
 				}
 
@@ -57,7 +57,7 @@ class DisableComments {
 			'init',
 			function (): void {
 
-				if ( empty( CoreOptions::read_option('core_disable_comments_enabled' ) ) ) {
+				if ( empty( CoreOptions::read_option('theme_disable_comments' ) ) ) {
 					return;
 				}
 

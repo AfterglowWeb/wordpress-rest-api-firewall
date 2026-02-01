@@ -7,6 +7,7 @@ import Header from './Header';
 import Footer from './Footer';
 import { AdminDataProvider } from './contexts/AdminDataContext';
 import { DocumentationProvider } from './contexts/DocumentationContext';
+import { LicenseProvider } from './contexts/LicenseContext';
 
 const App = lazy( () => import( './App' ) );
 
@@ -17,6 +18,7 @@ document.addEventListener( 'DOMContentLoaded', function () {
 		const root = createRoot( container );
 		root.render(
 			<AdminDataProvider adminData={ adminData }>
+				<LicenseProvider hasValidLicense={ adminData.has_valid_license }>
 				<DocumentationProvider>
 					<AppTheme>
 						<Suspense fallback={ <HeaderSkeleton /> }>
@@ -30,6 +32,7 @@ document.addEventListener( 'DOMContentLoaded', function () {
 						</Suspense>
 					</AppTheme>
 				</DocumentationProvider>
+				</LicenseProvider>
 			</AdminDataProvider>
 		);
 	}

@@ -2,67 +2,64 @@
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Models\ModelContext;
-use WP_Post;
+use cmk\RestApiFirewall\Controllers\ModelContext;
+use cmk\RestApiFirewall\Schemas\SchemaFilters;
 
 class MenuItemModel {
 
-	public function build( WP_Post $menu_item, ModelContext $context ): array {
+	public function __invoke( array $menu_item, ModelContext $context ): array {
 
-		$context = apply_filters(
-			'rest_firewall_model_menu_item_context',
-			$context,
-			$menu_item
-		);
-
-		$data = $this->base_fields( $menu_item, $context );
-
-		$data = apply_filters(
-			'rest_firewall_model_menu_item_build',
-			$data,
-			$menu_item,
-			$context
-		);
-
-		$data = apply_filters(
-			'rest_firewall_model_menu_item_fields',
-			$data,
-			$menu_item,
-			$context
-		);
+		$menu_item = $this->remove_disabled_properties( $menu_item, $context );
+		$menu_item = $this->apply_filters( $menu_item, $context );
 
 		return apply_filters(
 			'rest_firewall_model_menu_item',
-			$data,
 			$menu_item,
 			$context
 		);
 	}
 
-	protected function base_fields( WP_Post $menu_item, ModelContext $context ): array {
+	/**
+	 * Remove disabled properties from the menu item data.
+	 */
+	protected function remove_disabled_properties( array $menu_item, ModelContext $context ): array {
 
-		$menu_item = sanitize_post( $menu_item );
-
-		$data = array(
-			'id'          => (int) $menu_item->ID,
-			'title'       => (string) $menu_item->title,
-			'description' => (string) $menu_item->description,
-			'link'        => (string) get_the_permalink( $menu_item ),
-			'type'        => (string) $menu_item->type,
-			'parent'      => (int) $menu_item->menu_item_parent,
-			'classes'     => (array) $menu_item->classes,
-			'target'      => (string) $menu_item->target,
-			'attr_title'  => (string) $menu_item->attr_title,
-		);
-
-		if ( $context->with_acf ) {
-			$data['acf'] = apply_filters( 'rest_firewall_model_menu_item_acf', $menu_item->ID );
+		foreach ( array_keys( $menu_item ) as $property_key ) {
+			if ( $context->is_disabled( $property_key ) ) {
+				unset( $menu_item[ $property_key ] );
+			}
 		}
 
-		if ( $context->relative_urls ) {
-			$data['link'] = apply_filters( 'rest_firewall_relative_url_enabled', $data['link'] );
+		return $menu_item;
+	}
+
+	/**
+	 * Apply configured filters to the menu item data.
+	 */
+	protected function apply_filters( array $menu_item, ModelContext $context ): array {
+
+		// Relative URL filter
+		if ( isset( $menu_item['url'] ) && $context->should_relative_url( 'url' ) ) {
+			$menu_item['url'] = SchemaFilters::relative_url( $menu_item['url'] );
 		}
 
-		return $data;
+		// Rendered filters
+		if ( isset( $menu_item['title'] ) && $context->should_render( 'title' ) ) {
+			if ( is_array( $menu_item['title'] ) && isset( $menu_item['title']['rendered'] ) ) {
+				$menu_item['title'] = $menu_item['title']['rendered'];
+			}
+		}
+
+		// ACF fields
+		if ( $context->with_acf && isset( $menu_item['id'] ) ) {
+			$menu_item['acf'] = SchemaFilters::embed_acf_fields( $menu_item['id'] );
+		}
+
+		// Remove _links if configured
+		if ( $context->remove_links_prop && isset( $menu_item['_links'] ) ) {
+			unset( $menu_item['_links'] );
+		}
+
+		return $menu_item;
 	}
 }
