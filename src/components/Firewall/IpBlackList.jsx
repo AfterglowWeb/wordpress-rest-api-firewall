@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
+import { useLicense } from '../../contexts/LicenseContext';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -24,7 +25,8 @@ import Alert from '@mui/material/Alert';
 
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-import SecurityIcon from '@mui/icons-material/Security';
+
+import ProBadge from '../ProBadge';
 
 const IP_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
 const CIDR_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(?:[0-9]|[1-2][0-9]|3[0-2])$/;
@@ -52,6 +54,13 @@ export default function IpBlackList() {
 	const [ clientIp, setClientIp ] = useState( '' );
 	const [ newIp, setNewIp ] = useState( '' );
 	const [ ipError, setIpError ] = useState( '' );
+
+	const { hasValidLicense } = useLicense();
+	const isIpFilterDisabled = ! settings.enabled;
+	const isDisabled = ! hasValidLicense || isIpFilterDisabled;
+
+	const activeList = settings.mode === 'whitelist' ? settings.whitelist : settings.blacklist;
+	const activeListKey = settings.mode === 'whitelist' ? 'whitelist' : 'blacklist';
 
 	const loadSettings = useCallback( async () => {
 		setLoading( true );
@@ -210,9 +219,6 @@ export default function IpBlackList() {
 		}
 	};
 
-	const activeList = settings.mode === 'whitelist' ? settings.whitelist : settings.blacklist;
-	const activeListKey = settings.mode === 'whitelist' ? 'whitelist' : 'blacklist';
-
 	if ( loading ) {
 		return (
 			<Box sx={ { py: 2 } }>
@@ -254,7 +260,8 @@ export default function IpBlackList() {
 					</FormHelperText>
 				</FormControl>
 
-				<FormControl sx={ { minWidth: 200 } }>
+				<FormControl sx={ { minWidth: 200, position: 'relative' } } disabled={ isDisabled }>
+					<ProBadge position="bottom-right" />
 					<InputLabel id="ip-mode-label">{ __( 'Filter Mode', 'rest-api-firewall' ) }</InputLabel>
 					<Select
 						labelId="ip-mode-label"
@@ -262,34 +269,42 @@ export default function IpBlackList() {
 						onChange={ handleModeChange }
 						label={ __( 'Filter Mode', 'rest-api-firewall' ) }
 						size="small"
-						disabled={ ! settings.enabled }
 					>
 						<MenuItem value="blacklist">{ __( 'Blacklist', 'rest-api-firewall' ) }</MenuItem>
-						<MenuItem value="whitelist">{ __( 'Whitelist', 'rest-api-firewall' ) }</MenuItem>
+						{ hasValidLicense && <MenuItem value="whitelist">{ __( 'Whitelist', 'rest-api-firewall' ) }</MenuItem>}
 					</Select>
 					<FormHelperText>
 						{ settings.mode === 'blacklist'
-							? __( 'Block listed IPs, allow all others', 'rest-api-firewall' )
-							: __( 'Allow only listed IPs, block all others', 'rest-api-firewall' ) }
+							? __( 'Block listed IPs', 'rest-api-firewall' )
+							: __( 'Allow only listed IPs', 'rest-api-firewall' ) }
 					</FormHelperText>
 				</FormControl>
 			</Stack>
 
 			{ clientIp && clientIp !== '0.0.0.0' && (
-				<Alert severity="info" sx={ { alignItems: 'center' } }>
+				<Alert 
+				severity="info" 
+				sx={ { 
+					alignItems: 'center',
+					filter: activeListKey === 'blacklist' ? 'grayscale(1) opacity(0.6)' : 'none',
+				 } }
+				>
 					<Stack direction="row" spacing={ 1 } alignItems="center">
 						<Typography variant="body2">
 							{ __( 'Your current IP:', 'rest-api-firewall' ) }
 						</Typography>
 						<Chip label={ clientIp } size="small" variant="outlined" />
-						<Button size="small" onClick={ handleAddCurrentIp }>
-							{ __( 'Add to list', 'rest-api-firewall' ) }
+						<Button 
+						size="small" 
+						disabled={ activeListKey === 'blacklist' }
+						onClick={ handleAddCurrentIp }>
+							{ __( 'Add to white list', 'rest-api-firewall' ) }
 						</Button>
 					</Stack>
 				</Alert>
 			) }
 
-			{ settings.mode === 'whitelist' && settings.enabled && settings.whitelist.length === 0 && (
+			{ hasValidLicense && settings.mode === 'whitelist' && settings.enabled && settings.whitelist.length === 0 && (
 				<Alert severity="warning">
 					{ __( 'Warning: Whitelist mode is enabled but the list is empty. No IPs will be blocked until you add entries.', 'rest-api-firewall' ) }
 				</Alert>

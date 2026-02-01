@@ -19,7 +19,6 @@ import ThemeSettings from './components/ThemeSettings';
 import Models from './components/Models/Models';
 import Firewall from './components/Firewall/Firewall';
 
-// Option groups for partial saves
 const SCHEMA_OPTIONS = [
 	'rest_models_enabled',
 	'rest_models_embed_featured_attachment_enabled',
@@ -66,9 +65,7 @@ function TabPanel({ value, index, children }) {
 	);
 }
 
-/**
- * Pick only specified keys from form object.
- */
+
 function pickOptions( form, keys ) {
 	const result = {};
 	for ( const key of keys ) {
