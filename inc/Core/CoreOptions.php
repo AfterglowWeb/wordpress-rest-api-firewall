@@ -133,6 +133,14 @@ class CoreOptions {
 				'context'           => ['free', 'pro']
 			),
 
+			'application_webhook_auto_trigger_events'      => array(
+				'default_value'     => array(),
+				'type'              => 'array',
+				'sanitize_callback' => 'sanitize_key',
+				'rest_expose'       => false,
+				'context'           => ['free', 'pro']
+			),
+
 			// Theme.
 
 			'theme_redirect_templates_enabled'              => array(

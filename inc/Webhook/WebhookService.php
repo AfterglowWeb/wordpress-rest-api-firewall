@@ -4,6 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Core\Permissions;
 use cmk\RestApiFirewall\Core\CoreOptions;
+use cmk\RestApiFirewall\Webhook\WebhookClient;
 
 class WebhookService {
 
@@ -19,10 +20,22 @@ class WebhookService {
 	private function __construct() {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'wp_ajax_trigger_application_webhook', array( $this, 'ajax_trigger_application_webhook' ) );
+		add_action( 'wp_ajax_test_webhook_event', array( $this, 'ajax_test_webhook_event' ) );
 		add_action( 'wp_ajax_has_application_webhook_secret', array( $this, 'ajax_has_application_webhook_secret' ) );
 		add_action( 'wp_ajax_update_application_webhook_secret', array( $this, 'ajax_update_application_webhook_secret' ) );
 		add_action( 'wp_ajax_delete_application_webhook_secret', array( $this, 'ajax_delete_application_webhook_secret' ) );
 		add_action( 'admin_bar_menu', array( $this, 'add_admin_bar_button' ), 100 );
+	}
+
+	private function build_event_payload( string $event_key, array $event_config, array $args ): array {
+		return array(
+			'event'     => 'manual_trigger',
+			'group'     => $event_config['group'],
+			'timestamp' => current_time( 'c' ),
+		);
+
+		
+		return $payload;
 	}
 
 	public function ajax_trigger_application_webhook(): void {
@@ -38,7 +51,7 @@ class WebhookService {
 
 		$payload = (array) apply_filters(
 			'rest_firewall_application_webhook_body_payload',
-			array( 'action' => 'flush_cache' )
+			WebhookClient::build_event_payload( 'manual_trigger', array( 'group' => 'manual' ), array() ) 
 		);
 
 		$sanitized_payload = array();
@@ -67,6 +80,93 @@ class WebhookService {
 		}
 
 		wp_send_json_success( $response );
+	}
+
+	public function ajax_test_webhook_event(): void {
+
+		if ( false === Permissions::validate_ajax_crud_webhook() ) {
+			wp_send_json_error(
+				array(
+					'message' => esc_html__( 'Unauthorized', 'rest-api-firewall' ),
+				),
+				403
+			);
+		}
+
+		$event_key = isset( $_POST['event_key'] ) ? sanitize_key( $_POST['event_key'] ) : '';
+
+		if ( empty( $event_key ) ) {
+			wp_send_json_error(
+				array(
+					'message' => esc_html__( 'No event selected.', 'rest-api-firewall' ),
+				),
+				422
+			);
+		}
+
+		$available_events = WebhookAutoTrigger::get_available_events();
+
+		if ( ! isset( $available_events[ $event_key ] ) ) {
+			wp_send_json_error(
+				array(
+					'message' => esc_html__( 'Invalid event.', 'rest-api-firewall' ),
+				),
+				422
+			);
+		}
+
+		$event_config = $available_events[ $event_key ];
+		$payload      = WebhookClient::build_event_payload( $event_key, $event_config, array() );
+
+		$payload = (array) apply_filters(
+			'rest_firewall_application_webhook_body_payload',
+			$payload
+		);
+
+		$webhook_endpoint = CoreOptions::read_option( 'application_webhook_endpoint' );
+
+		if ( ! $webhook_endpoint ) {
+			wp_send_json_error(
+				array(
+					'message' => esc_html__( 'No webhook endpoint configured.', 'rest-api-firewall' ),
+				),
+				422
+			);
+		}
+
+		$start_time = microtime( true );
+
+		$response = WebhookClient::post(
+			$webhook_endpoint,
+			$payload
+		);
+
+		$duration = round( ( microtime( true ) - $start_time ) * 1000 );
+
+		if ( is_wp_error( $response ) ) {
+			/** @var \WP_Error $response */
+			wp_send_json_error(
+				array(
+					'message'  => $response->get_error_message(),
+					'payload'  => $payload,
+					'duration' => $duration,
+				)
+			);
+			return;
+		}
+
+		/** @var array $response */
+		$response_code = wp_remote_retrieve_response_code( $response );
+		$response_body = wp_remote_retrieve_body( $response );
+
+		wp_send_json_success(
+			array(
+				'payload'       => $payload,
+				'response_code' => $response_code,
+				'response_body' => $response_body,
+				'duration'      => $duration,
+			)
+		);
 	}
 
 	public function ajax_has_application_webhook_secret(): void {

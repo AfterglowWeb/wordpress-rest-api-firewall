@@ -55,6 +55,7 @@ const THEME_OPTIONS = [
 const WEBHOOK_OPTIONS = [
 	'application_host',
 	'application_webhook_endpoint',
+	'application_webhook_auto_trigger_events',
 ];
 
 function TabPanel({ value, index, children }) {
@@ -198,11 +199,12 @@ function AppContent() {
 						{ __( 'Application Webhook', 'rest-api-firewall' ) }
 					</Typography>
 					<Button
+						size="small"
 						variant="contained"
 						onClick={ handleSaveWebhook }
 						disabled={ saving }
 						>
-						{ __( 'Save Webhook Settings', 'rest-api-firewall' ) }
+						{ __( 'Save', 'rest-api-firewall' ) }
 					</Button>
 				</Stack>
 
