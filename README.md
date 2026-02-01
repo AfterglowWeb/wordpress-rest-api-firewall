@@ -84,11 +84,10 @@ Navigate to the `Theme Options` tab in the **REST API Firewall** admin page and 
 ## Free Features
 
 - **Global Authentication** - Enforce WordPress application password authentication on all REST routes
+- **Disable users endpoints** - Hide your users details
 - **Global Rate Limiting** - Protect against abuse with configurable request limits
 - **Auto-Blacklist IPs** - Automatically block IPs that exceed rate limits *(under development)*
-- **Content Filtering** - Remove WordPress domain from permalinks and media URLs
-- **Post Type Control** - Expose only selected post types via REST API
-- **Routes Explorer** - Visualize all REST API routes and understand what each plugin exposes
+- **Routes Explorer** - Visualize all REST API routes and understand what WordPress each plugin exposes
 - **Headless Theme** - Deploy a theme to disable frontend rendering entirely with additional options:
   - Redirect all templates to a page or custom URL
   - Disable Gutenberg site-wide
@@ -100,9 +99,12 @@ Navigate to the `Theme Options` tab in the **REST API Firewall** admin page and 
 
 ### Security & Access Control
 - **IP Filtering** - Whitelist and blacklist with CIDR support
+- **Domain Stripping** - Remove all WordPress domain references from API output
+- **Uploads Dir Stripping** - Make your media relative. Remove upload dir part from media urls
 - **Geo IP Blocking** - Automatically block or allow requests by country *(under development)*
 - **Per-Route Control** - Fine-grained authentication, rate limiting, and disabling per endpoint
 - **Cascade Rules** - Apply settings to child routes automatically
+- **Post Type Control** - Expose only selected post types via REST API
 
 ### Multi-Site & Multi-App
 - **Multiple Applications** - Manage separate API users and webhooks for different frontends *(under development)*
@@ -118,7 +120,7 @@ Navigate to the `Theme Options` tab in the **REST API Firewall** admin page and 
 - **Field Mapping** - Remap post fields to custom keys for cleaner API responses
 - **Domain Stripping** - Remove all WordPress domain references from API output
 
-## Roadmap
+## Roadmap Free Features
 
 | Version | Milestone |
 |---------|-----------|
@@ -127,10 +129,11 @@ Navigate to the `Theme Options` tab in the **REST API Firewall** admin page and 
 | 0.1.0-alpha.3 | Linting and testing (PHPUnit, Jest) |
 | 0.1.0-alpha.2 | Progressive migration from JavaScript to TypeScript |
 
-### Upcoming in Alpha
+### Upcoming in 0.1.0-alpha.1
 - UI: Wording and layout improvements
 - Auto-blacklist IPs on rate limit
-- UI: Test results display, model application results, submit buttons rationalization
+- Automation on Webhook
+- UI: Schemas filtering result preview, submit buttons rationalization
 
 ## Changelog
 

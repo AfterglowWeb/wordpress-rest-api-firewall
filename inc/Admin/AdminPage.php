@@ -7,6 +7,7 @@ use cmk\RestApiFirewall\Core\CoreOptions;
 use cmk\RestApiFirewall\Core\FileUtils;
 use cmk\RestApiFirewall\Core\Utils;
 use cmk\RestApiFirewall\Schemas\SchemaRepo;
+use cmk\RestApiFirewall\Webhook\WebhookAutoTrigger;
 
 class AdminPage {
 	protected static $instance = null;
@@ -93,6 +94,8 @@ class AdminPage {
 			'plugin_version'          => sanitize_text_field( REST_API_FIREWALL_VERSION ),
 			'plugin_uri'              => sanitize_url( $plugin_data['PluginURI'] ),
 			'home_url'                => get_home_url( '/' ),
+			'webhook_events'          => WebhookAutoTrigger::get_available_events(),
+			'webhook_event_groups'    => WebhookAutoTrigger::get_event_groups(),
 		);
 
 		if ( class_exists( '\cmk\RestApiFirewall\Theme\RedirectTemplates' ) ) {

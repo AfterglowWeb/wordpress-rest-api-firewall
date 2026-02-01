@@ -24,6 +24,7 @@ export default function useSettingsForm( {
 		rest_api_attachments_per_page: 100,
 		application_host: '',
 		application_webhook_endpoint: '',
+		application_webhook_auto_trigger_events: [],
 		theme_redirect_templates_enabled: false,
 		theme_redirect_templates_preset_url: '',
 		theme_disable_gutenberg: false,
@@ -85,6 +86,9 @@ export default function useSettingsForm( {
 
 			application_host: adminOptions.application_host ?? '',
 			application_webhook_endpoint: adminOptions.application_webhook_endpoint ?? '',
+			application_webhook_auto_trigger_events: Array.isArray(
+				adminOptions.application_webhook_auto_trigger_events
+			) ? adminOptions.application_webhook_auto_trigger_events : [],
 
 			theme_redirect_templates_enabled: Boolean(
 				adminOptions.theme_redirect_templates_enabled
@@ -192,6 +196,7 @@ export default function useSettingsForm( {
 
 				application_host: formData.application_host,
 				application_webhook_endpoint: formData.application_webhook_endpoint,
+				application_webhook_auto_trigger_events: formData.application_webhook_auto_trigger_events,
 
 				theme_redirect_templates_enabled: formData.theme_redirect_templates_enabled,
 				theme_redirect_templates_preset_url: formData.theme_redirect_templates_preset_url,

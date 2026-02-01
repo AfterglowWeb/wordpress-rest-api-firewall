@@ -41,4 +41,35 @@ final class WebhookClient {
 			)
 		);
 	}
+
+
+	public static function build_event_payload( string $event_key, array $event_config, array $args ): array {
+		$payload = array(
+			'event'     => $event_key,
+			'group'     => $event_config['group'],
+			'timestamp' => current_time( 'c' ),
+		);
+
+		switch ( $event_config['group'] ) {
+			case 'posts':
+			case 'attachments':
+				$post_id = $args[0] ?? 0;
+				if ( $post_id ) {
+					$post              = get_post( $post_id );
+					$payload['post_id']   = $post_id;
+					$payload['post_type'] = $post ? $post->post_type : '';
+					$payload['post_status'] = $post ? $post->post_status : '';
+				}
+				break;
+
+			case 'terms':
+				$term_id  = $args[0] ?? 0;
+				$taxonomy = $args[2] ?? '';
+				$payload['term_id']  = $term_id;
+				$payload['taxonomy'] = $taxonomy;
+				break;
+		}
+
+		return $payload;
+	}
 }
