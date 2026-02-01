@@ -233,7 +233,7 @@ export default function IpBlackList() {
 					onClick={ handleSave }
 					disabled={ saving }
 				>
-					{ __( 'Save IP Filter', 'rest-api-firewall' ) }
+					{ __( 'Save', 'rest-api-firewall' ) }
 				</Button>
 			</Stack>
 
