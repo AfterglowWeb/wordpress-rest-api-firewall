@@ -78,6 +78,7 @@ function NodeContent( {
 	node,
 	enforceAuth,
 	enforceRateLimit,
+	enforceDisabled,
 	globalRateLimit,
 	globalRateLimitTime,
 	proActive = true,
@@ -162,25 +163,43 @@ function NodeContent( {
 			case 'public':
 				return 'error';
 			case 'protected':
-				return 'success';
+				return 'warning';
 			case 'forbidden':
+				return 'success';
+			case 'authenticated':
 				return 'success';
 			case 'custom':
 				return 'info';
+			case 'unknown':
 			default:
 				return 'default';
 		}
 	};
 
+
 	const isAuthEnforced = enforceAuth || nodeSettings.protect.value;
 	const isRateLimitEnforced = enforceRateLimit || nodeSettings.rate_limit.value;
+	const isDisabled = enforceDisabled || nodeSettings.disabled.value;
 	const effectiveRateLimit = nodeSettings.rate_limit.value || globalRateLimit;
 	const effectiveRateLimitTime = nodeSettings.rate_limit_time.value || globalRateLimitTime;
+
+	const getEffectivePermission = ( type ) => {
+		return isDisabled ? 'forbidden' : (isAuthEnforced ? 'authenticated' : type);
+	}
 
 	return (
 		<TreeItemContent { ...props }>
 			<Stack direction="column" spacing={ 0.5 } sx={ { flex: 1, py: 1 } }>
-				<Stack direction="row" spacing={ 1 } alignItems="center">
+				
+				<Stack 
+				direction="row" 
+				spacing={ 1 } 
+				alignItems="center"
+				sx={{ 
+					cursor: isDisabled ? 'default' : 'pointer',
+					filter: isDisabled ? 'grayscale(1) opacity(0.6)' : 'none',
+				 }}
+				>
 					{ children }
 
 					{ node.isMethod && (
@@ -204,10 +223,10 @@ function NodeContent( {
 
 					{ node.permission && (
 						<Chip
-							label={ node.permission.type || 'unknown' }
+							label={ getEffectivePermission( node.permission.type ) || 'unknown' }
 							size="small"
 							variant="outlined"
-							color={ getPermissionColor( node.permission.type ) }
+							color={ getPermissionColor( getEffectivePermission( node.permission.type ) ) }
 						/>
 					) }
 
@@ -234,6 +253,7 @@ function NodeContent( {
 							</Tooltip>
 						</Stack>
 					) }
+					
 				</Stack>
 
 				{ node.permission?.callback && (
@@ -247,6 +267,18 @@ function NodeContent( {
 			</Stack>
 
 			<Stack direction="row" spacing={ 1 } alignItems="center" onClick={ handleSwitchClick }>
+				
+				<Tooltip
+					title={
+						! proActive
+							? __( 'Pro version required', 'rest-api-firewall' )
+							: enforceRateLimit
+							? __( 'Authentication enforced globally', 'rest-api-firewall' )
+							: isAuthEnforced
+							? `Authentication enforced`
+							: __( 'Enable authentication for this route', 'rest-api-firewall' )
+					}
+				>
 				<FormControlLabel
 					control={
 						<Switch
@@ -265,6 +297,7 @@ function NodeContent( {
 						</Typography>
 					}
 				/>
+				</Tooltip>
 
 				<Tooltip
 					title={
@@ -297,6 +330,15 @@ function NodeContent( {
 					/>
 				</Tooltip>
 
+				<Tooltip
+					title={
+						! proActive
+							? __( 'Pro version required', 'rest-api-firewall' )
+							: isDisabled
+							? __( 'This route is disabled', 'rest-api-firewall' )
+							: __( 'Disable this route', 'rest-api-firewall' )
+					}
+				>
 				<FormControlLabel
 					control={
 						<Switch
@@ -315,6 +357,7 @@ function NodeContent( {
 						</Typography>
 					}
 				/>
+				</Tooltip>
 
 				{ hasChildren && (
 					<Tooltip
@@ -378,6 +421,7 @@ const CustomTreeItem = forwardRef( function CustomTreeItem( props, ref ) {
 					node: node,
 					enforceAuth: props.enforceAuth,
 					enforceRateLimit: props.enforceRateLimit,
+					enforceDisabled: props.disabled,
 					globalRateLimit: props.globalRateLimit,
 					globalRateLimitTime: props.globalRateLimitTime,
 					proActive: props.proActive,
@@ -499,6 +543,7 @@ export default function RoutesTree( {
 	onSettingsChange,
 	enforceAuth = false,
 	enforceRateLimit = false,
+	enforceDisabled = false,
 	globalRateLimit = 30,
 	globalRateLimitTime = 60,
 	proActive = true,
@@ -558,6 +603,7 @@ export default function RoutesTree( {
 						getNodeById: getNodeById,
 						enforceAuth: enforceAuth,
 						enforceRateLimit: enforceRateLimit,
+						enforceDisabled: enforceDisabled,
 						globalRateLimit: globalRateLimit,
 						globalRateLimitTime: globalRateLimitTime,
 						proActive: proActive,
