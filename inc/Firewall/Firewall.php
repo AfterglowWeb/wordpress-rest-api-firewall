@@ -11,35 +11,35 @@ use WP_Error;
 
 class Firewall {
 
-    public static function result( $result ) {
-        if ( is_wp_error( $result ) ) {
-            return $result;
-        }
+	public static function result( $result ) {
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
 
-        $ip_check = self::ip_blacklist( $result );
-        if ( is_wp_error( $ip_check ) ) {
-            return $ip_check;
-        }
-    
-        $auth_check = self::wordpress_auth( $result );
-        if ( is_wp_error( $auth_check ) ) {
-            return $auth_check;
-        }
+		$ip_check = self::ip_blacklist( $result );
+		if ( is_wp_error( $ip_check ) ) {
+			return $ip_check;
+		}
 
-        return $result;
-    }
+		$auth_check = self::wordpress_auth( $result );
+		if ( is_wp_error( $auth_check ) ) {
+			return $auth_check;
+		}
 
-     public static function request( WP_REST_Request $request ) {
-       
-        $rate_check = self::rate_limit(  $request );
-        if ( is_wp_error( $rate_check ) ) {
-            return $rate_check;
-        }
-    
-        return $request;
-    }
+		return $result;
+	}
 
-    /**
+	public static function request( WP_REST_Request $request ) {
+
+		$rate_check = self::rate_limit( $request );
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+
+		return $request;
+	}
+
+	/**
 	 * IP filter
 	 *
 	 * @param mixed            $result  Response to replace the requested version with.
@@ -52,7 +52,7 @@ class Firewall {
 			return $result;
 		}
 
-        if ( false === FirewallOptions::get_option( 'enforce_ip_blacklist' ) ) {
+		if ( false === FirewallOptions::get_option( 'enforce_ip_blacklist' ) ) {
 			return $result;
 		}
 
@@ -65,7 +65,7 @@ class Firewall {
 		return $result;
 	}
 
-    /**
+	/**
 	 * WordPress Application Authentication
 	 *
 	 * @param mixed            $result  Response to replace the requested version with.
@@ -73,7 +73,7 @@ class Firewall {
 	 * @param \WP_REST_Request $request Request used to generate the response.
 	 * @return mixed|\WP_Error
 	 */
-    public static function wordpress_auth( $result ) {
+	public static function wordpress_auth( $result ) {
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
@@ -94,7 +94,7 @@ class Firewall {
 		return $result;
 	}
 
-    /**
+	/**
 	 * Check rate limit for a request.
 	 *
 	 * @param \WP_REST_Request $request    The REST request.
@@ -125,5 +125,4 @@ class Firewall {
 
 		return true;
 	}
-
 }

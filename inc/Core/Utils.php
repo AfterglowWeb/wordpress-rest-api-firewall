@@ -119,7 +119,6 @@ class Utils {
 		$data = json_decode( $json, $associative );
 
 		if ( JSON_ERROR_NONE !== json_last_error() ) {
-			error_log( esc_html( json_last_error_msg() ) );
 			return array();
 		}
 

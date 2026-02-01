@@ -11,9 +11,6 @@ use WP_REST_Attachments_Controller;
 
 class SchemaRepo {
 
-	/**
-	 * Get the appropriate REST controller for an object type.
-	 */
 	public static function get_rest_controller( string $object_type, string $subtype = '' ): ?object {
 
 		$object_type = sanitize_key( $object_type );
@@ -23,7 +20,7 @@ class SchemaRepo {
 		}
 
 		if ( 'term' === $object_type ) {
-			$taxonomy = $subtype ?: 'category';
+			$taxonomy = ! empty( $subtype ) ? $subtype : 'category';
 
 			if ( taxonomy_exists( $taxonomy ) ) {
 				return new WP_REST_Terms_Controller( $taxonomy );
@@ -53,94 +50,92 @@ class SchemaRepo {
 
 	public static function properties_filters(): array {
 
-		$taxonomy_options = Utils::list_taxonomies();
-		$formated_taxonomy_options = [];
-		
-		foreach($taxonomy_options as $taxonomy_option) {
-			$formated_taxonomy_options[ $taxonomy_option['value'] ] = [
-				'value' => false, 
-				'label' => $taxonomy_option['label']
-			];
+		$taxonomy_options          = Utils::list_taxonomies();
+		$formated_taxonomy_options = array();
+
+		foreach ( $taxonomy_options as $taxonomy_option ) {
+			$formated_taxonomy_options[ $taxonomy_option['value'] ] = array(
+				'value' => false,
+				'label' => $taxonomy_option['label'],
+			);
 		}
-		
-		return [
-			[
-				'key' => 'embed',
-				'label' => 'Embed',
-				'properties' => array_merge( 
-					[
-						'featured_media' => [
-							'value' => false, 
-							'label' => esc_html__('Featured Media', 'blank')
-						], 
-						'author' => [
-							'value' => false, 
-							'label' => esc_html__('Author', 'blank')
-						], 
-						'terms' => [
-							'value' => false, 
-							'label' => esc_html__('Terms', 'blank')
-						], 
-					],
-					 $formated_taxonomy_options
+
+		return array(
+			array(
+				'key'        => 'embed',
+				'label'      => 'Embed',
+				'properties' => array_merge(
+					array(
+						'featured_media' => array(
+							'value' => false,
+							'label' => esc_html__( 'Featured Media', 'blank' ),
+						),
+						'author'         => array(
+							'value' => false,
+							'label' => esc_html__( 'Author', 'blank' ),
+						),
+						'terms'          => array(
+							'value' => false,
+							'label' => esc_html__( 'Terms', 'blank' ),
+						),
+					),
+					$formated_taxonomy_options
 				),
-			],
-			[
-				'key' => 'rendered',
-				'label' => 'Rendered',
-				'properties' => [
-					'guid' => [
+			),
+			array(
+				'key'        => 'rendered',
+				'label'      => 'Rendered',
+				'properties' => array(
+					'guid'    => array(
 						'value' => false,
-						'label' => esc_html__('Guid', 'blank')
-					],
-					'title' => [
+						'label' => esc_html__( 'Guid', 'blank' ),
+					),
+					'title'   => array(
 						'value' => false,
-						'label' => esc_html__('Title', 'blank')
-					],
-					'excerpt' => [
+						'label' => esc_html__( 'Title', 'blank' ),
+					),
+					'excerpt' => array(
 						'value' => false,
-						'label' => esc_html__('Excerpt', 'blank')
-					],
-					'content' => [
+						'label' => esc_html__( 'Excerpt', 'blank' ),
+					),
+					'content' => array(
 						'value' => false,
-						'label' => esc_html__('Content', 'blank')
-					],
-				],
-			],
-			[
-				'key' => 'relative_url',
-				'label' => 'Relative url',
-				'properties' => [
-					'featured_media' => [
+						'label' => esc_html__( 'Content', 'blank' ),
+					),
+				),
+			),
+			array(
+				'key'        => 'relative_url',
+				'label'      => 'Relative url',
+				'properties' => array(
+					'featured_media' => array(
 						'value' => false,
-						'label' => esc_html__('Featured Media', 'blank')
-					],
-					'link' => [
+						'label' => esc_html__( 'Featured Media', 'blank' ),
+					),
+					'link'           => array(
 						'value' => false,
-						'label' => esc_html__('Link', 'blank')
-					],
-					'guid' => [
+						'label' => esc_html__( 'Link', 'blank' ),
+					),
+					'guid'           => array(
 						'value' => false,
-						'label' => esc_html__('Guid', 'blank')
-					],
-				],
-			]
-		];
-		
-	}	
+						'label' => esc_html__( 'Guid', 'blank' ),
+					),
+				),
+			),
+		);
+	}
 
 	public static function post_schemas(): array {
 
 		$post_types = Utils::list_post_types();
-		$result     = [];
-		
+		$result     = array();
 
 		foreach ( $post_types as $post_type ) {
-			$result[ $post_type['value'] ] = [
+			$result[ $post_type['value'] ] = array(
 				'label'    => $post_type['label'],
-				'settings' => [],
-				'props'    => self::post_schema( $post_type['value']),
-			];
+				'settings' => array(),
+				'props'    => self::post_schema( $post_type['value'] ),
+			);
 		}
 
 		return $result;
@@ -148,43 +143,41 @@ class SchemaRepo {
 
 	public static function post_schema( string $post_type ): array {
 
-
 			$controller = self::get_rest_controller( $post_type );
 			$filters    = self::properties_filters();
 
-			if ( ! $controller || ! method_exists( $controller, 'get_item_schema' ) ) {
-				return [];
-			}
+		if ( ! $controller || ! method_exists( $controller, 'get_item_schema' ) ) {
+			return array();
+		}
 
 			$schema = $controller->get_item_schema();
 
-			if ( empty( $schema['properties'] ) ) {
-				return [];
-			}
+		if ( empty( $schema['properties'] ) ) {
+			return array();
+		}
 
-			$properties = [];
+			$properties = array();
 
-			foreach ( $schema['properties'] as $property_key => $property ) {
+		foreach ( $schema['properties'] as $property_key => $property ) {
 
-				$property_filters = [];
+			$property_filters = array();
 
-				foreach ( $filters as $filter ) {
-					if ( in_array( $property_key, $filter['properties'], true ) ) {
-						$property_filters[] = $filter['key'];
-					}
+			foreach ( $filters as $filter ) {
+				if ( in_array( $property_key, $filter['properties'], true ) ) {
+					$property_filters[] = $filter['key'];
 				}
-
-				$properties[ $property_key ] = array_merge(
-					$property,
-					[
-						'settings' => [
-							'disable' => false,
-							'filters' => $property_filters,
-						],
-					]
-				);
 			}
-		
+
+			$properties[ $property_key ] = array_merge(
+				$property,
+				array(
+					'settings' => array(
+						'disable' => false,
+						'filters' => $property_filters,
+					),
+				)
+			);
+		}
 
 		return $properties;
 	}
@@ -192,15 +185,15 @@ class SchemaRepo {
 	public static function taxonomy_schemas(): array {
 
 		$taxonomies = Utils::list_taxonomies();
-		$result     = [];
+		$result     = array();
 		$filters    = self::properties_filters();
 
 		foreach ( $taxonomies as $taxonomy ) {
-			$result[ $taxonomy['value'] ] = [
+			$result[ $taxonomy['value'] ] = array(
 				'label'    => $taxonomy['label'],
-				'settings' => [],
+				'settings' => array(),
 				'props'    => self::taxonomy_schema( $taxonomy['value'], $filters ),
-			];
+			);
 		}
 
 		return $result;
@@ -211,20 +204,20 @@ class SchemaRepo {
 		$controller = self::get_rest_controller( 'term', $taxonomy );
 
 		if ( ! $controller || ! method_exists( $controller, 'get_item_schema' ) ) {
-			return [];
+			return array();
 		}
 
 		$schema = $controller->get_item_schema();
 
 		if ( empty( $schema['properties'] ) ) {
-			return [];
+			return array();
 		}
 
-		$properties = [];
+		$properties = array();
 
 		foreach ( $schema['properties'] as $property_key => $property ) {
 
-			$property_filters = [];
+			$property_filters = array();
 
 			foreach ( $filters as $filter ) {
 				if ( in_array( $property_key, array_keys( $filter['properties'] ), true ) ) {
@@ -234,17 +227,15 @@ class SchemaRepo {
 
 			$properties[ $property_key ] = array_merge(
 				$property,
-				[
-					'settings' => [
+				array(
+					'settings' => array(
 						'disable' => false,
 						'filters' => $property_filters,
-					],
-				]
+					),
+				)
 			);
 		}
 
 		return $properties;
 	}
-
 }
-

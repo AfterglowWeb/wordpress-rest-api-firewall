@@ -21,21 +21,17 @@ class AuthorModel {
 		);
 	}
 
-	/**
-	 * Build the author data array.
-	 */
 	protected function build_author_data( WP_User $user, ModelContext $context ): array {
 
-		$data = [
+		$data = array(
 			'id'           => $user->ID,
 			'nickname'     => $user->get( 'nickname' ),
 			'first_name'   => $user->get( 'first_name' ),
 			'last_name'    => $user->get( 'last_name' ),
 			'display_name' => $user->get( 'display_name' ),
 			'description'  => $user->get( 'description' ),
-		];
+		);
 
-		// ACF fields
 		if ( $context->with_acf ) {
 			$data['acf'] = SchemaFilters::embed_acf_fields( 'user_' . $user->ID );
 		}
@@ -43,9 +39,6 @@ class AuthorModel {
 		return $data;
 	}
 
-	/**
-	 * Remove disabled properties from the author data.
-	 */
 	protected function remove_disabled_properties( array $data, ModelContext $context ): array {
 
 		foreach ( array_keys( $data ) as $property_key ) {

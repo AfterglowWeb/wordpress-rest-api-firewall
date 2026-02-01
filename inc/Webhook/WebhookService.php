@@ -27,17 +27,6 @@ class WebhookService {
 		add_action( 'admin_bar_menu', array( $this, 'add_admin_bar_button' ), 100 );
 	}
 
-	private function build_event_payload( string $event_key, array $event_config, array $args ): array {
-		return array(
-			'event'     => 'manual_trigger',
-			'group'     => $event_config['group'],
-			'timestamp' => current_time( 'c' ),
-		);
-
-		
-		return $payload;
-	}
-
 	public function ajax_trigger_application_webhook(): void {
 
 		if ( false === Permissions::validate_ajax_crud_webhook() ) {
@@ -51,7 +40,7 @@ class WebhookService {
 
 		$payload = (array) apply_filters(
 			'rest_firewall_application_webhook_body_payload',
-			WebhookClient::build_event_payload( 'manual_trigger', array( 'group' => 'manual' ), array() ) 
+			WebhookClient::build_event_payload( 'manual_trigger', array( 'group' => 'manual' ), array() )
 		);
 
 		$sanitized_payload = array();
@@ -93,7 +82,8 @@ class WebhookService {
 			);
 		}
 
-		$event_key = isset( $_POST['event_key'] ) ? sanitize_key( $_POST['event_key'] ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::validate_ajax_crud_webhook()
+		$event_key = isset( $_POST['event_key'] ) ? sanitize_key( wp_unslash( $_POST['event_key'] ) ) : '';
 
 		if ( empty( $event_key ) ) {
 			wp_send_json_error(
@@ -144,7 +134,11 @@ class WebhookService {
 		$duration = round( ( microtime( true ) - $start_time ) * 1000 );
 
 		if ( is_wp_error( $response ) ) {
-			/** @var \WP_Error $response */
+			/**
+			 * Typecast to avoid error
+			 *
+			 * @var \WP_Error $response
+			 * */
 			wp_send_json_error(
 				array(
 					'message'  => $response->get_error_message(),
@@ -155,7 +149,11 @@ class WebhookService {
 			return;
 		}
 
-		/** @var array $response */
+		/**
+		 * Typecast to avoid error
+		 *
+		 * @var array $response
+		 * */
 		$response_code = wp_remote_retrieve_response_code( $response );
 		$response_body = wp_remote_retrieve_body( $response );
 

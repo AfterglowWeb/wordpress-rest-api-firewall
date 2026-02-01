@@ -17,7 +17,7 @@ class MultiSite {
 	}
 
 
-    public static function is_multisite_mode(): bool {
+	public static function is_multisite_mode(): bool {
 		return is_multisite()
 			&& apply_filters( 'rest_api_firewall_pro_multisite_enabled', false );
 	}
@@ -43,5 +43,4 @@ class MultiSite {
 
 		return update_option( $option_key, $value );
 	}
-
 }

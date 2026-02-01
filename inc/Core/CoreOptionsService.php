@@ -91,7 +91,4 @@ class CoreOptionsService {
 			wp_send_json_error( 'Unknown parameter', 422 );
 		}
 	}
-
-	
-
 }
