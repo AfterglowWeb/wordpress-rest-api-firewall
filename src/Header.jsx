@@ -41,8 +41,8 @@ const AppLogo = styled( Avatar )( () => ( {
 	height: 48,
 	background: 'linear-gradient(307deg, #ffb7c4 0%, #ff002e 100%)',
 	borderRadius: 12,
-	fontSize: '1rem',
-	fontWeight: 400,
+	fontSize: '1.4rem',
+	fontWeight: 500,
 	fontFamily: 'Helvetica, Arial, sans-serif',
 	color: 'white',
 	boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
@@ -94,7 +94,7 @@ export default function Header() {
 		<AppHeader>
 			<MainContainer>
 				<BrandSection>
-					<AppLogo>abc.</AppLogo>
+					<AppLogo>raf.</AppLogo>
 
 					<BrandInfo>
 						<AppName
