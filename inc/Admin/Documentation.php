@@ -30,7 +30,7 @@ class Documentation {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
-		$documentation_pages = Documentation::read_pages();
+		$documentation_pages = self::read_pages();
 		wp_send_json_success( $documentation_pages );
 	}
 

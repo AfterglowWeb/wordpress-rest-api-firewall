@@ -24,7 +24,7 @@ final class Bootstrap {
 	}
 
 	private function __construct() {
-		
+
 		CoreOptions::get_instance();
 		FirewallOptions::get_instance();
 		IpBlackList::get_instance();

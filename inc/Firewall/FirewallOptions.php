@@ -160,7 +160,7 @@ class FirewallOptions {
 	public static function update_option( string $key, $value ): array {
 		$sanitized = self::sanitize_option( $key, $value );
 
-		$current = self::get_options( );
+		$current         = self::get_options();
 		$current[ $key ] = $sanitized;
 
 		MultiSite::multisite_update_option( self::OPTION_KEY, $current );

@@ -15,40 +15,22 @@ class ModelContext {
 	public bool $resolve_rendered_props;
 	public bool $remove_links_prop;
 	public bool $remove_empty_props;
-	public array $disabled_properties = [];
+	public array $disabled_properties = array();
+	public array $property_filters    = array();
 
-	/**
-	 * Active filters per property, indexed by property key.
-	 * Structure: [ 'property_key' => [ 'filter_key' => bool, ... ], ... ]
-	 * Example: [ 'featured_media' => [ 'embed' => true, 'relative_url' => false ] ]
-	 */
-	public array $property_filters = [];
-
-	/**
-	 * Check if a filter is active for a given property.
-	 */
 	public function has_filter( string $property_key, string $filter_key ): bool {
 		return ! empty( $this->property_filters[ $property_key ][ $filter_key ] );
 	}
 
-	/**
-	 * Check if a property is disabled.
-	 */
 	public function is_disabled( string $property_key ): bool {
 		return in_array( $property_key, $this->disabled_properties, true );
 	}
 
-	/**
-	 * Check if embed filter is active for a property.
-	 * Falls back to global options if no fine-grained config.
-	 */
 	public function should_embed( string $property_key ): bool {
-		// Fine-grained config takes priority
 		if ( isset( $this->property_filters[ $property_key ]['embed'] ) ) {
 			return $this->property_filters[ $property_key ]['embed'];
 		}
 
-		// Fallback to global options
 		switch ( $property_key ) {
 			case 'featured_media':
 				return $this->embed_featured_attachment;
@@ -61,31 +43,19 @@ class ModelContext {
 		}
 	}
 
-	/**
-	 * Check if relative_url filter is active for a property.
-	 * Falls back to global options if no fine-grained config.
-	 */
 	public function should_relative_url( string $property_key ): bool {
-		// Fine-grained config takes priority
 		if ( isset( $this->property_filters[ $property_key ]['relative_url'] ) ) {
 			return $this->property_filters[ $property_key ]['relative_url'];
 		}
 
-		// Fallback to global option
 		return $this->relative_urls;
 	}
 
-	/**
-	 * Check if rendered filter is active for a property.
-	 * Falls back to global options if no fine-grained config.
-	 */
 	public function should_render( string $property_key ): bool {
-		// Fine-grained config takes priority
 		if ( isset( $this->property_filters[ $property_key ]['rendered'] ) ) {
 			return $this->property_filters[ $property_key ]['rendered'];
 		}
 
-		// Fallback to global option
 		return $this->resolve_rendered_props;
 	}
 
@@ -102,7 +72,7 @@ class ModelContext {
 		$context->resolve_rendered_props    = (bool) CoreOptions::read_option( 'rest_models_resolve_rendered_props' );
 		$context->remove_links_prop         = (bool) CoreOptions::read_option( 'rest_firewall_remove_links_prop' );
 		$context->remove_empty_props        = (bool) CoreOptions::read_option( 'rest_models_remove_empty_props' );
-		$context->disabled_properties       = [];
+		$context->disabled_properties       = array();
 
 		/**
 		 * Filter the model context.
@@ -114,5 +84,4 @@ class ModelContext {
 		 */
 		return apply_filters( 'rest_firewall_model_context', $context, $post_type, $application_id );
 	}
-
 }

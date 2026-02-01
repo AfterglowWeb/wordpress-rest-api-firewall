@@ -17,35 +17,40 @@ class Routes {
 
 		add_filter( 'rest_json_encode_options', fn() => JSON_UNESCAPED_SLASHES );
 
-		add_filter( 'application_password_is_api_request', '__return_true');
+		add_filter( 'application_password_is_api_request', '__return_true' );
 
 		add_filter( 'rest_authentication_errors', array( Firewall::class, 'result' ), 10, 3 );
 
 		add_filter( 'rest_pre_dispatch', array( UsersRouteHider::class, 'filter_users_route' ), 5, 3 );
 
-		add_filter( 'rest_pre_dispatch', function ( $result, $server, WP_REST_Request $request ) {
+		add_filter(
+			'rest_pre_dispatch',
+			function ( $result, $server, WP_REST_Request $request ) {
 
-			$firewall = Firewall::request( $request );
+				$firewall = Firewall::request( $request );
 
-			if ( is_wp_error( $firewall ) ) {
-				return $firewall;
-			}
+				if ( is_wp_error( $firewall ) ) {
+					return $firewall;
+				}
 
-			return $result;
+				return $result;
+			},
+			3,
+			10
+		);
 
-		}, 3, 10);
-
-		add_filter( 'rest_post_dispatch', array( new RoutesController(), 'resolve_rest_controller'), 10, 3 );
-
+		add_filter( 'rest_post_dispatch', array( new RoutesController(), 'resolve_rest_controller' ), 10, 3 );
 	}
 
 	private static function set_posts_per_page(): void {
 
-		$post_types = get_post_types([
-			'public'       => true,
-			'show_in_rest' => true
-		]);
-		
+		$post_types = get_post_types(
+			array(
+				'public'       => true,
+				'show_in_rest' => true,
+			)
+		);
+
 		foreach ( $post_types as $post_type ) {
 
 			add_filter(

@@ -2,8 +2,10 @@
 
 defined( 'ABSPATH' ) || exit;
 
+use cmk\RestApiFirewall\Core\CoreOptions;
 use cmk\RestApiFirewall\Core\Permissions;
 use WP_Error;
+use Exception;
 
 class IpBlackList {
 
@@ -65,7 +67,7 @@ class IpBlackList {
 
 		return array(
 			'enabled'   => (bool) ( $options['enabled'] ?? $defaults['enabled'] ),
-			'mode'      => 'blacklist' ,
+			'mode'      => 'blacklist',
 			'blacklist' => self::sanitize_ip_list( $options['blacklist'] ?? array() ),
 		);
 	}
@@ -127,11 +129,6 @@ class IpBlackList {
 		return false;
 	}
 
-	/**
-	 * Check if the current request IP should be blocked.
-	 *
-	 * @return true|\WP_Error True if allowed, WP_Error if blocked.
-	 */
 	public static function check_request() {
 		$options = self::get_options();
 
@@ -140,7 +137,11 @@ class IpBlackList {
 		}
 
 		$client_ip = self::get_client_ip();
-		
+
+		if ( self::has_pro_features() ) {
+			return self::check_with_pro_whitelist( $client_ip, $options );
+		}
+
 		$blacklist = $options['blacklist'];
 
 		if ( self::ip_in_list( $client_ip, $blacklist ) ) {
@@ -149,6 +150,25 @@ class IpBlackList {
 				__( 'Your IP address has been blocked.', 'rest-api-firewall' ),
 				array( 'status' => 403 )
 			);
+		}
+
+		return true;
+	}
+
+	private static function has_pro_features(): bool {
+		return CoreOptions::is_pro_active() &&
+		class_exists( 'cmk\RestApiFirewallPro\Firewall\IpFilter\IpFilter' )
+		&& method_exists( 'cmk\RestApiFirewallPro\Firewall\IpFilter\IpFilter', 'check_request_pro' );
+	}
+
+	private static function check_with_pro_whitelist( string $client_ip, array $options ) {
+
+		try {
+			$pro_class = 'cmk\RestApiFirewallPro\Firewall\IpFilter\IpFilter';
+			return call_user_func( array( $pro_class, 'check_request_pro' ), $client_ip, $options );
+		} catch ( Exception $e ) {
+			// Fallback silently to basic check.
+			return true;
 		}
 
 		return true;
@@ -261,12 +281,10 @@ class IpBlackList {
 			$options['enabled'] = rest_sanitize_boolean( wp_unslash( $_POST['enabled'] ) );
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
 		if ( isset( $_POST['mode'] ) ) {
 			$options['mode'] = sanitize_text_field( wp_unslash( $_POST['mode'] ) );
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
 		if ( isset( $_POST['blacklist'] ) ) {
 			$blacklist = sanitize_text_field( wp_unslash( $_POST['blacklist'] ) );
 			if ( is_string( $blacklist ) ) {
@@ -274,6 +292,7 @@ class IpBlackList {
 			}
 			$options['blacklist'] = is_array( $blacklist ) ? $blacklist : array();
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		$updated = self::update_options( $options );
 

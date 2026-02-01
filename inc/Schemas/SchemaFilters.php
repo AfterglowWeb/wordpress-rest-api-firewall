@@ -14,15 +14,15 @@ class SchemaFilters {
 		return function_exists( 'get_fields' ) ? (array) get_fields( $object_id ) : array();
 	}
 
-	public static function resolve_rendered_props(array $post): array {
+	public static function resolve_rendered_props( array $post ): array {
 
-		foreach ($post as $key => $value) {
+		foreach ( $post as $key => $value ) {
 			if (
-				is_array($value)
-				&& isset($value['rendered'])
-				&& ( ! isset($value['protected']) || ! $value['protected'] )
+				is_array( $value )
+				&& isset( $value['rendered'] )
+				&& ( ! isset( $value['protected'] ) || ! $value['protected'] )
 			) {
-				$post[$key] = $value['rendered'];
+				$post[ $key ] = $value['rendered'];
 			}
 		}
 
@@ -65,6 +65,4 @@ class SchemaFilters {
 
 		return $dirname;
 	}
-
 }
-

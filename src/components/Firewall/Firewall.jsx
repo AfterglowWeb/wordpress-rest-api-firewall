@@ -32,6 +32,8 @@ const defaultFirewallOptions = {
 	user_id: 0,
 	rate_limit: 30,
 	rate_limit_time: 60,
+	rate_limit_release: 300,
+	rate_limit_blacklist: 5,
 };
 
 export default function Firewall() {
@@ -119,6 +121,8 @@ export default function Firewall() {
 					user_id: result.data.user_id ?? 0,
 					rate_limit: result.data.rate_limit ?? 30,
 					rate_limit_time: result.data.rate_limit_time ?? 60,
+					rate_limit_release: result.data.rate_limit_release ?? 300,
+					rate_limit_blacklist: result.data.rate_limit_blacklist ?? 5,
 				} );
 			}
 		} catch ( error ) {
@@ -172,6 +176,8 @@ export default function Firewall() {
 								user_id: String( firewallOptions.user_id ),
 								rate_limit: String( firewallOptions.rate_limit ),
 								rate_limit_time: String( firewallOptions.rate_limit_time ),
+								rate_limit_release: String( firewallOptions.rate_limit_release ),
+								rate_limit_blacklist: String( firewallOptions.rate_limit_blacklist ),
 							} ),
 						} ),
 						treeState
@@ -281,8 +287,7 @@ export default function Firewall() {
 										restApiUser?.admin_url ?
 										<>
 										<span>
-										{sprintf( __( 'Restrict authentication to %s.', 'rest-api-firewall'), restApiUser.label)}<br/>
-										{__( 'Ensure you safe saved the user application password.', 'rest-api-firewall')}
+										{sprintf( __( 'Restrict authentication to %s,', 'rest-api-firewall'), restApiUser.label)}
 										</span>
 										<Typography
 												component="a"
@@ -290,14 +295,14 @@ export default function Firewall() {
 												variant="body.2"
 												target="_blank"
 												sx={ {
-													display: 'flex',
+													display: 'inline-flex',
 													alignItems: 'center',
 													gap: '4px',
-													px: '14px',
+													px: '4px',
 													fontSize: '12px',
 												} }
 											>
-												{ __( 'User profile', 'rest-api-firewall' ) }
+												{ __( 'user profile', 'rest-api-firewall' ) }
 												<OpenInNewIcon fontSize="inherut" />
 											</Typography>
 										</>
@@ -364,6 +369,7 @@ export default function Firewall() {
 
 						<Stack direction={{xs:'column', lg:'row'}} my={3.6} gap={ 2 }  justifyContent={'space-between'}>
 							
+							<Stack direction={'column'} spacing={ 2 }>
 							<Stack direction={{xs:'column', sm:'row'}} gap={ 2 }>
 								<TextField
 									label={ __( 'Rate Limit Requests', 'rest-api-firewall' ) }
@@ -392,6 +398,35 @@ export default function Firewall() {
 								/>
 							</Stack>
 
+							<Stack direction={{xs:'column', sm:'row'}} gap={ 2 }>
+								<TextField
+									label={ __( 'Rate Limit Release (seconds)', 'rest-api-firewall' ) }
+									type="number"
+									helperText={ __(
+										'Seconds to wait before releasing rate limit',
+										'rest-api-firewall'
+									) }
+									name="rate_limit_release"
+									value={ firewallOptions.rate_limit_release }
+									onChange={ handleOptionChange }
+									fullWidth
+								/>
+
+								<TextField
+									label={ __( 'Rate Limit Blacklist', 'rest-api-firewall' ) }
+									type="number"
+									helperText={ __(
+										'After how many rate limit hits an IP is blacklisted',
+										'rest-api-firewall'
+									) }
+									name="rate_limit_blacklist"
+									value={ firewallOptions.rate_limit_blacklist }
+									onChange={ handleOptionChange }
+									fullWidth
+								/>
+							</Stack>
+							</Stack>
+
 							<FormControl sx={{minWidth:240}}>
 								<FormControlLabel
 									control={
@@ -413,6 +448,8 @@ export default function Firewall() {
 							</FormControl>
 
 						</Stack>
+
+
 					</Grid>
 					<Grid size={ {xs:12, xl:5} }>
 						<IpBlackList />
