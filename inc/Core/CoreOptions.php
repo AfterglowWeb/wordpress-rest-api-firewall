@@ -331,7 +331,7 @@ class CoreOptions {
 	 * @param array $options        Options to sanitize.
 	 * @param bool  $use_defaults   If true, merge with defaults. If false, merge with current saved options.
 	 */
-	private static function sanitize_options( array $options, bool $use_defaults = true ): array {
+	public static function sanitize_options( array $options, bool $use_defaults = true ): array {
 		$options_config = self::options_config();
 		$base_values    = $use_defaults ? self::default_options() : MultiSite::multisite_get_option( 'rest_api_firewall_options', self::default_options() );
 

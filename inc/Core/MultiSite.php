@@ -22,12 +22,18 @@ class MultiSite {
 			&& apply_filters( 'rest_api_firewall_pro_multisite_enabled', false );
 	}
 
-	public static function multisite_get_option( string $option_key, $default_value = array() ): array {
+	public static function multisite_get_option( string $option_key, array $default_value = array() ): array {
 		if ( self::is_multisite_mode() ) {
-			return get_site_option( $option_key, $default_value );
+			$value = get_site_option( $option_key, null );
+		} else {
+			$value = get_option( $option_key, null );
 		}
 
-		return get_option( $option_key, $default_value );
+		if ( ! is_array( $value ) ) {
+			return $default_value;
+		}
+
+		return $value;
 	}
 
 	public static function multisite_update_option( string $option_key, $value ): bool {

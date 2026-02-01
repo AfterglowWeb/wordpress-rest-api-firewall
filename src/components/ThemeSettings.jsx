@@ -1,5 +1,6 @@
 import { useTheme } from '@mui/material/styles';
 import { useAdminData } from '../contexts/AdminDataContext';
+import { useLicense } from '../contexts/LicenseContext';
 
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -22,7 +23,9 @@ export default function ThemeSettings( { form, setField, setSlider, themeStatus,
 	const { __ } = wp.i18n || {};
 	const theme = useTheme();
 	const { adminData } = useAdminData();
+	const { hasValidLicense } = useLicense();
 	const disabled = ! themeStatus?.active;
+	const isProDisabled = ! hasValidLicense || disabled;
 	const redirectPresetUrlOptions = adminData?.redirect_preset_url_options || [];
 
 	const valueLabelFormat = ( value ) =>
@@ -58,7 +61,7 @@ export default function ThemeSettings( { form, setField, setSlider, themeStatus,
 					<FormHelperText>{ __( 'Redirect theme templates to front page, blog page, login page or a custom URL', 'rest-api-firewall' ) }</FormHelperText>
 				</FormControl>
 
-				<FormControl disabled={disabled}>
+				<FormControl disabled={ isProDisabled }>
 					<FormControlLabel
 						control={
 							<Switch
@@ -67,7 +70,7 @@ export default function ThemeSettings( { form, setField, setSlider, themeStatus,
 								}
 								name="theme_redirect_templates_free_url_enabled"
 								onChange={ setField }
-								disabled={ disabled || ! form.theme_redirect_templates_enabled }
+								disabled={ isProDisabled || ! form.theme_redirect_templates_enabled }
 							/>
 						}
 						label={ __( 'Custom URL', 'rest-api-firewall' ) }
@@ -111,7 +114,7 @@ export default function ThemeSettings( { form, setField, setSlider, themeStatus,
 					name="theme_redirect_templates_free_url"
 					value={ form.theme_redirect_templates_free_url }
 					onChange={ setField }
-					disabled={ disabled || ! form.theme_redirect_templates_enabled || ! form.theme_redirect_templates_free_url_enabled }
+					disabled={ isProDisabled || ! form.theme_redirect_templates_enabled || ! form.theme_redirect_templates_free_url_enabled }
 					fullWidth
 				/>
 			</Stack>

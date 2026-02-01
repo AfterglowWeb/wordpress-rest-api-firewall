@@ -8,6 +8,35 @@ It integrates seamlessly with external applications built with Next.js, React, V
 
 > **Alpha Version**: This plugin is currently under extensive testing and significant changes may still occur in the code architecture. It is made public to gather feedback and contributions. You are free to test it, but we cannot guarantee its stability and cannot be held responsible for any data loss.
 
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/wordpress-rest-api-firewall-tab.webp" alt="Firewall Tab" />
+      <br /><strong>Firewall</strong><br />
+      <sub>Authentication, rate limiting, IP filtering</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/wordpress-rest-api-firewall-schemas-tab.webp" alt="Schemas Tab" />
+      <br /><strong>Schemas</strong><br />
+      <sub>Response filtering and data embedding</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/wordpress-rest-api-firewall-webhook-tab.webp" alt="Webhook Tab" />
+      <br /><strong>Webhook</strong><br />
+      <sub>Notify external apps on content changes</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/wordpress-rest-api-firewall-theme-tab.webp" alt="Theme Tab" />
+      <br /><strong>Theme</strong><br />
+      <sub>Headless theme deployment and options</sub>
+    </td>
+  </tr>
+</table>
+
 ## Requirements
 
 - WordPress 6.0+
