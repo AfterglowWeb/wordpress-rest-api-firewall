@@ -24,8 +24,7 @@ class WebhookAutoTrigger {
 
 	public static function get_available_events(): array {
 		$events = array(
-			
-			// Posts.
+
 			'save_post'          => array(
 				'label'       => __( 'Post saved', 'rest-api-firewall' ),
 				'description' => __( 'Triggered when a post is created or updated', 'rest-api-firewall' ),
@@ -36,22 +35,21 @@ class WebhookAutoTrigger {
 				'label'       => __( 'Post deleted', 'rest-api-firewall' ),
 				'description' => __( 'Triggered before a post is permanently deleted', 'rest-api-firewall' ),
 				'group'       => 'posts',
-				'context'     => array( 'free', 'pro' ),
+				'context'     => array( 'pro' ),
 			),
 			'trashed_post'       => array(
 				'label'       => __( 'Post trashed', 'rest-api-firewall' ),
 				'description' => __( 'Triggered when a post is moved to trash', 'rest-api-firewall' ),
 				'group'       => 'posts',
-				'context'     => array( 'free', 'pro' ),
+				'context'     => array( 'pro' ),
 			),
 			'untrashed_post'     => array(
 				'label'       => __( 'Post restored', 'rest-api-firewall' ),
 				'description' => __( 'Triggered when a post is restored from trash', 'rest-api-firewall' ),
 				'group'       => 'posts',
-				'context'     => array( 'free', 'pro' ),
+				'context'     => array( 'pro' ),
 			),
 
-			// Attachments.
 			'add_attachment'     => array(
 				'label'       => __( 'Attachment added', 'rest-api-firewall' ),
 				'description' => __( 'Triggered when a new attachment is uploaded', 'rest-api-firewall' ),
@@ -62,16 +60,15 @@ class WebhookAutoTrigger {
 				'label'       => __( 'Attachment edited', 'rest-api-firewall' ),
 				'description' => __( 'Triggered when an attachment is modified', 'rest-api-firewall' ),
 				'group'       => 'attachments',
-				'context'     => array( 'free', 'pro' ),
+				'context'     => array( 'pro' ),
 			),
 			'delete_attachment'  => array(
 				'label'       => __( 'Attachment deleted', 'rest-api-firewall' ),
 				'description' => __( 'Triggered when an attachment is deleted', 'rest-api-firewall' ),
 				'group'       => 'attachments',
-				'context'     => array( 'free', 'pro' ),
+				'context'     => array( 'pro' ),
 			),
 
-			// Terms.
 			'created_term'       => array(
 				'label'       => __( 'Term created', 'rest-api-firewall' ),
 				'description' => __( 'Triggered when a new term is created', 'rest-api-firewall' ),
@@ -82,13 +79,13 @@ class WebhookAutoTrigger {
 				'label'       => __( 'Term edited', 'rest-api-firewall' ),
 				'description' => __( 'Triggered when a term is modified', 'rest-api-firewall' ),
 				'group'       => 'terms',
-				'context'     => array( 'free', 'pro' ),
+				'context'     => array( 'pro' ),
 			),
 			'delete_term'        => array(
 				'label'       => __( 'Term deleted', 'rest-api-firewall' ),
 				'description' => __( 'Triggered when a term is deleted', 'rest-api-firewall' ),
 				'group'       => 'terms',
-				'context'     => array( 'free', 'pro' ),
+				'context'     => array( 'pro' ),
 			),
 		);
 
@@ -135,16 +132,16 @@ class WebhookAutoTrigger {
 
 	private function get_hook_accepted_args( string $event_key ): int {
 		$args_map = array(
-			'save_post'          => 3, // $post_id, $post, $update
-			'before_delete_post' => 2, // $post_id, $post
-			'trashed_post'       => 2, // $post_id, $previous_status
-			'untrashed_post'     => 2, // $post_id, $previous_status
-			'add_attachment'     => 1, // $post_id
-			'edit_attachment'    => 1, // $post_id
-			'delete_attachment'  => 1, // $post_id
-			'created_term'       => 3, // $term_id, $tt_id, $taxonomy
-			'edited_term'        => 3, // $term_id, $tt_id, $taxonomy
-			'delete_term'        => 5, // $term_id, $tt_id, $taxonomy, $deleted_term, $object_ids
+			'save_post'          => 3, // post_id, post, update.
+			'before_delete_post' => 2, // post_id, post.
+			'trashed_post'       => 2, // post_id, previous_status.
+			'untrashed_post'     => 2, // post_id, previous_status.
+			'add_attachment'     => 1, // post_id.
+			'edit_attachment'    => 1, // post_id.
+			'delete_attachment'  => 1, // post_id.
+			'created_term'       => 3, // term_id, tt_id, taxonomy.
+			'edited_term'        => 3, // term_id, tt_id, taxonomy.
+			'delete_term'        => 5, // term_id, tt_id, taxonomy, deleted_term, object_ids.
 		);
 
 		return $args_map[ $event_key ] ?? 1;

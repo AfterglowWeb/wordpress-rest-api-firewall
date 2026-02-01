@@ -44,6 +44,4 @@ class WordpressAuth {
 
 		return $user->has_cap( 'rest_firewall_api_access' );
 	}
-
-
 }

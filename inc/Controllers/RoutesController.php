@@ -14,8 +14,8 @@ use WP_Post;
 class RoutesController {
 
 	private ?ModelContext $context = null;
-	private string $post_type = '';
-	private string $taxonomy = '';
+	private string $post_type      = '';
+	private string $taxonomy       = '';
 	private string $application_id = '';
 
 	public function resolve_rest_controller( $result, $server, WP_REST_Request $request ) {
@@ -59,7 +59,7 @@ class RoutesController {
 
 	private function get_context(): ModelContext {
 		if ( null === $this->context ) {
-			$object_type = $this->post_type ?: $this->taxonomy;
+			$object_type   = $this->post_type ? $this->post_type : $this->taxonomy;
 			$this->context = ModelContext::from_options( $object_type, $this->application_id );
 		}
 
@@ -122,9 +122,6 @@ class RoutesController {
 		return $term_model( $term, $this->get_context() );
 	}
 
-	/**
-	 * @return array|int
-	 */
 	public function author_model( int $user_id ) {
 		$user = get_userdata( $user_id );
 
@@ -136,9 +133,6 @@ class RoutesController {
 		return $author_model( $user, $this->get_context() );
 	}
 
-	/**
-	 * @return array|int
-	 */
 	public function attachment_model( int $attachment_id ) {
 		$attachment = get_post( $attachment_id );
 

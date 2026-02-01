@@ -19,9 +19,6 @@ class TermModel {
 		);
 	}
 
-	/**
-	 * Remove disabled properties from the term data.
-	 */
 	protected function remove_disabled_properties( array $term, ModelContext $context ): array {
 
 		foreach ( array_keys( $term ) as $property_key ) {
@@ -33,18 +30,13 @@ class TermModel {
 		return $term;
 	}
 
-	/**
-	 * Apply configured filters to the term data.
-	 */
 	protected function apply_filters( array $term, ModelContext $context ): array {
 
-		// Relative URL filter
 		if ( isset( $term['link'] ) && $context->should_relative_url( 'link' ) ) {
 			$term['link'] = SchemaFilters::relative_url( $term['link'] );
 		}
 
-		// Rendered filters
-		foreach ( [ 'name', 'description' ] as $rendered_prop ) {
+		foreach ( array( 'name', 'description' ) as $rendered_prop ) {
 			if ( isset( $term[ $rendered_prop ] ) && $context->should_render( $rendered_prop ) ) {
 				if ( is_array( $term[ $rendered_prop ] ) && isset( $term[ $rendered_prop ]['rendered'] ) ) {
 					$term[ $rendered_prop ] = $term[ $rendered_prop ]['rendered'];
@@ -52,12 +44,10 @@ class TermModel {
 			}
 		}
 
-		// ACF fields
 		if ( $context->with_acf && isset( $term['id'] ) ) {
 			$term['acf'] = SchemaFilters::embed_acf_fields( 'term_' . $term['id'] );
 		}
 
-		// Remove _links if configured
 		if ( $context->remove_links_prop && isset( $term['_links'] ) ) {
 			unset( $term['_links'] );
 		}

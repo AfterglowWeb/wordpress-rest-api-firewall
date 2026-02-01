@@ -45,6 +45,7 @@ export default function IpBlackList() {
 
 	const [ loading, setLoading ] = useState( true );
 	const [ saving, setSaving ] = useState( false );
+
 	const [ settings, setSettings ] = useState( {
 		enabled: false,
 		mode: 'blacklist',
@@ -191,9 +192,20 @@ export default function IpBlackList() {
 			return;
 		}
 
+		const ipEntry = {
+			ip: trimmed,
+			agent: null,
+			blocked_time: Math.floor(Date.now() / 1000),
+			type: 'manual',
+			geoIp: {
+			country: null,
+			countryName: null
+			}
+		};
+
 		setSettings( ( prev ) => ( {
 			...prev,
-			[ listKey ]: [ ...prev[ listKey ], trimmed ],
+			[ listKey ]: [ ...prev[ listKey ], ipEntry ],
 		} ) );
 		setNewIp( '' );
 		setIpError( '' );
@@ -348,45 +360,59 @@ export default function IpBlackList() {
 				</Stack>
 
 				{ activeList.length > 0 ? (
-					<List dense sx={ { bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' } }>
-						{ activeList.map( ( ip, index ) => (
-							<ListItem
-								key={ ip }
-								divider={ index < activeList.length - 1 }
-								secondaryAction={
-									<IconButton
-										edge="end"
-										onClick={ () => handleRemoveIp( activeListKey, ip ) }
-										disabled={ ! settings.enabled }
-										size="small"
-									>
-										<DeleteIcon fontSize="small" />
-									</IconButton>
-								}
-							>
-								<ListItemText
-									primary={
-										<Stack direction="row" spacing={ 1 } alignItems="center">
-											<Typography variant="body2" sx={ { fontFamily: 'monospace' } }>
-												{ ip }
-											</Typography>
-											{ ip.includes( '/' ) && (
-												<Chip label="CIDR" size="small" variant="outlined" color="info" />
-											) }
-											{ ip === clientIp && (
-												<Chip label={ __( 'Your IP', 'rest-api-firewall' ) } size="small" color="warning" />
-											) }
-										</Stack>
-									}
-								/>
-							</ListItem>
-						) ) }
-					</List>
-				) : (
-					<Typography variant="body2" color="text.secondary" sx={ { py: 2, textAlign: 'center' } }>
-						{ __( 'No IPs in the list', 'rest-api-firewall' ) }
-					</Typography>
-				) }
+    <List dense sx={ { bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' } }>
+        { activeList.map((entry, index) => {
+            const ipValue = typeof entry === 'string' ? entry : entry.ip;
+            const geoIp = entry?.geoIp;
+            
+            return (
+                <ListItem 
+                    key={ipValue} 
+                    divider={index < activeList.length - 1}
+                    secondaryAction={
+                        <IconButton
+                            edge="end"
+                            onClick={ () => handleRemoveIp( activeListKey, ipValue ) }
+                            disabled={ ! settings.enabled }
+                            size="small"
+                        >
+                            <DeleteIcon fontSize="small" />
+                        </IconButton>
+                    }
+                >
+                    <ListItemText
+                        primary={
+                        <Stack direction="row" spacing={1} alignItems="center">
+                            <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                            {ipValue}
+                            </Typography>
+                            {ipValue.includes('/') && (
+                            <Chip label="CIDR" size="small" variant="outlined" color="info" />
+                            )}
+							{entry?.blocked_time && (
+								<Typography variant="caption">
+                            	{new Date(entry.blocked_time * 1000).toLocaleString()}
+                            </Typography>
+                            )}
+                            {geoIp?.countryName && (
+                            <Chip label={geoIp.countryName} size="small" color="primary" />
+                            )}
+                        </Stack>
+                        }
+                        secondary={<Typography
+								variant="caption"
+								sx={ { color: 'text.secondary', whiteSpace: 'nowrap' } }
+							>{entry?.type === 'manual' ? 'Manual' : 'Rate limit'}</Typography>}
+                    />
+                </ListItem>
+            );
+        })}
+    </List>
+) : (
+    <Typography variant="body2" color="text.secondary" sx={ { py: 2, textAlign: 'center' } }>
+        { __( 'No IPs in the list', 'rest-api-firewall' ) }
+    </Typography>
+) }
 			</Box>
 
 			{ /* Show the other list if it has entries */ }

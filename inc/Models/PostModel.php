@@ -20,9 +20,6 @@ class PostModel {
 		);
 	}
 
-	/**
-	 * Remove disabled properties from the post data.
-	 */
 	protected function remove_disabled_properties( array $post, ModelContext $context ): array {
 
 		foreach ( array_keys( $post ) as $property_key ) {
@@ -34,12 +31,8 @@ class PostModel {
 		return $post;
 	}
 
-	/**
-	 * Apply configured filters to the post data.
-	 */
 	protected function apply_filters( array $post, ModelContext $context ): array {
 
-		// Relative URL filters
 		if ( isset( $post['link'] ) && $context->should_relative_url( 'link' ) ) {
 			$post['link'] = SchemaFilters::relative_url( $post['link'] );
 		}
@@ -50,8 +43,7 @@ class PostModel {
 				: SchemaFilters::relative_url( $post['guid'] );
 		}
 
-		// Rendered filters
-		foreach ( [ 'title', 'excerpt', 'content', 'guid' ] as $rendered_prop ) {
+		foreach ( array( 'title', 'excerpt', 'content', 'guid' ) as $rendered_prop ) {
 			if ( isset( $post[ $rendered_prop ] ) && $context->should_render( $rendered_prop ) ) {
 				if ( is_array( $post[ $rendered_prop ] ) && isset( $post[ $rendered_prop ]['rendered'] ) ) {
 					$post[ $rendered_prop ] = $post[ $rendered_prop ]['rendered'];
@@ -59,7 +51,6 @@ class PostModel {
 			}
 		}
 
-		// Embed filters
 		if ( isset( $post['featured_media'] ) && $context->should_embed( 'featured_media' ) ) {
 			$attachment_model       = new AttachmentModel();
 			$post['featured_media'] = $attachment_model( (int) $post['featured_media'], $context );
@@ -77,36 +68,30 @@ class PostModel {
 			$post['terms'] = $this->embed_terms( $post, $context );
 		}
 
-		// ACF fields
 		if ( $context->with_acf && isset( $post['id'] ) ) {
 			$post['acf'] = SchemaFilters::embed_acf_fields( $post['id'] );
 		}
 
-		// Remove _links if configured
 		if ( $context->remove_links_prop && isset( $post['_links'] ) ) {
 			unset( $post['_links'] );
 		}
 
-		// Remove empty props if configured
 		if ( $context->remove_empty_props ) {
-			$post = array_filter( $post, fn( $value ) => ! empty( $value ) || $value === 0 || $value === false );
+			$post = array_filter( $post, fn( $value ) => ! empty( $value ) || 0 === $value || false === $value );
 		}
 
 		return $post;
 	}
 
-	/**
-	 * Embed terms for the post.
-	 */
 	protected function embed_terms( array $post, ModelContext $context ): array {
 
 		if ( empty( $post['id'] ) ) {
-			return [];
+			return array();
 		}
 
 		$post_id    = (int) $post['id'];
 		$taxonomies = get_object_taxonomies( get_post_type( $post_id ), 'names' );
-		$terms_data = [];
+		$terms_data = array();
 		$term_model = new TermModel();
 
 		foreach ( $taxonomies as $taxonomy ) {
