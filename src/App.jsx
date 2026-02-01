@@ -55,6 +55,7 @@ const THEME_OPTIONS = [
 const WEBHOOK_OPTIONS = [
 	'application_host',
 	'application_webhook_endpoint',
+	'application_webhook_auto_trigger_events',
 ];
 
 function TabPanel({ value, index, children }) {

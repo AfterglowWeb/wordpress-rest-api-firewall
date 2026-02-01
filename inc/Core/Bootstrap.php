@@ -10,6 +10,7 @@ use cmk\RestApiFirewall\Firewall\IpBlackList;
 use cmk\RestApiFirewall\Policy\PolicyRepository;
 use cmk\RestApiFirewall\Policy\TestPolicy;
 use cmk\RestApiFirewall\Webhook\WebhookService;
+use cmk\RestApiFirewall\Webhook\WebhookAutoTrigger;
 
 final class Bootstrap {
 
@@ -30,6 +31,7 @@ final class Bootstrap {
 		Routes::register();
 		PolicyRepository::get_instance();
 		WebhookService::get_instance();
+		WebhookAutoTrigger::get_instance();
 
 		if ( is_admin() ) {
 			CoreOptionsService::get_instance();
