@@ -2,6 +2,7 @@
 namespace cmk\RestApiFirewall\Admin;
 
 use cmk\RestApiFirewall\Core\FileUtils;
+use cmk\RestApiFirewall\Core\Permissions;
 
 use League\CommonMark\MarkdownConverter;
 use League\CommonMark\Environment\Environment;
@@ -20,7 +21,18 @@ class Documentation {
 		return static::$instance;
 	}
 
-	private function __construct() {}
+	private function __construct() {
+		add_action( 'wp_ajax_rest_api_firewall_documentation', array( $this, 'ajax_documentation' ) );
+	}
+
+	public function ajax_documentation() {
+		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
+			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
+		}
+
+		$documentation_pages = Documentation::read_pages();
+		wp_send_json_success( $documentation_pages );
+	}
 
 	public static function read_pages() {
 

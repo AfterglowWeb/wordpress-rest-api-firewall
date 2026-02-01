@@ -2,68 +2,66 @@
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Models\ModelContext;
-use WP_Term;
+use cmk\RestApiFirewall\Controllers\ModelContext;
+use cmk\RestApiFirewall\Schemas\SchemaFilters;
 
 class TermModel {
 
-	public function build( WP_Term $term, ModelContext $context ): array {
+	public function __invoke( array $term, ModelContext $context ): array {
 
-		$context = apply_filters(
-			'rest_firewall_model_term_context',
-			$context,
-			$term
-		);
-
-		$data = $this->base_fields( $term, $context );
-
-		$data = apply_filters(
-			'rest_firewall_model_term_build',
-			$data,
-			$term,
-			$context
-		);
-
-		$data = apply_filters(
-			'rest_firewall_model_term_fields',
-			$data,
-			$term,
-			$context
-		);
+		$term = $this->remove_disabled_properties( $term, $context );
+		$term = $this->apply_filters( $term, $context );
 
 		return apply_filters(
 			'rest_firewall_model_term',
-			$data,
 			$term,
 			$context
 		);
 	}
 
-	protected function base_fields( WP_Term $term, ModelContext $context ): array {
+	/**
+	 * Remove disabled properties from the term data.
+	 */
+	protected function remove_disabled_properties( array $term, ModelContext $context ): array {
 
-		$term = sanitize_term( $term, $term->taxonomy );
-
-		$data = array(
-			'id'          => (int) $term->term_id,
-			'taxonomy'    => $term->taxonomy,
-			'slug'        => $term->slug,
-			'name'        => $term->name,
-			'description' => $term->description,
-			'count'       => (int) $term->count,
-			'link'        => get_term_link( $term ),
-		);
-
-		if ( $context->relative_urls ) {
-			$data['link'] = apply_filters(
-				'rest_firewall_relative_url_enabled',
-				get_term_link( $term )
-			);
+		foreach ( array_keys( $term ) as $property_key ) {
+			if ( $context->is_disabled( $property_key ) ) {
+				unset( $term[ $property_key ] );
+			}
 		}
 
-		if ( $context->with_acf ) {
-			$data['acf'] = apply_filters( 'rest_firewall_model_term_acf', $term );
+		return $term;
+	}
+
+	/**
+	 * Apply configured filters to the term data.
+	 */
+	protected function apply_filters( array $term, ModelContext $context ): array {
+
+		// Relative URL filter
+		if ( isset( $term['link'] ) && $context->should_relative_url( 'link' ) ) {
+			$term['link'] = SchemaFilters::relative_url( $term['link'] );
 		}
 
-		return $data;
+		// Rendered filters
+		foreach ( [ 'name', 'description' ] as $rendered_prop ) {
+			if ( isset( $term[ $rendered_prop ] ) && $context->should_render( $rendered_prop ) ) {
+				if ( is_array( $term[ $rendered_prop ] ) && isset( $term[ $rendered_prop ]['rendered'] ) ) {
+					$term[ $rendered_prop ] = $term[ $rendered_prop ]['rendered'];
+				}
+			}
+		}
+
+		// ACF fields
+		if ( $context->with_acf && isset( $term['id'] ) ) {
+			$term['acf'] = SchemaFilters::embed_acf_fields( 'term_' . $term['id'] );
+		}
+
+		// Remove _links if configured
+		if ( $context->remove_links_prop && isset( $term['_links'] ) ) {
+			unset( $term['_links'] );
+		}
+
+		return $term;
 	}
 }

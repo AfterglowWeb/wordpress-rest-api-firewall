@@ -46,9 +46,9 @@ export default function ThemeSettings( { form, setField, setSlider, themeStatus,
 						control={
 							<Switch
 								checked={
-									!! form.core_redirect_templates_enabled
+									!! form.theme_redirect_templates_enabled
 								}
-								name="core_redirect_templates_enabled"
+								name="theme_redirect_templates_enabled"
 								onChange={ setField }
 								disabled={disabled}
 							/>
@@ -63,11 +63,11 @@ export default function ThemeSettings( { form, setField, setSlider, themeStatus,
 						control={
 							<Switch
 								checked={
-									!! form.core_redirect_templates_free_url_enabled
+									!! form.theme_redirect_templates_free_url_enabled
 								}
-								name="core_redirect_templates_free_url_enabled"
+								name="theme_redirect_templates_free_url_enabled"
 								onChange={ setField }
-								disabled={ disabled || ! form.core_redirect_templates_enabled }
+								disabled={ disabled || ! form.theme_redirect_templates_enabled }
 							/>
 						}
 						label={ __( 'Custom URL', 'rest-api-firewall' ) }
@@ -81,12 +81,12 @@ export default function ThemeSettings( { form, setField, setSlider, themeStatus,
 					</InputLabel>
 					<Select
 						labelId="redirect-templates-preset-url-label"
-						id="core_redirect_templates_preset_url"
-						name="core_redirect_templates_preset_url"
-						value={ form.core_redirect_templates_preset_url }
+						id="theme_redirect_templates_preset_url"
+						name="theme_redirect_templates_preset_url"
+						value={ form.theme_redirect_templates_preset_url }
 						label={ __( 'Redirect Page', 'rest-api-firewall' ) }
 						onChange={ setField }
-						disabled={ disabled || ! form.core_redirect_templates_enabled || form.core_redirect_templates_free_url_enabled }
+						disabled={ disabled || ! form.theme_redirect_templates_enabled || form.theme_redirect_templates_free_url_enabled }
 					>
 						<MenuItem value={ 0 }>
 							<em>{ __( 'Select a Page', 'rest-api-firewall' ) }</em>
@@ -108,10 +108,10 @@ export default function ThemeSettings( { form, setField, setSlider, themeStatus,
 						'Full url with protocol and domain (https://www.example.com)',
 						'rest-api-firewall'
 					) }
-					name="core_redirect_templates_free_url"
-					value={ form.core_redirect_templates_free_url }
+					name="theme_redirect_templates_free_url"
+					value={ form.theme_redirect_templates_free_url }
 					onChange={ setField }
-					disabled={ disabled || ! form.core_redirect_templates_enabled || ! form.core_redirect_templates_free_url_enabled }
+					disabled={ disabled || ! form.theme_redirect_templates_enabled || ! form.theme_redirect_templates_free_url_enabled }
 					fullWidth
 				/>
 			</Stack>
@@ -125,9 +125,9 @@ export default function ThemeSettings( { form, setField, setSlider, themeStatus,
 						control={
 							<Switch
 								checked={
-									!! form.core_disable_gutenberg_enabled
+									!! form.theme_disable_gutenberg
 								}
-								name="core_disable_gutenberg_enabled"
+								name="theme_disable_gutenberg"
 								onChange={ setField }
 								disabled={disabled}
 							/>
@@ -142,9 +142,9 @@ export default function ThemeSettings( { form, setField, setSlider, themeStatus,
 						control={
 							<Switch
 								checked={
-									!! form.core_remove_empty_p_tags_enabled
+									!! form.theme_remove_empty_p_tags_enabled
 								}
-								name="core_remove_empty_p_tags_enabled"
+								name="theme_remove_empty_p_tags_enabled"
 								onChange={ setField }
 								disabled={disabled}
 							/>
@@ -165,9 +165,9 @@ export default function ThemeSettings( { form, setField, setSlider, themeStatus,
 						control={
 							<Switch
 								checked={
-									!! form.core_disable_comments_enabled
+									!! form.theme_disable_comments
 								}
-								name="core_disable_comments_enabled"
+								name="theme_disable_comments"
 								onChange={ setField }
 								disabled={disabled}
 							/>
@@ -179,93 +179,118 @@ export default function ThemeSettings( { form, setField, setSlider, themeStatus,
 			</Stack>
 
 			<Stack spacing={3}>
-			<Typography variant="subtitle1" fontWeight={600} sx={ { mb: 2 } }>
-					{ __( 'Image Files', 'rest-api-firewall' ) }
-			</Typography>
+				<Typography variant="subtitle1" fontWeight={600} sx={ { mb: 2 } }>
+						{ __( 'Image Files', 'rest-api-firewall' ) }
+				</Typography>
 
-			<Box>
+				<Box>
 
-				<FormControl disabled={disabled}>
-					<FormControlLabel
-						control={
-							<Switch
-								checked={
-									!! form.core_svg_webp_support_enabled
-								}
-								name="core_svg_webp_support_enabled"
-								onChange={ setField }
-								disabled={disabled}
-							/>
-						}
-						label={ __( 'Enable SVG and Webp Support', 'rest-api-firewall' ) }
-					/>
-					<FormHelperText>{ __( 'Enable .svg and .webp image files format support', 'rest-api-firewall' ) }</FormHelperText>
-				</FormControl>
-
-				<FormControl disabled={disabled}>
-
-					<Stack direction={ { xs: 'column', sm: 'row' } }>
+					<FormControl disabled={disabled}>
 						<FormControlLabel
 							control={
 								<Switch
 									checked={
-										!! form.core_max_upload_weight_enabled
+										!! form.theme_svg_webp_support_enabled
 									}
-									name="core_max_upload_weight_enabled"
+									name="theme_svg_webp_support_enabled"
 									onChange={ setField }
 									disabled={disabled}
 								/>
 							}
-							label={ __(
-								'Limit Images Weight',
+							label={ __( 'Enable SVG and Webp Support', 'rest-api-firewall' ) }
+						/>
+						<FormHelperText>{ __( 'Enable .svg and .webp image files format support', 'rest-api-firewall' ) }</FormHelperText>
+					</FormControl>
+
+					<FormControl disabled={disabled}>
+
+						<Stack direction={ { xs: 'column', sm: 'row' } }>
+							<FormControlLabel
+								control={
+									<Switch
+										checked={
+											!! form.theme_max_upload_weight_enabled
+										}
+										name="theme_max_upload_weight_enabled"
+										onChange={ setField }
+										disabled={disabled}
+									/>
+								}
+								label={ __(
+									'Limit Images Weight',
+									'rest-api-firewall'
+								) }
+							/>
+							<Typography
+								sx={ {
+									display: 'flex',
+									alignItems: 'center',
+									mb: 0,
+								} }
+								color={
+									disabled || !form.theme_max_upload_weight_enabled
+										? theme.palette.text.disabled
+										: theme.palette.primary.main
+								}
+								id="max-upload-weight-slider"
+								gutterBottom
+							>
+								{ __( 'Max Images Upload Weight', 'rest-api-firewall' ) } :{ ' ' }
+								{ valueLabelFormat(
+									form.theme_max_upload_weight
+								) }
+							</Typography>
+						</Stack>
+
+						<Slider
+							value={ form.theme_max_upload_weight }
+							min={ 1 }
+							max={ 1024 }
+							step={ 1 }
+							disabled={ disabled || ! form.theme_max_upload_weight_enabled }
+							getAriaValueText={ valueLabelFormat }
+							valueLabelFormat={ valueLabelFormat }
+							onChange={ ( _, value ) =>
+								setSlider( 'theme_max_upload_weight', value )
+							}
+							valueLabelDisplay="auto"
+							aria-labelledby="max-upload-weight-slider"
+						/>
+
+						<FormHelperText>
+							{ __(
+								'Limit the images weight users can upload.',
 								'rest-api-firewall'
 							) }
-						/>
-						<Typography
-							sx={ {
-								display: 'flex',
-								alignItems: 'center',
-								mb: 0,
-							} }
-							color={
-								disabled || !form.core_max_upload_weight_enabled
-									? theme.palette.text.disabled
-									: theme.palette.primary.main
-							}
-							id="max-upload-weight-slider"
-							gutterBottom
-						>
-							{ __( 'Max Images Upload Weight', 'rest-api-firewall' ) } :{ ' ' }
-							{ valueLabelFormat(
-								form.core_max_upload_weight
-							) }
-						</Typography>
-					</Stack>
+						</FormHelperText>
 
-					<Slider
-						value={ form.core_max_upload_weight }
-						min={ 1 }
-						max={ 1024 }
-						step={ 1 }
-						disabled={ disabled || ! form.core_max_upload_weight_enabled }
-						getAriaValueText={ valueLabelFormat }
-						valueLabelFormat={ valueLabelFormat }
-						onChange={ ( _, value ) =>
-							setSlider( 'core_max_upload_weight', value )
+					</FormControl>
+				</Box>
+			</Stack>
+
+			<Stack spacing={3}>
+				<Typography variant="subtitle1" fontWeight={600} sx={ { mb: 2 } }>
+						{ __( 'ACF', 'rest-api-firewall' ) }
+				</Typography>
+
+				<FormControl>
+					<FormControlLabel
+						control={
+							<Switch
+								checked={ !! form.theme_json_acf_fields_enabled }
+								name="theme_json_acf_fields_enabled"
+								onChange={ setField }
+							/>
 						}
-						valueLabelDisplay="auto"
-						aria-labelledby="max-upload-weight-slider"
+						label={ __( 'Sync ACF Fields to JSON', 'rest-api-firewall' ) }
 					/>
-
 					<FormHelperText>
 						{ __(
-							'Limit the images weight users can upload.',
+							'Write JSON files in theme config directory',
 							'rest-api-firewall'
 						) }
 					</FormHelperText>
-
 				</FormControl>
-			</Box>
 			</Stack>
 
 		</Stack>

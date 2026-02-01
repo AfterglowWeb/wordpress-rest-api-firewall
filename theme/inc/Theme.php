@@ -24,7 +24,7 @@ class Theme {
 		add_filter( 'xmlrpc_enabled', '__return_false' );
 		add_filter( 'show_admin_bar', '__return_false' );
 
-		if ( true === CoreOptions::read_option( 'rest_firewall_json_acf_fields_enabled' )
+		if ( true === CoreOptions::read_option( 'theme_json_acf_fields_enabled' )
 			&& FileUtils::mkdir_p( get_stylesheet_directory() . '/config' ) ) {
 
 			add_filter(

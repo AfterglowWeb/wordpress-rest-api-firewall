@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || exit;
 use cmk\RestApiFirewall\Core\Permissions;
 use WP_Error;
 
-class IpFilter {
+class IpBlackList {
 
 	protected static $instance = null;
 
@@ -29,7 +29,6 @@ class IpFilter {
 		return array(
 			'enabled'   => false,
 			'mode'      => 'blacklist',
-			'whitelist' => array(),
 			'blacklist' => array(),
 		);
 	}
@@ -64,14 +63,9 @@ class IpFilter {
 	public static function sanitize_options( array $options ): array {
 		$defaults = self::default_options();
 
-		$mode = in_array( $options['mode'] ?? '', array( 'whitelist', 'blacklist' ), true )
-			? $options['mode']
-			: $defaults['mode'];
-
 		return array(
 			'enabled'   => (bool) ( $options['enabled'] ?? $defaults['enabled'] ),
-			'mode'      => $mode,
-			'whitelist' => self::sanitize_ip_list( $options['whitelist'] ?? array() ),
+			'mode'      => 'blacklist' ,
 			'blacklist' => self::sanitize_ip_list( $options['blacklist'] ?? array() ),
 		);
 	}
@@ -146,32 +140,15 @@ class IpFilter {
 		}
 
 		$client_ip = self::get_client_ip();
-		$mode      = $options['mode'];
+		
+		$blacklist = $options['blacklist'];
 
-		if ( 'whitelist' === $mode ) {
-			$whitelist = $options['whitelist'];
-
-			if ( empty( $whitelist ) ) {
-				return true;
-			}
-
-			if ( ! self::ip_in_list( $client_ip, $whitelist ) ) {
-				return new WP_Error(
-					'ip_not_whitelisted',
-					__( 'Your IP address is not allowed.', 'rest-api-firewall' ),
-					array( 'status' => 403 )
-				);
-			}
-		} else {
-			$blacklist = $options['blacklist'];
-
-			if ( self::ip_in_list( $client_ip, $blacklist ) ) {
-				return new WP_Error(
-					'ip_blacklisted',
-					__( 'Your IP address has been blocked.', 'rest-api-firewall' ),
-					array( 'status' => 403 )
-				);
-			}
+		if ( self::ip_in_list( $client_ip, $blacklist ) ) {
+			return new WP_Error(
+				'ip_blacklisted',
+				__( 'Your IP address has been blocked.', 'rest-api-firewall' ),
+				array( 'status' => 403 )
+			);
 		}
 
 		return true;
@@ -265,7 +242,6 @@ class IpFilter {
 		$response = array(
 			'enabled'   => $options['enabled'],
 			'mode'      => $options['mode'],
-			'whitelist' => $options['whitelist'],
 			'blacklist' => $options['blacklist'],
 			'client_ip' => $client_ip,
 		);
@@ -288,15 +264,6 @@ class IpFilter {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
 		if ( isset( $_POST['mode'] ) ) {
 			$options['mode'] = sanitize_text_field( wp_unslash( $_POST['mode'] ) );
-		}
-
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
-		if ( isset( $_POST['whitelist'] ) ) {
-			$whitelist = sanitize_text_field( wp_unslash( $_POST['whitelist'] ) );
-			if ( is_string( $whitelist ) ) {
-				$whitelist = json_decode( $whitelist, true );
-			}
-			$options['whitelist'] = is_array( $whitelist ) ? $whitelist : array();
 		}
 
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()

@@ -6,7 +6,7 @@ use cmk\RestApiFirewall\Firewall\FirewallOptions;
 use WP_Error;
 use WP_User;
 
-class Auth {
+class WordpressAuth {
 
 	public static function sync_rest_api_user( int $new_user_id, int $old_user_id = 0 ): void {
 		if (
@@ -35,28 +35,7 @@ class Auth {
 		}
 	}
 
-	public static function wordpress_auth( $result ) {
-
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
-
-		if ( false === FirewallOptions::get_option( 'enforce_auth' ) ) {
-			return $result;
-		}
-
-		if ( false === self::validate_wp_application_password() ) {
-			return new WP_Error(
-				'rest_forbidden',
-				esc_html__( 'Authentication required.', 'rest-api-firewall' ),
-				array( 'status' => 401 )
-			);
-		}
-
-		return $result;
-	}
-
-	private static function validate_wp_application_password(): bool {
+	public static function validate_wp_application_password(): bool {
 		$user = wp_get_current_user();
 
 		if ( ! $user || ! $user->exists() ) {

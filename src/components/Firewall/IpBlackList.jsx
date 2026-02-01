@@ -36,7 +36,7 @@ function isValidIpOrCidr( value ) {
 	return IP_REGEX.test( trimmed ) || CIDR_REGEX.test( trimmed ) || IPV6_REGEX.test( trimmed );
 }
 
-export default function IpFilter() {
+export default function IpBlackList() {
 	const { adminData } = useAdminData();
 	const { __ } = wp.i18n || {};
 	const { openDialog, updateDialog } = useDialog();
@@ -225,7 +225,6 @@ export default function IpFilter() {
 		<Stack spacing={ 3 }>
 			<Stack direction="row" justifyContent="space-between" alignItems="center">
 				<Typography variant="subtitle1" fontWeight={ 600 }>
-					<SecurityIcon sx={ { mr: 1, verticalAlign: 'middle' } } />
 					{ __( 'IP Filtering', 'rest-api-firewall' ) }
 				</Typography>
 				<Button
