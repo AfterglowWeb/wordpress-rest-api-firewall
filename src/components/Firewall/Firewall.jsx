@@ -8,32 +8,27 @@ import IconButton from '@mui/material/IconButton';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import Tooltip from '@mui/material/Tooltip';
 import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
-import Switch from '@mui/material/Switch';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormControl from '@mui/material/FormControl';
-import FormHelperText from '@mui/material/FormHelperText';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
-
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import Grid from '@mui/material/Grid';
 
 import RoutesTree from './RoutesTree';
 import IpBlackList from './IpBlackList';
-import Grid from '@mui/material/Grid';
+import ProBadge from '../ProBadge';
+import RateLimit from './RateLimit';
+import RestApiUser from './RestApUser';
+import Card from '@mui/material/Card';
 
 const defaultFirewallOptions = {
 	enforce_auth: false,
 	enforce_rate_limit: false,
 	hide_user_routes: false,
 	user_id: 0,
-	rate_limit: 30,
+	rate_limit: 200,
 	rate_limit_time: 60,
 	rate_limit_release: 300,
 	rate_limit_blacklist: 5,
+	rate_limit_blacklist_time: 3600,
 };
 
 export default function Firewall() {
@@ -46,9 +41,6 @@ export default function Firewall() {
 	const [ users, setUsers ] = useState( [] );
 	const [ restApiUser, setRestApiUser ] = useState( [] );
 	const [ proActive, setProActive ] = useState( true );
-
-	const adminUrl = adminData?.ajaxurl?.split( 'admin-ajax.php' )[0] || '';
-	const usersPageUrl = `${ adminUrl }users.php`;
 
 	const { openDialog, updateDialog } = useDialog();
 
@@ -119,10 +111,11 @@ export default function Firewall() {
 					enforce_rate_limit: result.data.enforce_rate_limit ?? false,
 					hide_user_routes: result.data.hide_user_routes ?? false,
 					user_id: result.data.user_id ?? 0,
-					rate_limit: result.data.rate_limit ?? 30,
+					rate_limit: result.data.rate_limit ?? 200,
 					rate_limit_time: result.data.rate_limit_time ?? 60,
 					rate_limit_release: result.data.rate_limit_release ?? 300,
 					rate_limit_blacklist: result.data.rate_limit_blacklist ?? 5,
+					rate_limit_blacklist_time: result.data.rate_limit_blacklist_time ?? 3600,
 				} );
 			}
 		} catch ( error ) {
@@ -170,14 +163,17 @@ export default function Firewall() {
 							body: new URLSearchParams( {
 								action: 'save_firewall_options',
 								nonce: adminData.nonce,
-								enforce_auth: firewallOptions.enforce_auth ? '1' : '0',
-								enforce_rate_limit: firewallOptions.enforce_rate_limit ? '1' : '0',
-								hide_user_routes: firewallOptions.hide_user_routes ? '1' : '0',
-								user_id: String( firewallOptions.user_id ),
-								rate_limit: String( firewallOptions.rate_limit ),
-								rate_limit_time: String( firewallOptions.rate_limit_time ),
-								rate_limit_release: String( firewallOptions.rate_limit_release ),
-								rate_limit_blacklist: String( firewallOptions.rate_limit_blacklist ),
+								data: JSON.stringify( {
+									enforce_auth: firewallOptions.enforce_auth ? '1' : '0',
+									enforce_rate_limit: firewallOptions.enforce_rate_limit ? '1' : '0',
+									hide_user_routes: firewallOptions.hide_user_routes ? '1' : '0',
+									user_id: String( firewallOptions.user_id ),
+									rate_limit: String( firewallOptions.rate_limit ),
+									rate_limit_time: String( firewallOptions.rate_limit_time ),
+									rate_limit_release: String( firewallOptions.rate_limit_release ),
+									rate_limit_blacklist: String( firewallOptions.rate_limit_blacklist ),
+									rate_limit_blacklist_time: String( firewallOptions.rate_limit_blacklist_time ),
+								} ),
 							} ),
 						} ),
 						treeState
@@ -243,228 +239,48 @@ export default function Firewall() {
 			<Stack spacing={ 3 } >
 
 				<Grid spacing={ 4 } container>
-					<Grid size={ {xs:12, xl:7} } spacing={ 3 }>
+					<Grid size={{ xs: 12, xl: 7 }} spacing={ 3 }>
 						
-						<Stack direction={"row"} justifyContent={"space-between"} gap={2} flexWrap={"wrap"} alignItems={"center"}>
-							<Typography variant="subtitle1" fontWeight={600}>
-								{ __( 'User and Rate Limiting', 'rest-api-firewall' ) }
-							</Typography>
-							<Button size="small" color="primary" variant="contained" onClick={ handleSave }>
-								{ __( 'Save', 'rest-api-firewall' ) }
-							</Button>
-						</Stack>
-
-						<Stack direction={{xs:'column', xl:'row'}} my={3.6} gap={ 2 } justifyContent={'space-between'}>
-							
-							<FormControl>
-								<InputLabel id="user-id-label">
-									{ __( 'REST API User', 'rest-api-firewall' ) }
-								</InputLabel>
-								<Select
-									labelId="user-id-label"
-									id="user_id"
-									name="user_id"
-									value={ firewallOptions.user_id }
-									label={ __( 'REST API User', 'rest-api-firewall' ) }
-									onChange={ handleOptionChange }
-								>
-									<MenuItem value={ 0 }>
-										<em>{ __( 'Select User', 'rest-api-firewall' ) }</em>
-									</MenuItem>
-									{ users.map( ( user ) =>
-										user.value && user.label ? (
-											<MenuItem key={ user.value } value={ user.value }>
-												{ user.label }
-											</MenuItem>
-										) : null
-									) }
-								</Select>
-								<FormHelperText>
-								
-									{ firewallOptions.user_id &&
-										restApiUser &&
-										restApiUser?.label &&
-										restApiUser?.admin_url ?
-										<>
-										<span>
-										{sprintf( __( 'Restrict authentication to %s,', 'rest-api-firewall'), restApiUser.label)}
-										</span>
-										<Typography
-												component="a"
-												href={ restApiUser.admin_url }
-												variant="body.2"
-												target="_blank"
-												sx={ {
-													display: 'inline-flex',
-													alignItems: 'center',
-													gap: '4px',
-													px: '4px',
-													fontSize: '12px',
-												} }
-											>
-												{ __( 'user profile', 'rest-api-firewall' ) }
-												<OpenInNewIcon fontSize="inherut" />
-											</Typography>
-										</>
-										:
-										<>
-										<span>
-										{__( 'Restrict authentication to one user. Create an application password first in', 'rest-api-firewall')}
-										</span>
-										<Typography
-											component="a"
-											href={ usersPageUrl }
-											variant="body.2"
-											target="_blank"
-											sx={ {
-												display: 'inline-flex',
-												alignItems: 'center',
-												gap: '4px',
-												pl: '4px',
-												fontSize: '12px',
-											} }
-											>
-												{ __( 'users list', 'rest-api-firewall' ) }
-												<OpenInNewIcon fontSize="inherit" />
-											</Typography></>
-										}
-								
-								</FormHelperText>
-							</FormControl>
-								
-							<FormControl sx={{minWidth:240}}>
-								<FormControlLabel
-									control={
-										<Switch
-											checked={ !! firewallOptions.enforce_auth }
-											name="enforce_auth"
-											size="small"
-											onChange={ handleOptionChange }
-										/>
-									}
-									label={ __( 'Enforce Authentication', 'rest-api-firewall' ) }
-								/>
-								<FormHelperText>
-									{ __('Enforce authentication on all routes', 'rest-api-firewall') }
-								</FormHelperText>
-							</FormControl>
-
-							<FormControl sx={{minWidth:240}}>
-								<FormControlLabel
-									control={
-										<Switch
-											checked={ !! firewallOptions.hide_user_routes }
-											name="hide_user_routes"
-											size="small"
-											onChange={ handleOptionChange }
-										/>
-									}
-									label={ __( 'Hide User Routes', 'rest-api-firewall' ) }
-								/>
-								<FormHelperText>
-									{ __('Block access to /wp/v2/users endpoint', 'rest-api-firewall') }
-								</FormHelperText>
-							</FormControl>
-						</Stack>
-
-						<Stack direction={{xs:'column', lg:'row'}} my={3.6} gap={ 2 }  justifyContent={'space-between'}>
-							
-							<Stack direction={'column'} spacing={ 2 }>
-							<Stack direction={{xs:'column', sm:'row'}} gap={ 2 }>
-								<TextField
-									label={ __( 'Rate Limit Requests', 'rest-api-firewall' ) }
-									type="number"
-									helperText={ __(
-										'Maximum requests before rate-limiting',
-										'rest-api-firewall'
-									) }
-									name="rate_limit"
-									value={ firewallOptions.rate_limit }
-									onChange={ handleOptionChange }
-									fullWidth
-								/>
-
-								<TextField
-									label={ __( 'Rate Limit Window (seconds)', 'rest-api-firewall' ) }
-									type="number"
-									helperText={ __(
-										'Time window for the request limit',
-										'rest-api-firewall'
-									) }
-									name="rate_limit_time"
-									value={ firewallOptions.rate_limit_time }
-									onChange={ handleOptionChange }
-									fullWidth
-								/>
+						
+						<Card variant="outlined" sx={ { p: 2, mb: 3 } }>
+							<Stack direction={"row"} justifyContent={"space-between"} gap={2} flexWrap={"wrap"} alignItems={"center"}>
+								<Typography variant="subtitle1" fontWeight={600}>
+									{ __( 'User and Rate Limiting', 'rest-api-firewall' ) }
+								</Typography>
+								<Button disableElevation size="small" color="primary" variant="contained" onClick={ handleSave }>
+									{ __( 'Save', 'rest-api-firewall' ) }
+								</Button>
 							</Stack>
-
-							<Stack direction={{xs:'column', sm:'row'}} gap={ 2 }>
-								<TextField
-									label={ __( 'Rate Limit Release (seconds)', 'rest-api-firewall' ) }
-									type="number"
-									helperText={ __(
-										'Seconds to wait before releasing rate limit',
-										'rest-api-firewall'
-									) }
-									name="rate_limit_release"
-									value={ firewallOptions.rate_limit_release }
-									onChange={ handleOptionChange }
-									fullWidth
-								/>
-
-								<TextField
-									label={ __( 'Rate Limit Blacklist', 'rest-api-firewall' ) }
-									type="number"
-									helperText={ __(
-										'After how many rate limit hits an IP is blacklisted',
-										'rest-api-firewall'
-									) }
-									name="rate_limit_blacklist"
-									value={ firewallOptions.rate_limit_blacklist }
-									onChange={ handleOptionChange }
-									fullWidth
-								/>
-							</Stack>
-							</Stack>
-
-							<FormControl sx={{minWidth:240}}>
-								<FormControlLabel
-									control={
-										<Switch
-											checked={ !! firewallOptions.enforce_rate_limit }
-											name="enforce_rate_limit"
-											onChange={ handleOptionChange }
-											size="small"
-										/>
-									}
-									label={ __( 'Enforce Rate Limiting', 'rest-api-firewall' ) }
-								/>
-								<FormHelperText>
-									{ __(
-										'Apply rate limiting to all routes',
-										'rest-api-firewall'
-									) }
-								</FormHelperText>
-							</FormControl>
-
-						</Stack>
-
+							<RestApiUser 
+							firewallOptions={ firewallOptions } 
+							handleOptionChange={ handleOptionChange } 
+							users={ users } 
+							restApiUser={ restApiUser } />
+							<Divider sx={ { my: 3 } } />
+							<RateLimit 
+							firewallOptions={ firewallOptions } 
+							handleOptionChange={ handleOptionChange } />
+						</Card>
 
 					</Grid>
-					<Grid size={ {xs:12, xl:5} }>
+
+					<Grid size={{ xs: 12, xl: 5 }}>
+						<Card variant="outlined" sx={ { p: 2, mb: 3 } }>
 						<IpBlackList />
+						</Card>
 					</Grid>
 				</Grid>
 
 				<Divider />
 
-				<Typography variant="subtitle1" fontWeight={600} sx={ { mb: 2 } }>
+				<Typography variant="subtitle1" fontWeight={600} sx={ { mb: 2, position: 'relative' } }>
 					<span>{ __( 'Per Route Settings', 'rest-api-firewall' ) }</span>
 					<Tooltip title={ __( 'Refresh routes from server', 'rest-api-firewall' ) }>
 						<IconButton onClick={ loadRoutes } disabled={ loading } size="small">
 							<RefreshIcon />
 						</IconButton>
 					</Tooltip>
+					<ProBadge position={'right'} />
 				</Typography>
 
 				{ loading ? (

@@ -248,6 +248,7 @@ export default function IpBlackList() {
 				<Button
 					variant="contained"
 					size="small"
+					disableElevation
 					onClick={ handleSave }
 					disabled={ saving }
 				>
