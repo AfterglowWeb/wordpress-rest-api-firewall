@@ -227,13 +227,15 @@ export default function Webhook( { form, setField } ) {
 	return (
 		<Stack maxWidth="xl" spacing={ 3 }>
 			
-			<Grid container spacing={4}>
+			<Stack direction={'row'} gap={4}>
 				
-				<Grid size={{xs: 12, lg:6, xl:4 }}>
-					<Stack spacing={4}>
+				<Stack spacing={2} flex={1}>
+					<Stack spacing={3}>
 					<Typography variant="subtitle1" fontWeight={ 600 } sx={ { mb: 2 } }>
 						{ __( 'Webhook access', 'rest-api-firewall' ) }
 					</Typography>
+						<Stack spacing={4}>
+
 						<TextField
 							label={ __( 'Application URL', 'rest-api-firewall' ) }
 							name="application_host"
@@ -331,6 +333,7 @@ export default function Webhook( { form, setField } ) {
 							<Button
 								size="small"
 								variant="contained"
+								disableElevation
 								startIcon={ <AutorenewIcon /> }
 								onClick={ () => setConfirmAction( 'regenerate' ) }
 							>
@@ -339,56 +342,56 @@ export default function Webhook( { form, setField } ) {
 						</Stack>
 
 					</Stack>
+					</Stack>
+				</Stack>
 
-				</Grid>
+				<Divider orientation="vertical" variant="middle" flexItem />
 
-				<Grid size={{xs: 12, lg:6, xl:4 }}>
-				
-				<Typography variant="subtitle1" fontWeight={ 600 } sx={ { mb: 2 } }>
-					{ __( 'Auto-trigger Events', 'rest-api-firewall' ) }
-				</Typography>
-				<FormHelperText sx={ { mb: 2 } }>
-					{ __( 'Select WordPress events that will automatically trigger the webhook.', 'rest-api-firewall' ) }
-				</FormHelperText>
-
-				{ Object.entries( webhookEventGroups ).map( ( [ groupKey, groupLabel ] ) => {
-					const groupEvents = getEventsByGroup( groupKey );
-					if ( groupEvents.length === 0 ) return null;
-
-					return (
-						<Box key={ groupKey } sx={ { mb: 2 } }>
-							<Typography variant="body2" color="text.secondary" sx={ { mb: 1 } }>
-								{ groupLabel }
-							</Typography>
-							<FormGroup>
-								{ groupEvents.map( ( [ eventKey, eventConfig ] ) => (
-									<FormControl key={ eventKey }>
-										<FormControlLabel
-											control={
-												<Checkbox
-													size="small"
-													checked={ selectedEvents.includes( eventKey ) }
-													onChange={ () => handleEventToggle( eventKey ) }
-												/>
-											}
-											label={ eventConfig.label }
-										/>
-										<FormHelperText sx={ { ml: 4, mt: -0.5 } }>
-											{ eventConfig.description }
-										</FormHelperText>
-									</FormControl>
-								) ) }
-							</FormGroup>
-						</Box>
-					);
-				} ) }
-		
-
+				<Stack spacing={2} flex={1}>
+					<Typography variant="subtitle1" fontWeight={ 600 } sx={ { mb: 2 } }>
+						{ __( 'Auto-trigger Events', 'rest-api-firewall' ) }
+					</Typography>
 					
-				</Grid>
-			
-				<Grid size={{xs: 12, lg:6, xl:4 }}>
-					<Stack spacing={3}>
+					<FormHelperText sx={ { mb: 2 } }>
+						{ __( 'Select WordPress events that will automatically trigger the webhook.', 'rest-api-firewall' ) }
+					</FormHelperText>
+
+					{ Object.entries( webhookEventGroups ).map( ( [ groupKey, groupLabel ] ) => {
+						const groupEvents = getEventsByGroup( groupKey );
+						if ( groupEvents.length === 0 ) return null;
+
+						return (
+							<Box key={ groupKey } sx={ { mb: 2 } }>
+								<Typography variant="body2" color="text.secondary" sx={ { mb: 1 } }>
+									{ groupLabel }
+								</Typography>
+								<FormGroup>
+									{ groupEvents.map( ( [ eventKey, eventConfig ] ) => (
+										<FormControl key={ eventKey }>
+											<FormControlLabel
+												control={
+													<Checkbox
+														size="small"
+														checked={ selectedEvents.includes( eventKey ) }
+														onChange={ () => handleEventToggle( eventKey ) }
+													/>
+												}
+												label={ eventConfig.label }
+											/>
+											<FormHelperText sx={ { ml: 4, mt: -0.5 } }>
+												{ eventConfig.description }
+											</FormHelperText>
+										</FormControl>
+									) ) }
+								</FormGroup>
+							</Box>
+						);
+					} ) }
+				</Stack>
+
+				<Divider orientation="vertical" variant="middle" flexItem />
+
+				<Stack spacing={2} flex={1}>
 					<Typography variant="subtitle1" fontWeight={ 600 } sx={ { mb: 2 } }>
 						{ __( 'Test Webhook', 'rest-api-firewall' ) }
 					</Typography>
@@ -519,13 +522,9 @@ export default function Webhook( { form, setField } ) {
 								'rest-api-firewall'
 							) }
 					</Alert>
-					</Stack>
-				</Grid>
+				</Stack>
 
-			</Grid>
-
-			<Divider />
-
+			</Stack>
 			
 			<Dialog
 				open={ confirmOpen }

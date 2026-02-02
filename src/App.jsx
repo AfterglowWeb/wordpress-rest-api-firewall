@@ -174,6 +174,7 @@ function AppContent() {
 					</Typography>
 					<Button
 						variant="contained"
+						disableElevation
 						size="small"
 						onClick={ handleSaveSchemas }
 						disabled={ saving }
@@ -197,6 +198,7 @@ function AppContent() {
 					</Typography>
 					<Button
 						size="small"
+						disableElevation
 						variant="contained"
 						onClick={ handleSaveWebhook }
 						disabled={ saving }
@@ -224,9 +226,11 @@ function AppContent() {
 						variant="contained"
 						onClick={ handleSaveTheme }
 						disabled={ saving }
+						disableElevation
+						size="small"
 						sx={{ml:3}}
 						>
-						{ __( 'Save Theme Options', 'rest-api-firewall' ) }
+						{ __( 'Save', 'rest-api-firewall' ) }
 					</Button>
 				</Stack>}
 

@@ -2,7 +2,6 @@ import { useState } from '@wordpress/element';
 import { useLicense } from '../../contexts/LicenseContext';
 
 import FormControl from '@mui/material/FormControl';
-import FormHelperText from '@mui/material/FormHelperText';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import InputLabel from '@mui/material/InputLabel';
@@ -10,18 +9,20 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 
 import PostProperties from './PostProperties';
+import ProBadge from '../ProBadge';
 
 export default function ModelsPro( { form, setField, postTypes } ) {
 	const { hasValidLicense } = useLicense();
 	const { __ } = wp.i18n || {};
-	const [selectedPostType, setSelectedPostType] = useState( null );
+	const [selectedPostType, setSelectedPostType] = useState( 'post' );
 	const selectedPostTypeOption = selectedPostType ? postTypes.filter( (postType) => postType.value === selectedPostType ) : {};
 
 	return (
 		<Stack spacing={ 3 }>
 
-			<Typography variant="subtitle1" fontWeight={600} sx={ { mb: 2 } }>
+			<Typography variant="subtitle1" fontWeight={600} sx={ { mb: 2, position: 'relative' } }>
 				{ __( 'Fine Grained Schemas Settings', 'rest-api-firewall' ) }
+				{ ! hasValidLicense && <ProBadge position={'right'} />}
 			</Typography>
 			
 			<FormControl fullWidth>

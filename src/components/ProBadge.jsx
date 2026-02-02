@@ -13,11 +13,11 @@ export default function ProBadge ( { position } ) {
             'top':         { top: -yoffset, left: '50%', transform: 'translateX(-50%)' },
             'bottom':      { bottom: -yoffset, left: '50%', transform: 'translateX(-50%)' },
             'left':        { left: -xoffset, top: '50%', transform: 'translateY(-50%)' },
-            'right':       { right: -xoffset, top: '50%', transform: 'translateY(-50%)' },
+            'right':       { right: 0, top: '50%', transform: 'translateY(-50%)' },
             'top-right':   { top: -yoffset, right: -yoffset },
             'top-left':    { top: -yoffset, left: -yoffset },
             'bottom-right': { bottom: -yoffset, right: -yoffset },
-            'bottom-left': { bottom: -yoffset, left: -yoffset },
+            'bottom-left': { bottom: -15, left: -yoffset },
         };
         return positions[position] || positions['top-right'];
     }

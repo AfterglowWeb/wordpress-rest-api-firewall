@@ -5,6 +5,7 @@ defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Core\MultiSite;
 use cmk\RestApiFirewall\Core\Permissions;
+use cmk\RestApiFirewall\Core\Utils;
 use cmk\RestApiFirewall\Firewall\WordpressAuth;
 
 
@@ -66,6 +67,21 @@ class FirewallOptions {
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
 			),
+			'rate_limit_release' => array(
+				'default_value'     => 300,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+			),
+			'rate_limit_blacklist' => array(
+				'default_value'     => 5,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+			),
+			'rate_limit_blacklist_time' => array(
+				'default_value'     => 3600,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+			),
 			'policy'             => array(
 				'default_value'     => array(
 					'nodes'  => array(),
@@ -84,7 +100,7 @@ class FirewallOptions {
 
 	public function ajax_get_firewall_options(): void {
 		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
-			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
+			wp_send_json_error( array( 'message' => esc_html__( 'Unauthorized', 'rest-api-firewall' ) ), 403 );
 		}
 
 		wp_send_json_success( self::get_options(), 200 );
@@ -92,35 +108,19 @@ class FirewallOptions {
 
 	public function ajax_save_firewall_options(): void {
 		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
-			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
+			wp_send_json_error( array( 'message' => esc_html__( 'Unauthorized', 'rest-api-firewall' ) ), 403 );
 		}
 
-		$options = array();
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
-		if ( isset( $_POST['enforce_auth'] ) ) {
-			$options['enforce_auth'] = rest_sanitize_boolean( $_POST['enforce_auth'] );
+		if ( ! isset( $_POST['data'] ) ) {
+			wp_send_json_error( array( 'message' => esc_html__( 'No data provided', 'rest-api-firewall' ) ), 400 );
 		}
 
-		if ( isset( $_POST['enforce_rate_limit'] ) ) {
-			$options['enforce_rate_limit'] = rest_sanitize_boolean( $_POST['enforce_rate_limit'] );
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
+		$options = Utils::json_decode( sanitize_text_field( wp_unslash( $_POST['data'] ) ) );
+		if ( ! is_array( $options ) ) {
+			wp_send_json_error( array( 'error' => esc_html__( 'Invalid options data', 'rest-api-firewall' ) ), 400 );
 		}
-
-		if ( isset( $_POST['user_id'] ) ) {
-			$options['user_id'] = absint( $_POST['user_id'] );
-		}
-
-		if ( isset( $_POST['rate_limit'] ) ) {
-			$options['rate_limit'] = absint( $_POST['rate_limit'] );
-		}
-
-		if ( isset( $_POST['rate_limit_time'] ) ) {
-			$options['rate_limit_time'] = absint( $_POST['rate_limit_time'] );
-		}
-
-		if ( isset( $_POST['hide_user_routes'] ) ) {
-			$options['hide_user_routes'] = rest_sanitize_boolean( $_POST['hide_user_routes'] );
-		}
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		$updated = self::update_options( $options );
 
