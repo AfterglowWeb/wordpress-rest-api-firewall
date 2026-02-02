@@ -4,11 +4,10 @@ import Box from '@mui/material/Box';
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
-import FormHelperText from '@mui/material/FormHelperText';
 import Stack from '@mui/material/Stack';
-import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
+import ProBadge from '../ProBadge';
 
 import MultipleSelect from '../MultipleSelect';
 
@@ -55,7 +54,7 @@ export default function Collections( { form, setField, postTypes } ) {
 				/>
 			</Stack>
 
-			<Stack spacing={ 3 } direction={'row'} justifyContent={'space-between'} alignItems={'flex-start'}>
+			<Stack sx={{ position: 'relative' }} spacing={ 3 } direction={'row'} justifyContent={'space-between'} alignItems={'flex-start'}>
 				<Box sx={{ flex: 1 }}>
 					{ postTypes && (
 						<MultipleSelect
@@ -82,6 +81,7 @@ export default function Collections( { form, setField, postTypes } ) {
 						label={ __( 'Enable', 'rest-api-firewall' ) }
 					/>
 				</FormControl>
+				<ProBadge position={'right'} />
 			</Stack>
 
 		</Stack>

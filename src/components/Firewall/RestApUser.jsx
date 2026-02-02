@@ -1,0 +1,136 @@
+import { useAdminData } from '../../contexts/AdminDataContext';
+
+import Stack from '@mui/material/Stack';
+import Switch from '@mui/material/Switch';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormControl from '@mui/material/FormControl';
+import FormHelperText from '@mui/material/FormHelperText';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import Typography from '@mui/material/Typography';
+
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+
+export default function RestApiUser( { firewallOptions, handleOptionChange, users, restApiUser } ) {
+	const { __, sprintf } = wp.i18n || {};
+	const { adminData } = useAdminData();
+
+	const adminUrl = adminData?.ajaxurl?.split( 'admin-ajax.php' )[0] || '';
+	const usersPageUrl = `${ adminUrl }users.php`;
+
+	return (
+		<Stack direction={{xs:'column', md:'row'}} my={3.6} gap={ 2 } justifyContent={'space-between'}>
+			
+			<FormControl>
+				<InputLabel id="user-id-label">
+					{ __( 'REST API User', 'rest-api-firewall' ) }
+				</InputLabel>
+				<Select
+					labelId="user-id-label"
+					id="user_id"
+					name="user_id"
+					value={ firewallOptions.user_id }
+					label={ __( 'REST API User', 'rest-api-firewall' ) }
+					onChange={ handleOptionChange }
+				>
+					<MenuItem value={ 0 }>
+						<em>{ __( 'Select User', 'rest-api-firewall' ) }</em>
+					</MenuItem>
+					{ users.map( ( user ) =>
+						user.value && user.label ? (
+							<MenuItem key={ user.value } value={ user.value }>
+								{ user.label }
+							</MenuItem>
+						) : null
+					) }
+				</Select>
+				<FormHelperText>
+				
+					{ firewallOptions.user_id &&
+						restApiUser &&
+						restApiUser?.label &&
+						restApiUser?.admin_url ?
+						<>
+						<span>
+						{sprintf( __( 'Restrict authentication to %s,', 'rest-api-firewall'), restApiUser.label)}
+						</span>
+						<Typography
+								component="a"
+								href={ restApiUser.admin_url }
+								variant="body.2"
+								target="_blank"
+								sx={ {
+									display: 'inline-flex',
+									alignItems: 'center',
+									gap: '4px',
+									px: '4px',
+									fontSize: '12px',
+								} }
+							>
+								{ __( 'user profile', 'rest-api-firewall' ) }
+								<OpenInNewIcon fontSize="inherut" />
+							</Typography>
+						</>
+						:
+						<>
+						<span>
+						{__( 'Restrict authentication to one user. Create an application password first in', 'rest-api-firewall')}
+						</span>
+						<Typography
+							component="a"
+							href={ usersPageUrl }
+							variant="body.2"
+							target="_blank"
+							sx={ {
+								display: 'inline-flex',
+								alignItems: 'center',
+								gap: '4px',
+								pl: '4px',
+								fontSize: '12px',
+							} }
+							>
+								{ __( 'users list', 'rest-api-firewall' ) }
+								<OpenInNewIcon fontSize="inherit" />
+							</Typography></>
+						}
+				
+				</FormHelperText>
+			</FormControl>
+				
+			<FormControl sx={{minWidth:240}}>
+				<FormControlLabel
+					control={
+						<Switch
+							checked={ !! firewallOptions.enforce_auth }
+							name="enforce_auth"
+							size="small"
+							onChange={ handleOptionChange }
+						/>
+					}
+					label={ __( 'Enforce Authentication', 'rest-api-firewall' ) }
+				/>
+				<FormHelperText>
+					{ __('Enforce authentication on all routes', 'rest-api-firewall') }
+				</FormHelperText>
+			</FormControl>
+
+			<FormControl sx={{minWidth:240}}>
+				<FormControlLabel
+					control={
+						<Switch
+							checked={ !! firewallOptions.hide_user_routes }
+							name="hide_user_routes"
+							size="small"
+							onChange={ handleOptionChange }
+						/>
+					}
+					label={ __( 'Hide User Routes', 'rest-api-firewall' ) }
+				/>
+				<FormHelperText>
+					{ __('Block /wp/v2/users endpoint', 'rest-api-firewall') }
+				</FormHelperText>
+			</FormControl>
+		</Stack>
+	);
+}
