@@ -12,6 +12,7 @@ class IpBlackList {
 	protected static $instance = null;
 
 	private const OPTION_KEY = 'rest_firewall_ip_filter';
+	private const AUTO_BLACKLIST_KEY_PREFIX = 'rest_firewall_auto_blacklist_';
 
 	private static ?array $cache = null;
 
@@ -80,18 +81,50 @@ class IpBlackList {
 		$sanitized = array();
 
 		foreach ( $ip_list as $entry ) {
-			$entry = trim( sanitize_text_field( $entry ) );
+			if ( is_array( $entry ) && isset( $entry['ip'] ) ) {
+				$ip = trim( sanitize_text_field( $entry['ip'] ) );
 
-			if ( empty( $entry ) ) {
-				continue;
-			}
+				if ( empty( $ip ) || ! self::is_valid_ip_or_cidr( $ip ) ) {
+					continue;
+				}
 
-			if ( self::is_valid_ip_or_cidr( $entry ) ) {
-				$sanitized[] = $entry;
+				$sanitized[] = array(
+					'ip'           => $ip,
+					'type'         => isset( $entry['type'] ) ? sanitize_text_field( $entry['type'] ) : 'manual',
+					'blocked_time' => isset( $entry['blocked_time'] ) ? absint( $entry['blocked_time'] ) : time(),
+					'agent'        => isset( $entry['agent'] ) ? sanitize_text_field( $entry['agent'] ) : null,
+					'geoIp'        => isset( $entry['geoIp'] ) && is_array( $entry['geoIp'] ) ? array(
+						'country'     => isset( $entry['geoIp']['country'] ) ? sanitize_text_field( $entry['geoIp']['country'] ) : null,
+						'countryName' => isset( $entry['geoIp']['countryName'] ) ? sanitize_text_field( $entry['geoIp']['countryName'] ) : null,
+					) : null,
+				);
+			} else {
+				$ip = trim( sanitize_text_field( (string) $entry ) );
+
+				if ( empty( $ip ) || ! self::is_valid_ip_or_cidr( $ip ) ) {
+					continue;
+				}
+
+				$sanitized[] = array(
+					'ip'           => $ip,
+					'type'         => 'manual',
+					'blocked_time' => time(),
+					'agent'        => null,
+					'geoIp'        => null,
+				);
 			}
 		}
 
-		return array_unique( $sanitized );
+		$unique = array();
+		$seen   = array();
+		foreach ( $sanitized as $item ) {
+			if ( ! in_array( $item['ip'], $seen, true ) ) {
+				$seen[]   = $item['ip'];
+				$unique[] = $item;
+			}
+		}
+
+		return $unique;
 	}
 
 	public static function is_valid_ip_or_cidr( string $entry ): bool {
@@ -130,13 +163,21 @@ class IpBlackList {
 	}
 
 	public static function check_request() {
+		$client_ip = self::get_client_ip();
+
+		if ( self::is_auto_blacklisted( $client_ip ) ) {
+			return new WP_Error(
+				'ip_auto_blacklisted',
+				__( 'Your IP address has been temporarily blocked due to excessive requests.', 'rest-api-firewall' ),
+				array( 'status' => 403 )
+			);
+		}
+
 		$options = self::get_options();
 
 		if ( ! $options['enabled'] ) {
 			return true;
 		}
-
-		$client_ip = self::get_client_ip();
 
 		if ( self::has_pro_features() ) {
 			return self::check_with_pro_whitelist( $client_ip, $options );
@@ -176,11 +217,14 @@ class IpBlackList {
 
 	public static function ip_in_list( string $ip, array $ip_list ): bool {
 		foreach ( $ip_list as $entry ) {
-			if ( strpos( $entry, '/' ) !== false ) {
-				if ( self::ip_in_cidr( $ip, $entry ) ) {
+			// Handle both object format and simple string format.
+			$entry_ip = is_array( $entry ) && isset( $entry['ip'] ) ? $entry['ip'] : (string) $entry;
+
+			if ( strpos( $entry_ip, '/' ) !== false ) {
+				if ( self::ip_in_cidr( $ip, $entry_ip ) ) {
 					return true;
 				}
-			} elseif ( $ip === $entry ) {
+			} elseif ( $ip === $entry_ip ) {
 				return true;
 			}
 		}
@@ -249,6 +293,21 @@ class IpBlackList {
 
 	public static function flush(): void {
 		self::$cache = null;
+	}
+
+	public static function is_auto_blacklisted( string $ip ): bool {
+		$key = self::AUTO_BLACKLIST_KEY_PREFIX . md5( $ip );
+		return (bool) get_transient( $key );
+	}
+
+	public static function auto_blacklist_ip( string $ip, int $duration ): void {
+		$key = self::AUTO_BLACKLIST_KEY_PREFIX . md5( $ip );
+		set_transient( $key, time(), $duration );
+	}
+
+	public static function remove_auto_blacklist( string $ip ): void {
+		$key = self::AUTO_BLACKLIST_KEY_PREFIX . md5( $ip );
+		delete_transient( $key );
 	}
 
 	public function ajax_get_ip_filter(): void {

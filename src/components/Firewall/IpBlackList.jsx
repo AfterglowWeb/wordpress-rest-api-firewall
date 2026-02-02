@@ -187,7 +187,12 @@ export default function IpBlackList() {
 		const listKey = settings.mode === 'whitelist' ? 'whitelist' : 'blacklist';
 		const currentList = settings[ listKey ];
 
-		if ( currentList.includes( trimmed ) ) {
+		const isDuplicate = currentList.some( ( item ) => {
+			const itemIp = typeof item === 'string' ? item : item.ip;
+			return itemIp === trimmed;
+		} );
+
+		if ( isDuplicate ) {
 			setIpError( __( 'This IP is already in the list', 'rest-api-firewall' ) );
 			return;
 		}
@@ -214,7 +219,10 @@ export default function IpBlackList() {
 	const handleRemoveIp = ( listKey, ip ) => {
 		setSettings( ( prev ) => ( {
 			...prev,
-			[ listKey ]: prev[ listKey ].filter( ( item ) => item !== ip ),
+			[ listKey ]: prev[ listKey ].filter( ( item ) => {
+				const itemIp = typeof item === 'string' ? item : item.ip;
+				return itemIp !== ip;
+			} ),
 		} ) );
 	};
 
