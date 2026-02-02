@@ -82,7 +82,7 @@ class Documentation {
 		$environment->addExtension( new HeadingPermalinkExtension() );
 
 		$converter = new MarkdownConverter( $environment );
-
+		$pages_html = array();
 		foreach ( $pages as $page ) {
 
 			$file = realpath( $docs_dir . '/' . $page['slug'] . '.md' );
@@ -99,13 +99,13 @@ class Documentation {
 			$result = $converter->convert( $markdown );
 			$html   = $result->getContent();
 
-			$pages[] = array(
+			$pages_html[] = array(
 				'slug'  => $page['slug'],
 				'title' => $page['title'],
 				'html'  => $html,
 			);
 		}
 
-		return $pages;
+		return $pages_html;
 	}
 }

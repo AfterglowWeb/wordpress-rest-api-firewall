@@ -13,14 +13,15 @@ import MenuItem from '@mui/material/MenuItem';
 import CloseIcon from '@mui/icons-material/Close';
 import MenuIcon from '@mui/icons-material/Menu';
 
-import contentStyles from './utils/contentStyles';
+import contentStyles from '../utils/contentStyles';
+import Button from '@mui/material/Button';
 
-export default function Documentation() {
+export default function Documentation({page, buttonText, variant = "text", size = "small", color = "primary"}) {
+	const { __ } = wp.i18n || {};
 	const { open, openDoc, closeDoc, currentLocation, docs } =
 		useDocumentation();
 
 	const [ menuAnchorEl, setMenuAnchorEl ] = useState( null );
-
 	const currentDoc = useMemo(
 		() => docs.find( ( doc ) => doc.slug === currentLocation?.page ),
 		[ docs, currentLocation ]
@@ -38,12 +39,22 @@ export default function Documentation() {
 	}, [ currentLocation, currentDoc ] );
 
 	return (
+		<>
+		<Button 
+		variant={variant} 
+		size={size } 
+		color={color} 
+		onClick={ () => openDoc( { page: page } ) }>
+			{ buttonText }
+		</Button>
 		<Drawer
 			anchor="right"
 			open={ open }
 			onClose={ closeDoc }
 			sx={ {
 				'& .MuiDrawer-paper': {
+					height: 'calc(100% - 32px)',
+					marginTop: '32px',
 					boxSizing: 'border-box',
 					width: '100%',
 					maxWidth: 600,
@@ -59,7 +70,7 @@ export default function Documentation() {
 				</IconButton>
 
 				<Typography variant="h6" sx={ { flexGrow: 1 } }>
-					{ __( 'Help', 'rest-api-firewall' ) }
+					{ __( 'Documentation', 'rest-api-firewall' ) }
 				</Typography>
 
 				<IconButton onClick={ closeDoc }>
@@ -68,9 +79,9 @@ export default function Documentation() {
 			</Toolbar>
 
 			{ currentDoc && (
-				<Card>
+				<Card sx={ { p: 2, height: 'calc(100% - 96px)', overflow: 'scroll' } }>
 					<CardContent
-						sx={ contentStyles }
+						sx={{overflow: 'auto', ...contentStyles }}
 						dangerouslySetInnerHTML={ {
 							__html: currentDoc.html,
 						} }
@@ -94,5 +105,6 @@ export default function Documentation() {
 				) ) }
 			</Menu>
 		</Drawer>
+		</>
 	);
 }
