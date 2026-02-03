@@ -159,6 +159,22 @@ class CoreOptions {
 				'context'           => array( 'free', 'pro' ),
 			),
 
+			'theme_disable_xmlrpc'                       => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+			),
+
+			'theme_disable_filedit'                      => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+			),
+
 			'theme_disable_gutenberg'                    => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
@@ -175,7 +191,23 @@ class CoreOptions {
 				'context'           => array( 'free', 'pro' ),
 			),
 
+			'theme_disable_pingbacks'                    => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+			),
+
 			'theme_remove_empty_p_tags_enabled'          => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+			),
+
+			'theme_remove_emoji_scripts'                 => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',

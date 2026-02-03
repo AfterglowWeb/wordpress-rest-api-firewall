@@ -34,7 +34,6 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import Grid from '@mui/material/Grid';
 import Skeleton from '@mui/material/Skeleton';
 
 export default function Webhook( { form, setField } ) {
@@ -226,180 +225,240 @@ export default function Webhook( { form, setField } ) {
 
 	return (
 		<Stack maxWidth="xl" spacing={ 3 }>
-			
-			<Stack direction={'row'} gap={4}>
-				
-				<Stack spacing={2} flex={1}>
-					<Stack spacing={3}>
-					<Typography variant="subtitle1" fontWeight={ 600 } sx={ { mb: 2 } }>
-						{ __( 'Webhook access', 'rest-api-firewall' ) }
-					</Typography>
-						<Stack spacing={4}>
-
-						<TextField
-							label={ __( 'Application URL', 'rest-api-firewall' ) }
-							name="application_host"
-							helperText={ __(
-								'Full application URL with protocol and port (e.g., https://example.local:5001).',
-								'rest-api-firewall'
-							) }
-							value={ form.application_host }
-							onChange={ setField }
-							fullWidth
-						/>
-				
-						<TextField
-							label={ __( 'Application Webhook Endpoint', 'rest-api-firewall' ) }
-							name="application_webhook_endpoint"
-							helperText={ __(
-								'The application endpoint used to trigger a webhook.',
-								'rest-api-firewall'
-							) }
-							value={ form.application_webhook_endpoint }
-							onChange={ setField }
-							fullWidth
-						/>
-			
-						<TextField
-						label={ __( 'Application Webhook Secret', 'rest-api-firewall' ) }
-							value={
-								isLoading
-									? __( 'Checking…', 'rest-api-firewall' )
-									: ! hasSecret
-									? __( 'Not generated', 'rest-api-firewall' )
-									: isRevealed
-									? webhookSecret
-									: '••••••••••••••••••••••••••••••••'
-							}
-							type={ isRevealed ? 'text' : 'password' }
-							disabled={ false }
-							slotProps={ {
-								input: {
-									readOnly: true,
-									endAdornment: isRevealed && (
-										<InputAdornment position="end">
-											<IconButton
-												onClick={ () =>
-													navigator.clipboard.writeText(
-														webhookSecret
-													)
-												}
-											>
-												<ContentCopyIcon fontSize="small" />
-											</IconButton>
-										</InputAdornment>
-									),
-								},
-							} }
-							helperText={
-								! hasSecret
-									? __(
-											'No webhook secret generated yet.',
-											'rest-api-firewall'
-									)
-									: __(
-											'Used to sign webhook requests.',
-											'rest-api-firewall'
-									)
-							}
-							fullWidth
-						/>
-
-						{ isRevealed && (
-							<Alert severity="info">
-								{ __(
-									'This secret is shown only once. Copy it now and store it securely.',
+			<Stack direction={ 'row' } gap={ 4 }>
+				<Stack spacing={ 2 } flex={ 1 }>
+					<Stack spacing={ 3 }>
+						<Typography
+							variant="subtitle1"
+							fontWeight={ 600 }
+							sx={ { mb: 2 } }
+						>
+							{ __( 'Webhook access', 'rest-api-firewall' ) }
+						</Typography>
+						<Stack spacing={ 4 }>
+							<TextField
+								label={ __(
+									'Application URL',
 									'rest-api-firewall'
 								) }
-							</Alert>
-						) }
+								name="application_host"
+								helperText={ __(
+									'Full application URL with protocol and port (e.g., https://example.local:5001).',
+									'rest-api-firewall'
+								) }
+								value={ form.application_host }
+								onChange={ setField }
+								fullWidth
+							/>
 
-						<Stack
-							direction="row"
-							spacing={ 2 }
-							alignItems="flex-start" 
-						>
-							<Button
-								variant="outlined"
-								size="small"
-								sx={{ display: 'inline-flex' }}
-								startIcon={ <DeleteOutlineIcon /> }
-								onClick={ () => setConfirmAction( 'delete' ) }
-								disabled={ ! hasSecret }
-							>
-								{ __( 'Revoke', 'rest-api-firewall' ) }
-							</Button>
+							<TextField
+								label={ __(
+									'Application Webhook Endpoint',
+									'rest-api-firewall'
+								) }
+								name="application_webhook_endpoint"
+								helperText={ __(
+									'The application endpoint used to trigger a webhook.',
+									'rest-api-firewall'
+								) }
+								value={ form.application_webhook_endpoint }
+								onChange={ setField }
+								fullWidth
+							/>
 
-							<Button
-								size="small"
-								variant="contained"
-								disableElevation
-								startIcon={ <AutorenewIcon /> }
-								onClick={ () => setConfirmAction( 'regenerate' ) }
+							<TextField
+								label={ __(
+									'Application Webhook Secret',
+									'rest-api-firewall'
+								) }
+								value={
+									isLoading
+										? __( 'Checking…', 'rest-api-firewall' )
+										: ! hasSecret
+										? __(
+												'Not generated',
+												'rest-api-firewall'
+										  )
+										: isRevealed
+										? webhookSecret
+										: '••••••••••••••••••••••••••••••••'
+								}
+								type={ isRevealed ? 'text' : 'password' }
+								disabled={ false }
+								slotProps={ {
+									input: {
+										readOnly: true,
+										endAdornment: isRevealed && (
+											<InputAdornment position="end">
+												<IconButton
+													onClick={ () =>
+														navigator.clipboard.writeText(
+															webhookSecret
+														)
+													}
+												>
+													<ContentCopyIcon fontSize="small" />
+												</IconButton>
+											</InputAdornment>
+										),
+									},
+								} }
+								helperText={
+									! hasSecret
+										? __(
+												'No webhook secret generated yet.',
+												'rest-api-firewall'
+										  )
+										: __(
+												'Used to sign webhook requests.',
+												'rest-api-firewall'
+										  )
+								}
+								fullWidth
+							/>
+
+							{ isRevealed && (
+								<Alert severity="info">
+									{ __(
+										'This secret is shown only once. Copy it now and store it securely.',
+										'rest-api-firewall'
+									) }
+								</Alert>
+							) }
+
+							<Stack
+								direction="row"
+								spacing={ 2 }
+								alignItems="flex-start"
 							>
-								{ __( 'Regenerate', 'rest-api-firewall' ) }
-							</Button>
+								<Button
+									variant="outlined"
+									size="small"
+									sx={ { display: 'inline-flex' } }
+									startIcon={ <DeleteOutlineIcon /> }
+									onClick={ () =>
+										setConfirmAction( 'delete' )
+									}
+									disabled={ ! hasSecret }
+								>
+									{ __( 'Revoke', 'rest-api-firewall' ) }
+								</Button>
+
+								<Button
+									size="small"
+									variant="contained"
+									disableElevation
+									startIcon={ <AutorenewIcon /> }
+									onClick={ () =>
+										setConfirmAction( 'regenerate' )
+									}
+								>
+									{ __( 'Regenerate', 'rest-api-firewall' ) }
+								</Button>
+							</Stack>
 						</Stack>
-
-					</Stack>
 					</Stack>
 				</Stack>
 
 				<Divider orientation="vertical" variant="middle" flexItem />
 
-				<Stack spacing={2} flex={1}>
-					<Typography variant="subtitle1" fontWeight={ 600 } sx={ { mb: 2 } }>
+				<Stack spacing={ 2 } flex={ 1 }>
+					<Typography
+						variant="subtitle1"
+						fontWeight={ 600 }
+						sx={ { mb: 2 } }
+					>
 						{ __( 'Auto-trigger Events', 'rest-api-firewall' ) }
 					</Typography>
-					
+
 					<FormHelperText sx={ { mb: 2 } }>
-						{ __( 'Select WordPress events that will automatically trigger the webhook.', 'rest-api-firewall' ) }
+						{ __(
+							'Select WordPress events that will automatically trigger the webhook.',
+							'rest-api-firewall'
+						) }
 					</FormHelperText>
 
-					{ Object.entries( webhookEventGroups ).map( ( [ groupKey, groupLabel ] ) => {
-						const groupEvents = getEventsByGroup( groupKey );
-						if ( groupEvents.length === 0 ) return null;
+					{ Object.entries( webhookEventGroups ).map(
+						( [ groupKey, groupLabel ] ) => {
+							const groupEvents = getEventsByGroup( groupKey );
+							if ( groupEvents.length === 0 ) {
+								return null;
+							}
 
-						return (
-							<Box key={ groupKey } sx={ { mb: 2 } }>
-								<Typography variant="body2" color="text.secondary" sx={ { mb: 1 } }>
-									{ groupLabel }
-								</Typography>
-								<FormGroup>
-									{ groupEvents.map( ( [ eventKey, eventConfig ] ) => (
-										<FormControl key={ eventKey }>
-											<FormControlLabel
-												control={
-													<Checkbox
-														size="small"
-														checked={ selectedEvents.includes( eventKey ) }
-														onChange={ () => handleEventToggle( eventKey ) }
+							return (
+								<Box key={ groupKey } sx={ { mb: 2 } }>
+									<Typography
+										variant="body2"
+										color="text.secondary"
+										sx={ { mb: 1 } }
+									>
+										{ groupLabel }
+									</Typography>
+									<FormGroup>
+										{ groupEvents.map(
+											( [ eventKey, eventConfig ] ) => (
+												<FormControl key={ eventKey }>
+													<FormControlLabel
+														control={
+															<Checkbox
+																size="small"
+																checked={ selectedEvents.includes(
+																	eventKey
+																) }
+																onChange={ () =>
+																	handleEventToggle(
+																		eventKey
+																	)
+																}
+															/>
+														}
+														label={
+															eventConfig.label
+														}
 													/>
-												}
-												label={ eventConfig.label }
-											/>
-											<FormHelperText sx={ { ml: 4, mt: -0.5 } }>
-												{ eventConfig.description }
-											</FormHelperText>
-										</FormControl>
-									) ) }
-								</FormGroup>
-							</Box>
-						);
-					} ) }
+													<FormHelperText
+														sx={ {
+															ml: 4,
+															mt: -0.5,
+														} }
+													>
+														{
+															eventConfig.description
+														}
+													</FormHelperText>
+												</FormControl>
+											)
+										) }
+									</FormGroup>
+								</Box>
+							);
+						}
+					) }
 				</Stack>
 
 				<Divider orientation="vertical" variant="middle" flexItem />
 
-				<Stack spacing={2} flex={1}>
-					<Typography variant="subtitle1" fontWeight={ 600 } sx={ { mb: 2 } }>
+				<Stack spacing={ 2 } flex={ 1 }>
+					<Typography
+						variant="subtitle1"
+						fontWeight={ 600 }
+						sx={ { mb: 2 } }
+					>
 						{ __( 'Test Webhook', 'rest-api-firewall' ) }
 					</Typography>
 					<FormHelperText sx={ { mb: 2 } }>
-						{ __( 'Send a test webhook request to verify your configuration.', 'rest-api-firewall' ) }
+						{ __(
+							'Send a test webhook request to verify your configuration.',
+							'rest-api-firewall'
+						) }
 					</FormHelperText>
 
-					<Stack direction="row" spacing={ 2 } alignItems="flex-start" sx={ { mb: 2 } }>
+					<Stack
+						direction="row"
+						spacing={ 2 }
+						alignItems="flex-start"
+						sx={ { mb: 2 } }
+					>
 						<FormControl sx={ { minWidth: 250 } }>
 							<InputLabel id="test-event-label">
 								{ __( 'Event', 'rest-api-firewall' ) }
@@ -407,41 +466,85 @@ export default function Webhook( { form, setField } ) {
 							<Select
 								labelId="test-event-label"
 								value={ testEventKey }
-								onChange={ ( e ) => setTestEventKey( e.target.value ) }
+								onChange={ ( e ) =>
+									setTestEventKey( e.target.value )
+								}
 								label={ __( 'Event', 'rest-api-firewall' ) }
 							>
 								<MenuItem value="">
-									<em>{ __( 'Select an event', 'rest-api-firewall' ) }</em>
+									<em>
+										{ __(
+											'Select an event',
+											'rest-api-firewall'
+										) }
+									</em>
 								</MenuItem>
-								{ Object.entries( webhookEvents ).map( ( [ eventKey, eventConfig ] ) => (
-									<MenuItem key={ eventKey } value={ eventKey }>
-										{ eventConfig.label }
-									</MenuItem>
-								) ) }
+								{ Object.entries( webhookEvents ).map(
+									( [ eventKey, eventConfig ] ) => (
+										<MenuItem
+											key={ eventKey }
+											value={ eventKey }
+										>
+											{ eventConfig.label }
+										</MenuItem>
+									)
+								) }
 							</Select>
 						</FormControl>
 
 						<Button
 							variant="contained"
 							size="small"
-							startIcon={ testLoading ? <CircularProgress size={ 16 } color="inherit" /> : <PlayArrowIcon /> }
+							startIcon={
+								testLoading ? (
+									<CircularProgress
+										size={ 16 }
+										color="inherit"
+									/>
+								) : (
+									<PlayArrowIcon />
+								)
+							}
 							onClick={ handleTestWebhook }
-							disabled={ ! testEventKey || testLoading || ! hasSecret }
+							disabled={
+								! testEventKey || testLoading || ! hasSecret
+							}
 						>
-							{ testLoading ? __( 'Testing...', 'rest-api-firewall' ) : __( 'Test', 'rest-api-firewall' ) }
+							{ testLoading
+								? __( 'Testing…', 'rest-api-firewall' )
+								: __( 'Test', 'rest-api-firewall' ) }
 						</Button>
 					</Stack>
 
 					{ testResult ? (
 						<Card variant="outlined" sx={ { mt: 2 } }>
 							<CardContent>
-								<Stack direction="row" spacing={ 1 } alignItems="center" sx={ { mb: 2 } }>
+								<Stack
+									direction="row"
+									spacing={ 1 }
+									alignItems="center"
+									sx={ { mb: 2 } }
+								>
 									<Typography variant="subtitle2">
 										{ __( 'Result', 'rest-api-firewall' ) }
 									</Typography>
 									<Chip
-										label={ testResult.success ? __( 'Success', 'rest-api-firewall' ) : __( 'Error', 'rest-api-firewall' ) }
-										color={ testResult.success ? 'success' : 'error' }
+										label={
+											testResult.success
+												? __(
+														'Success',
+														'rest-api-firewall'
+												  )
+												: __(
+														'Error',
+														'rest-api-firewall'
+												  )
+										}
+										color={
+											testResult.success
+												? 'success'
+												: 'error'
+										}
 										size="small"
 									/>
 									{ testResult.data?.duration && (
@@ -468,8 +571,15 @@ export default function Webhook( { form, setField } ) {
 
 								{ testResult.data?.payload && (
 									<Box sx={ { mb: 2 } }>
-										<Typography variant="body2" color="text.secondary" sx={ { mb: 0.5 } }>
-											{ __( 'Payload sent:', 'rest-api-firewall' ) }
+										<Typography
+											variant="body2"
+											color="text.secondary"
+											sx={ { mb: 0.5 } }
+										>
+											{ __(
+												'Payload sent:',
+												'rest-api-firewall'
+											) }
 										</Typography>
 										<Box
 											component="pre"
@@ -482,15 +592,26 @@ export default function Webhook( { form, setField } ) {
 												maxHeight: 150,
 											} }
 										>
-											{ JSON.stringify( testResult.data.payload, null, 2 ) }
+											{ JSON.stringify(
+												testResult.data.payload,
+												null,
+												2
+											) }
 										</Box>
 									</Box>
 								) }
 
 								{ testResult.data?.response_body && (
 									<Box>
-										<Typography variant="body2" color="text.secondary" sx={ { mb: 0.5 } }>
-											{ __( 'Response:', 'rest-api-firewall' ) }
+										<Typography
+											variant="body2"
+											color="text.secondary"
+											sx={ { mb: 0.5 } }
+										>
+											{ __(
+												'Response:',
+												'rest-api-firewall'
+											) }
 										</Typography>
 										<Box
 											component="pre"
@@ -509,23 +630,23 @@ export default function Webhook( { form, setField } ) {
 								) }
 							</CardContent>
 						</Card>
-					) : 
-						<Skeleton 
-						animation={false}
-						variant="rounded" 
-						height={ 300 } />
-					}
+					) : (
+						<Skeleton
+							animation={ false }
+							variant="rounded"
+							height={ 300 }
+						/>
+					) }
 
 					<Alert severity="info">
-							{ __(
-								'You can edit the webhook payload through the "rest_firewall_application_webhook_body_payload" filter hook.',
-								'rest-api-firewall'
-							) }
+						{ __(
+							'You can edit the webhook payload through the "rest_firewall_application_webhook_body_payload" filter hook.',
+							'rest-api-firewall'
+						) }
 					</Alert>
 				</Stack>
-
 			</Stack>
-			
+
 			<Dialog
 				open={ confirmOpen }
 				onClose={ () => setConfirmAction( null ) }

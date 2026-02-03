@@ -20,6 +20,7 @@
     "@mui/icons-material": "^7",
     "@mui/material": "^7",
     "@mui/utils": "^7.3.3",
+    "@mui/x-data-grid": "^8.27.0",
     "@mui/x-tree-view": "^8.0.0",
     "@wordpress/element": "^6.18.0",
     "@wordpress/i18n": "^5.18.0",

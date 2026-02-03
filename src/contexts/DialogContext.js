@@ -1,4 +1,9 @@
-import { createContext, useContext, useState, useCallback } from '@wordpress/element';
+import {
+	createContext,
+	useContext,
+	useState,
+	useCallback,
+} from '@wordpress/element';
 
 const DialogContext = createContext( null );
 

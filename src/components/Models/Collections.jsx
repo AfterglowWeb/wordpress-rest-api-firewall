@@ -17,12 +17,16 @@ export default function Collections( { form, setField, postTypes } ) {
 
 	return (
 		<Stack spacing={ 3 }>
-
-			<Typography variant="subtitle1" fontWeight={600}>
+			<Typography variant="subtitle1" fontWeight={ 600 }>
 				{ __( 'Collections', 'rest-api-firewall' ) }
 			</Typography>
 
-			<Stack spacing={ 3 } direction={'row'} justifyContent={'space-between'} alignItems={'flex-start'}>
+			<Stack
+				spacing={ 3 }
+				direction={ 'row' }
+				justifyContent={ 'space-between' }
+				alignItems={ 'flex-start' }
+			>
 				<TextField
 					label={ __( 'Posts Per Page', 'rest-api-firewall' ) }
 					type="number"
@@ -54,15 +58,26 @@ export default function Collections( { form, setField, postTypes } ) {
 				/>
 			</Stack>
 
-			<Stack sx={{ position: 'relative' }} spacing={ 3 } direction={'row'} justifyContent={'space-between'} alignItems={'flex-start'}>
-				<Box sx={{ flex: 1 }}>
+			<Stack
+				sx={ { position: 'relative' } }
+				spacing={ 3 }
+				direction={ 'row' }
+				justifyContent={ 'space-between' }
+				alignItems={ 'flex-start' }
+			>
+				<Box sx={ { flex: 1 } }>
 					{ postTypes && (
 						<MultipleSelect
 							disabled={ ! hasValidLicense }
 							name="rest_api_allowed_post_types"
-							label={ __( 'Restict to Posts Types', 'rest-api-firewall' ) }
+							label={ __(
+								'Restict to Posts Types',
+								'rest-api-firewall'
+							) }
 							value={ form.rest_api_allowed_post_types }
-							helperText={ 'The selected Posts Types only will be visible in the REST API. If empty, default visibilty settings are applied' }
+							helperText={
+								'The selected Posts Types only will be visible in the REST API. If empty, default visibilty settings are applied'
+							}
 							options={ postTypes }
 							onChange={ setField }
 						/>
@@ -73,7 +88,9 @@ export default function Collections( { form, setField, postTypes } ) {
 					<FormControlLabel
 						control={
 							<Switch
-								checked={ !! form.rest_api_restrict_post_types_enabled }
+								checked={
+									!! form.rest_api_restrict_post_types_enabled
+								}
 								name="rest_api_restrict_post_types_enabled"
 								onChange={ setField }
 							/>
@@ -81,9 +98,8 @@ export default function Collections( { form, setField, postTypes } ) {
 						label={ __( 'Enable', 'rest-api-firewall' ) }
 					/>
 				</FormControl>
-				<ProBadge position={'right'} />
+				<ProBadge position={ 'right' } />
 			</Stack>
-
 		</Stack>
 	);
 }

@@ -22,8 +22,5 @@ const appTheme = createTheme( {
 } );
 
 export default function AppTheme( { children } ) {
-	return (
-	<ThemeProvider theme={ appTheme }>
-		{ children }
-	</ThemeProvider>);
+	return <ThemeProvider theme={ appTheme }>{ children }</ThemeProvider>;
 }

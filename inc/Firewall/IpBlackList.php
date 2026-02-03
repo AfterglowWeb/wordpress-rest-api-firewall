@@ -11,7 +11,8 @@ class IpBlackList {
 
 	protected static $instance = null;
 
-	private const OPTION_KEY = 'rest_firewall_ip_filter';
+	private const OPTION_KEY                = 'rest_firewall_ip_filter';
+	private const AUTO_BLACKLIST_KEY_PREFIX = 'rest_firewall_auto_blacklist_';
 
 	private static ?array $cache = null;
 
@@ -33,6 +34,115 @@ class IpBlackList {
 			'mode'      => 'blacklist',
 			'blacklist' => array(),
 		);
+	}
+
+	private static function ip_entry_config(): array {
+		return array(
+			'ip'           => array(
+				'type'              => 'string',
+				'required'          => true,
+				'sanitize_callback' => 'sanitize_text_field',
+				'default'           => null,
+			),
+			'type'         => array(
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+				'default'           => 'manual',
+				'allowed_values'    => array( 'manual', 'rate_limit' ),
+			),
+			'blocked_time' => array(
+				'type'              => 'integer',
+				'required'          => false,
+				'sanitize_callback' => 'absint',
+				'default'           => null, // Will use time if null.
+			),
+			'agent'        => array(
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+				'default'           => null,
+			),
+			'geoIp'        => array(
+				'type'              => 'object',
+				'required'          => false,
+				'sanitize_callback' => null, // Custom handling.
+				'default'           => null,
+				'properties'        => array(
+					'country'     => array(
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'default'           => null,
+					),
+					'countryName' => array(
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'default'           => null,
+					),
+				),
+			),
+		);
+	}
+
+	/**
+	 * Sanitize a single IP entry based on configuration.
+	 *
+	 * @param array|string $entry Raw entry data.
+	 * @return array|null Sanitized entry or null if invalid.
+	 */
+	private static function sanitize_ip_entry( $entry ): ?array {
+		$config = self::ip_entry_config();
+
+		if ( ! is_array( $entry ) ) {
+			$entry = array( 'ip' => (string) $entry );
+		}
+
+		if ( ! isset( $entry['ip'] ) || empty( trim( $entry['ip'] ) ) ) {
+			return null;
+		}
+
+		$ip = trim( sanitize_text_field( $entry['ip'] ) );
+		if ( ! self::is_valid_ip_or_cidr( $ip ) ) {
+			return null;
+		}
+
+		$sanitized = array();
+
+		foreach ( $config as $key => $field_config ) {
+			$value = $entry[ $key ] ?? null;
+
+			if ( 'object' === $field_config['type'] && isset( $field_config['properties'] ) ) {
+				// Handle nested object (geoIp).
+				if ( is_array( $value ) ) {
+					$nested = array();
+					foreach ( $field_config['properties'] as $prop_key => $prop_config ) {
+						$prop_value = $value[ $prop_key ] ?? $prop_config['default'];
+						if ( null !== $prop_value && is_callable( $prop_config['sanitize_callback'] ) ) {
+							$prop_value = call_user_func( $prop_config['sanitize_callback'], $prop_value );
+						}
+						$nested[ $prop_key ] = $prop_value;
+					}
+					$sanitized[ $key ] = $nested;
+				} else {
+					$sanitized[ $key ] = $field_config['default'];
+				}
+			} elseif ( null === $value ) {
+					$default = $field_config['default'];
+				if ( 'blocked_time' === $key && null === $default ) {
+					$default = time();
+				}
+					$sanitized[ $key ] = $default;
+			} else {
+				$callback          = $field_config['sanitize_callback'];
+				$sanitized[ $key ] = is_callable( $callback ) ? call_user_func( $callback, $value ) : $value;
+
+				if ( isset( $field_config['allowed_values'] ) && ! in_array( $sanitized[ $key ], $field_config['allowed_values'], true ) ) {
+					$sanitized[ $key ] = $field_config['default'];
+				}
+			}
+		}
+
+		return $sanitized;
 	}
 
 	public static function get_options(): array {
@@ -78,20 +188,25 @@ class IpBlackList {
 		}
 
 		$sanitized = array();
+		$seen_ips  = array();
 
 		foreach ( $ip_list as $entry ) {
-			$entry = trim( sanitize_text_field( $entry ) );
+			$sanitized_entry = self::sanitize_ip_entry( $entry );
 
-			if ( empty( $entry ) ) {
+			if ( null === $sanitized_entry ) {
 				continue;
 			}
 
-			if ( self::is_valid_ip_or_cidr( $entry ) ) {
-				$sanitized[] = $entry;
+			// Skip duplicates.
+			if ( in_array( $sanitized_entry['ip'], $seen_ips, true ) ) {
+				continue;
 			}
+
+			$seen_ips[]  = $sanitized_entry['ip'];
+			$sanitized[] = $sanitized_entry;
 		}
 
-		return array_unique( $sanitized );
+		return $sanitized;
 	}
 
 	public static function is_valid_ip_or_cidr( string $entry ): bool {
@@ -130,13 +245,21 @@ class IpBlackList {
 	}
 
 	public static function check_request() {
+		$client_ip = self::get_client_ip();
+
+		if ( self::is_auto_blacklisted( $client_ip ) ) {
+			return new WP_Error(
+				'ip_auto_blacklisted',
+				__( 'Your IP address has been temporarily blocked due to excessive requests.', 'rest-api-firewall' ),
+				array( 'status' => 403 )
+			);
+		}
+
 		$options = self::get_options();
 
 		if ( ! $options['enabled'] ) {
 			return true;
 		}
-
-		$client_ip = self::get_client_ip();
 
 		if ( self::has_pro_features() ) {
 			return self::check_with_pro_whitelist( $client_ip, $options );
@@ -176,11 +299,13 @@ class IpBlackList {
 
 	public static function ip_in_list( string $ip, array $ip_list ): bool {
 		foreach ( $ip_list as $entry ) {
-			if ( strpos( $entry, '/' ) !== false ) {
-				if ( self::ip_in_cidr( $ip, $entry ) ) {
+			$entry_ip = is_array( $entry ) && isset( $entry['ip'] ) ? $entry['ip'] : (string) $entry;
+
+			if ( strpos( $entry_ip, '/' ) !== false ) {
+				if ( self::ip_in_cidr( $ip, $entry_ip ) ) {
 					return true;
 				}
-			} elseif ( $ip === $entry ) {
+			} elseif ( $ip === $entry_ip ) {
 				return true;
 			}
 		}
@@ -249,6 +374,21 @@ class IpBlackList {
 
 	public static function flush(): void {
 		self::$cache = null;
+	}
+
+	public static function is_auto_blacklisted( string $ip ): bool {
+		$key = self::AUTO_BLACKLIST_KEY_PREFIX . md5( $ip );
+		return (bool) get_transient( $key );
+	}
+
+	public static function auto_blacklist_ip( string $ip, int $duration ): void {
+		$key = self::AUTO_BLACKLIST_KEY_PREFIX . md5( $ip );
+		set_transient( $key, time(), $duration );
+	}
+
+	public static function remove_auto_blacklist( string $ip ): void {
+		$key = self::AUTO_BLACKLIST_KEY_PREFIX . md5( $ip );
+		delete_transient( $key );
 	}
 
 	public function ajax_get_ip_filter(): void {

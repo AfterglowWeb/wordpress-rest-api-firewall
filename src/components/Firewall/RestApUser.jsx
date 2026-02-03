@@ -12,16 +12,25 @@ import Typography from '@mui/material/Typography';
 
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
-export default function RestApiUser( { firewallOptions, handleOptionChange, users, restApiUser } ) {
+export default function RestApiUser( {
+	firewallOptions,
+	handleOptionChange,
+	users,
+	restApiUser,
+} ) {
 	const { __, sprintf } = wp.i18n || {};
 	const { adminData } = useAdminData();
 
-	const adminUrl = adminData?.ajaxurl?.split( 'admin-ajax.php' )[0] || '';
+	const adminUrl = adminData?.ajaxurl?.split( 'admin-ajax.php' )[ 0 ] || '';
 	const usersPageUrl = `${ adminUrl }users.php`;
 
 	return (
-		<Stack direction={{xs:'column', md:'row'}} my={3.6} gap={ 2 } justifyContent={'space-between'}>
-			
+		<Stack
+			direction={ { xs: 'column', md: 'row' } }
+			my={ 3.6 }
+			gap={ 2 }
+			justifyContent={ 'space-between' }
+		>
 			<FormControl>
 				<InputLabel id="user-id-label">
 					{ __( 'REST API User', 'rest-api-firewall' ) }
@@ -46,16 +55,21 @@ export default function RestApiUser( { firewallOptions, handleOptionChange, user
 					) }
 				</Select>
 				<FormHelperText>
-				
 					{ firewallOptions.user_id &&
-						restApiUser &&
-						restApiUser?.label &&
-						restApiUser?.admin_url ?
+					restApiUser &&
+					restApiUser?.label &&
+					restApiUser?.admin_url ? (
 						<>
-						<span>
-						{sprintf( __( 'Restrict authentication to %s,', 'rest-api-firewall'), restApiUser.label)}
-						</span>
-						<Typography
+							<span>
+								{ sprintf(
+									__(
+										'Restrict authentication to %s,',
+										'rest-api-firewall'
+									),
+									restApiUser.label
+								) }
+							</span>
+							<Typography
 								component="a"
 								href={ restApiUser.admin_url }
 								variant="body.2"
@@ -72,33 +86,36 @@ export default function RestApiUser( { firewallOptions, handleOptionChange, user
 								<OpenInNewIcon fontSize="inherut" />
 							</Typography>
 						</>
-						:
+					) : (
 						<>
-						<span>
-						{__( 'Restrict authentication to one user. Create an application password first in', 'rest-api-firewall')}
-						</span>
-						<Typography
-							component="a"
-							href={ usersPageUrl }
-							variant="body.2"
-							target="_blank"
-							sx={ {
-								display: 'inline-flex',
-								alignItems: 'center',
-								gap: '4px',
-								pl: '4px',
-								fontSize: '12px',
-							} }
+							<span>
+								{ __(
+									'Restrict authentication to one user. Create an application password first in',
+									'rest-api-firewall'
+								) }
+							</span>
+							<Typography
+								component="a"
+								href={ usersPageUrl }
+								variant="body.2"
+								target="_blank"
+								sx={ {
+									display: 'inline-flex',
+									alignItems: 'center',
+									gap: '4px',
+									pl: '4px',
+									fontSize: '12px',
+								} }
 							>
 								{ __( 'users list', 'rest-api-firewall' ) }
 								<OpenInNewIcon fontSize="inherit" />
-							</Typography></>
-						}
-				
+							</Typography>
+						</>
+					) }
 				</FormHelperText>
 			</FormControl>
-				
-			<FormControl sx={{minWidth:240}}>
+
+			<FormControl sx={ { minWidth: 240 } }>
 				<FormControlLabel
 					control={
 						<Switch
@@ -108,14 +125,20 @@ export default function RestApiUser( { firewallOptions, handleOptionChange, user
 							onChange={ handleOptionChange }
 						/>
 					}
-					label={ __( 'Enforce Authentication', 'rest-api-firewall' ) }
+					label={ __(
+						'Enforce Authentication',
+						'rest-api-firewall'
+					) }
 				/>
 				<FormHelperText>
-					{ __('Enforce authentication on all routes', 'rest-api-firewall') }
+					{ __(
+						'Enforce authentication on all routes',
+						'rest-api-firewall'
+					) }
 				</FormHelperText>
 			</FormControl>
 
-			<FormControl sx={{minWidth:240}}>
+			<FormControl sx={ { minWidth: 240 } }>
 				<FormControlLabel
 					control={
 						<Switch
@@ -128,7 +151,7 @@ export default function RestApiUser( { firewallOptions, handleOptionChange, user
 					label={ __( 'Hide User Routes', 'rest-api-firewall' ) }
 				/>
 				<FormHelperText>
-					{ __('Block /wp/v2/users endpoint', 'rest-api-firewall') }
+					{ __( 'Block /wp/v2/users endpoint', 'rest-api-firewall' ) }
 				</FormHelperText>
 			</FormControl>
 		</Stack>

@@ -6,7 +6,6 @@ export default function useSettingsForm( {
 	updateAdminData,
 	action,
 } ) {
-
 	const [ adminOptions, setAdminOptions ] = useState( {} );
 	const { hasValidLicense } = useLicense();
 	const [ form, setForm ] = useState( {
@@ -27,9 +26,13 @@ export default function useSettingsForm( {
 		application_webhook_auto_trigger_events: [],
 		theme_redirect_templates_enabled: false,
 		theme_redirect_templates_preset_url: '',
+		theme_disable_xmlrpc: false,
+		theme_disable_filedit: false,
+		theme_disable_pingbacks: false,
 		theme_disable_gutenberg: false,
 		theme_disable_comments: false,
 		theme_remove_empty_p_tags_enabled: false,
+		theme_remove_emoji_scripts: false,
 		theme_max_upload_weight: 1024,
 		theme_max_upload_weight_enabled: false,
 		theme_svg_webp_support_enabled: false,
@@ -49,10 +52,7 @@ export default function useSettingsForm( {
 		}
 
 		const baseForm = {
-
-			rest_models_enabled: Boolean(
-				adminOptions.rest_models_enabled
-			),
+			rest_models_enabled: Boolean( adminOptions.rest_models_enabled ),
 			rest_models_embed_featured_attachment_enabled: Boolean(
 				adminOptions.rest_models_embed_featured_attachment_enabled
 			),
@@ -85,16 +85,27 @@ export default function useSettingsForm( {
 			),
 
 			application_host: adminOptions.application_host ?? '',
-			application_webhook_endpoint: adminOptions.application_webhook_endpoint ?? '',
+			application_webhook_endpoint:
+				adminOptions.application_webhook_endpoint ?? '',
 			application_webhook_auto_trigger_events: Array.isArray(
 				adminOptions.application_webhook_auto_trigger_events
-			) ? adminOptions.application_webhook_auto_trigger_events : [],
+			)
+				? adminOptions.application_webhook_auto_trigger_events
+				: [],
 
 			theme_redirect_templates_enabled: Boolean(
 				adminOptions.theme_redirect_templates_enabled
 			),
-			theme_redirect_templates_preset_url: adminOptions.theme_redirect_templates_preset_url ?? '',
+			theme_redirect_templates_preset_url:
+				adminOptions.theme_redirect_templates_preset_url ?? '',
 
+			theme_disable_xmlrpc: Boolean( adminOptions.theme_disable_xmlrpc ),
+			theme_disable_filedit: Boolean(
+				adminOptions.theme_disable_filedit
+			),
+			theme_disable_pingbacks: Boolean(
+				adminOptions.theme_disable_pingbacks
+			),
 			theme_disable_gutenberg: Boolean(
 				adminOptions.theme_disable_gutenberg
 			),
@@ -113,6 +124,9 @@ export default function useSettingsForm( {
 			theme_svg_webp_support_enabled: Boolean(
 				adminOptions.theme_svg_webp_support_enabled
 			),
+			theme_remove_emoji_scripts: Boolean(
+				adminOptions.theme_remove_emoji_scripts
+			),
 			theme_json_acf_fields_enabled: Boolean(
 				adminOptions.theme_json_acf_fields_enabled
 			),
@@ -123,14 +137,17 @@ export default function useSettingsForm( {
 				adminOptions.rest_models_relative_url_enabled ?? false
 			);
 			baseForm.rest_models_relative_attachment_url_enabled = Boolean(
-				adminOptions.rest_models_relative_attachment_url_enabled ?? false
+				adminOptions.rest_models_relative_attachment_url_enabled ??
+					false
 			);
 			baseForm.rest_api_restrict_post_types_enabled = Boolean(
 				adminOptions.rest_api_restrict_post_types_enabled ?? false
 			);
 			baseForm.rest_api_allowed_post_types = Array.isArray(
 				adminOptions.rest_api_allowed_post_types
-			) ? adminOptions.rest_api_allowed_post_types : [];
+			)
+				? adminOptions.rest_api_allowed_post_types
+				: [];
 			baseForm.theme_redirect_templates_free_url_enabled = Boolean(
 				adminOptions.theme_redirect_templates_free_url_enabled ?? false
 			);
@@ -176,7 +193,6 @@ export default function useSettingsForm( {
 
 	const mapFormToAdminOptions = useCallback(
 		( formData ) => {
-
 			const mapped = {
 				rest_models_enabled: formData.rest_models_enabled,
 				rest_models_embed_featured_attachment_enabled:
@@ -185,30 +201,47 @@ export default function useSettingsForm( {
 					formData.rest_models_embed_post_attachments_enabled,
 				rest_models_resolve_rendered_props:
 					formData.rest_models_resolve_rendered_props,
-				rest_models_embed_terms_enabled: formData.rest_models_embed_terms_enabled,
-				rest_models_embed_author_enabled: formData.rest_models_embed_author_enabled,
-				rest_models_with_acf_enabled: formData.rest_models_with_acf_enabled,
-				rest_models_remove_empty_props: formData.rest_models_remove_empty_props,
-				rest_firewall_remove_links_prop: formData.rest_firewall_remove_links_prop,
+				rest_models_embed_terms_enabled:
+					formData.rest_models_embed_terms_enabled,
+				rest_models_embed_author_enabled:
+					formData.rest_models_embed_author_enabled,
+				rest_models_with_acf_enabled:
+					formData.rest_models_with_acf_enabled,
+				rest_models_remove_empty_props:
+					formData.rest_models_remove_empty_props,
+				rest_firewall_remove_links_prop:
+					formData.rest_firewall_remove_links_prop,
 
 				rest_api_posts_per_page: formData.rest_api_posts_per_page,
-				rest_api_attachments_per_page: formData.rest_api_attachments_per_page,
+				rest_api_attachments_per_page:
+					formData.rest_api_attachments_per_page,
 
 				application_host: formData.application_host,
-				application_webhook_endpoint: formData.application_webhook_endpoint,
-				application_webhook_auto_trigger_events: formData.application_webhook_auto_trigger_events,
+				application_webhook_endpoint:
+					formData.application_webhook_endpoint,
+				application_webhook_auto_trigger_events:
+					formData.application_webhook_auto_trigger_events,
 
-				theme_redirect_templates_enabled: formData.theme_redirect_templates_enabled,
-				theme_redirect_templates_preset_url: formData.theme_redirect_templates_preset_url,
-
-				theme_svg_webp_support_enabled: formData.theme_svg_webp_support_enabled,
+				theme_redirect_templates_enabled:
+					formData.theme_redirect_templates_enabled,
+				theme_redirect_templates_preset_url:
+					formData.theme_redirect_templates_preset_url,
+				theme_disable_xmlrpc: formData.theme_disable_xmlrpc,
+				theme_disable_filedit: formData.theme_disable_filedit,
+				theme_disable_pingbacks: formData.theme_disable_pingbacks,
+				theme_svg_webp_support_enabled:
+					formData.theme_svg_webp_support_enabled,
 				theme_max_upload_weight: formData.theme_max_upload_weight,
-				theme_max_upload_weight_enabled: formData.theme_max_upload_weight_enabled,
+				theme_max_upload_weight_enabled:
+					formData.theme_max_upload_weight_enabled,
 
 				theme_disable_gutenberg: formData.theme_disable_gutenberg,
 				theme_disable_comments: formData.theme_disable_comments,
-				theme_remove_empty_p_tags_enabled: formData.theme_remove_empty_p_tags_enabled,
-				theme_json_acf_fields_enabled: formData.theme_json_acf_fields_enabled,
+				theme_remove_empty_p_tags_enabled:
+					formData.theme_remove_empty_p_tags_enabled,
+				theme_remove_emoji_scripts: formData.theme_remove_emoji_scripts,
+				theme_json_acf_fields_enabled:
+					formData.theme_json_acf_fields_enabled,
 			};
 
 			if ( hasValidLicense ) {
@@ -218,7 +251,8 @@ export default function useSettingsForm( {
 					formData.rest_models_relative_attachment_url_enabled;
 				mapped.rest_api_restrict_post_types_enabled =
 					formData.rest_api_restrict_post_types_enabled;
-				mapped.rest_api_allowed_post_types = formData.rest_api_allowed_post_types;
+				mapped.rest_api_allowed_post_types =
+					formData.rest_api_allowed_post_types;
 				mapped.theme_redirect_templates_free_url_enabled =
 					formData.theme_redirect_templates_free_url_enabled;
 				mapped.theme_redirect_templates_free_url =

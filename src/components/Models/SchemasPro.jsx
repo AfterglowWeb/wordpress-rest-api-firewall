@@ -11,43 +11,54 @@ import MenuItem from '@mui/material/MenuItem';
 import PostProperties from './PostProperties';
 import ProBadge from '../ProBadge';
 
-export default function ModelsPro( { form, setField, postTypes } ) {
+export default function ModelsPro( { setField, postTypes } ) {
 	const { hasValidLicense } = useLicense();
 	const { __ } = wp.i18n || {};
-	const [selectedPostType, setSelectedPostType] = useState( 'post' );
-	const selectedPostTypeOption = selectedPostType ? postTypes.filter( (postType) => postType.value === selectedPostType ) : {};
+	const [ selectedPostType, setSelectedPostType ] = useState( 'post' );
+	const selectedPostTypeOption = selectedPostType
+		? postTypes.filter(
+				( postType ) => postType.value === selectedPostType
+		  )
+		: {};
 
 	return (
 		<Stack spacing={ 3 }>
-
-			<Typography variant="subtitle1" fontWeight={600} sx={ { mb: 2, position: 'relative' } }>
+			<Typography
+				variant="subtitle1"
+				fontWeight={ 600 }
+				sx={ { mb: 2, position: 'relative' } }
+			>
 				{ __( 'Fine Grained Schemas Settings', 'rest-api-firewall' ) }
-				{ ! hasValidLicense && <ProBadge position={'right'} />}
+				{ ! hasValidLicense && <ProBadge position={ 'right' } /> }
 			</Typography>
-			
+
 			<FormControl fullWidth>
 				<InputLabel>
 					{ __( 'Post type', 'rest-api-firewall' ) }
 				</InputLabel>
 				<Select
 					value={ selectedPostType }
-					defaultValue={ postTypes[0].value || '' }
+					defaultValue={ postTypes[ 0 ].value || '' }
 					label={ __( 'Post type', 'rest-api-firewall' ) }
 					onChange={ ( e ) => setSelectedPostType( e.target.value ) }
 				>
-					{ postTypes && postTypes.map( ( postType ) => (
-						<MenuItem key={ postType.value } value={ postType.value }>
-							{ postType.label }
-						</MenuItem>
-					) ) }
+					{ postTypes &&
+						postTypes.map( ( postType ) => (
+							<MenuItem
+								key={ postType.value }
+								value={ postType.value }
+							>
+								{ postType.label }
+							</MenuItem>
+						) ) }
 				</Select>
 			</FormControl>
 
-			<PostProperties 
-			selectedPostType={ selectedPostType } 
-			selectedPostTypeLabel={ selectedPostTypeOption?.label || '' }
-			setField={ setField } />
-
+			<PostProperties
+				selectedPostType={ selectedPostType }
+				selectedPostTypeLabel={ selectedPostTypeOption?.label || '' }
+				setField={ setField }
+			/>
 		</Stack>
 	);
 }
