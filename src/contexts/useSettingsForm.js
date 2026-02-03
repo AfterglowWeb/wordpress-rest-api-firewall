@@ -27,9 +27,13 @@ export default function useSettingsForm( {
 		application_webhook_auto_trigger_events: [],
 		theme_redirect_templates_enabled: false,
 		theme_redirect_templates_preset_url: '',
+		theme_disable_xmlrpc: false,
+		theme_disable_filedit: false,
+		theme_disable_pingbacks: false,
 		theme_disable_gutenberg: false,
 		theme_disable_comments: false,
 		theme_remove_empty_p_tags_enabled: false,
+		theme_remove_emoji_scripts: false,
 		theme_max_upload_weight: 1024,
 		theme_max_upload_weight_enabled: false,
 		theme_svg_webp_support_enabled: false,
@@ -95,6 +99,15 @@ export default function useSettingsForm( {
 			),
 			theme_redirect_templates_preset_url: adminOptions.theme_redirect_templates_preset_url ?? '',
 
+			theme_disable_xmlrpc: Boolean(
+				adminOptions.theme_disable_xmlrpc
+			),
+			theme_disable_filedit: Boolean(
+				adminOptions.theme_disable_filedit
+			),
+			theme_disable_pingbacks: Boolean(
+				adminOptions.theme_disable_pingbacks
+			),
 			theme_disable_gutenberg: Boolean(
 				adminOptions.theme_disable_gutenberg
 			),
@@ -112,6 +125,9 @@ export default function useSettingsForm( {
 			),
 			theme_svg_webp_support_enabled: Boolean(
 				adminOptions.theme_svg_webp_support_enabled
+			),
+			theme_remove_emoji_scripts: Boolean(
+				adminOptions.theme_remove_emoji_scripts
 			),
 			theme_json_acf_fields_enabled: Boolean(
 				adminOptions.theme_json_acf_fields_enabled
@@ -200,7 +216,9 @@ export default function useSettingsForm( {
 
 				theme_redirect_templates_enabled: formData.theme_redirect_templates_enabled,
 				theme_redirect_templates_preset_url: formData.theme_redirect_templates_preset_url,
-
+				theme_disable_xmlrpc: formData.theme_disable_xmlrpc,
+				theme_disable_filedit: formData.theme_disable_filedit,
+				theme_disable_pingbacks: formData.theme_disable_pingbacks,
 				theme_svg_webp_support_enabled: formData.theme_svg_webp_support_enabled,
 				theme_max_upload_weight: formData.theme_max_upload_weight,
 				theme_max_upload_weight_enabled: formData.theme_max_upload_weight_enabled,
@@ -208,6 +226,8 @@ export default function useSettingsForm( {
 				theme_disable_gutenberg: formData.theme_disable_gutenberg,
 				theme_disable_comments: formData.theme_disable_comments,
 				theme_remove_empty_p_tags_enabled: formData.theme_remove_empty_p_tags_enabled,
+				theme_remove_emoji_scripts: formData.theme_remove_emoji_scripts,
+				theme_remove_emoji_scripts: formData.theme_remove_emoji_scripts,
 				theme_json_acf_fields_enabled: formData.theme_json_acf_fields_enabled,
 			};
 

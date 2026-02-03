@@ -39,6 +39,9 @@ const SCHEMA_OPTIONS = [
 
 const THEME_OPTIONS = [
 	'theme_redirect_templates_enabled',
+	'theme_disable_xmlrpc',
+	'theme_disable_filedit',
+	'theme_disable_pingbacks',
 	'theme_redirect_templates_preset_url',
 	'theme_redirect_templates_free_url_enabled',
 	'theme_redirect_templates_free_url',

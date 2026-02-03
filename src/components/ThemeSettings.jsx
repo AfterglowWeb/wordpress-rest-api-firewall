@@ -118,12 +118,53 @@ export default function ThemeSettings( { form, setField, setSlider, themeStatus,
 				</Stack>
 			</Stack>
 
-
 			<Stack flex={1} spacing={ 3 }>
 				
 				<Stack spacing={3}>
 					<Typography variant="subtitle1" fontWeight={600} sx={ { mb: 2 } }>
-							{ __( 'Post Content', 'rest-api-firewall' ) }
+							{ __( 'Security', 'rest-api-firewall' ) }
+					</Typography>
+				</Stack>
+
+				<FormControl disabled={disabled}>
+					<FormControlLabel
+						control={
+							<Switch
+								size="small"
+								checked={
+									!! form.theme_disable_xmlrpc
+								}
+								name="theme_disable_xmlrpc"
+								onChange={ setField }
+								disabled={disabled}
+							/>
+						}
+						label={ __( 'Disable XML-RPC endpoint', 'rest-api-firewall' ) }
+					/>
+				</FormControl>
+
+				<FormControl disabled={disabled}>
+					<FormControlLabel
+						control={
+							<Switch
+								size="small"
+								checked={
+									!! form.theme_disable_filedit
+								}
+								name="theme_disable_filedit"
+								onChange={ setField }
+								disabled={disabled}
+							/>
+						}
+						label={ __( 'Disable theme file editor', 'rest-api-firewall' ) }
+					/>
+				</FormControl>
+
+				<Divider />
+
+				<Stack spacing={3}>
+					<Typography variant="subtitle1" fontWeight={600} sx={ { mb: 2 } }>
+							{ __( 'Content', 'rest-api-firewall' ) }
 					</Typography>
 					<FormControl disabled={disabled}>
 						<FormControlLabel
@@ -161,12 +202,62 @@ export default function ThemeSettings( { form, setField, setSlider, themeStatus,
 						<FormHelperText>{ __( 'Remove empty paragraphs added by content filtering', 'rest-api-firewall' ) }</FormHelperText>
 					</FormControl>
 
+					<FormControl disabled={disabled}>
+						<FormControlLabel
+							control={
+								<Switch
+									size="small"
+									checked={
+										!! form.theme_remove_emoji_scripts
+									}
+									name="theme_remove_emoji_scripts"
+									onChange={ setField }
+									disabled={disabled}
+								/>
+							}
+							label={ __( 'Remove emoji scripts', 'rest-api-firewall' ) }
+						/>
+						<FormHelperText>{ __( 'Remove emoji scripts from front and backend', 'rest-api-firewall' ) }</FormHelperText>
+					</FormControl>
+
 				</Stack>
+
 				<Divider />
 
 				<Stack spacing={3}>
 					<Typography variant="subtitle1" fontWeight={600} sx={ { mb: 2 } }>
-							{ __( 'Comments', 'rest-api-firewall' ) }
+							{ __( 'ACF', 'rest-api-firewall' ) }
+					</Typography>
+
+					<FormControl>
+						<FormControlLabel
+							control={
+								<Switch
+									size="small"
+									checked={ !! form.theme_json_acf_fields_enabled }
+									name="theme_json_acf_fields_enabled"
+									onChange={ setField }
+								/>
+							}
+							label={ __( 'Sync ACF Fields to JSON', 'rest-api-firewall' ) }
+						/>
+						<FormHelperText>
+							{ __(
+								'Write JSON files in theme config directory',
+								'rest-api-firewall'
+							) }
+						</FormHelperText>
+					</FormControl>
+				</Stack>
+
+			</Stack>
+
+
+			<Stack flex={1} spacing={ 3 }>
+				
+				<Stack spacing={3}>
+					<Typography variant="subtitle1" fontWeight={600} sx={ { mb: 2 } }>
+							{ __( 'Comments & Pingbacks', 'rest-api-firewall' ) }
 					</Typography>
 					<FormControl disabled={disabled}>
 						<FormControlLabel
@@ -185,7 +276,25 @@ export default function ThemeSettings( { form, setField, setSlider, themeStatus,
 						/>
 						<FormHelperText>{ __( 'Deactivate comments site wide', 'rest-api-firewall' ) }</FormHelperText>
 					</FormControl>
+					<FormControl disabled={disabled}>
+						<FormControlLabel
+							control={
+								<Switch
+									size="small"
+									checked={
+										!! form.theme_disable_pingbacks
+									}
+									name="theme_disable_pingbacks"
+									onChange={ setField }
+									disabled={disabled}
+								/>
+							}
+							label={ __( 'Disable Pingbacks', 'rest-api-firewall' ) }
+						/>
+						<FormHelperText>{ __( 'Deactivate pingbacks site wide', 'rest-api-firewall' ) }</FormHelperText>
+					</FormControl>
 				</Stack>
+				
 				<Divider />
 
 				<Stack spacing={3}>
@@ -193,7 +302,7 @@ export default function ThemeSettings( { form, setField, setSlider, themeStatus,
 							{ __( 'Image Files', 'rest-api-firewall' ) }
 					</Typography>
 
-					<Box>
+					<Stack spacing={3}>
 
 						<FormControl disabled={disabled}>
 							<FormControlLabel
@@ -215,7 +324,7 @@ export default function ThemeSettings( { form, setField, setSlider, themeStatus,
 
 						<FormControl disabled={disabled}>
 
-							<Stack direction={ { xs: 'column', sm: 'row' } }>
+							<Stack >
 								<FormControlLabel
 									control={
 										<Switch
@@ -271,40 +380,13 @@ export default function ThemeSettings( { form, setField, setSlider, themeStatus,
 							</Stack>
 							<FormHelperText>
 								{ __(
-									'Limit the images weight users can upload.',
+									'Limit the images weight users can upload',
 									'rest-api-firewall'
 								) }
 							</FormHelperText>
 
 						</FormControl>
-					</Box>
-				</Stack>
-				<Divider />
-
-				<Stack spacing={3}>
-					<Typography variant="subtitle1" fontWeight={600} sx={ { mb: 2 } }>
-							{ __( 'ACF', 'rest-api-firewall' ) }
-					</Typography>
-
-					<FormControl>
-						<FormControlLabel
-							control={
-								<Switch
-									size="small"
-									checked={ !! form.theme_json_acf_fields_enabled }
-									name="theme_json_acf_fields_enabled"
-									onChange={ setField }
-								/>
-							}
-							label={ __( 'Sync ACF Fields to JSON', 'rest-api-firewall' ) }
-						/>
-						<FormHelperText>
-							{ __(
-								'Write JSON files in theme config directory',
-								'rest-api-firewall'
-							) }
-						</FormHelperText>
-					</FormControl>
+					</Stack>
 				</Stack>
 
 			</Stack>

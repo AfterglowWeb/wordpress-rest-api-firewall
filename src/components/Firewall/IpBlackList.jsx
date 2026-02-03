@@ -6,36 +6,54 @@ import { useLicense } from '../../contexts/LicenseContext';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormHelperText from '@mui/material/FormHelperText';
 import IconButton from '@mui/material/IconButton';
 import InputLabel from '@mui/material/InputLabel';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
 
 import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
+import CloseIcon from '@mui/icons-material/Close';
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import PublicIcon from '@mui/icons-material/Public';
+import TableViewIcon from '@mui/icons-material/TableView';
 
 import ProBadge from '../ProBadge';
+import IpDataGrid from './IpDataGrid';
+import CountryBlockList from './CountryBlockList';
 
 const IP_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
 const CIDR_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(?:[0-9]|[1-2][0-9]|3[0-2])$/;
 const IPV6_REGEX = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::$|^([0-9a-fA-F]{1,4}:){1,7}:$|^:(:([0-9a-fA-F]{1,4})){1,7}$|^([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}$/;
 
-function isValidIpOrCidr( value ) {
+function isValidIp( value ) {
 	if ( ! value ) return false;
 	const trimmed = value.trim();
-	return IP_REGEX.test( trimmed ) || CIDR_REGEX.test( trimmed ) || IPV6_REGEX.test( trimmed );
+	return IP_REGEX.test( trimmed ) || IPV6_REGEX.test( trimmed );
+}
+
+function isValidCidr( value ) {
+	if ( ! value ) return false;
+	return CIDR_REGEX.test( value.trim() );
+}
+
+function isValidIpOrCidr( value ) {
+	return isValidIp( value ) || isValidCidr( value );
 }
 
 export default function IpBlackList() {
@@ -55,6 +73,8 @@ export default function IpBlackList() {
 	const [ clientIp, setClientIp ] = useState( '' );
 	const [ newIp, setNewIp ] = useState( '' );
 	const [ ipError, setIpError ] = useState( '' );
+	const [ dialogOpen, setDialogOpen ] = useState( false );
+	const [ dialogTab, setDialogTab ] = useState( 0 );
 
 	const { hasValidLicense } = useLicense();
 	const isIpFilterDisabled = ! settings.enabled;
@@ -62,6 +82,18 @@ export default function IpBlackList() {
 
 	const activeList = settings.mode === 'whitelist' ? settings.whitelist : settings.blacklist;
 	const activeListKey = settings.mode === 'whitelist' ? 'whitelist' : 'blacklist';
+
+	const countryStats = activeList.reduce( ( acc, entry ) => {
+		const country = entry?.geoIp?.countryName || null;
+		if ( country ) {
+			acc[ country ] = ( acc[ country ] || 0 ) + 1;
+		}
+		return acc;
+	}, {} );
+
+	const topCountries = Object.entries( countryStats )
+		.sort( ( a, b ) => b[ 1 ] - a[ 1 ] )
+		.slice( 0, 10 );
 
 	const loadSettings = useCallback( async () => {
 		setLoading( true );
@@ -179,8 +211,13 @@ export default function IpBlackList() {
 			return;
 		}
 
+		if ( isValidCidr( trimmed ) && ! hasValidLicense ) {
+			setIpError( __( 'CIDR ranges require Pro license', 'rest-api-firewall' ) );
+			return;
+		}
+
 		if ( ! isValidIpOrCidr( trimmed ) ) {
-			setIpError( __( 'Invalid IP address or CIDR range', 'rest-api-firewall' ) );
+			setIpError( __( 'Invalid IP address', 'rest-api-firewall' ) );
 			return;
 		}
 
@@ -200,12 +237,12 @@ export default function IpBlackList() {
 		const ipEntry = {
 			ip: trimmed,
 			agent: null,
-			blocked_time: Math.floor(Date.now() / 1000),
+			blocked_time: Math.floor( Date.now() / 1000 ),
 			type: 'manual',
 			geoIp: {
-			country: null,
-			countryName: null
-			}
+				country: null,
+				countryName: null,
+			},
 		};
 
 		setSettings( ( prev ) => ( {
@@ -226,13 +263,7 @@ export default function IpBlackList() {
 		} ) );
 	};
 
-	const handleAddCurrentIp = () => {
-		if ( clientIp && clientIp !== '0.0.0.0' ) {
-			setNewIp( clientIp );
-		}
-	};
-
-	const handleKeyPress = ( e ) => {
+	const handleKeyDown = ( e ) => {
 		if ( e.key === 'Enter' ) {
 			e.preventDefault();
 			handleAddIp();
@@ -246,6 +277,10 @@ export default function IpBlackList() {
 			</Box>
 		);
 	}
+
+	const recentIps = [ ...activeList ]
+		.sort( ( a, b ) => ( b?.blocked_time || 0 ) - ( a?.blocked_time || 0 ) )
+		.slice( 0, 5 );
 
 	return (
 		<Stack spacing={ 3 }>
@@ -264,7 +299,7 @@ export default function IpBlackList() {
 				</Button>
 			</Stack>
 
-			<Stack direction={{ xs: 'column', sm: 'row' }} spacing={ 3 }>
+			<Stack direction={ { xs: 'column', sm: 'row' } } spacing={ 3 }>
 				<FormControl>
 					<FormControlLabel
 						control={
@@ -292,7 +327,7 @@ export default function IpBlackList() {
 						size="small"
 					>
 						<MenuItem value="blacklist">{ __( 'Blacklist', 'rest-api-firewall' ) }</MenuItem>
-						{ hasValidLicense && <MenuItem value="whitelist">{ __( 'Whitelist', 'rest-api-firewall' ) }</MenuItem>}
+						{ hasValidLicense && <MenuItem value="whitelist">{ __( 'Whitelist', 'rest-api-firewall' ) }</MenuItem> }
 					</Select>
 					<FormHelperText>
 						{ settings.mode === 'blacklist'
@@ -302,143 +337,180 @@ export default function IpBlackList() {
 				</FormControl>
 			</Stack>
 
-			{ clientIp && clientIp !== '0.0.0.0' && (
-				<Alert 
-				severity="info" 
-				sx={ { 
-					alignItems: 'center',
-					filter: activeListKey === 'blacklist' ? 'grayscale(1) opacity(0.6)' : 'none',
-				 } }
-				>
+			{ clientIp && clientIp !== '0.0.0.0' && settings.mode === 'whitelist' && (
+				<Alert severity="info" sx={ { alignItems: 'center' } }>
 					<Stack direction="row" spacing={ 1 } alignItems="center">
 						<Typography variant="body2">
 							{ __( 'Your current IP:', 'rest-api-firewall' ) }
 						</Typography>
 						<Chip label={ clientIp } size="small" variant="outlined" />
-						<Button 
-						size="small" 
-						disabled={ activeListKey === 'blacklist' }
-						onClick={ handleAddCurrentIp }>
-							{ __( 'Add to white list', 'rest-api-firewall' ) }
+						<Button
+							size="small"
+							onClick={ () => setNewIp( clientIp ) }
+						>
+							{ __( 'Add to whitelist', 'rest-api-firewall' ) }
 						</Button>
 					</Stack>
 				</Alert>
 			) }
 
-			{ hasValidLicense && settings.mode === 'whitelist' && settings.enabled && settings.whitelist.length === 0 && (
-				<Alert severity="warning">
-					{ __( 'Warning: Whitelist mode is enabled but the list is empty. No IPs will be blocked until you add entries.', 'rest-api-firewall' ) }
-				</Alert>
-			) }
-
 			<Divider />
 
-			<Box>
-				<Typography variant="subtitle2" sx={ { mb: 1 } }>
-					{ settings.mode === 'whitelist'
-						? __( 'Whitelisted IPs', 'rest-api-firewall' )
-						: __( 'Blacklisted IPs', 'rest-api-firewall' ) }
-					<Chip
-						label={ activeList.length }
-						size="small"
-						sx={ { ml: 1 } }
-					/>
-				</Typography>
+			<Stack spacing={ 3 }>
+				<Box sx={ { flex: 1 } }>
+					<Typography variant="subtitle2" sx={ { mb: 1 } }>
+						{ __( 'Add IP Address Manually', 'rest-api-firewall' ) }
+					</Typography>
+					<Stack direction="row" spacing={ 1 }>
+						<TextField
+							value={ newIp }
+							onChange={ handleNewIpChange }
+							onKeyDown={ handleKeyDown }
+							placeholder={ hasValidLicense ? '192.168.1.1 or 10.0.0.0/24' : '192.168.1.1' }
+							size="small"
+							error={ !! ipError }
+							helperText={ ipError || ( hasValidLicense
+								? __( 'IP address or CIDR range', 'rest-api-firewall' )
+								: __( 'IP address (CIDR requires Pro)', 'rest-api-firewall' )
+							) }
+							disabled={ ! settings.enabled }
+							sx={ { flexGrow: 1 } }
+						/>
+						<Button
+							variant="outlined"
+							sx={ { alignSelf: 'flex-start' } }
+							onClick={ handleAddIp }
+							disabled={ ! settings.enabled || ! newIp.trim() }
+							startIcon={ <AddIcon /> }
+						>
+							{ __( 'Add', 'rest-api-firewall' ) }
+						</Button>
+					</Stack>
+				</Box>
 
-				<Stack direction="row" spacing={ 1 } sx={ { mb: 2 } }>
-					<TextField
-						value={ newIp }
-						onChange={ handleNewIpChange }
-						onKeyPress={ handleKeyPress }
-						placeholder="192.168.1.1 or 10.0.0.0/24"
-						size="small"
-						error={ !! ipError }
-						helperText={ ipError || __( 'Enter IP address or CIDR range (e.g., 192.168.1.0/24)', 'rest-api-firewall' ) }
-						disabled={ ! settings.enabled }
-						sx={ { flexGrow: 1, maxWidth: 400 } }
-					/>
-					<Button
-						variant="outlined"
-						sx={{ alignSelf: 'flex-start' }}
-						onClick={ handleAddIp }
-						disabled={ ! settings.enabled || ! newIp.trim() }
-						startIcon={ <AddIcon /> }
+				<Box sx={ { minWidth: 280 } }>
+					<Stack direction="row" justifyContent="space-between" alignItems="center" sx={ { mb: 1 } }>
+						<Typography variant="subtitle2">
+							{ __( 'Blocked IPs', 'rest-api-firewall' ) }
+							<Chip label={ activeList.length } size="small" sx={ { ml: 1 } } />
+						</Typography>
+						<Button
+							variant="outlined"
+							size="small"
+							onClick={ () => setDialogOpen( true ) }
+							disabled={ ! settings.enabled }
+							startIcon={ <TableViewIcon /> }
+						>
+							{ __( 'Manage', 'rest-api-firewall' ) }
+						</Button>
+					</Stack>
+
+					{ topCountries.length > 0 ? (
+						<Stack direction="row" flexWrap="wrap" gap={ 0.5 }>
+							{ topCountries.map( ( [ country, count ] ) => (
+								<Chip
+									key={ country }
+									icon={ <PublicIcon /> }
+									label={ `${ country }: ${ count }` }
+									size="small"
+									variant="outlined"
+								/>
+							) ) }
+						</Stack>
+					) : (
+						<Typography variant="body2" color="text.secondary">
+							{ activeList.length > 0
+								? __( 'No country data available', 'rest-api-firewall' )
+								: __( 'No IPs blocked yet', 'rest-api-firewall' )
+							}
+						</Typography>
+					) }
+				</Box>
+			</Stack>
+
+			{ recentIps.length > 0 && (
+				<Box>
+					<Typography variant="caption" color="text.secondary" sx={ { mb: 0.5, display: 'block' } }>
+						{ __( 'Recent:', 'rest-api-firewall' ) }
+					</Typography>
+					<Stack direction="row" flexWrap="wrap" gap={ 0.5 }>
+						{ recentIps.map( ( entry ) => {
+							const ipValue = typeof entry === 'string' ? entry : entry.ip;
+							return (
+								<Chip
+									key={ ipValue }
+									label={ ipValue }
+									size="small"
+									onDelete={ settings.enabled ? () => handleRemoveIp( activeListKey, ipValue ) : undefined }
+									sx={ { fontFamily: 'monospace', fontSize: '0.75rem' } }
+								/>
+							);
+						} ) }
+						{ activeList.length > 5 && (
+							<Chip
+								label={ `+${ activeList.length - 5 } more` }
+								size="small"
+								variant="outlined"
+								onClick={ () => setDialogOpen( true ) }
+							/>
+						) }
+					</Stack>
+				</Box>
+			) }
+
+			<Dialog
+				open={ dialogOpen }
+				onClose={ () => setDialogOpen( false ) }
+				maxWidth={false}
+				fullWidth
+				fullScreen={ true }
+				keepMounted={ true }
+				sx={{ ml: { xs: 0, sm: '45px', lg: '160px' }, mt: '32px' }}
+			>
+				<DialogTitle sx={ { display: 'flex',  alignItems: 'center', justifyContent: 'space-between', gap: 1, pb: 0 } }>
+					<IconButton onClick={ () => setDialogOpen( false ) } size="large">
+						<ArrowBackIosIcon color="primary" sx={{transform: 'translateX(4px)'}} />
+					</IconButton>
+					<Typography variant="h6">
+						{ settings.mode === 'whitelist'
+							? __( 'Manage Whitelisted IPs', 'rest-api-firewall' )
+							: __( 'Manage Blacklisted IPs', 'rest-api-firewall' ) }
+					</Typography>
+					<IconButton onClick={ () => setDialogOpen( false ) }>
+						<CloseIcon />
+					</IconButton>
+				</DialogTitle>
+				<DialogContent sx={ { pt: 0 } }>
+					<Tabs
+						value={ dialogTab }
+						onChange={ ( e, newValue ) => setDialogTab( newValue ) }
+						sx={ { mb: 2, borderBottom: 1, borderColor: 'divider' } }
 					>
-						{ __( 'Add', 'rest-api-firewall' ) }
-					</Button>
-				</Stack>
+						<Tab
+							icon={ <PublicIcon /> }
+							iconPosition="start"
+							label={ __( 'By Country', 'rest-api-firewall' ) }
+						/>
+						<Tab
+							icon={ <TableViewIcon /> }
+							iconPosition="start"
+							label={ __( 'All IPs', 'rest-api-firewall' ) }
+						/>
+					</Tabs>
 
-				{ activeList.length > 0 ? (
-    <List dense sx={ { bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' } }>
-        { activeList.map((entry, index) => {
-            const ipValue = typeof entry === 'string' ? entry : entry.ip;
-            const geoIp = entry?.geoIp;
-            
-            return (
-                <ListItem 
-                    key={ipValue} 
-                    divider={index < activeList.length - 1}
-                    secondaryAction={
-                        <IconButton
-                            edge="end"
-                            onClick={ () => handleRemoveIp( activeListKey, ipValue ) }
-                            disabled={ ! settings.enabled }
-                            size="small"
-                        >
-                            <DeleteIcon fontSize="small" />
-                        </IconButton>
-                    }
-                >
-                    <ListItemText
-                        primary={
-                        <Stack direction="row" spacing={1} alignItems="center">
-                            <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                            {ipValue}
-                            </Typography>
-                            {ipValue.includes('/') && (
-                            <Chip label="CIDR" size="small" variant="outlined" color="info" />
-                            )}
-							{entry?.blocked_time && (
-								<Typography variant="caption">
-                            	{new Date(entry.blocked_time * 1000).toLocaleString()}
-                            </Typography>
-                            )}
-                            {geoIp?.countryName && (
-                            <Chip label={geoIp.countryName} size="small" color="primary" />
-                            )}
-                        </Stack>
-                        }
-                        secondary={<Typography
-								variant="caption"
-								sx={ { color: 'text.secondary', whiteSpace: 'nowrap' } }
-							>{entry?.type === 'manual' ? 'Manual' : 'Rate limit'}</Typography>}
-                    />
-                </ListItem>
-            );
-        })}
-    </List>
-) : (
-    <Typography variant="body2" color="text.secondary" sx={ { py: 2, textAlign: 'center' } }>
-        { __( 'No IPs in the list', 'rest-api-firewall' ) }
-    </Typography>
-) }
-			</Box>
+					{ dialogTab === 0 && (
+						<CountryBlockList listType={ activeListKey } freeEntries={ activeList } />
+					) }
 
-			{ /* Show the other list if it has entries */ }
-			{ settings.mode === 'blacklist' && settings.whitelist.length > 0 && (
-				<Box sx={ { opacity: 0.6 } }>
-					<Typography variant="caption" color="text.secondary">
-						{ __( 'Whitelist (inactive):', 'rest-api-firewall' ) } { settings.whitelist.join( ', ' ) }
-					</Typography>
-				</Box>
-			) }
-			{ settings.mode === 'whitelist' && settings.blacklist.length > 0 && (
-				<Box sx={ { opacity: 0.6 } }>
-					<Typography variant="caption" color="text.secondary">
-						{ __( 'Blacklist (inactive):', 'rest-api-firewall' ) } { settings.blacklist.join( ', ' ) }
-					</Typography>
-				</Box>
-			) }
+					{ dialogTab === 1 && (
+						<IpDataGrid
+							listType={ activeListKey }
+							onClose={ () => setDialogOpen( false ) }
+							freeEntries={ activeList }
+						/>
+					) }
+				</DialogContent>
+			</Dialog>
 		</Stack>
 	);
 }

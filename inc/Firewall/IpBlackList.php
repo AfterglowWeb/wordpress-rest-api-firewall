@@ -36,6 +36,118 @@ class IpBlackList {
 		);
 	}
 
+	private static function ip_entry_config(): array {
+		return array(
+			'ip'           => array(
+				'type'              => 'string',
+				'required'          => true,
+				'sanitize_callback' => 'sanitize_text_field',
+				'default'           => null,
+			),
+			'type'         => array(
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+				'default'           => 'manual',
+				'allowed_values'    => array( 'manual', 'rate_limit' ),
+			),
+			'blocked_time' => array(
+				'type'              => 'integer',
+				'required'          => false,
+				'sanitize_callback' => 'absint',
+				'default'           => null, // Will use time() if null.
+			),
+			'agent'        => array(
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+				'default'           => null,
+			),
+			'geoIp'        => array(
+				'type'              => 'object',
+				'required'          => false,
+				'sanitize_callback' => null, // Custom handling.
+				'default'           => null,
+				'properties'        => array(
+					'country'     => array(
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'default'           => null,
+					),
+					'countryName' => array(
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'default'           => null,
+					),
+				),
+			),
+		);
+	}
+
+	/**
+	 * Sanitize a single IP entry based on configuration.
+	 *
+	 * @param array|string $entry Raw entry data.
+	 * @return array|null Sanitized entry or null if invalid.
+	 */
+	private static function sanitize_ip_entry( $entry ): ?array {
+		$config = self::ip_entry_config();
+
+		if ( ! is_array( $entry ) ) {
+			$entry = array( 'ip' => (string) $entry );
+		}
+
+		if ( ! isset( $entry['ip'] ) || empty( trim( $entry['ip'] ) ) ) {
+			return null;
+		}
+
+		$ip = trim( sanitize_text_field( $entry['ip'] ) );
+		if ( ! self::is_valid_ip_or_cidr( $ip ) ) {
+			return null;
+		}
+
+		$sanitized = array();
+
+		foreach ( $config as $key => $field_config ) {
+			$value = $entry[ $key ] ?? null;
+
+			if ( 'object' === $field_config['type'] && isset( $field_config['properties'] ) ) {
+				// Handle nested object (geoIp).
+				if ( is_array( $value ) ) {
+					$nested = array();
+					foreach ( $field_config['properties'] as $prop_key => $prop_config ) {
+						$prop_value = $value[ $prop_key ] ?? $prop_config['default'];
+						if ( null !== $prop_value && is_callable( $prop_config['sanitize_callback'] ) ) {
+							$prop_value = call_user_func( $prop_config['sanitize_callback'], $prop_value );
+						}
+						$nested[ $prop_key ] = $prop_value;
+					}
+					$sanitized[ $key ] = $nested;
+				} else {
+					$sanitized[ $key ] = $field_config['default'];
+				}
+			} else {
+				// Handle scalar values.
+				if ( null === $value ) {
+					$default = $field_config['default'];
+					if ( 'blocked_time' === $key && null === $default ) {
+						$default = time();
+					}
+					$sanitized[ $key ] = $default;
+				} else {
+					$callback = $field_config['sanitize_callback'];
+					$sanitized[ $key ] = is_callable( $callback ) ? call_user_func( $callback, $value ) : $value;
+
+					if ( isset( $field_config['allowed_values'] ) && ! in_array( $sanitized[ $key ], $field_config['allowed_values'], true ) ) {
+						$sanitized[ $key ] = $field_config['default'];
+					}
+				}
+			}
+		}
+
+		return $sanitized;
+	}
+
 	public static function get_options(): array {
 		if ( null !== self::$cache ) {
 			return self::$cache;
@@ -79,52 +191,25 @@ class IpBlackList {
 		}
 
 		$sanitized = array();
+		$seen_ips  = array();
 
 		foreach ( $ip_list as $entry ) {
-			if ( is_array( $entry ) && isset( $entry['ip'] ) ) {
-				$ip = trim( sanitize_text_field( $entry['ip'] ) );
+			$sanitized_entry = self::sanitize_ip_entry( $entry );
 
-				if ( empty( $ip ) || ! self::is_valid_ip_or_cidr( $ip ) ) {
-					continue;
-				}
-
-				$sanitized[] = array(
-					'ip'           => $ip,
-					'type'         => isset( $entry['type'] ) ? sanitize_text_field( $entry['type'] ) : 'manual',
-					'blocked_time' => isset( $entry['blocked_time'] ) ? absint( $entry['blocked_time'] ) : time(),
-					'agent'        => isset( $entry['agent'] ) ? sanitize_text_field( $entry['agent'] ) : null,
-					'geoIp'        => isset( $entry['geoIp'] ) && is_array( $entry['geoIp'] ) ? array(
-						'country'     => isset( $entry['geoIp']['country'] ) ? sanitize_text_field( $entry['geoIp']['country'] ) : null,
-						'countryName' => isset( $entry['geoIp']['countryName'] ) ? sanitize_text_field( $entry['geoIp']['countryName'] ) : null,
-					) : null,
-				);
-			} else {
-				$ip = trim( sanitize_text_field( (string) $entry ) );
-
-				if ( empty( $ip ) || ! self::is_valid_ip_or_cidr( $ip ) ) {
-					continue;
-				}
-
-				$sanitized[] = array(
-					'ip'           => $ip,
-					'type'         => 'manual',
-					'blocked_time' => time(),
-					'agent'        => null,
-					'geoIp'        => null,
-				);
+			if ( null === $sanitized_entry ) {
+				continue;
 			}
+
+			// Skip duplicates.
+			if ( in_array( $sanitized_entry['ip'], $seen_ips, true ) ) {
+				continue;
+			}
+
+			$seen_ips[]  = $sanitized_entry['ip'];
+			$sanitized[] = $sanitized_entry;
 		}
 
-		$unique = array();
-		$seen   = array();
-		foreach ( $sanitized as $item ) {
-			if ( ! in_array( $item['ip'], $seen, true ) ) {
-				$seen[]   = $item['ip'];
-				$unique[] = $item;
-			}
-		}
-
-		return $unique;
+		return $sanitized;
 	}
 
 	public static function is_valid_ip_or_cidr( string $entry ): bool {
@@ -217,7 +302,6 @@ class IpBlackList {
 
 	public static function ip_in_list( string $ip, array $ip_list ): bool {
 		foreach ( $ip_list as $entry ) {
-			// Handle both object format and simple string format.
 			$entry_ip = is_array( $entry ) && isset( $entry['ip'] ) ? $entry['ip'] : (string) $entry;
 
 			if ( strpos( $entry_ip, '/' ) !== false ) {
