@@ -39,6 +39,9 @@ const SCHEMA_OPTIONS = [
 
 const THEME_OPTIONS = [
 	'theme_redirect_templates_enabled',
+	'theme_disable_xmlrpc',
+	'theme_disable_filedit',
+	'theme_disable_pingbacks',
 	'theme_redirect_templates_preset_url',
 	'theme_redirect_templates_free_url_enabled',
 	'theme_redirect_templates_free_url',
@@ -57,14 +60,17 @@ const WEBHOOK_OPTIONS = [
 	'application_webhook_auto_trigger_events',
 ];
 
-function TabPanel({ value, index, children }) {
+function TabPanel( { value, index, children } ) {
 	return (
-		<div role="tabpanel" hidden={value !== index}>
-			{value === index && <Box maxWidth="xl" minHeight={'calc(100vh - 340px)'} py={4}>{children}</Box>}
+		<div role="tabpanel" hidden={ value !== index }>
+			{ value === index && (
+				<Box maxWidth="xl" minHeight={ 'calc(100vh - 340px)' } py={ 4 }>
+					{ children }
+				</Box>
+			) }
 		</div>
 	);
 }
-
 
 function pickOptions( form, keys ) {
 	const result = {};
@@ -82,30 +88,27 @@ function AppContent() {
 	const { save, saving } = useSaveOptions();
 
 	const [ postTypes, setPostTypes ] = useState( [] );
-	const [ tabIndex, setTabIndex ] = useState(0);
-	const [ themeStatus, setThemeStatus] = useState(null);
+	const [ tabIndex, setTabIndex ] = useState( 0 );
+	const [ themeStatus, setThemeStatus ] = useState( null );
 
-	const {
-		form,
-		setField,
-		setSlider,
-	} = useSettingsForm( {
+	const { form, setField, setSlider } = useSettingsForm( {
 		adminData,
 		updateAdminData,
 		action: 'rest_api_firewall_update_options',
 	} );
 
-	const handleTabChange = (_, newValue) => {
-		setTabIndex(newValue);
-		window.localStorage.setItem('rest_api_firewall_last_tab', newValue );
+	const handleTabChange = ( _, newValue ) => {
+		setTabIndex( newValue );
+		window.localStorage.setItem( 'rest_api_firewall_last_tab', newValue );
 	};
 
 	useEffect( () => {
-		const lastTab = window.localStorage.getItem('rest_api_firewall_last_tab') || null;
+		const lastTab =
+			window.localStorage.getItem( 'rest_api_firewall_last_tab' ) || null;
 		if ( lastTab ) {
 			setTabIndex( Number( lastTab ) );
 		}
-	}, [setTabIndex] );
+	}, [ setTabIndex ] );
 
 	useEffect( () => {
 		if ( Array.isArray( adminData?.post_types ) ) {
@@ -116,7 +119,10 @@ function AppContent() {
 	const handleSaveSchemas = () => {
 		save( pickOptions( form, SCHEMA_OPTIONS ), {
 			successTitle: __( 'Schemas Saved', 'rest-api-firewall' ),
-			successMessage: __( 'Schemas settings saved successfully.', 'rest-api-firewall' ),
+			successMessage: __(
+				'Schemas settings saved successfully.',
+				'rest-api-firewall'
+			),
 			confirmMessage: __( 'Save schemas settings?', 'rest-api-firewall' ),
 		} );
 	};
@@ -124,7 +130,10 @@ function AppContent() {
 	const handleSaveTheme = () => {
 		save( pickOptions( form, THEME_OPTIONS ), {
 			successTitle: __( 'Theme Saved', 'rest-api-firewall' ),
-			successMessage: __( 'Theme settings saved successfully.', 'rest-api-firewall' ),
+			successMessage: __(
+				'Theme settings saved successfully.',
+				'rest-api-firewall'
+			),
 			confirmMessage: __( 'Save theme settings?', 'rest-api-firewall' ),
 		} );
 	};
@@ -132,7 +141,10 @@ function AppContent() {
 	const handleSaveWebhook = () => {
 		save( pickOptions( form, WEBHOOK_OPTIONS ), {
 			successTitle: __( 'Webhook Saved', 'rest-api-firewall' ),
-			successMessage: __( 'Webhook settings saved successfully.', 'rest-api-firewall' ),
+			successMessage: __(
+				'Webhook settings saved successfully.',
+				'rest-api-firewall'
+			),
 			confirmMessage: __( 'Save webhook settings?', 'rest-api-firewall' ),
 		} );
 	};
@@ -143,33 +155,36 @@ function AppContent() {
 
 	return (
 		<Paper
-			sx={ { maxWidth: '100%', mx: 'auto', px: 3, pb:3 } }
+			sx={ { maxWidth: '100%', mx: 'auto', px: 3, pb: 3 } }
 			elevation={ 2 }
 		>
 			<Tabs
-				value={tabIndex}
-				onChange={handleTabChange}
+				value={ tabIndex }
+				onChange={ handleTabChange }
 				variant="scrollable"
 				scrollButtons="auto"
 				aria-label="REST API settings tabs"
 			>
-				<Tab label={__('Firewall', 'rest-api-firewall')} />
-				<Tab label={__('Schemas', 'rest-api-firewall')} />
-				<Tab label={__('Webhook', 'rest-api-firewall')} />
-				<Tab label={__('Theme', 'rest-api-firewall')} />
+				<Tab label={ __( 'Firewall', 'rest-api-firewall' ) } />
+				<Tab label={ __( 'Schemas', 'rest-api-firewall' ) } />
+				<Tab label={ __( 'Webhook', 'rest-api-firewall' ) } />
+				<Tab label={ __( 'Theme', 'rest-api-firewall' ) } />
 			</Tabs>
 
-			<TabPanel value={tabIndex} index={0}>
+			<TabPanel value={ tabIndex } index={ 0 }>
 				<Firewall />
 			</TabPanel>
 
-			<TabPanel value={tabIndex} index={1}>
+			<TabPanel value={ tabIndex } index={ 1 }>
 				<Stack
-				direction={"row"}
-				justifyContent={"space-between"}
-				gap={2} py={3}
-				flexWrap={"wrap"} alignItems={"center"}>
-					<Typography variant="h6" fontWeight={600}>
+					direction={ 'row' }
+					justifyContent={ 'space-between' }
+					gap={ 2 }
+					py={ 3 }
+					flexWrap={ 'wrap' }
+					alignItems={ 'center' }
+				>
+					<Typography variant="h6" fontWeight={ 600 }>
 						{ __( 'Schemas Settings', 'rest-api-firewall' ) }
 					</Typography>
 					<Button
@@ -178,7 +193,7 @@ function AppContent() {
 						size="small"
 						onClick={ handleSaveSchemas }
 						disabled={ saving }
-						>
+					>
 						{ __( 'Save', 'rest-api-firewall' ) }
 					</Button>
 				</Stack>
@@ -188,12 +203,18 @@ function AppContent() {
 					setField={ setField }
 					postTypes={ postTypes }
 				/>
-
 			</TabPanel>
 
-			<TabPanel value={tabIndex} index={2}>
-				<Stack direction={"row"} justifyContent={"space-between"} gap={2} py={3} flexWrap={"wrap"} alignItems={"center"}>
-					<Typography variant="h6" fontWeight={600}>
+			<TabPanel value={ tabIndex } index={ 2 }>
+				<Stack
+					direction={ 'row' }
+					justifyContent={ 'space-between' }
+					gap={ 2 }
+					py={ 3 }
+					flexWrap={ 'wrap' }
+					alignItems={ 'center' }
+				>
+					<Typography variant="h6" fontWeight={ 600 }>
 						{ __( 'Application Webhook', 'rest-api-firewall' ) }
 					</Typography>
 					<Button
@@ -202,48 +223,49 @@ function AppContent() {
 						variant="contained"
 						onClick={ handleSaveWebhook }
 						disabled={ saving }
-						>
+					>
 						{ __( 'Save', 'rest-api-firewall' ) }
 					</Button>
 				</Stack>
 
-				<Webhook
-					form={ form }
-					setField={ setField }
-				/>
-
+				<Webhook form={ form } setField={ setField } />
 			</TabPanel>
 
-			<TabPanel value={tabIndex} index={3}>
+			<TabPanel value={ tabIndex } index={ 3 }>
+				{ themeStatus && themeStatus?.active && (
+					<Stack
+						direction={ 'row' }
+						justifyContent={ 'space-between' }
+						gap={ 2 }
+						py={ 3 }
+						flexWrap={ 'wrap' }
+						alignItems={ 'center' }
+					>
+						<Typography variant="h6" fontWeight={ 600 }>
+							{ __( 'Theme Options', 'rest-api-firewall' ) }
+						</Typography>
 
-				{themeStatus && themeStatus?.active &&
-				<Stack direction={"row"} justifyContent={"space-between"} gap={2} py={3} flexWrap={"wrap"} alignItems={"center"}>
-					<Typography variant="h6" fontWeight={600}>
-						{ __( 'Theme Options', 'rest-api-firewall' ) }
-					</Typography>
-
-					<Button
-						variant="contained"
-						onClick={ handleSaveTheme }
-						disabled={ saving }
-						disableElevation
-						size="small"
-						sx={{ml:3}}
+						<Button
+							variant="contained"
+							onClick={ handleSaveTheme }
+							disabled={ saving }
+							disableElevation
+							size="small"
+							sx={ { ml: 3 } }
 						>
-						{ __( 'Save', 'rest-api-firewall' ) }
-					</Button>
-				</Stack>}
+							{ __( 'Save', 'rest-api-firewall' ) }
+						</Button>
+					</Stack>
+				) }
 
 				<ThemeSettings
 					form={ form }
 					setField={ setField }
-					setSlider={setSlider}
+					setSlider={ setSlider }
 					themeStatus={ themeStatus }
 					setThemeStatus={ setThemeStatus }
 				/>
-
 			</TabPanel>
-
 		</Paper>
 	);
 }

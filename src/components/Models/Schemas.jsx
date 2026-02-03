@@ -17,8 +17,17 @@ export default function Models( { form, setField } ) {
 
 	return (
 		<Stack spacing={ 3 }>
-			<Stack spacing={ 3 } direction={'row'} justifyContent={'space-between'} alignItems={'center'}>
-				<Typography variant="subtitle1" fontWeight={600} sx={ { mb: 2 } }>
+			<Stack
+				spacing={ 3 }
+				direction={ 'row' }
+				justifyContent={ 'space-between' }
+				alignItems={ 'center' }
+			>
+				<Typography
+					variant="subtitle1"
+					fontWeight={ 600 }
+					sx={ { mb: 2 } }
+				>
 					{ __( 'Bulk Schemas Filtering', 'rest-api-firewall' ) }
 				</Typography>
 
@@ -62,12 +71,17 @@ export default function Models( { form, setField } ) {
 					control={
 						<Switch
 							size="small"
-							checked={ !! form.rest_models_embed_featured_attachment_enabled }
+							checked={
+								!! form.rest_models_embed_featured_attachment_enabled
+							}
 							name="rest_models_embed_featured_attachment_enabled"
 							onChange={ setField }
 						/>
 					}
-					label={ __( 'Embed featured attachments', 'rest-api-firewall' ) }
+					label={ __(
+						'Embed featured attachments',
+						'rest-api-firewall'
+					) }
 				/>
 				<FormHelperText>
 					{ __(
@@ -82,22 +96,32 @@ export default function Models( { form, setField } ) {
 					control={
 						<Switch
 							size="small"
-							checked={ !! form.rest_models_embed_post_attachments_enabled }
+							checked={
+								!! form.rest_models_embed_post_attachments_enabled
+							}
 							name="rest_models_embed_post_attachments_enabled"
 							onChange={ setField }
 						/>
 					}
-					label={ __( 'Embed attachments on posts', 'rest-api-firewall' ) }
+					label={ __(
+						'Embed attachments on posts',
+						'rest-api-firewall'
+					) }
 				/>
 				<FormHelperText>
-					<Typography variant="caption">{ __(
-						'Add a simplified array of attachments on posts',
-						'rest-api-firewall'
-					) }</Typography><br/>
-					<Typography variant="caption">{ __(
-						'Includes featured attachment and ACF fields according to their type.',
-						'rest-api-firewall'
-					) }</Typography>
+					<Typography variant="caption">
+						{ __(
+							'Add a simplified array of attachments on posts',
+							'rest-api-firewall'
+						) }
+					</Typography>
+					<br />
+					<Typography variant="caption">
+						{ __(
+							'Includes featured attachment and ACF fields according to their type.',
+							'rest-api-firewall'
+						) }
+					</Typography>
 				</FormHelperText>
 			</FormControl>
 
@@ -106,19 +130,29 @@ export default function Models( { form, setField } ) {
 					control={
 						<Switch
 							size="small"
-							checked={ !! form.rest_models_relative_attachment_url_enabled }
+							checked={
+								!! form.rest_models_relative_attachment_url_enabled
+							}
 							name="rest_models_relative_attachment_url_enabled"
 							onChange={ setField }
 						/>
 					}
-					label={ __( 'Relative attachment urls', 'rest-api-firewall' ) }
+					label={ __(
+						'Relative attachment urls',
+						'rest-api-firewall'
+					) }
 				/>
 				<FormHelperText>
-					<Typography variant="caption">{ __(
-						'Remove host and upload path from attachment urls',
-						'rest-api-firewall'
-					) }</Typography><br/>
-					<Typography variant="caption">https://www.domain-example.com/wp-content/uploads</Typography>
+					<Typography variant="caption">
+						{ __(
+							'Remove host and upload path from attachment urls',
+							'rest-api-firewall'
+						) }
+					</Typography>
+					<br />
+					<Typography variant="caption">
+						https://www.domain-example.com/wp-content/uploads
+					</Typography>
 				</FormHelperText>
 			</FormControl>
 
@@ -189,7 +223,10 @@ export default function Models( { form, setField } ) {
 							onChange={ setField }
 						/>
 					}
-					label={ __( 'Remove _links property', 'rest-api-firewall' ) }
+					label={ __(
+						'Remove _links property',
+						'rest-api-firewall'
+					) }
 				/>
 				<FormHelperText>
 					{ __(
@@ -198,7 +235,6 @@ export default function Models( { form, setField } ) {
 					) }
 				</FormHelperText>
 			</FormControl>
-
 		</Stack>
 	);
 }

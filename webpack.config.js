@@ -20,6 +20,12 @@ module.exports = {
 					chunks: 'all',
 					priority: 20,
 				},
+				muiDataGrid: {
+					test: /[\\/]node_modules[\\/]@mui[\\/]x-data-grid[\\/]/,
+					name: 'mui-datagrid',
+					chunks: 'all',
+					priority: 30,
+				},
 			},
 		},
 	},

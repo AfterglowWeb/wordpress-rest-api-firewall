@@ -65,11 +65,20 @@ export default function ConfirmDialog() {
 	const getIcon = () => {
 		switch ( type ) {
 			case DIALOG_TYPES.SUCCESS:
-				return <CheckCircleOutlineIcon color="success" sx={ { fontSize: 48 } } />;
+				return (
+					<CheckCircleOutlineIcon
+						color="success"
+						sx={ { fontSize: 48 } }
+					/>
+				);
 			case DIALOG_TYPES.ERROR:
-				return <ErrorOutlineIcon color="error" sx={ { fontSize: 48 } } />;
+				return (
+					<ErrorOutlineIcon color="error" sx={ { fontSize: 48 } } />
+				);
 			case DIALOG_TYPES.INFO:
-				return <InfoOutlinedIcon color="info" sx={ { fontSize: 48 } } />;
+				return (
+					<InfoOutlinedIcon color="info" sx={ { fontSize: 48 } } />
+				);
 			default:
 				return null;
 		}
@@ -84,7 +93,7 @@ export default function ConfirmDialog() {
 			case DIALOG_TYPES.INFO:
 				return __( 'Information', 'rest-api-firewall' );
 			case DIALOG_TYPES.LOADING:
-				return __( 'Please wait...', 'rest-api-firewall' );
+				return __( 'Please wait…', 'rest-api-firewall' );
 			default:
 				return __( 'Confirm', 'rest-api-firewall' );
 		}
@@ -94,7 +103,9 @@ export default function ConfirmDialog() {
 		if ( type === DIALOG_TYPES.LOADING ) {
 			return (
 				<Stack spacing={ 2 } sx={ { py: 2 } }>
-					{ content && <DialogContentText>{ content }</DialogContentText> }
+					{ content && (
+						<DialogContentText>{ content }</DialogContentText>
+					) }
 					<LinearProgress />
 				</Stack>
 			);
@@ -106,7 +117,11 @@ export default function ConfirmDialog() {
 			return (
 				<Stack alignItems="center" spacing={ 2 } sx={ { py: 1 } }>
 					{ icon }
-					{ content && <DialogContentText textAlign="center">{ content }</DialogContentText> }
+					{ content && (
+						<DialogContentText textAlign="center">
+							{ content }
+						</DialogContentText>
+					) }
 				</Stack>
 			);
 		}
@@ -119,7 +134,11 @@ export default function ConfirmDialog() {
 			return null;
 		}
 
-		if ( type === DIALOG_TYPES.SUCCESS || type === DIALOG_TYPES.ERROR || type === DIALOG_TYPES.INFO ) {
+		if (
+			type === DIALOG_TYPES.SUCCESS ||
+			type === DIALOG_TYPES.ERROR ||
+			type === DIALOG_TYPES.INFO
+		) {
 			return (
 				<DialogActions>
 					<Button
@@ -166,9 +185,7 @@ export default function ConfirmDialog() {
 			<DialogTitle id="dialog-title">
 				{ title || getDefaultTitle() }
 			</DialogTitle>
-			<DialogContent>
-				{ renderContent() }
-			</DialogContent>
+			<DialogContent>{ renderContent() }</DialogContent>
 			{ renderActions() }
 		</Dialog>
 	);

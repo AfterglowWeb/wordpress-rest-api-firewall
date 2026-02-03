@@ -24,25 +24,49 @@ function normalizeTree( nodes, parentPath = '', parentSettings = null ) {
 	return nodes.map( ( node ) => {
 		const nodePath = node.path || `${ parentPath }/${ node.label }`;
 		const nodeSettings = {
-			protect: { value: false, inherited: parentSettings?.protect?.value ?? false },
-			disabled: { value: false, inherited: parentSettings?.disabled?.value ?? false },
-			rate_limit: { value: false, inherited: parentSettings?.rate_limit?.value ?? false },
-			rate_limit_time: { value: false, inherited: parentSettings?.rate_limit_time?.value ?? false },
+			protect: {
+				value: false,
+				inherited: parentSettings?.protect?.value ?? false,
+			},
+			disabled: {
+				value: false,
+				inherited: parentSettings?.disabled?.value ?? false,
+			},
+			rate_limit: {
+				value: false,
+				inherited: parentSettings?.rate_limit?.value ?? false,
+			},
+			rate_limit_time: {
+				value: false,
+				inherited: parentSettings?.rate_limit_time?.value ?? false,
+			},
 			applyToChildren: false,
 		};
 
 		if ( node.settings ) {
 			if ( node.settings.protect !== undefined ) {
-				nodeSettings.protect = { value: node.settings.protect, inherited: false };
+				nodeSettings.protect = {
+					value: node.settings.protect,
+					inherited: false,
+				};
 			}
 			if ( node.settings.disabled !== undefined ) {
-				nodeSettings.disabled = { value: node.settings.disabled, inherited: false };
+				nodeSettings.disabled = {
+					value: node.settings.disabled,
+					inherited: false,
+				};
 			}
 			if ( node.settings.rate_limit !== undefined ) {
-				nodeSettings.rate_limit = { value: node.settings.rate_limit, inherited: false };
+				nodeSettings.rate_limit = {
+					value: node.settings.rate_limit,
+					inherited: false,
+				};
 			}
 			if ( node.settings.rate_limit_time !== undefined ) {
-				nodeSettings.rate_limit_time = { value: node.settings.rate_limit_time, inherited: false };
+				nodeSettings.rate_limit_time = {
+					value: node.settings.rate_limit_time,
+					inherited: false,
+				};
 			}
 			if ( node.settings.applyToChildren !== undefined ) {
 				nodeSettings.applyToChildren = node.settings.applyToChildren;
@@ -63,7 +87,11 @@ function normalizeTree( nodes, parentPath = '', parentSettings = null ) {
 		};
 
 		if ( node.children && node.children.length > 0 ) {
-			normalizedNode.children = normalizeTree( node.children, nodePath, nodeSettings );
+			normalizedNode.children = normalizeTree(
+				node.children,
+				nodePath,
+				nodeSettings
+			);
 		}
 
 		return normalizedNode;
@@ -101,7 +129,9 @@ function NodeContent( {
 	const hasChildren = node.children && node.children.length > 0;
 
 	const getDescendantsMatchState = () => {
-		if ( ! hasChildren ) return null;
+		if ( ! hasChildren ) {
+			return null;
+		}
 
 		let allMatch = true;
 		let noneMatch = true;
@@ -109,12 +139,18 @@ function NodeContent( {
 		const checkDescendants = ( childNodes ) => {
 			for ( const child of childNodes ) {
 				const childMatchesProtect =
-					child.settings?.protect?.value === nodeSettings.protect.value;
+					child.settings?.protect?.value ===
+					nodeSettings.protect.value;
 				const childMatchesDisabled =
-					child.settings?.disabled?.value === nodeSettings.disabled.value;
+					child.settings?.disabled?.value ===
+					nodeSettings.disabled.value;
 				const childMatchesRateLimit =
-					child.settings?.rate_limit?.value === nodeSettings.rate_limit.value;
-				const childMatches = childMatchesProtect && childMatchesDisabled && childMatchesRateLimit;
+					child.settings?.rate_limit?.value ===
+					nodeSettings.rate_limit.value;
+				const childMatches =
+					childMatchesProtect &&
+					childMatchesDisabled &&
+					childMatchesRateLimit;
 
 				if ( childMatches ) {
 					noneMatch = false;
@@ -130,8 +166,12 @@ function NodeContent( {
 
 		checkDescendants( node.children );
 
-		if ( allMatch ) return 'all';
-		if ( noneMatch ) return 'none';
+		if ( allMatch ) {
+			return 'all';
+		}
+		if ( noneMatch ) {
+			return 'none';
+		}
 		return 'partial';
 	};
 
@@ -176,29 +216,35 @@ function NodeContent( {
 		}
 	};
 
-
 	const isAuthEnforced = enforceAuth || nodeSettings.protect.value;
-	const isRateLimitEnforced = enforceRateLimit || nodeSettings.rate_limit.value;
+	const isRateLimitEnforced =
+		enforceRateLimit || nodeSettings.rate_limit.value;
 	const isDisabled = enforceDisabled || nodeSettings.disabled.value;
 	const effectiveRateLimit = nodeSettings.rate_limit.value || globalRateLimit;
-	const effectiveRateLimitTime = nodeSettings.rate_limit_time.value || globalRateLimitTime;
+	const effectiveRateLimitTime =
+		nodeSettings.rate_limit_time.value || globalRateLimitTime;
 
 	const getEffectivePermission = ( type ) => {
-		return isDisabled ? 'forbidden' : (isAuthEnforced ? 'authenticated' : type);
-	}
+		return isDisabled
+			? 'forbidden'
+			: isAuthEnforced
+			? 'authenticated'
+			: type;
+	};
 
 	return (
 		<TreeItemContent { ...props }>
 			<Stack direction="column" spacing={ 0.5 } sx={ { flex: 1, py: 1 } }>
-				
-				<Stack 
-				direction="row" 
-				spacing={ 1 } 
-				alignItems="center"
-				sx={{ 
-					cursor: isDisabled ? 'default' : 'pointer',
-					filter: isDisabled ? 'grayscale(1) opacity(0.6)' : 'none',
-				 }}
+				<Stack
+					direction="row"
+					spacing={ 1 }
+					alignItems="center"
+					sx={ {
+						cursor: isDisabled ? 'default' : 'pointer',
+						filter: isDisabled
+							? 'grayscale(1) opacity(0.6)'
+							: 'none',
+					} }
 				>
 					{ children }
 
@@ -223,10 +269,16 @@ function NodeContent( {
 
 					{ node.permission && (
 						<Chip
-							label={ getEffectivePermission( node.permission.type ) || 'unknown' }
+							label={
+								getEffectivePermission(
+									node.permission.type
+								) || 'unknown'
+							}
 							size="small"
 							variant="outlined"
-							color={ getPermissionColor( getEffectivePermission( node.permission.type ) ) }
+							color={ getPermissionColor(
+								getEffectivePermission( node.permission.type )
+							) }
 						/>
 					) }
 
@@ -239,64 +291,100 @@ function NodeContent( {
 					) }
 
 					{ ( node.path || node.route ) && (
-						<Stack direction="row" spacing={ 0.5 } alignItems="center">
+						<Stack
+							direction="row"
+							spacing={ 0.5 }
+							alignItems="center"
+						>
 							<Typography
 								variant="caption"
-								sx={ { color: 'text.secondary', fontFamily: 'monospace', whiteSpace: 'nowrap' } }
+								sx={ {
+									color: 'text.secondary',
+									fontFamily: 'monospace',
+									whiteSpace: 'nowrap',
+								} }
 							>
 								{ node.route || node.path }
 							</Typography>
 							<Tooltip title="Copy path">
-								<IconButton size="small" onClick={ handleCopyPath } sx={ { p: 0.25 } }>
+								<IconButton
+									size="small"
+									onClick={ handleCopyPath }
+									sx={ { p: 0.25 } }
+								>
 									<ContentCopyIcon sx={ { fontSize: 14 } } />
 								</IconButton>
 							</Tooltip>
 						</Stack>
 					) }
-					
 				</Stack>
 
 				{ node.permission?.callback && (
 					<Typography
 						variant="caption"
-						sx={ { color: 'text.secondary', fontSize: '0.7rem', ml: 4 } }
+						sx={ {
+							color: 'text.secondary',
+							fontSize: '0.7rem',
+							ml: 4,
+						} }
 					>
 						Permission: { node.permission.callback }
 					</Typography>
 				) }
 			</Stack>
 
-			<Stack direction="row" spacing={ 1 } alignItems="center" onClick={ handleSwitchClick }>
-				
+			<Stack
+				direction="row"
+				spacing={ 1 }
+				alignItems="center"
+				onClick={ handleSwitchClick }
+			>
 				<Tooltip
 					title={
 						! proActive
 							? __( 'Pro version required', 'rest-api-firewall' )
 							: enforceRateLimit
-							? __( 'Authentication enforced globally', 'rest-api-firewall' )
+							? __(
+									'Authentication enforced globally',
+									'rest-api-firewall'
+							  )
 							: isAuthEnforced
 							? `Authentication enforced`
-							: __( 'Enable authentication for this route', 'rest-api-firewall' )
+							: __(
+									'Enable authentication for this route',
+									'rest-api-firewall'
+							  )
 					}
 				>
-				<FormControlLabel
-					control={
-						<Switch
-							size="small"
-							checked={ isAuthEnforced }
-							onChange={ handleToggle( 'protect' ) }
-							disabled={ enforceAuth || ! proActive }
-							sx={ {
-								opacity: enforceAuth || nodeSettings.protect.inherited || ! proActive ? 0.6 : 1,
-							} }
-						/>
-					}
-					label={
-						<Typography variant="body2" sx={ { fontSize: '0.875rem' } }>
-							Auth { ( enforceAuth || nodeSettings.protect.inherited ) && '↓' }
-						</Typography>
-					}
-				/>
+					<FormControlLabel
+						control={
+							<Switch
+								size="small"
+								checked={ isAuthEnforced }
+								onChange={ handleToggle( 'protect' ) }
+								disabled={ enforceAuth || ! proActive }
+								sx={ {
+									opacity:
+										enforceAuth ||
+										nodeSettings.protect.inherited ||
+										! proActive
+											? 0.6
+											: 1,
+								} }
+							/>
+						}
+						label={
+							<Typography
+								variant="body2"
+								sx={ { fontSize: '0.875rem' } }
+							>
+								Auth{ ' ' }
+								{ ( enforceAuth ||
+									nodeSettings.protect.inherited ) &&
+									'↓' }
+							</Typography>
+						}
+					/>
 				</Tooltip>
 
 				<Tooltip
@@ -304,10 +392,16 @@ function NodeContent( {
 						! proActive
 							? __( 'Pro version required', 'rest-api-firewall' )
 							: enforceRateLimit
-							? __( 'Rate limiting enforced globally', 'rest-api-firewall' )
+							? __(
+									'Rate limiting enforced globally',
+									'rest-api-firewall'
+							  )
 							: isRateLimitEnforced
 							? `${ effectiveRateLimit } requests / ${ effectiveRateLimitTime }s`
-							: __( 'Enable rate limiting for this route', 'rest-api-firewall' )
+							: __(
+									'Enable rate limiting for this route',
+									'rest-api-firewall'
+							  )
 					}
 				>
 					<FormControlLabel
@@ -318,13 +412,24 @@ function NodeContent( {
 								onChange={ handleToggle( 'rate_limit' ) }
 								disabled={ enforceRateLimit || ! proActive }
 								sx={ {
-									opacity: enforceRateLimit || nodeSettings.rate_limit.inherited || ! proActive ? 0.6 : 1,
+									opacity:
+										enforceRateLimit ||
+										nodeSettings.rate_limit.inherited ||
+										! proActive
+											? 0.6
+											: 1,
 								} }
 							/>
 						}
 						label={
-							<Typography variant="body2" sx={ { fontSize: '0.875rem' } }>
-								Rate { ( enforceRateLimit || nodeSettings.rate_limit.inherited ) && '↓' }
+							<Typography
+								variant="body2"
+								sx={ { fontSize: '0.875rem' } }
+							>
+								Rate{ ' ' }
+								{ ( enforceRateLimit ||
+									nodeSettings.rate_limit.inherited ) &&
+									'↓' }
 							</Typography>
 						}
 					/>
@@ -335,39 +440,59 @@ function NodeContent( {
 						! proActive
 							? __( 'Pro version required', 'rest-api-firewall' )
 							: isDisabled
-							? __( 'This route is disabled', 'rest-api-firewall' )
+							? __(
+									'This route is disabled',
+									'rest-api-firewall'
+							  )
 							: __( 'Disable this route', 'rest-api-firewall' )
 					}
 				>
-				<FormControlLabel
-					control={
-						<Switch
-							size="small"
-							checked={ nodeSettings.disabled.value }
-							onChange={ handleToggle( 'disabled' ) }
-							disabled={ ! proActive }
-							sx={ {
-								opacity: nodeSettings.disabled.inherited || ! proActive ? 0.6 : 1,
-							} }
-						/>
-					}
-					label={
-						<Typography variant="body2" sx={ { fontSize: '0.875rem' } }>
-							Disable { nodeSettings.disabled.inherited && '↓' }
-						</Typography>
-					}
-				/>
+					<FormControlLabel
+						control={
+							<Switch
+								size="small"
+								checked={ nodeSettings.disabled.value }
+								onChange={ handleToggle( 'disabled' ) }
+								disabled={ ! proActive }
+								sx={ {
+									opacity:
+										nodeSettings.disabled.inherited ||
+										! proActive
+											? 0.6
+											: 1,
+								} }
+							/>
+						}
+						label={
+							<Typography
+								variant="body2"
+								sx={ { fontSize: '0.875rem' } }
+							>
+								Disable{ ' ' }
+								{ nodeSettings.disabled.inherited && '↓' }
+							</Typography>
+						}
+					/>
 				</Tooltip>
 
 				{ hasChildren && (
 					<Tooltip
 						title={
 							! proActive
-								? __( 'Pro version required', 'rest-api-firewall' )
+								? __(
+										'Pro version required',
+										'rest-api-firewall'
+								  )
 								: isApplyToChildrenChecked
-								? __( 'Settings applied to all descendants. Click to unlink.', 'rest-api-firewall' )
+								? __(
+										'Settings applied to all descendants. Click to unlink.',
+										'rest-api-firewall'
+								  )
 								: descendantsMatchState === 'all'
-								? __( 'All descendants have same settings', 'rest-api-firewall' )
+								? __(
+										'All descendants have same settings',
+										'rest-api-firewall'
+								  )
 								: descendantsMatchState === 'partial'
 								? __(
 										'Some descendants have different settings. Click to apply to all.',
@@ -385,7 +510,8 @@ function NodeContent( {
 									size="small"
 									checked={ isApplyToChildrenChecked }
 									indeterminate={
-										! isApplyToChildrenChecked && descendantsMatchState === 'partial'
+										! isApplyToChildrenChecked &&
+										descendantsMatchState === 'partial'
 									}
 									onChange={ handleApplyToAll }
 									disabled={ ! proActive }
@@ -393,8 +519,14 @@ function NodeContent( {
 								/>
 							}
 							label={
-								<Typography variant="body2" sx={ { fontSize: '0.75rem' } }>
-									{ __( 'Apply to children', 'rest-api-firewall' ) }
+								<Typography
+									variant="body2"
+									sx={ { fontSize: '0.75rem' } }
+								>
+									{ __(
+										'Apply to children',
+										'rest-api-firewall'
+									) }
 								</Typography>
 							}
 						/>
@@ -418,7 +550,7 @@ const CustomTreeItem = forwardRef( function CustomTreeItem( props, ref ) {
 					toggleNodeSetting: props.toggleNodeSetting,
 					applyToAllChildren: props.applyToAllChildren,
 					getNodeById: props.getNodeById,
-					node: node,
+					node,
 					enforceAuth: props.enforceAuth,
 					enforceRateLimit: props.enforceRateLimit,
 					enforceDisabled: props.disabled,
@@ -436,7 +568,11 @@ function treeReducer( state, action ) {
 		case 'TOGGLE_NODE':
 			return toggleNode( state, action.id, action.key );
 		case 'APPLY_TO_ALL_DESCENDANTS':
-			return applyToAllDescendants( state, action.id, action.shouldApply );
+			return applyToAllDescendants(
+				state,
+				action.id,
+				action.shouldApply
+			);
 		case 'RESET':
 			return action.payload;
 		default:
@@ -472,7 +608,8 @@ function applyToAllDescendants( items, parentId, shouldApply ) {
 
 			const updateDescendants = ( children, applySettings ) => {
 				return ( children || [] ).map( ( child ) => {
-					const hasGrandchildren = child.children && child.children.length > 0;
+					const hasGrandchildren =
+						child.children && child.children.length > 0;
 
 					if ( applySettings ) {
 						return {
@@ -498,16 +635,15 @@ function applyToAllDescendants( items, parentId, shouldApply ) {
 							},
 							children: updateDescendants( child.children, true ),
 						};
-					} else {
-						return {
-							...child,
-							settings: {
-								...child.settings,
-								applyToChildren: false,
-							},
-							children: updateDescendants( child.children, false ),
-						};
 					}
+					return {
+						...child,
+						settings: {
+							...child.settings,
+							applyToChildren: false,
+						},
+						children: updateDescendants( child.children, false ),
+					};
 				} );
 			};
 
@@ -521,7 +657,14 @@ function applyToAllDescendants( items, parentId, shouldApply ) {
 			};
 		}
 		if ( item.children ) {
-			return { ...item, children: applyToAllDescendants( item.children, parentId, shouldApply ) };
+			return {
+				...item,
+				children: applyToAllDescendants(
+					item.children,
+					parentId,
+					shouldApply
+				),
+			};
 		}
 		return item;
 	} );
@@ -529,10 +672,14 @@ function applyToAllDescendants( items, parentId, shouldApply ) {
 
 function findNodeById( items, id ) {
 	for ( const item of items ) {
-		if ( item.id === id ) return item;
+		if ( item.id === id ) {
+			return item;
+		}
 		if ( item.children ) {
 			const found = findNodeById( item.children, id );
-			if ( found ) return found;
+			if ( found ) {
+				return found;
+			}
 		}
 	}
 	return null;
@@ -548,7 +695,11 @@ export default function RoutesTree( {
 	globalRateLimitTime = 60,
 	proActive = true,
 } ) {
-	const [ nodes, dispatch ] = useReducer( treeReducer, treeData || [], normalizeTree );
+	const [ nodes, dispatch ] = useReducer(
+		treeReducer,
+		treeData || [],
+		normalizeTree
+	);
 	const { __ } = wp.i18n || {};
 
 	useEffect( () => {
@@ -585,7 +736,9 @@ export default function RoutesTree( {
 				} }
 			>
 				<Typography variant="body2" color="text.secondary">
-					{ treeData === null ? __( 'Loading routes...', 'rest-api-firewall' ) : __( 'No routes found', 'rest-api-firewall' ) }
+					{ treeData === null
+						? __( 'Loading routes…', 'rest-api-firewall' )
+						: __( 'No routes found', 'rest-api-firewall' ) }
 				</Typography>
 			</Box>
 		);
@@ -600,13 +753,13 @@ export default function RoutesTree( {
 					item: {
 						toggleNodeSetting: handleToggle,
 						applyToAllChildren: handleApplyToAll,
-						getNodeById: getNodeById,
-						enforceAuth: enforceAuth,
-						enforceRateLimit: enforceRateLimit,
-						enforceDisabled: enforceDisabled,
-						globalRateLimit: globalRateLimit,
-						globalRateLimitTime: globalRateLimitTime,
-						proActive: proActive,
+						getNodeById,
+						enforceAuth,
+						enforceRateLimit,
+						enforceDisabled,
+						globalRateLimit,
+						globalRateLimitTime,
+						proActive,
 					},
 				} }
 			/>

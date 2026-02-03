@@ -42,37 +42,37 @@ class FirewallOptions {
 
 	private static function options_config(): array {
 		return array(
-			'enforce_auth'       => array(
+			'enforce_auth'              => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 			),
-			'enforce_rate_limit' => array(
+			'enforce_rate_limit'        => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 			),
-			'user_id'            => array(
+			'user_id'                   => array(
 				'default_value'     => 0,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
 			),
-			'rate_limit'         => array(
+			'rate_limit'                => array(
 				'default_value'     => 30,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
 			),
-			'rate_limit_time'    => array(
+			'rate_limit_time'           => array(
 				'default_value'     => 60,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
 			),
-			'rate_limit_release' => array(
+			'rate_limit_release'        => array(
 				'default_value'     => 300,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
 			),
-			'rate_limit_blacklist' => array(
+			'rate_limit_blacklist'      => array(
 				'default_value'     => 5,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -82,7 +82,7 @@ class FirewallOptions {
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
 			),
-			'policy'             => array(
+			'policy'                    => array(
 				'default_value'     => array(
 					'nodes'  => array(),
 					'routes' => array(),
@@ -90,7 +90,7 @@ class FirewallOptions {
 				'type'              => 'array',
 				'sanitize_callback' => '',
 			),
-			'hide_user_routes'   => array(
+			'hide_user_routes'          => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
