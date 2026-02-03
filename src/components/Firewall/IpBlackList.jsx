@@ -28,8 +28,6 @@ import Alert from '@mui/material/Alert';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
-import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PublicIcon from '@mui/icons-material/Public';
 import TableViewIcon from '@mui/icons-material/TableView';
 
@@ -37,18 +35,25 @@ import ProBadge from '../ProBadge';
 import IpDataGrid from './IpDataGrid';
 import CountryBlockList from './CountryBlockList';
 
-const IP_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-const CIDR_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(?:[0-9]|[1-2][0-9]|3[0-2])$/;
-const IPV6_REGEX = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::$|^([0-9a-fA-F]{1,4}:){1,7}:$|^:(:([0-9a-fA-F]{1,4})){1,7}$|^([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}$/;
+const IP_REGEX =
+	/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+const CIDR_REGEX =
+	/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(?:[0-9]|[1-2][0-9]|3[0-2])$/;
+const IPV6_REGEX =
+	/^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::$|^([0-9a-fA-F]{1,4}:){1,7}:$|^:(:([0-9a-fA-F]{1,4})){1,7}$|^([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}$/;
 
 function isValidIp( value ) {
-	if ( ! value ) return false;
+	if ( ! value ) {
+		return false;
+	}
 	const trimmed = value.trim();
 	return IP_REGEX.test( trimmed ) || IPV6_REGEX.test( trimmed );
 }
 
 function isValidCidr( value ) {
-	if ( ! value ) return false;
+	if ( ! value ) {
+		return false;
+	}
 	return CIDR_REGEX.test( value.trim() );
 }
 
@@ -80,8 +85,10 @@ export default function IpBlackList() {
 	const isIpFilterDisabled = ! settings.enabled;
 	const isDisabled = ! hasValidLicense || isIpFilterDisabled;
 
-	const activeList = settings.mode === 'whitelist' ? settings.whitelist : settings.blacklist;
-	const activeListKey = settings.mode === 'whitelist' ? 'whitelist' : 'blacklist';
+	const activeList =
+		settings.mode === 'whitelist' ? settings.whitelist : settings.blacklist;
+	const activeListKey =
+		settings.mode === 'whitelist' ? 'whitelist' : 'blacklist';
 
 	const countryStats = activeList.reduce( ( acc, entry ) => {
 		const country = entry?.geoIp?.countryName || null;
@@ -101,7 +108,8 @@ export default function IpBlackList() {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+					'Content-Type':
+						'application/x-www-form-urlencoded; charset=UTF-8',
 				},
 				body: new URLSearchParams( {
 					action: 'get_ip_filter',
@@ -135,12 +143,18 @@ export default function IpBlackList() {
 		openDialog( {
 			type: DIALOG_TYPES.CONFIRM,
 			title: __( 'Confirm Save', 'rest-api-firewall' ),
-			content: __( 'Are you sure you want to save the IP filter settings?', 'rest-api-firewall' ),
+			content: __(
+				'Are you sure you want to save the IP filter settings?',
+				'rest-api-firewall'
+			),
 			onConfirm: async () => {
 				updateDialog( {
 					type: DIALOG_TYPES.LOADING,
 					title: __( 'Saving', 'rest-api-firewall' ),
-					content: __( 'Saving IP filter settings...', 'rest-api-firewall' ),
+					content: __(
+						'Saving IP filter settings…',
+						'rest-api-firewall'
+					),
 				} );
 
 				setSaving( true );
@@ -149,7 +163,8 @@ export default function IpBlackList() {
 					const response = await fetch( adminData.ajaxurl, {
 						method: 'POST',
 						headers: {
-							'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+							'Content-Type':
+								'application/x-www-form-urlencoded; charset=UTF-8',
 						},
 						body: new URLSearchParams( {
 							action: 'save_ip_filter',
@@ -167,14 +182,22 @@ export default function IpBlackList() {
 						updateDialog( {
 							type: DIALOG_TYPES.SUCCESS,
 							title: __( 'Success', 'rest-api-firewall' ),
-							content: __( 'IP filter settings saved successfully!', 'rest-api-firewall' ),
+							content: __(
+								'IP filter settings saved successfully!',
+								'rest-api-firewall'
+							),
 							autoClose: 2000,
 						} );
 					} else {
 						updateDialog( {
 							type: DIALOG_TYPES.ERROR,
 							title: __( 'Error', 'rest-api-firewall' ),
-							content: result?.data?.message || __( 'Failed to save settings', 'rest-api-firewall' ),
+							content:
+								result?.data?.message ||
+								__(
+									'Failed to save settings',
+									'rest-api-firewall'
+								),
 						} );
 					}
 				} catch ( error ) {
@@ -207,12 +230,16 @@ export default function IpBlackList() {
 		const trimmed = newIp.trim();
 
 		if ( ! trimmed ) {
-			setIpError( __( 'Please enter an IP address', 'rest-api-firewall' ) );
+			setIpError(
+				__( 'Please enter an IP address', 'rest-api-firewall' )
+			);
 			return;
 		}
 
 		if ( isValidCidr( trimmed ) && ! hasValidLicense ) {
-			setIpError( __( 'CIDR ranges require Pro license', 'rest-api-firewall' ) );
+			setIpError(
+				__( 'CIDR ranges require Pro license', 'rest-api-firewall' )
+			);
 			return;
 		}
 
@@ -221,7 +248,8 @@ export default function IpBlackList() {
 			return;
 		}
 
-		const listKey = settings.mode === 'whitelist' ? 'whitelist' : 'blacklist';
+		const listKey =
+			settings.mode === 'whitelist' ? 'whitelist' : 'blacklist';
 		const currentList = settings[ listKey ];
 
 		const isDuplicate = currentList.some( ( item ) => {
@@ -230,7 +258,9 @@ export default function IpBlackList() {
 		} );
 
 		if ( isDuplicate ) {
-			setIpError( __( 'This IP is already in the list', 'rest-api-firewall' ) );
+			setIpError(
+				__( 'This IP is already in the list', 'rest-api-firewall' )
+			);
 			return;
 		}
 
@@ -273,7 +303,9 @@ export default function IpBlackList() {
 	if ( loading ) {
 		return (
 			<Box sx={ { py: 2 } }>
-				<Typography color="text.secondary">{ __( 'Loading...', 'rest-api-firewall' ) }</Typography>
+				<Typography color="text.secondary">
+					{ __( 'Loading…', 'rest-api-firewall' ) }
+				</Typography>
 			</Box>
 		);
 	}
@@ -284,7 +316,11 @@ export default function IpBlackList() {
 
 	return (
 		<Stack spacing={ 3 }>
-			<Stack direction="row" justifyContent="space-between" alignItems="center">
+			<Stack
+				direction="row"
+				justifyContent="space-between"
+				alignItems="center"
+			>
 				<Typography variant="subtitle1" fontWeight={ 600 }>
 					{ __( 'IP Filtering', 'rest-api-firewall' ) }
 				</Typography>
@@ -309,16 +345,27 @@ export default function IpBlackList() {
 								size="small"
 							/>
 						}
-						label={ __( 'Enable IP Filtering', 'rest-api-firewall' ) }
+						label={ __(
+							'Enable IP Filtering',
+							'rest-api-firewall'
+						) }
 					/>
 					<FormHelperText>
-						{ __( 'Block or allow requests based on IP address', 'rest-api-firewall' ) }
+						{ __(
+							'Block or allow requests based on IP address',
+							'rest-api-firewall'
+						) }
 					</FormHelperText>
 				</FormControl>
 
-				<FormControl sx={ { minWidth: 200, position: 'relative' } } disabled={ isDisabled }>
+				<FormControl
+					sx={ { minWidth: 200, position: 'relative' } }
+					disabled={ isDisabled }
+				>
 					<ProBadge position="bottom-right" />
-					<InputLabel id="ip-mode-label">{ __( 'Filter Mode', 'rest-api-firewall' ) }</InputLabel>
+					<InputLabel id="ip-mode-label">
+						{ __( 'Filter Mode', 'rest-api-firewall' ) }
+					</InputLabel>
 					<Select
 						labelId="ip-mode-label"
 						value={ settings.mode }
@@ -326,33 +373,58 @@ export default function IpBlackList() {
 						label={ __( 'Filter Mode', 'rest-api-firewall' ) }
 						size="small"
 					>
-						<MenuItem value="blacklist">{ __( 'Blacklist', 'rest-api-firewall' ) }</MenuItem>
-						{ hasValidLicense && <MenuItem value="whitelist">{ __( 'Whitelist', 'rest-api-firewall' ) }</MenuItem> }
+						<MenuItem value="blacklist">
+							{ __( 'Blacklist', 'rest-api-firewall' ) }
+						</MenuItem>
+						{ hasValidLicense && (
+							<MenuItem value="whitelist">
+								{ __( 'Whitelist', 'rest-api-firewall' ) }
+							</MenuItem>
+						) }
 					</Select>
 					<FormHelperText>
 						{ settings.mode === 'blacklist'
 							? __( 'Block listed IPs', 'rest-api-firewall' )
-							: __( 'Allow only listed IPs', 'rest-api-firewall' ) }
+							: __(
+									'Allow only listed IPs',
+									'rest-api-firewall'
+							  ) }
 					</FormHelperText>
 				</FormControl>
 			</Stack>
 
-			{ clientIp && clientIp !== '0.0.0.0' && settings.mode === 'whitelist' && (
-				<Alert severity="info" sx={ { alignItems: 'center' } }>
-					<Stack direction="row" spacing={ 1 } alignItems="center">
-						<Typography variant="body2">
-							{ __( 'Your current IP:', 'rest-api-firewall' ) }
-						</Typography>
-						<Chip label={ clientIp } size="small" variant="outlined" />
-						<Button
-							size="small"
-							onClick={ () => setNewIp( clientIp ) }
+			{ clientIp &&
+				clientIp !== '0.0.0.0' &&
+				settings.mode === 'whitelist' && (
+					<Alert severity="info" sx={ { alignItems: 'center' } }>
+						<Stack
+							direction="row"
+							spacing={ 1 }
+							alignItems="center"
 						>
-							{ __( 'Add to whitelist', 'rest-api-firewall' ) }
-						</Button>
-					</Stack>
-				</Alert>
-			) }
+							<Typography variant="body2">
+								{ __(
+									'Your current IP:',
+									'rest-api-firewall'
+								) }
+							</Typography>
+							<Chip
+								label={ clientIp }
+								size="small"
+								variant="outlined"
+							/>
+							<Button
+								size="small"
+								onClick={ () => setNewIp( clientIp ) }
+							>
+								{ __(
+									'Add to whitelist',
+									'rest-api-firewall'
+								) }
+							</Button>
+						</Stack>
+					</Alert>
+				) }
 
 			<Divider />
 
@@ -366,13 +438,25 @@ export default function IpBlackList() {
 							value={ newIp }
 							onChange={ handleNewIpChange }
 							onKeyDown={ handleKeyDown }
-							placeholder={ hasValidLicense ? '192.168.1.1 or 10.0.0.0/24' : '192.168.1.1' }
+							placeholder={
+								hasValidLicense
+									? '192.168.1.1 or 10.0.0.0/24'
+									: '192.168.1.1'
+							}
 							size="small"
 							error={ !! ipError }
-							helperText={ ipError || ( hasValidLicense
-								? __( 'IP address or CIDR range', 'rest-api-firewall' )
-								: __( 'IP address (CIDR requires Pro)', 'rest-api-firewall' )
-							) }
+							helperText={
+								ipError ||
+								( hasValidLicense
+									? __(
+											'IP address or CIDR range',
+											'rest-api-firewall'
+									  )
+									: __(
+											'IP address (CIDR requires Pro)',
+											'rest-api-firewall'
+									  ) )
+							}
 							disabled={ ! settings.enabled }
 							sx={ { flexGrow: 1 } }
 						/>
@@ -389,10 +473,19 @@ export default function IpBlackList() {
 				</Box>
 
 				<Box sx={ { minWidth: 280 } }>
-					<Stack direction="row" justifyContent="space-between" alignItems="center" sx={ { mb: 1 } }>
+					<Stack
+						direction="row"
+						justifyContent="space-between"
+						alignItems="center"
+						sx={ { mb: 1 } }
+					>
 						<Typography variant="subtitle2">
 							{ __( 'Blocked IPs', 'rest-api-firewall' ) }
-							<Chip label={ activeList.length } size="small" sx={ { ml: 1 } } />
+							<Chip
+								label={ activeList.length }
+								size="small"
+								sx={ { ml: 1 } }
+							/>
 						</Typography>
 						<Button
 							variant="outlined"
@@ -420,9 +513,14 @@ export default function IpBlackList() {
 					) : (
 						<Typography variant="body2" color="text.secondary">
 							{ activeList.length > 0
-								? __( 'No country data available', 'rest-api-firewall' )
-								: __( 'No IPs blocked yet', 'rest-api-firewall' )
-							}
+								? __(
+										'No country data available',
+										'rest-api-firewall'
+								  )
+								: __(
+										'No IPs blocked yet',
+										'rest-api-firewall'
+								  ) }
 						</Typography>
 					) }
 				</Box>
@@ -430,19 +528,35 @@ export default function IpBlackList() {
 
 			{ recentIps.length > 0 && (
 				<Box>
-					<Typography variant="caption" color="text.secondary" sx={ { mb: 0.5, display: 'block' } }>
+					<Typography
+						variant="caption"
+						color="text.secondary"
+						sx={ { mb: 0.5, display: 'block' } }
+					>
 						{ __( 'Recent:', 'rest-api-firewall' ) }
 					</Typography>
 					<Stack direction="row" flexWrap="wrap" gap={ 0.5 }>
 						{ recentIps.map( ( entry ) => {
-							const ipValue = typeof entry === 'string' ? entry : entry.ip;
+							const ipValue =
+								typeof entry === 'string' ? entry : entry.ip;
 							return (
 								<Chip
 									key={ ipValue }
 									label={ ipValue }
 									size="small"
-									onDelete={ settings.enabled ? () => handleRemoveIp( activeListKey, ipValue ) : undefined }
-									sx={ { fontFamily: 'monospace', fontSize: '0.75rem' } }
+									onDelete={
+										settings.enabled
+											? () =>
+													handleRemoveIp(
+														activeListKey,
+														ipValue
+													)
+											: undefined
+									}
+									sx={ {
+										fontFamily: 'monospace',
+										fontSize: '0.75rem',
+									} }
 								/>
 							);
 						} ) }
@@ -461,20 +575,40 @@ export default function IpBlackList() {
 			<Dialog
 				open={ dialogOpen }
 				onClose={ () => setDialogOpen( false ) }
-				maxWidth={false}
+				maxWidth={ false }
 				fullWidth
 				fullScreen={ true }
 				keepMounted={ true }
-				sx={{ ml: { xs: 0, sm: '45px', lg: '160px' }, mt: '32px' }}
+				sx={ { ml: { xs: 0, sm: '45px', lg: '160px' }, mt: '32px' } }
 			>
-				<DialogTitle sx={ { display: 'flex',  alignItems: 'center', justifyContent: 'space-between', gap: 1, pb: 0 } }>
-					<IconButton onClick={ () => setDialogOpen( false ) } size="large">
-						<ArrowBackIosIcon color="primary" sx={{transform: 'translateX(4px)'}} />
+				<DialogTitle
+					sx={ {
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'space-between',
+						gap: 1,
+						pb: 0,
+					} }
+				>
+					<IconButton
+						onClick={ () => setDialogOpen( false ) }
+						size="large"
+					>
+						<ArrowBackIosIcon
+							color="primary"
+							sx={ { transform: 'translateX(4px)' } }
+						/>
 					</IconButton>
 					<Typography variant="h6">
 						{ settings.mode === 'whitelist'
-							? __( 'Manage Whitelisted IPs', 'rest-api-firewall' )
-							: __( 'Manage Blacklisted IPs', 'rest-api-firewall' ) }
+							? __(
+									'Manage Whitelisted IPs',
+									'rest-api-firewall'
+							  )
+							: __(
+									'Manage Blacklisted IPs',
+									'rest-api-firewall'
+							  ) }
 					</Typography>
 					<IconButton onClick={ () => setDialogOpen( false ) }>
 						<CloseIcon />
@@ -484,7 +618,11 @@ export default function IpBlackList() {
 					<Tabs
 						value={ dialogTab }
 						onChange={ ( e, newValue ) => setDialogTab( newValue ) }
-						sx={ { mb: 2, borderBottom: 1, borderColor: 'divider' } }
+						sx={ {
+							mb: 2,
+							borderBottom: 1,
+							borderColor: 'divider',
+						} }
 					>
 						<Tab
 							icon={ <PublicIcon /> }
@@ -499,7 +637,10 @@ export default function IpBlackList() {
 					</Tabs>
 
 					{ dialogTab === 0 && (
-						<CountryBlockList listType={ activeListKey } freeEntries={ activeList } />
+						<CountryBlockList
+							listType={ activeListKey }
+							freeEntries={ activeList }
+						/>
 					) }
 
 					{ dialogTab === 1 && (

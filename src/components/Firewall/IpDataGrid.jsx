@@ -18,18 +18,29 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import LockOutlineIcon from '@mui/icons-material/LockOutline';
 
-const IP_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-const CIDR_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(?:[0-9]|[1-2][0-9]|3[0-2])$/;
-const IPV6_REGEX = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::$|^([0-9a-fA-F]{1,4}:){1,7}:$|^:(:([0-9a-fA-F]{1,4})){1,7}$|^([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}$/;
+const IP_REGEX =
+	/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+const CIDR_REGEX =
+	/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(?:[0-9]|[1-2][0-9]|3[0-2])$/;
+const IPV6_REGEX =
+	/^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::$|^([0-9a-fA-F]{1,4}:){1,7}:$|^:(:([0-9a-fA-F]{1,4})){1,7}$|^([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}$/;
 
 function isValidIpOrCidr( value ) {
-	if ( ! value ) return false;
+	if ( ! value ) {
+		return false;
+	}
 	const trimmed = value.trim();
-	return IP_REGEX.test( trimmed ) || CIDR_REGEX.test( trimmed ) || IPV6_REGEX.test( trimmed );
+	return (
+		IP_REGEX.test( trimmed ) ||
+		CIDR_REGEX.test( trimmed ) ||
+		IPV6_REGEX.test( trimmed )
+	);
 }
 
-
-export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] } ) {
+export default function IpDataGrid( {
+	listType = 'blacklist',
+	freeEntries = [],
+} ) {
 	const { adminData } = useAdminData();
 	const { hasValidLicense } = useLicense();
 	const { __ } = wp.i18n || {};
@@ -37,8 +48,13 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 	const [ rows, setRows ] = useState( [] );
 	const [ loading, setLoading ] = useState( true );
 	const [ rowCount, setRowCount ] = useState( 0 );
-	const [ paginationModel, setPaginationModel ] = useState( { page: 0, pageSize: 25 } );
-	const [ sortModel, setSortModel ] = useState( [ { field: 'blocked_at', sort: 'desc' } ] );
+	const [ paginationModel, setPaginationModel ] = useState( {
+		page: 0,
+		pageSize: 25,
+	} );
+	const [ sortModel, setSortModel ] = useState( [
+		{ field: 'blocked_at', sort: 'desc' },
+	] );
 	const [ filterValue, setFilterValue ] = useState( '' );
 	const [ rowSelectionModel, setRowSelectionModel ] = useState( [] );
 
@@ -50,12 +66,16 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 		return freeEntries
 			.map( ( entry, index ) => {
 				const ip = typeof entry === 'string' ? entry : entry?.ip;
-				if ( ! ip ) return null;
-				const blockedTime = entry?.blocked_time ? new Date( entry.blocked_time * 1000 ).toISOString() : null;
+				if ( ! ip ) {
+					return null;
+				}
+				const blockedTime = entry?.blocked_time
+					? new Date( entry.blocked_time * 1000 ).toISOString()
+					: null;
 				return {
 					id: index + 1,
 					actions: '',
-					ip: ip,
+					ip,
 					entry_type: entry?.type || 'manual',
 					country_name: entry?.geoIp?.countryName || null,
 					country_code: entry?.geoIp?.country || null,
@@ -72,10 +92,11 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 
 		if ( filterValue ) {
 			const search = filterValue.toLowerCase();
-			result = result.filter( ( row ) =>
-				row.ip?.toLowerCase().includes( search ) ||
-				row.country_name?.toLowerCase().includes( search ) ||
-				row.agent?.toLowerCase().includes( search )
+			result = result.filter(
+				( row ) =>
+					row.ip?.toLowerCase().includes( search ) ||
+					row.country_name?.toLowerCase().includes( search ) ||
+					row.agent?.toLowerCase().includes( search )
 			);
 		}
 
@@ -96,26 +117,30 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 
 	const paginatedFreeRows = useMemo( () => {
 		const start = paginationModel.page * paginationModel.pageSize;
-		return processedFreeRows.slice( start, start + paginationModel.pageSize );
+		return processedFreeRows.slice(
+			start,
+			start + paginationModel.pageSize
+		);
 	}, [ processedFreeRows, paginationModel ] );
 
 	const columns = useMemo( () => {
 		const baseColumns = [
 			{
-			field: 'actions',
-			headerName: __( 'Actions', 'rest-api-firewall' ),
-			width: 80,
-			sortable: false,
-			filterable: false,
-			renderCell: ( params ) => (
-				<IconButton
-					size="small"
-					color="default"
-					onClick={ () => handleDeleteOne( params.row.id ) }
-				>
-					<DeleteOutlineIcon fontSize="small" />
-				</IconButton>
-			)},
+				field: 'actions',
+				headerName: __( 'Actions', 'rest-api-firewall' ),
+				width: 80,
+				sortable: false,
+				filterable: false,
+				renderCell: ( params ) => (
+					<IconButton
+						size="small"
+						color="default"
+						onClick={ () => handleDeleteOne( params.row.id ) }
+					>
+						<DeleteOutlineIcon fontSize="small" />
+					</IconButton>
+				),
+			},
 			{
 				field: 'ip',
 				headerName: __( 'IP Address', 'rest-api-firewall' ),
@@ -123,11 +148,19 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 				minWidth: 150,
 				renderCell: ( params ) => (
 					<Stack direction="row" spacing={ 1 } alignItems="center">
-						<Typography variant="body2" sx={ { fontFamily: 'monospace' } }>
+						<Typography
+							variant="body2"
+							sx={ { fontFamily: 'monospace' } }
+						>
 							{ params.value }
 						</Typography>
 						{ params.value?.includes( '/' ) && (
-							<Chip label="CIDR" size="small" variant="outlined" color="info" />
+							<Chip
+								label="CIDR"
+								size="small"
+								variant="outlined"
+								color="info"
+							/>
 						) }
 					</Stack>
 				),
@@ -138,9 +171,15 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 				width: 120,
 				renderCell: ( params ) => (
 					<Chip
-						label={ params.value === 'manual' ? __( 'Manual', 'rest-api-firewall' ) : __( 'Rate Limit', 'rest-api-firewall' ) }
+						label={
+							params.value === 'manual'
+								? __( 'Manual', 'rest-api-firewall' )
+								: __( 'Rate Limit', 'rest-api-firewall' )
+						}
 						size="small"
-						color={ params.value === 'manual' ? 'default' : 'warning' }
+						color={
+							params.value === 'manual' ? 'default' : 'warning'
+						}
 						variant="outlined"
 					/>
 				),
@@ -156,7 +195,9 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 				headerName: __( 'Blocked At', 'rest-api-firewall' ),
 				width: 180,
 				renderCell: ( params ) => {
-					if ( ! params.value ) return '-';
+					if ( ! params.value ) {
+						return '-';
+					}
 					return new Date( params.value ).toLocaleString();
 				},
 			},
@@ -165,7 +206,9 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 				headerName: __( 'Expires At', 'rest-api-firewall' ),
 				width: 180,
 				renderCell: ( params ) => {
-					if ( ! params.value ) return __( 'Never', 'rest-api-firewall' );
+					if ( ! params.value ) {
+						return __( 'Never', 'rest-api-firewall' );
+					}
 					return new Date( params.value ).toLocaleString();
 				},
 			},
@@ -174,13 +217,13 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 				headerName: __( 'Agent', 'rest-api-firewall' ),
 				width: 180,
 				renderCell: ( params ) => {
-					if ( ! params.value ) return __( 'Unknown', 'rest-api-firewall' );
+					if ( ! params.value ) {
+						return __( 'Unknown', 'rest-api-firewall' );
+					}
 					return new Date( params.value ).toLocaleString();
 				},
 			},
 		];
-
-		
 
 		return baseColumns;
 	}, [ hasValidLicense, __ ] );
@@ -202,7 +245,8 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+					'Content-Type':
+						'application/x-www-form-urlencoded; charset=UTF-8',
 				},
 				body: new URLSearchParams( {
 					action: 'get_ip_entries',
@@ -227,7 +271,16 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 		} finally {
 			setLoading( false );
 		}
-	}, [ adminData, hasValidLicense, listType, paginationModel, sortModel, filterValue, paginatedFreeRows, processedFreeRows ] );
+	}, [
+		adminData,
+		hasValidLicense,
+		listType,
+		paginationModel,
+		sortModel,
+		filterValue,
+		paginatedFreeRows,
+		processedFreeRows,
+	] );
 
 	useEffect( () => {
 		fetchEntries();
@@ -237,12 +290,16 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 		const trimmed = newIp.trim();
 
 		if ( ! trimmed ) {
-			setIpError( __( 'Please enter an IP address', 'rest-api-firewall' ) );
+			setIpError(
+				__( 'Please enter an IP address', 'rest-api-firewall' )
+			);
 			return;
 		}
 
 		if ( ! isValidIpOrCidr( trimmed ) ) {
-			setIpError( __( 'Invalid IP address or CIDR range', 'rest-api-firewall' ) );
+			setIpError(
+				__( 'Invalid IP address or CIDR range', 'rest-api-firewall' )
+			);
 			return;
 		}
 
@@ -253,7 +310,8 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+					'Content-Type':
+						'application/x-www-form-urlencoded; charset=UTF-8',
 				},
 				body: new URLSearchParams( {
 					action: 'add_ip_entry',
@@ -270,7 +328,10 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 				setNewIp( '' );
 				fetchEntries();
 			} else {
-				setIpError( result?.data?.message || __( 'Failed to add IP', 'rest-api-firewall' ) );
+				setIpError(
+					result?.data?.message ||
+						__( 'Failed to add IP', 'rest-api-firewall' )
+				);
 			}
 		} catch ( error ) {
 			setIpError( error.message );
@@ -284,12 +345,13 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+					'Content-Type':
+						'application/x-www-form-urlencoded; charset=UTF-8',
 				},
 				body: new URLSearchParams( {
 					action: 'delete_ip_entry',
 					nonce: adminData.nonce,
-					id: id,
+					id,
 				} ),
 			} );
 
@@ -304,13 +366,16 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 	};
 
 	const handleDeleteSelected = async () => {
-		if ( rowSelectionModel.length === 0 ) return;
+		if ( rowSelectionModel.length === 0 ) {
+			return;
+		}
 
 		try {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+					'Content-Type':
+						'application/x-www-form-urlencoded; charset=UTF-8',
 				},
 				body: new URLSearchParams( {
 					action: 'delete_ip_entries',
@@ -345,7 +410,10 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 					icon={ <LockOutlineIcon /> }
 					sx={ { mb: 2 } }
 				>
-					{ __( 'Upgrade to Pro for advanced IP management: CIDR support, block by country, block by CIDR, bulk delete, set retention time, export and more.', 'rest-api-firewall' ) }
+					{ __(
+						'Upgrade to Pro for advanced IP management: CIDR support, block by country, block by CIDR, bulk delete, set retention time, export and more.',
+						'rest-api-firewall'
+					) }
 				</Alert>
 			) }
 
@@ -382,7 +450,7 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 				<TextField
 					value={ filterValue }
 					onChange={ ( e ) => setFilterValue( e.target.value ) }
-					placeholder={ __( 'Search...', 'rest-api-firewall' ) }
+					placeholder={ __( 'Search…', 'rest-api-firewall' ) }
 					size="small"
 					sx={ { minWidth: 200 } }
 				/>
@@ -401,7 +469,8 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 						onClick={ handleDeleteSelected }
 						startIcon={ <DeleteOutlineIcon /> }
 					>
-						{ __( 'Delete', 'rest-api-firewall' ) } ({ rowSelectionModel.length })
+						{ __( 'Delete', 'rest-api-firewall' ) } (
+						{ rowSelectionModel.length })
 					</Button>
 				) }
 			</Toolbar>
@@ -420,10 +489,12 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 				onSortModelChange={ setSortModel }
 				checkboxSelection={ hasValidLicense }
 				disableRowSelectionOnClick
-				{ ...( hasValidLicense ? {
-					rowSelectionModel,
-					onRowSelectionModelChange: setRowSelectionModel,
-				} : {} ) }
+				{ ...( hasValidLicense
+					? {
+							rowSelectionModel,
+							onRowSelectionModelChange: setRowSelectionModel,
+					  }
+					: {} ) }
 				sx={ {
 					'& .MuiDataGrid-cell': {
 						display: 'flex',
@@ -431,9 +502,15 @@ export default function IpDataGrid( { listType = 'blacklist', freeEntries = [] }
 					},
 				} }
 				localeText={ {
-					noRowsLabel: __( 'No IPs in the list', 'rest-api-firewall' ),
+					noRowsLabel: __(
+						'No IPs in the list',
+						'rest-api-firewall'
+					),
 					MuiTablePagination: {
-						labelRowsPerPage: __( 'Rows per page:', 'rest-api-firewall' ),
+						labelRowsPerPage: __(
+							'Rows per page:',
+							'rest-api-firewall'
+						),
 					},
 				} }
 			/>

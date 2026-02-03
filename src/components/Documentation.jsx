@@ -16,7 +16,13 @@ import MenuIcon from '@mui/icons-material/Menu';
 import contentStyles from '../utils/contentStyles';
 import Button from '@mui/material/Button';
 
-export default function Documentation({page, buttonText, variant = "text", size = "small", color = "primary"}) {
+export default function Documentation( {
+	page,
+	buttonText,
+	variant = 'text',
+	size = 'small',
+	color = 'primary',
+} ) {
 	const { __ } = wp.i18n || {};
 	const { open, openDoc, closeDoc, currentLocation, docs } =
 		useDocumentation();
@@ -40,71 +46,78 @@ export default function Documentation({page, buttonText, variant = "text", size 
 
 	return (
 		<>
-		<Button 
-		variant={variant} 
-		size={size } 
-		color={color} 
-		onClick={ () => openDoc( { page: page } ) }>
-			{ buttonText }
-		</Button>
-		<Drawer
-			anchor="right"
-			open={ open }
-			onClose={ closeDoc }
-			sx={ {
-				'& .MuiDrawer-paper': {
-					height: 'calc(100% - 32px)',
-					marginTop: '32px',
-					boxSizing: 'border-box',
-					width: '100%',
-					maxWidth: 600,
-				},
-			} }
-		>
-			<Toolbar>
-				<IconButton
-					size="small"
-					onClick={ ( e ) => setMenuAnchorEl( e.currentTarget ) }
-				>
-					<MenuIcon />
-				</IconButton>
-
-				<Typography variant="h6" sx={ { flexGrow: 1 } }>
-					{ __( 'Documentation', 'rest-api-firewall' ) }
-				</Typography>
-
-				<IconButton onClick={ closeDoc }>
-					<CloseIcon />
-				</IconButton>
-			</Toolbar>
-
-			{ currentDoc && (
-				<Card sx={ { p: 2, height: 'calc(100% - 96px)', overflow: 'scroll' } }>
-					<CardContent
-						sx={{overflow: 'auto', ...contentStyles }}
-						dangerouslySetInnerHTML={ {
-							__html: currentDoc.html,
-						} }
-					/>
-				</Card>
-			) }
-
-			<Menu
-				anchorEl={ menuAnchorEl }
-				open={ Boolean( menuAnchorEl ) }
-				onClose={ () => setMenuAnchorEl( null ) }
+			<Button
+				variant={ variant }
+				size={ size }
+				color={ color }
+				onClick={ () => openDoc( { page } ) }
 			>
-				{ docs.map( ( doc ) => (
-					<MenuItem
-						key={ doc.slug }
-						selected={ currentDoc?.slug === doc.slug }
-						onClick={ () => openDoc( { page: doc.slug } ) }
+				{ buttonText }
+			</Button>
+			<Drawer
+				anchor="right"
+				open={ open }
+				onClose={ closeDoc }
+				sx={ {
+					'& .MuiDrawer-paper': {
+						height: 'calc(100% - 32px)',
+						marginTop: '32px',
+						boxSizing: 'border-box',
+						width: '100%',
+						maxWidth: 600,
+					},
+				} }
+			>
+				<Toolbar>
+					<IconButton
+						size="small"
+						onClick={ ( e ) => setMenuAnchorEl( e.currentTarget ) }
 					>
-						<ListItemText primary={ doc.title } />
-					</MenuItem>
-				) ) }
-			</Menu>
-		</Drawer>
+						<MenuIcon />
+					</IconButton>
+
+					<Typography variant="h6" sx={ { flexGrow: 1 } }>
+						{ __( 'Documentation', 'rest-api-firewall' ) }
+					</Typography>
+
+					<IconButton onClick={ closeDoc }>
+						<CloseIcon />
+					</IconButton>
+				</Toolbar>
+
+				{ currentDoc && (
+					<Card
+						sx={ {
+							p: 2,
+							height: 'calc(100% - 96px)',
+							overflow: 'scroll',
+						} }
+					>
+						<CardContent
+							sx={ { overflow: 'auto', ...contentStyles } }
+							dangerouslySetInnerHTML={ {
+								__html: currentDoc.html,
+							} }
+						/>
+					</Card>
+				) }
+
+				<Menu
+					anchorEl={ menuAnchorEl }
+					open={ Boolean( menuAnchorEl ) }
+					onClose={ () => setMenuAnchorEl( null ) }
+				>
+					{ docs.map( ( doc ) => (
+						<MenuItem
+							key={ doc.slug }
+							selected={ currentDoc?.slug === doc.slug }
+							onClick={ () => openDoc( { page: doc.slug } ) }
+						>
+							<ListItemText primary={ doc.title } />
+						</MenuItem>
+					) ) }
+				</Menu>
+			</Drawer>
 		</>
 	);
 }

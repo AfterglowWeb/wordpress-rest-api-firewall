@@ -4,7 +4,6 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Avatar from '@mui/material/Avatar';
 import Tooltip from '@mui/material/Tooltip';
-import Button from '@mui/material/Button';
 
 import { useAdminData } from './contexts/AdminDataContext';
 import sanitizeHtml from './utils/sanitizeHtml';
@@ -114,7 +113,10 @@ export default function Header() {
 					/>
 
 					<Tooltip title={ 'Open Theme Github in a new tab' }>
-						<Documentation page="getting-started" buttonText="Documentation" />
+						<Documentation
+							page="getting-started"
+							buttonText="Documentation"
+						/>
 					</Tooltip>
 				</BrandSection>
 			</MainContainer>

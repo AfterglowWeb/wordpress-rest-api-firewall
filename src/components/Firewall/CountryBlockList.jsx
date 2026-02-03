@@ -15,15 +15,16 @@ import Typography from '@mui/material/Typography';
 import BlockIcon from '@mui/icons-material/Block';
 import LockIcon from '@mui/icons-material/Lock';
 
-import ProBadge from '../ProBadge';
-
 /**
  * CountryBlockList component
  * @param {Object} props
- * @param {string} props.listType - 'whitelist' or 'blacklist'
- * @param {Array} props.freeEntries - For Free users: array of IP entries from local settings
+ * @param {string} props.listType    - 'whitelist' or 'blacklist'
+ * @param {Array}  props.freeEntries - For Free users: array of IP entries from local settings
  */
-export default function CountryBlockList( { listType = 'blacklist', freeEntries = [] } ) {
+export default function CountryBlockList( {
+	listType = 'blacklist',
+	freeEntries = [],
+} ) {
 	const { adminData } = useAdminData();
 	const { hasValidLicense } = useLicense();
 	const { __ } = wp.i18n || {};
@@ -34,9 +35,10 @@ export default function CountryBlockList( { listType = 'blacklist', freeEntries 
 	const [ blockedCountries, setBlockedCountries ] = useState( [] );
 	const [ selectedCountries, setSelectedCountries ] = useState( [] );
 
-	// Calculate stats from freeEntries for Free users
 	const freeStats = useMemo( () => {
-		if ( hasValidLicense ) return [];
+		if ( hasValidLicense ) {
+			return [];
+		}
 
 		const countryMap = {};
 		freeEntries.forEach( ( entry ) => {
@@ -54,11 +56,12 @@ export default function CountryBlockList( { listType = 'blacklist', freeEntries 
 			}
 		} );
 
-		return Object.values( countryMap ).sort( ( a, b ) => b.count - a.count );
+		return Object.values( countryMap ).sort(
+			( a, b ) => b.count - a.count
+		);
 	}, [ freeEntries, hasValidLicense ] );
 
 	const fetchStats = useCallback( async () => {
-		// For Free users, use local data
 		if ( ! hasValidLicense ) {
 			setStats( freeStats );
 			setLoading( false );
@@ -70,7 +73,8 @@ export default function CountryBlockList( { listType = 'blacklist', freeEntries 
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+					'Content-Type':
+						'application/x-www-form-urlencoded; charset=UTF-8',
 				},
 				body: new URLSearchParams( {
 					action: 'get_country_stats',
@@ -87,7 +91,7 @@ export default function CountryBlockList( { listType = 'blacklist', freeEntries 
 				setSelectedCountries( result.data.blocked_countries || [] );
 			}
 		} catch ( error ) {
-			console.error( 'Error fetching country stats:', error );
+			// Handle error silently.
 		} finally {
 			setLoading( false );
 		}
@@ -98,7 +102,9 @@ export default function CountryBlockList( { listType = 'blacklist', freeEntries 
 	}, [ fetchStats ] );
 
 	const handleToggleCountry = ( countryCode ) => {
-		if ( ! hasValidLicense ) return;
+		if ( ! hasValidLicense ) {
+			return;
+		}
 
 		setSelectedCountries( ( prev ) => {
 			if ( prev.includes( countryCode ) ) {
@@ -109,14 +115,17 @@ export default function CountryBlockList( { listType = 'blacklist', freeEntries 
 	};
 
 	const handleSaveBlockedCountries = async () => {
-		if ( ! hasValidLicense ) return;
+		if ( ! hasValidLicense ) {
+			return;
+		}
 
 		setSaving( true );
 		try {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+					'Content-Type':
+						'application/x-www-form-urlencoded; charset=UTF-8',
 				},
 				body: new URLSearchParams( {
 					action: 'update_blocked_countries',
@@ -131,13 +140,15 @@ export default function CountryBlockList( { listType = 'blacklist', freeEntries 
 				setBlockedCountries( result.data.blocked_countries || [] );
 			}
 		} catch ( error ) {
-			console.error( 'Error saving blocked countries:', error );
+			// Handle error silently.
 		} finally {
 			setSaving( false );
 		}
 	};
 
-	const hasChanges = JSON.stringify( selectedCountries.sort() ) !== JSON.stringify( blockedCountries.sort() );
+	const hasChanges =
+		JSON.stringify( selectedCountries.sort() ) !==
+		JSON.stringify( blockedCountries.sort() );
 
 	if ( loading ) {
 		return (
@@ -151,7 +162,10 @@ export default function CountryBlockList( { listType = 'blacklist', freeEntries 
 		return (
 			<Box sx={ { py: 2, textAlign: 'center' } }>
 				<Typography color="text.secondary">
-					{ __( 'No country data available yet. IPs will be tagged with country info when blocked.', 'rest-api-firewall' ) }
+					{ __(
+						'No country data available yet. IPs will be tagged with country info when blocked.',
+						'rest-api-firewall'
+					) }
 				</Typography>
 			</Box>
 		);
@@ -159,10 +173,19 @@ export default function CountryBlockList( { listType = 'blacklist', freeEntries 
 
 	return (
 		<Box>
-			<Stack direction="row" justifyContent="space-between" alignItems="center" sx={ { mb: 2 } }>
+			<Stack
+				direction="row"
+				justifyContent="space-between"
+				alignItems="center"
+				sx={ { mb: 2 } }
+			>
 				<Typography variant="subtitle2">
 					{ __( 'Blocked IPs by Country', 'rest-api-firewall' ) }
-					<Chip label={ stats.length } size="small" sx={ { ml: 1 } } />
+					<Chip
+						label={ stats.length }
+						size="small"
+						sx={ { ml: 1 } }
+					/>
 				</Typography>
 
 				{ hasValidLicense && hasChanges && (
@@ -173,17 +196,29 @@ export default function CountryBlockList( { listType = 'blacklist', freeEntries 
 						disabled={ saving }
 						startIcon={ <BlockIcon /> }
 					>
-						{ saving ? __( 'Saving...', 'rest-api-firewall' ) : __( 'Save Country Blocks', 'rest-api-firewall' ) }
+						{ saving
+							? __( 'Saving…', 'rest-api-firewall' )
+							: __( 'Save Country Blocks', 'rest-api-firewall' ) }
 					</Button>
 				) }
 			</Stack>
 
 			{ ! hasValidLicense && (
-				<Box sx={ { mb: 2, p: 1.5, bgcolor: 'action.hover', borderRadius: 1 } }>
+				<Box
+					sx={ {
+						mb: 2,
+						p: 1.5,
+						bgcolor: 'action.hover',
+						borderRadius: 1,
+					} }
+				>
 					<Stack direction="row" spacing={ 1 } alignItems="center">
 						<LockIcon fontSize="small" color="action" />
 						<Typography variant="body2" color="text.secondary">
-							{ __( 'Upgrade to Pro to block entire countries', 'rest-api-firewall' ) }
+							{ __(
+								'Upgrade to Pro to block entire countries',
+								'rest-api-firewall'
+							) }
 						</Typography>
 					</Stack>
 				</Box>
@@ -191,27 +226,49 @@ export default function CountryBlockList( { listType = 'blacklist', freeEntries 
 
 			<Grid container spacing={ 1 }>
 				{ stats.map( ( country ) => {
-					const isBlocked = selectedCountries.includes( country.country_code );
-					const wasBlocked = blockedCountries.includes( country.country_code );
+					const isBlocked = selectedCountries.includes(
+						country.country_code
+					);
+					const wasBlocked = blockedCountries.includes(
+						country.country_code
+					);
 
 					return (
-						<Grid item xs={ 6 } sm={ 4 } md={ 3 } key={ country.country_code }>
+						<Grid
+							item
+							xs={ 6 }
+							sm={ 4 }
+							md={ 3 }
+							key={ country.country_code }
+						>
 							<Box
 								sx={ {
 									p: 1,
 									border: '1px solid',
-									borderColor: isBlocked ? 'error.main' : 'divider',
+									borderColor: isBlocked
+										? 'error.main'
+										: 'divider',
 									borderRadius: 1,
-									bgcolor: isBlocked ? 'error.lighter' : 'background.paper',
+									bgcolor: isBlocked
+										? 'error.lighter'
+										: 'background.paper',
 									opacity: hasValidLicense ? 1 : 0.7,
-									cursor: hasValidLicense ? 'pointer' : 'default',
+									cursor: hasValidLicense
+										? 'pointer'
+										: 'default',
 									transition: 'all 0.2s',
-									'&:hover': hasValidLicense ? {
-										borderColor: 'primary.main',
-										bgcolor: isBlocked ? 'error.light' : 'action.hover',
-									} : {},
+									'&:hover': hasValidLicense
+										? {
+												borderColor: 'primary.main',
+												bgcolor: isBlocked
+													? 'error.light'
+													: 'action.hover',
+										  }
+										: {},
 								} }
-								onClick={ () => handleToggleCountry( country.country_code ) }
+								onClick={ () =>
+									handleToggleCountry( country.country_code )
+								}
 							>
 								<FormControlLabel
 									control={
@@ -223,14 +280,28 @@ export default function CountryBlockList( { listType = 'blacklist', freeEntries 
 										/>
 									}
 									label={
-										<Stack direction="row" spacing={ 0.5 } alignItems="center" sx={ { ml: 0.5 } }>
-											<Typography variant="body2" noWrap sx={ { maxWidth: 100 } }>
-												{ country.country_name || country.country_code }
+										<Stack
+											direction="row"
+											spacing={ 0.5 }
+											alignItems="center"
+											sx={ { ml: 0.5 } }
+										>
+											<Typography
+												variant="body2"
+												noWrap
+												sx={ { maxWidth: 100 } }
+											>
+												{ country.country_name ||
+													country.country_code }
 											</Typography>
 											<Chip
 												label={ country.count }
 												size="small"
-												color={ isBlocked ? 'error' : 'default' }
+												color={
+													isBlocked
+														? 'error'
+														: 'default'
+												}
 												variant="outlined"
 											/>
 										</Stack>

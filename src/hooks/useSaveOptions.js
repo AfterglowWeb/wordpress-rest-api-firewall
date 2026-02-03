@@ -13,9 +13,15 @@ export default function useSaveOptions() {
 			const {
 				action = 'rest_api_firewall_update_options',
 				successTitle = __( 'Settings Saved', 'rest-api-firewall' ),
-				successMessage = __( 'Settings saved successfully.', 'rest-api-firewall' ),
+				successMessage = __(
+					'Settings saved successfully.',
+					'rest-api-firewall'
+				),
 				confirmTitle = __( 'Confirm Save', 'rest-api-firewall' ),
-				confirmMessage = __( 'Are you sure you want to save these settings?', 'rest-api-firewall' ),
+				confirmMessage = __(
+					'Are you sure you want to save these settings?',
+					'rest-api-firewall'
+				),
 				skipConfirm = false,
 				onSuccess,
 			} = config;
@@ -24,7 +30,7 @@ export default function useSaveOptions() {
 				updateDialog( {
 					type: DIALOG_TYPES.LOADING,
 					title: __( 'Saving', 'rest-api-firewall' ),
-					content: __( 'Saving settings...', 'rest-api-firewall' ),
+					content: __( 'Saving settings…', 'rest-api-firewall' ),
 				} );
 
 				setSaving( true );
@@ -33,7 +39,8 @@ export default function useSaveOptions() {
 					const response = await fetch( adminData.ajaxurl, {
 						method: 'POST',
 						headers: {
-							'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+							'Content-Type':
+								'application/x-www-form-urlencoded; charset=UTF-8',
 						},
 						body: new URLSearchParams( {
 							action,
@@ -66,20 +73,30 @@ export default function useSaveOptions() {
 						}
 
 						return { success: true, data: result.data };
-					} else {
-						const errorMessage = result?.data?.error || result?.data?.message || __( 'Unknown error', 'rest-api-firewall' );
-						updateDialog( {
-							type: DIALOG_TYPES.ERROR,
-							title: __( 'Error', 'rest-api-firewall' ),
-							content: __( 'Failed to save settings: ', 'rest-api-firewall' ) + errorMessage,
-						} );
-						return { success: false, error: errorMessage };
 					}
+					const errorMessage =
+						result?.data?.error ||
+						result?.data?.message ||
+						__( 'Unknown error', 'rest-api-firewall' );
+					updateDialog( {
+						type: DIALOG_TYPES.ERROR,
+						title: __( 'Error', 'rest-api-firewall' ),
+						content:
+							__(
+								'Failed to save settings:',
+								'rest-api-firewall'
+							) + errorMessage,
+					} );
+					return { success: false, error: errorMessage };
 				} catch ( error ) {
 					updateDialog( {
 						type: DIALOG_TYPES.ERROR,
 						title: __( 'Error', 'rest-api-firewall' ),
-						content: __( 'Error saving settings: ', 'rest-api-firewall' ) + error.message,
+						content:
+							__(
+								'Error saving settings:',
+								'rest-api-firewall'
+							) + error.message,
 					} );
 					return { success: false, error: error.message };
 				} finally {

@@ -1,5 +1,4 @@
-import { createRoot } from '@wordpress/element';
-import { lazy, Suspense } from '@wordpress/element';
+import { createRoot, lazy, Suspense } from '@wordpress/element';
 import Box from '@mui/material/Box';
 import Skeleton from '@mui/material/Skeleton';
 import AppTheme from './AppTheme';
@@ -18,20 +17,22 @@ document.addEventListener( 'DOMContentLoaded', function () {
 		const root = createRoot( container );
 		root.render(
 			<AdminDataProvider adminData={ adminData }>
-				<LicenseProvider hasValidLicense={ adminData.has_valid_license }>
-				<DocumentationProvider>
-					<AppTheme>
-						<Suspense fallback={ <HeaderSkeleton /> }>
-							<Header />
-						</Suspense>
-						<Suspense fallback={ <ContentSkeleton /> }>
-							<App />
-						</Suspense>
-						<Suspense fallback={ <FooterSkeleton /> }>
-							<Footer />
-						</Suspense>
-					</AppTheme>
-				</DocumentationProvider>
+				<LicenseProvider
+					hasValidLicense={ adminData.has_valid_license }
+				>
+					<DocumentationProvider>
+						<AppTheme>
+							<Suspense fallback={ <HeaderSkeleton /> }>
+								<Header />
+							</Suspense>
+							<Suspense fallback={ <ContentSkeleton /> }>
+								<App />
+							</Suspense>
+							<Suspense fallback={ <FooterSkeleton /> }>
+								<Footer />
+							</Suspense>
+						</AppTheme>
+					</DocumentationProvider>
 				</LicenseProvider>
 			</AdminDataProvider>
 		);
@@ -103,7 +104,6 @@ const ContentSkeleton = () => (
 			pb: 3,
 		} }
 	>
-
 		<Box
 			sx={ {
 				display: 'flex',
@@ -124,25 +124,41 @@ const ContentSkeleton = () => (
 			sx={ {
 				py: 4,
 				display: 'flex',
-				flexDirection: {xs:'column', md:'row'},
+				flexDirection: { xs: 'column', md: 'row' },
 				justifyContent: 'space-around',
 				gap: 3,
 			} }
 		>
-			<Skeleton variant="rounded" width={ "calc(60% - 20px)" } height={ 160 } />
-			<Skeleton variant="rounded" width={ "calc(40% - 20px)" } height={ 160 } />
+			<Skeleton
+				variant="rounded"
+				width={ 'calc(60% - 20px)' }
+				height={ 160 }
+			/>
+			<Skeleton
+				variant="rounded"
+				width={ 'calc(40% - 20px)' }
+				height={ 160 }
+			/>
 		</Box>
 		<Box
 			sx={ {
 				py: 4,
 				display: 'flex',
-				flexDirection: {xs:'column', md:'row'},
+				flexDirection: { xs: 'column', md: 'row' },
 				justifyContent: 'space-around',
 				gap: 3,
 			} }
 		>
-			<Skeleton variant="rounded" width={ "calc(60% - 20px)" } height={ 200 } />
-			<Skeleton variant="rounded" width={ "calc(40% - 20px)" } height={ 200 } />
+			<Skeleton
+				variant="rounded"
+				width={ 'calc(60% - 20px)' }
+				height={ 200 }
+			/>
+			<Skeleton
+				variant="rounded"
+				width={ 'calc(40% - 20px)' }
+				height={ 200 }
+			/>
 		</Box>
 		<Skeleton variant="rounded" height={ 60 } />
 	</Box>

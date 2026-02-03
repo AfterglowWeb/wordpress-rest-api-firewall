@@ -67,13 +67,14 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+					'Content-Type':
+						'application/x-www-form-urlencoded; charset=UTF-8',
 				},
 				body: new URLSearchParams( {
 					action: 'run_policy_test',
 					nonce: adminData.nonce,
-					route: route,
-					method: method,
+					route,
+					method,
 					test_sub_routes: options.test_sub_routes ? '1' : '0',
 					use_auth: options.use_auth ? '1' : '0',
 					use_rate_limit: options.use_rate_limit ? '1' : '0',
@@ -86,10 +87,15 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 			if ( result?.success ) {
 				setResults( result.data );
 			} else {
-				setError( result?.data?.message || __( 'Test failed', 'rest-api-firewall' ) );
+				setError(
+					result?.data?.message ||
+						__( 'Test failed', 'rest-api-firewall' )
+				);
 			}
 		} catch ( err ) {
-			setError( err.message || __( 'Network error', 'rest-api-firewall' ) );
+			setError(
+				err.message || __( 'Network error', 'rest-api-firewall' )
+			);
 		} finally {
 			setLoading( false );
 		}
@@ -128,7 +134,10 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 				sx={ { py: 0.5 } }
 			>
 				{ getTestIcon( test ) }
-				<Typography variant="body2" sx={ { fontWeight: 500, minWidth: 100 } }>
+				<Typography
+					variant="body2"
+					sx={ { fontWeight: 500, minWidth: 100 } }
+				>
 					{ getTestLabel( testName ) }
 				</Typography>
 				<Typography variant="body2" color="text.secondary">
@@ -140,15 +149,28 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 
 	const renderPolicyInfo = ( policy ) => {
 		return (
-			<Stack direction="row" spacing={ 1 } flexWrap="wrap" sx={ { mb: 1 } }>
+			<Stack
+				direction="row"
+				spacing={ 1 }
+				flexWrap="wrap"
+				sx={ { mb: 1 } }
+			>
 				<Chip
-					label={ policy.state ? __( 'Enabled', 'rest-api-firewall' ) : __( 'Disabled', 'rest-api-firewall' ) }
+					label={
+						policy.state
+							? __( 'Enabled', 'rest-api-firewall' )
+							: __( 'Disabled', 'rest-api-firewall' )
+					}
 					size="small"
 					color={ policy.state ? 'success' : 'error' }
 					variant="outlined"
 				/>
 				<Chip
-					label={ policy.protect ? __( 'Protected', 'rest-api-firewall' ) : __( 'Public', 'rest-api-firewall' ) }
+					label={
+						policy.protect
+							? __( 'Protected', 'rest-api-firewall' )
+							: __( 'Public', 'rest-api-firewall' )
+					}
 					size="small"
 					color={ policy.protect ? 'warning' : 'default' }
 					variant="outlined"
@@ -173,13 +195,21 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 		return (
 			<Stack spacing={ 1 } sx={ { mt: 2 } }>
 				<Typography variant="subtitle2" fontWeight={ 600 }>
-					{ __( 'Results', 'rest-api-firewall' ) } ({ results.length })
+					{ __( 'Results', 'rest-api-firewall' ) } ({ results.length }
+					)
 				</Typography>
 
 				{ results.map( ( result, index ) => (
-					<Accordion key={ index } defaultExpanded={ results.length === 1 }>
+					<Accordion
+						key={ index }
+						defaultExpanded={ results.length === 1 }
+					>
 						<AccordionSummary expandIcon={ <ExpandMoreIcon /> }>
-							<Stack direction="row" spacing={ 1 } alignItems="center">
+							<Stack
+								direction="row"
+								spacing={ 1 }
+								alignItems="center"
+							>
 								<Chip
 									label={ result.method }
 									size="small"
@@ -193,25 +223,36 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 											: 'default'
 									}
 								/>
-								<Typography variant="body2" sx={ { fontFamily: 'monospace' } }>
+								<Typography
+									variant="body2"
+									sx={ { fontFamily: 'monospace' } }
+								>
 									{ result.route }
 								</Typography>
 							</Stack>
 						</AccordionSummary>
 						<AccordionDetails>
-							<Typography variant="caption" color="text.secondary" sx={ { mb: 1 } }>
+							<Typography
+								variant="caption"
+								color="text.secondary"
+								sx={ { mb: 1 } }
+							>
 								{ __( 'Policy:', 'rest-api-firewall' ) }
 							</Typography>
 							{ renderPolicyInfo( result.policy ) }
 
 							<Divider sx={ { my: 1 } } />
 
-							<Typography variant="caption" color="text.secondary">
+							<Typography
+								variant="caption"
+								color="text.secondary"
+							>
 								{ __( 'Tests:', 'rest-api-firewall' ) }
 							</Typography>
 							<Box sx={ { mt: 0.5 } }>
-								{ Object.entries( result.tests ).map( ( [ testName, test ] ) =>
-									renderTestResult( testName, test )
+								{ Object.entries( result.tests ).map(
+									( [ testName, test ] ) =>
+										renderTestResult( testName, test )
 								) }
 							</Box>
 						</AccordionDetails>
@@ -247,10 +288,17 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 				<DialogContent>
 					<Stack spacing={ 2 }>
 						<Box>
-							<Typography variant="subtitle2" color="text.secondary">
+							<Typography
+								variant="subtitle2"
+								color="text.secondary"
+							>
 								{ __( 'Route', 'rest-api-firewall' ) }
 							</Typography>
-							<Stack direction="row" spacing={ 1 } alignItems="center">
+							<Stack
+								direction="row"
+								spacing={ 1 }
+								alignItems="center"
+							>
 								<Chip
 									label={ method }
 									size="small"
@@ -264,7 +312,10 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 											: 'default'
 									}
 								/>
-								<Typography variant="body1" sx={ { fontFamily: 'monospace' } }>
+								<Typography
+									variant="body1"
+									sx={ { fontFamily: 'monospace' } }
+								>
 									{ route }
 								</Typography>
 							</Stack>
@@ -282,12 +333,19 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 									<FormControlLabel
 										control={
 											<Checkbox
-												checked={ options.test_sub_routes }
-												onChange={ handleOptionChange( 'test_sub_routes' ) }
+												checked={
+													options.test_sub_routes
+												}
+												onChange={ handleOptionChange(
+													'test_sub_routes'
+												) }
 												size="small"
 											/>
 										}
-										label={ __( 'Include sub-routes', 'rest-api-firewall' ) }
+										label={ __(
+											'Include sub-routes',
+											'rest-api-firewall'
+										) }
 									/>
 								) }
 
@@ -295,40 +353,53 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 									control={
 										<Checkbox
 											checked={ options.use_auth }
-											onChange={ handleOptionChange( 'use_auth' ) }
+											onChange={ handleOptionChange(
+												'use_auth'
+											) }
 											size="small"
 										/>
 									}
-									label={ __( 'Test authentication', 'rest-api-firewall' ) }
+									label={ __(
+										'Test authentication',
+										'rest-api-firewall'
+									) }
 								/>
 
 								<FormControlLabel
 									control={
 										<Checkbox
 											checked={ options.use_rate_limit }
-											onChange={ handleOptionChange( 'use_rate_limit' ) }
+											onChange={ handleOptionChange(
+												'use_rate_limit'
+											) }
 											size="small"
 										/>
 									}
-									label={ __( 'Test rate limiting', 'rest-api-firewall' ) }
+									label={ __(
+										'Test rate limiting',
+										'rest-api-firewall'
+									) }
 								/>
 
 								<FormControlLabel
 									control={
 										<Checkbox
 											checked={ options.use_disabled }
-											onChange={ handleOptionChange( 'use_disabled' ) }
+											onChange={ handleOptionChange(
+												'use_disabled'
+											) }
 											size="small"
 										/>
 									}
-									label={ __( 'Test disabled state', 'rest-api-firewall' ) }
+									label={ __(
+										'Test disabled state',
+										'rest-api-firewall'
+									) }
 								/>
 							</Stack>
 						</Box>
 
-						{ error && (
-							<Alert severity="error">{ error }</Alert>
-						) }
+						{ error && <Alert severity="error">{ error }</Alert> }
 
 						{ renderResults() }
 					</Stack>
@@ -342,9 +413,17 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 						variant="contained"
 						onClick={ runTest }
 						disabled={ loading }
-						startIcon={ loading ? <CircularProgress size={ 16 } /> : <PlayArrowIcon /> }
+						startIcon={
+							loading ? (
+								<CircularProgress size={ 16 } />
+							) : (
+								<PlayArrowIcon />
+							)
+						}
 					>
-						{ loading ? __( 'Running...', 'rest-api-firewall' ) : __( 'Run Test', 'rest-api-firewall' ) }
+						{ loading
+							? __( 'Running…', 'rest-api-firewall' )
+							: __( 'Run Test', 'rest-api-firewall' ) }
 					</Button>
 				</DialogActions>
 			</Dialog>
