@@ -102,6 +102,18 @@ export default function IpBlackList() {
 		.sort( ( a, b ) => b[ 1 ] - a[ 1 ] )
 		.slice( 0, 10 );
 
+	const countryStats = activeList.reduce( ( acc, entry ) => {
+		const country = entry?.geoIp?.countryName || null;
+		if ( country ) {
+			acc[ country ] = ( acc[ country ] || 0 ) + 1;
+		}
+		return acc;
+	}, {} );
+
+	const topCountries = Object.entries( countryStats )
+		.sort( ( a, b ) => b[ 1 ] - a[ 1 ] )
+		.slice( 0, 10 );
+
 	const loadSettings = useCallback( async () => {
 		setLoading( true );
 		try {
@@ -240,6 +252,11 @@ export default function IpBlackList() {
 			setIpError(
 				__( 'CIDR ranges require Pro license', 'rest-api-firewall' )
 			);
+			return;
+		}
+
+		if ( isValidCidr( trimmed ) && ! hasValidLicense ) {
+			setIpError( __( 'CIDR ranges require Pro license', 'rest-api-firewall' ) );
 			return;
 		}
 
