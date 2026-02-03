@@ -81,7 +81,7 @@ class Documentation {
 		$environment->addExtension( new StrikethroughExtension() );
 		$environment->addExtension( new HeadingPermalinkExtension() );
 
-		$converter = new MarkdownConverter( $environment );
+		$converter  = new MarkdownConverter( $environment );
 		$pages_html = array();
 		foreach ( $pages as $page ) {
 

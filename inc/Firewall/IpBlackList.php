@@ -11,7 +11,7 @@ class IpBlackList {
 
 	protected static $instance = null;
 
-	private const OPTION_KEY = 'rest_firewall_ip_filter';
+	private const OPTION_KEY                = 'rest_firewall_ip_filter';
 	private const AUTO_BLACKLIST_KEY_PREFIX = 'rest_firewall_auto_blacklist_';
 
 	private static ?array $cache = null;
@@ -55,7 +55,7 @@ class IpBlackList {
 				'type'              => 'integer',
 				'required'          => false,
 				'sanitize_callback' => 'absint',
-				'default'           => null, // Will use time() if null.
+				'default'           => null, // Will use time if null.
 			),
 			'agent'        => array(
 				'type'              => 'string',
@@ -126,21 +126,18 @@ class IpBlackList {
 				} else {
 					$sanitized[ $key ] = $field_config['default'];
 				}
-			} else {
-				// Handle scalar values.
-				if ( null === $value ) {
+			} elseif ( null === $value ) {
 					$default = $field_config['default'];
-					if ( 'blocked_time' === $key && null === $default ) {
-						$default = time();
-					}
+				if ( 'blocked_time' === $key && null === $default ) {
+					$default = time();
+				}
 					$sanitized[ $key ] = $default;
-				} else {
-					$callback = $field_config['sanitize_callback'];
-					$sanitized[ $key ] = is_callable( $callback ) ? call_user_func( $callback, $value ) : $value;
+			} else {
+				$callback          = $field_config['sanitize_callback'];
+				$sanitized[ $key ] = is_callable( $callback ) ? call_user_func( $callback, $value ) : $value;
 
-					if ( isset( $field_config['allowed_values'] ) && ! in_array( $sanitized[ $key ], $field_config['allowed_values'], true ) ) {
-						$sanitized[ $key ] = $field_config['default'];
-					}
+				if ( isset( $field_config['allowed_values'] ) && ! in_array( $sanitized[ $key ], $field_config['allowed_values'], true ) ) {
+					$sanitized[ $key ] = $field_config['default'];
 				}
 			}
 		}

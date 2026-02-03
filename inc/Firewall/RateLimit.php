@@ -63,7 +63,7 @@ class RateLimit {
 	public static function record_violation( string $client_id, int $blacklist_time ): int {
 		$key   = self::VIOLATION_KEY_PREFIX . md5( $client_id );
 		$count = (int) get_transient( $key );
-		$count++;
+		++$count;
 		set_transient( $key, $count, $blacklist_time );
 		return $count;
 	}

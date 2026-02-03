@@ -159,7 +159,7 @@ class CoreOptions {
 				'context'           => array( 'free', 'pro' ),
 			),
 
-			'theme_disable_xmlrpc'  => array(
+			'theme_disable_xmlrpc'                       => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -167,7 +167,7 @@ class CoreOptions {
 				'context'           => array( 'free', 'pro' ),
 			),
 
-			'theme_disable_filedit'  => array(
+			'theme_disable_filedit'                      => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -191,7 +191,7 @@ class CoreOptions {
 				'context'           => array( 'free', 'pro' ),
 			),
 
-			'theme_disable_pingbacks' => array(
+			'theme_disable_pingbacks'                    => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -207,7 +207,7 @@ class CoreOptions {
 				'context'           => array( 'free', 'pro' ),
 			),
 
-			'theme_remove_emoji_scripts'        => array(
+			'theme_remove_emoji_scripts'                 => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
