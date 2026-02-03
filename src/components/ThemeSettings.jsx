@@ -302,17 +302,23 @@ export default function ThemeSettings( {
 							control={
 								<Switch
 									size="small"
-									checked={
-										!! form.theme_disable_pingbacks
-									}
+									checked={ !! form.theme_disable_pingbacks }
 									name="theme_disable_pingbacks"
 									onChange={ setField }
-									disabled={disabled}
+									disabled={ disabled }
 								/>
 							}
-							label={ __( 'Disable Pingbacks', 'rest-api-firewall' ) }
+							label={ __(
+								'Disable Pingbacks',
+								'rest-api-firewall'
+							) }
 						/>
-						<FormHelperText>{ __( 'Deactivate pingbacks site wide', 'rest-api-firewall' ) }</FormHelperText>
+						<FormHelperText>
+							{ __(
+								'Deactivate pingbacks site wide',
+								'rest-api-firewall'
+							) }
+						</FormHelperText>
 					</FormControl>
 				</Stack>
 

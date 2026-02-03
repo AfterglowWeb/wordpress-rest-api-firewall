@@ -256,7 +256,9 @@ export default function IpBlackList() {
 		}
 
 		if ( isValidCidr( trimmed ) && ! hasValidLicense ) {
-			setIpError( __( 'CIDR ranges require Pro license', 'rest-api-firewall' ) );
+			setIpError(
+				__( 'CIDR ranges require Pro license', 'rest-api-firewall' )
+			);
 			return;
 		}
 
