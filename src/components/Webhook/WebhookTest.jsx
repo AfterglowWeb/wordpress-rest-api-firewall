@@ -15,13 +15,8 @@ import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CircularProgress from '@mui/material/CircularProgress';
 import Chip from '@mui/material/Chip';
-import Skeleton from '@mui/material/Skeleton';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-
+import CopyButton from '../CopyButton';
 
 export default function WebhookTest( { hasSecret } ) {
 	const { adminData } = useAdminData();
@@ -67,8 +62,6 @@ export default function WebhookTest( { hasSecret } ) {
 		}
 	};
 
-	console.log(testResult);
-
 	return (
 		<Stack spacing={ 2 } flex={1} width={'100%'} maxWidth={500}>
 			<Typography
@@ -86,7 +79,7 @@ export default function WebhookTest( { hasSecret } ) {
 			</FormHelperText>
 
 			<Stack
-				direction="row"
+				direction={{ xs:'column', sm:'row' }}
 				spacing={ 2 }
 				alignItems="flex-start"
 				sx={ { mb: 2 } }
@@ -336,11 +329,9 @@ export default function WebhookTest( { hasSecret } ) {
 					</CardContent>
 				</Card>
 			) : (
-				<Skeleton
-					animation={ false }
-					variant="rounded"
+				<Card variant="outlined"
 					height={ 300 }
-					sx={{ maxWidth: '100%' }}
+					sx={{ mt: 2, maxWidth: '100%' }}
 				/>
 			) }
 
@@ -355,23 +346,4 @@ export default function WebhookTest( { hasSecret } ) {
 			</Alert>
 		</Stack>
 	);
-}
-
-function CopyButton( toCopy ) {
-
-	const handleCopy = ( e ) => {
-		e.stopPropagation();
-		navigator.clipboard.writeText( toCopy || '' );
-	};
-
-	return (
-	<Tooltip title="Copy">
-		<IconButton
-			size="small"
-			onClick={ handleCopy }
-			sx={ { p: 0.25 } }
-		>
-			<ContentCopyIcon sx={ { fontSize: 14 } } />
-		</IconButton>
-	</Tooltip>);
 }

@@ -5,6 +5,7 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
+import Box from '@mui/material/Box';
 import InputAdornment from '@mui/material/InputAdornment';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
@@ -22,6 +23,8 @@ import Snackbar from '@mui/material/Snackbar';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 export default function WebhookAuth( { hasSecret, setHasSecret, form, setField } ) {
     const { adminData } = useAdminData();
@@ -34,6 +37,7 @@ export default function WebhookAuth( { hasSecret, setHasSecret, form, setField }
 
     const [ useCustomSecret, setUseCustomSecret ] = useState( false );
     const [ customSecret, setCustomSecret ] = useState( '' );
+    const [ showSecretGuide, setShowSecretGuide ] = useState( false );
 
     const [ snackbarOpen, setSnackbarOpen ] = useState( false );
     const [ snackbarSeverity, setSnackbarSeverity ] = useState( '' );
@@ -168,7 +172,7 @@ export default function WebhookAuth( { hasSecret, setHasSecret, form, setField }
                         'application/x-www-form-urlencoded; charset=UTF-8',
                 },
                 body: new URLSearchParams( {
-                    action: 'save_application_webhook_custom_secret',
+                    action: 'update_application_webhook_custom_secret',
                     nonce: adminData.nonce,
                     custom_secret: customSecret,
                 } ),
@@ -320,6 +324,7 @@ return(<>
                         ) }
                         fullWidth
                     />
+                    
                     <Stack
                         direction="row"
                         spacing={ 2 }
@@ -388,7 +393,7 @@ return(<>
                     }
                     disabled={ useCustomSecret }
                 >
-                    { __( 'Regenerate', 'rest-api-firewall' ) }
+                    { hasSecret ? __( 'Regenerate', 'rest-api-firewall' ) : __( 'Generate', 'rest-api-firewall' ) }
                 </Button>
 
                 <FormControlLabel
@@ -407,6 +412,64 @@ return(<>
                     ) }
                 />
             </Stack>
+
+            <Stack
+                direction="row"
+                spacing={ 1 }
+                alignItems="center"
+                justifyContent="flex-start"
+                onClick={ () =>
+                    setShowSecretGuide( ! showSecretGuide )
+                }
+                sx={ { px:1, cursor: 'pointer', userSelect: 'none' } }
+            >
+                <Typography 
+                variant="body1" 
+                color="primary" 
+                sx={ { flex: 1 } }>
+                    { __(
+                        'How to validate the secret in my application?',
+                        'rest-api-firewall'
+                    ) }
+                </Typography>
+                <ExpandMoreIcon />
+            </Stack>
+            <Collapse in={ showSecretGuide } timeout="auto">
+                <Stack spacing={ 1.5 } sx={ { p: 2, bgcolor: 'grey.50', borderRadius: 1 } }>
+                    <Typography variant="body2">
+                        { __(
+                            'The secret is used to sign webhook requests using HMAC-SHA256. Your application must validate the',
+                            'rest-api-firewall'
+                        ) }
+                        { ' ' }
+                        <code>X-Webhook-Signature</code>
+                        { ' ' }
+                        { __( 'header by computing:', 'rest-api-firewall' ) }
+                    </Typography>
+                    <Box
+                        component="pre"
+                        sx={ {
+                            p: 1.5,
+                            bgcolor: '#f5f5f5',
+                            borderRadius: 1,
+                            border: '1px solid #e0e0e0',
+                            fontSize: '0.85rem',
+                            overflow: 'auto',
+                            fontFamily: 'monospace',
+                        } }
+                    >
+                        { 'hash_hmac("sha256", payload + timestamp, secret)' }
+                    </Box>
+                    <Typography variant="body2">
+                        { __( 'The timestamp is sent in the', 'rest-api-firewall' ) }
+                        { ' ' }
+                        <code>X-Webhook-Timestamp</code>
+                        { ' ' }
+                        { __( 'header.', 'rest-api-firewall' ) }
+                    </Typography>
+                </Stack>
+            </Collapse>
+
         </Stack>
     </Stack>
 
@@ -443,7 +506,7 @@ return(<>
         open={ snackbarOpen }
         autoHideDuration={ 5000 }
         onClose={ () => setSnackbarOpen( false ) }
-        anchorOrigin={ { vertical: 'bottom', horizontal: 'right' } }
+        anchorOrigin={ { vertical: 'center', horizontal: 'center' } }
     >
         <Alert
             onClose={ () => setSnackbarOpen( false ) }
