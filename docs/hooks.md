@@ -186,4 +186,4 @@ WIP:
 ## `rest_api_firewall_%admin_option_key%`
 ## `rest_api_firewall_pro_multisite_enabled`
 ## `rest_firewall_model_api_posts_per_page`
-## `rest_firewall_application_webhook_body_payload`
+## `rest_api_firewall_webhook_payload`

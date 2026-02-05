@@ -234,11 +234,11 @@ class DeployTheme {
 			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'rest-api-firewall' ) ), 403 );
 		}
 
-		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
 		$action = isset( $_POST['theme_action'] ) ? sanitize_key( wp_unslash( $_POST['theme_action'] ) ) : '';
 
 		switch ( $action ) {

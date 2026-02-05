@@ -23,7 +23,7 @@ class CoreOptionsService {
 	}
 
 	public function ajax_read_options() {
-		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
@@ -32,13 +32,13 @@ class CoreOptionsService {
 	}
 
 	public function ajax_update_options() {
-		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
 		if ( isset( $_POST['action'] ) && 'rest_api_firewall_update_options' === $_POST['action'] && isset( $_POST['options'] ) ) {
 
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
 			$options = json_decode( sanitize_text_field( wp_unslash( $_POST['options'] ) ), true );
 			if ( ! is_array( $options ) ) {
 				wp_send_json_error( array( 'error' => esc_html__( 'Invalid options data', 'rest-api-firewall' ) ), 400 );
@@ -59,14 +59,14 @@ class CoreOptionsService {
 	}
 
 	public function ajax_update_option() {
-		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
 		if ( isset( $_POST['action'] ) && 'rest_api_firewall_update_option' === $_POST['action'] && isset( $_POST['option'] ) ) {
 
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
 			$option = json_decode( sanitize_text_field( wp_unslash( $_POST['option'] ) ), true );
 			if ( ! is_array( $option ) ) {
 				wp_send_json_error( array( 'error' => esc_html__( 'Invalid option data', 'rest-api-firewall' ) ), 422 );

@@ -392,7 +392,7 @@ class IpBlackList {
 	}
 
 	public function ajax_get_ip_filter(): void {
-		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
@@ -410,13 +410,13 @@ class IpBlackList {
 	}
 
 	public function ajax_save_ip_filter(): void {
-		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
 		$options = array();
 
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
 		if ( isset( $_POST['enabled'] ) ) {
 			$options['enabled'] = rest_sanitize_boolean( wp_unslash( $_POST['enabled'] ) );
 		}

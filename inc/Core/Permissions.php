@@ -6,13 +6,13 @@ use WP_User;
 
 class Permissions {
 
-	public static function ajax_has_firewall_update_caps(): bool {
+	public static function ajax_validate_has_firewall_admin_caps(): bool {
 		return check_ajax_referer( 'rest_api_firewall_update_options_nonce', 'nonce' )
 			&& is_user_logged_in()
 			&& current_user_can( 'rest_api_firewall_edit_options' );
 	}
 
-	public static function validate_ajax_crud_webhook(): bool {
+	public static function ajax_validate_has_webhook_caps(): bool {
 		return check_ajax_referer( 'rest_api_firewall_webhook_nonce', 'nonce' )
 			&& is_user_logged_in()
 			&& self::has_webhook_capabilities();

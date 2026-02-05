@@ -99,7 +99,7 @@ class FirewallOptions {
 	}
 
 	public function ajax_get_firewall_options(): void {
-		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
 			wp_send_json_error( array( 'message' => esc_html__( 'Unauthorized', 'rest-api-firewall' ) ), 403 );
 		}
 
@@ -107,16 +107,16 @@ class FirewallOptions {
 	}
 
 	public function ajax_save_firewall_options(): void {
-		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
 			wp_send_json_error( array( 'message' => esc_html__( 'Unauthorized', 'rest-api-firewall' ) ), 403 );
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
 		if ( ! isset( $_POST['data'] ) ) {
 			wp_send_json_error( array( 'message' => esc_html__( 'No data provided', 'rest-api-firewall' ) ), 400 );
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
 		$options = Utils::json_decode( sanitize_text_field( wp_unslash( $_POST['data'] ) ) );
 		if ( ! is_array( $options ) ) {
 			wp_send_json_error( array( 'error' => esc_html__( 'Invalid options data', 'rest-api-firewall' ) ), 400 );
