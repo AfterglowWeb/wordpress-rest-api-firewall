@@ -174,6 +174,7 @@ class WebhookService {
 				'response_body' => $response_body,
 				'headers_sent'  => $headers_sent,
 				'duration'      => $duration,
+				'endpoint'      => $endpoint
 			)
 		);
 	}
