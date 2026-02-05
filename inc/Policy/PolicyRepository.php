@@ -36,7 +36,7 @@ class PolicyRepository {
 	}
 
 	public function ajax_get_routes_policy_tree(): void {
-		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
@@ -51,11 +51,11 @@ class PolicyRepository {
 	}
 
 	public function ajax_save_routes_policy_tree(): void {
-		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
 		if ( ! isset( $_POST['tree'] ) ) {
 			wp_send_json_error(
 				array(
@@ -65,7 +65,7 @@ class PolicyRepository {
 			);
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
 		$tree = json_decode( sanitize_text_field( wp_unslash( $_POST['tree'] ) ), true );
 
 		if ( ! is_array( $tree ) ) {

@@ -16,7 +16,7 @@ import RoutesTree from './RoutesTree';
 import IpBlackList from './IpBlackList';
 import ProBadge from '../ProBadge';
 import RateLimit from './RateLimit';
-import RestApiUser from './RestApUser';
+import RestApiUser from './RestApiUser';
 import Card from '@mui/material/Card';
 
 const defaultFirewallOptions = {

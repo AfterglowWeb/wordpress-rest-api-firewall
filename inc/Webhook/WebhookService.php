@@ -29,7 +29,7 @@ class WebhookService {
 
 	public function ajax_trigger_application_webhook(): void {
 
-		if ( false === Permissions::validate_ajax_crud_webhook() ) {
+		if ( false === Permissions::ajax_validate_has_webhook_caps() ) {
 			wp_send_json_error(
 				array(
 					'message' => esc_html__( 'Unauthorized', 'rest-api-firewall' ),
@@ -73,7 +73,7 @@ class WebhookService {
 
 	public function ajax_test_webhook_event(): void {
 
-		if ( false === Permissions::validate_ajax_crud_webhook() ) {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
 			wp_send_json_error(
 				array(
 					'message' => esc_html__( 'Unauthorized', 'rest-api-firewall' ),
@@ -82,7 +82,7 @@ class WebhookService {
 			);
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::validate_ajax_crud_webhook()
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_webhook_caps()
 		$event_key = isset( $_POST['event_key'] ) ? sanitize_key( wp_unslash( $_POST['event_key'] ) ) : '';
 
 		if ( empty( $event_key ) ) {
@@ -128,22 +128,29 @@ class WebhookService {
 
 		$response = WebhookClient::post(
 			$webhook_endpoint,
-			$payload
+			$payload,
+			true,
 		);
 
 		$duration = round( ( microtime( true ) - $start_time ) * 1000 );
+		$headers_sent = $response['headers_sent'];
 
-		if ( is_wp_error( $response ) ) {
+		if ( is_wp_error( $response['result'] ) ) {
 			/**
 			 * Typecast to avoid error
 			 *
 			 * @var \WP_Error $response
 			 * */
-			wp_send_json_error(
+
+			wp_send_json_success(
 				array(
-					'message'  => $response->get_error_message(),
-					'payload'  => $payload,
-					'duration' => $duration,
+					'type'          => 'error',
+					'payload'       => $payload,
+					'response_code' => 403,
+					'response_body' => $response['result']->get_error_message(),
+					'duration'      => $duration,
+					'headers_sent'  => $headers_sent,
+
 				)
 			);
 			return;
@@ -154,14 +161,17 @@ class WebhookService {
 		 *
 		 * @var array $response
 		 * */
-		$response_code = wp_remote_retrieve_response_code( $response );
-		$response_body = wp_remote_retrieve_body( $response );
+		$response_code = wp_remote_retrieve_response_code( $response['result']);
+		$response_body = wp_remote_retrieve_body( $response['result'] );
+		$is_remote_error =  empty( $response_code ) || $response_code >= 400;
 
 		wp_send_json_success(
 			array(
+				'type'          => $is_remote_error ? 'error' : 'success',
 				'payload'       => $payload,
 				'response_code' => $response_code,
 				'response_body' => $response_body,
+				'headers_sent'  => $headers_sent,
 				'duration'      => $duration,
 			)
 		);
@@ -169,7 +179,7 @@ class WebhookService {
 
 	public function ajax_has_application_webhook_secret(): void {
 
-		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
@@ -185,7 +195,7 @@ class WebhookService {
 
 	public function ajax_update_application_webhook_secret(): void {
 
-		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
@@ -206,7 +216,7 @@ class WebhookService {
 
 	public function ajax_delete_application_webhook_secret(): void {
 
-		if ( false === Permissions::ajax_has_firewall_update_caps() ) {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 

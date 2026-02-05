@@ -7,7 +7,7 @@ use WP_Error;
 
 final class WebhookClient {
 
-	public static function post( string $route, array $payload ): array {
+	public static function post( string $route, array $payload, $is_test = false ) {
 
 		$options = CoreOptions::read_options();
 		$host    = rtrim( $options['application_host'], '/' );
@@ -15,7 +15,10 @@ final class WebhookClient {
 		$secret  = get_option( 'rest_api_firewall_application_webhook_secret' );
 
 		if ( ! $host || ! $secret ) {
-			return new WP_Error( 'config', 'Webhook not configured' );
+			return new WP_Error( 
+			'config', 
+			__('Webhook not configured', 'rest-api-firewall'), 
+			);
 		}
 
 		$timestamp = time();
@@ -27,8 +30,10 @@ final class WebhookClient {
 			$secret
 		);
 
-		return wp_remote_post(
-			$host . '/' . $route,
+		$endpoint = $host . '/' . $route;
+
+		$result = wp_remote_post(
+			$endpoint,
 			array(
 				'timeout' => 10,
 				'headers' => array(
@@ -40,6 +45,21 @@ final class WebhookClient {
 				'body'    => $body,
 			)
 		);
+
+		if(true === $is_test)  {
+			return [
+				'bli' => $result,
+				'headers_sent' => array(
+					'Content-Type'        => 'application/json',
+					'X-Webhook-Signature' => 'xxx-xxx-xxx-xxx',
+					'X-Webhook-Timestamp' => $timestamp,
+					'X-Webhook-Source'    => 'wordpress',
+				),
+			];
+		}
+
+		return $result;
+
 	}
 
 
