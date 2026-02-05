@@ -23,6 +23,7 @@ class WebhookService {
 		add_action( 'wp_ajax_test_webhook_event', array( $this, 'ajax_test_webhook_event' ) );
 		add_action( 'wp_ajax_has_application_webhook_secret', array( $this, 'ajax_has_application_webhook_secret' ) );
 		add_action( 'wp_ajax_update_application_webhook_secret', array( $this, 'ajax_update_application_webhook_secret' ) );
+		add_action( 'wp_ajax_update_application_webhook_custom_secret', array( $this, 'ajax_update_application_webhook_custom_secret' ) );
 		add_action( 'wp_ajax_delete_application_webhook_secret', array( $this, 'ajax_delete_application_webhook_secret' ) );
 		add_action( 'admin_bar_menu', array( $this, 'add_admin_bar_button' ), 100 );
 	}
@@ -174,6 +175,7 @@ class WebhookService {
 				'response_body' => $response_body,
 				'headers_sent'  => $headers_sent,
 				'duration'      => $duration,
+				'endpoint'      => $endpoint
 			)
 		);
 	}
@@ -181,7 +183,7 @@ class WebhookService {
 	public function ajax_has_application_webhook_secret(): void {
 
 		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
-			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
+			wp_send_json_error( array( 'message' => esc_html__('Unauthorized', 'rest-api-firewall') ), 403 );
 		}
 
 		$has_secret = (bool) get_option( 'rest_api_firewall_application_webhook_secret' );
@@ -197,28 +199,84 @@ class WebhookService {
 	public function ajax_update_application_webhook_secret(): void {
 
 		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
-			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
+			wp_send_json_error( array( 'message' => esc_html__('Unauthorized', 'rest-api-firewall') ), 403 );
 		}
 
 		$secret = wp_generate_password( 64, true );
-		update_option( 'rest_api_firewall_application_webhook_secret', $secret );
+		$result = update_option( 'rest_api_firewall_application_webhook_secret', $secret );
 
-		wp_send_json_success(
-			array(
-				'secret'  => $secret,
-				'message' => esc_html__(
-					'Copy this secret now. You will not be able to view it again.',
-					'rest-api-firewall'
+		if( true === $result) {
+			wp_send_json_success(
+				array(
+					'secret'  => $secret,
+					'message' => esc_html__(
+						'Copy this secret now. You will not be able to view it again.',
+						'rest-api-firewall'
+					),
 				),
-			),
-			200
-		);
+				200
+			);
+		}
+
+		wp_send_json_error(
+				array(
+					'message' => esc_html__( 'An error occured while generating the secret.', 'rest-api-firewall' ),
+				),
+				500
+			);
+	}
+
+	public function ajax_update_application_webhook_custom_secret(): void {
+
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
+			wp_send_json_error( array( 'message' => esc_html__('Unauthorized', 'rest-api-firewall') ), 403 );
+		}
+
+		if( ! isset( $_POST['custom_secret'] ) ) {
+				wp_send_json_error(
+					array(
+						'message' => esc_html__( 'Missing data.', 'rest-api-firewall' ),
+					),
+					422
+				);
+		}
+
+		$secret = sanitize_text_field( wp_unslash( $_POST['custom_secret'] ));
+		if( empty ($secret)) {
+			wp_send_json_error(
+				array(
+					'message' => esc_html__( 'Missing value.', 'rest-api-firewall' ),
+				),
+				422
+			);
+		}
+
+		$result = update_option( 'rest_api_firewall_application_webhook_secret', $secret );
+
+		if( true === $result) {
+			wp_send_json_success(
+				array(
+					'message' => esc_html__(
+						'Your secret has been saved. You will not be able to view it again.',
+						'rest-api-firewall'
+					),
+				),
+				200
+			);
+		}
+
+		wp_send_json_error(
+				array(
+					'message' => esc_html__( 'An error occured while saving.', 'rest-api-firewall' ),
+				),
+				500
+			);
 	}
 
 	public function ajax_delete_application_webhook_secret(): void {
 
 		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
-			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
+			wp_send_json_error( array( 'message' => esc_html__('Unauthorized', 'rest-api-firewall') ), 403 );
 		}
 
 		$webhook = get_option( 'rest_api_firewall_application_webhook_secret' );

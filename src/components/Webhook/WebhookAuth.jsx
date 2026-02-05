@@ -5,9 +5,13 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
+import Box from '@mui/material/Box';
 import InputAdornment from '@mui/material/InputAdornment';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
+import Collapse from '@mui/material/Collapse';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
 
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -19,6 +23,8 @@ import Snackbar from '@mui/material/Snackbar';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 export default function WebhookAuth( { hasSecret, setHasSecret, form, setField } ) {
     const { adminData } = useAdminData();
@@ -28,6 +34,10 @@ export default function WebhookAuth( { hasSecret, setHasSecret, form, setField }
     const [ webhookSecret, setWebhookSecret ] = useState( null );
     const isRevealed = webhookSecret !== null;
     const isLoading = hasSecret === null;
+
+    const [ useCustomSecret, setUseCustomSecret ] = useState( false );
+    const [ customSecret, setCustomSecret ] = useState( '' );
+    const [ showSecretGuide, setShowSecretGuide ] = useState( false );
 
     const [ snackbarOpen, setSnackbarOpen ] = useState( false );
     const [ snackbarSeverity, setSnackbarSeverity ] = useState( '' );
@@ -144,6 +154,64 @@ export default function WebhookAuth( { hasSecret, setHasSecret, form, setField }
         setConfirmAction( null );
     };
 
+    const saveCustomSecret = async () => {
+        if ( ! customSecret || customSecret.length === 0 ) {
+            setSnackbarOpen( true );
+            setSnackbarSeverity( 'error' );
+            setSnackbarContent(
+                __( 'Please provide a custom secret.', 'rest-api-firewall' )
+            );
+            return;
+        }
+
+        try {
+            const response = await fetch( adminData.ajaxurl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type':
+                        'application/x-www-form-urlencoded; charset=UTF-8',
+                },
+                body: new URLSearchParams( {
+                    action: 'update_application_webhook_custom_secret',
+                    nonce: adminData.nonce,
+                    custom_secret: customSecret,
+                } ),
+            } );
+
+            const result = await response.json();
+
+            if ( result?.success ) {
+                setWebhookSecret( customSecret );
+                setHasSecret( true );
+                setUseCustomSecret( false );
+                setCustomSecret( '' );
+
+                setSnackbarOpen( true );
+                setSnackbarSeverity( 'success' );
+                setSnackbarContent(
+                    __(
+                        'Custom webhook secret saved successfully.',
+                        'rest-api-firewall'
+                    )
+                );
+            } else {
+                setSnackbarOpen( true );
+                setSnackbarSeverity( 'error' );
+                setSnackbarContent(
+                    result?.data?.message ||
+                        __(
+                            'Failed to save custom secret.',
+                            'rest-api-firewall'
+                        )
+                );
+            }
+        } catch ( error ) {
+            setSnackbarOpen( true );
+            setSnackbarSeverity( 'error' );
+            setSnackbarContent( error.message );
+        }
+    };
+
 
 return(<>
     <Stack spacing={ 3 } flex={1} width={'100%'} maxWidth={500}>
@@ -234,7 +302,58 @@ return(<>
                             )
                 }
                 fullWidth
+                sx={ { display: useCustomSecret ? 'none' : 'block' } }
             />
+
+            <Collapse in={ useCustomSecret } timeout="auto" unmountOnExit>
+                <Stack spacing={ 2 }>
+                    <TextField
+                        label={ __(
+                            'Custom Webhook Secret',
+                            'rest-api-firewall'
+                        ) }
+                        name="application_webhook_custom_secret"
+                        type="password"
+                        value={ customSecret }
+                        onChange={ ( e ) =>
+                            setCustomSecret( e.target.value )
+                        }
+                        helperText={ __(
+                            'Provide your own secret for webhook requests.',
+                            'rest-api-firewall'
+                        ) }
+                        fullWidth
+                    />
+                    
+                    <Stack
+                        direction="row"
+                        spacing={ 2 }
+                        alignItems="center"
+                    >
+                        <Button
+                            size="small"
+                            variant="contained"
+                            disableElevation
+                            onClick={ saveCustomSecret }
+                        >
+                            { __(
+                                'Save Custom Secret',
+                                'rest-api-firewall'
+                            ) }
+                        </Button>
+                        <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={ () => {
+                                setUseCustomSecret( false );
+                                setCustomSecret( '' );
+                            } }
+                        >
+                            { __( 'Cancel', 'rest-api-firewall' ) }
+                        </Button>
+                    </Stack>
+                </Stack>
+            </Collapse>
 
             { isRevealed && (
                 <Alert severity="info">
@@ -248,7 +367,8 @@ return(<>
             <Stack
                 direction="row"
                 spacing={ 2 }
-                alignItems="flex-start"
+                alignItems="center"
+                flexWrap="wrap"
             >
                 <Button
                     variant="outlined"
@@ -271,10 +391,85 @@ return(<>
                     onClick={ () =>
                         setConfirmAction( 'regenerate' )
                     }
+                    disabled={ useCustomSecret }
                 >
-                    { __( 'Regenerate', 'rest-api-firewall' ) }
+                    { hasSecret ? __( 'Regenerate', 'rest-api-firewall' ) : __( 'Generate', 'rest-api-firewall' ) }
                 </Button>
+
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            checked={ useCustomSecret }
+                            onChange={ ( e ) =>
+                                setUseCustomSecret( e.target.checked )
+                            }
+                            size="small"
+                        />
+                    }
+                    label={ __(
+                        'I will paste my own secret',
+                        'rest-api-firewall'
+                    ) }
+                />
             </Stack>
+
+            <Stack
+                direction="row"
+                spacing={ 1 }
+                alignItems="center"
+                justifyContent="flex-start"
+                onClick={ () =>
+                    setShowSecretGuide( ! showSecretGuide )
+                }
+                sx={ { px:1, cursor: 'pointer', userSelect: 'none' } }
+            >
+                <Typography 
+                variant="body1" 
+                color="primary" 
+                sx={ { flex: 1 } }>
+                    { __(
+                        'How to validate the secret in my application?',
+                        'rest-api-firewall'
+                    ) }
+                </Typography>
+                <ExpandMoreIcon />
+            </Stack>
+            <Collapse in={ showSecretGuide } timeout="auto">
+                <Stack spacing={ 1.5 } sx={ { p: 2, bgcolor: 'grey.50', borderRadius: 1 } }>
+                    <Typography variant="body2">
+                        { __(
+                            'The secret is used to sign webhook requests using HMAC-SHA256. Your application must validate the',
+                            'rest-api-firewall'
+                        ) }
+                        { ' ' }
+                        <code>X-Webhook-Signature</code>
+                        { ' ' }
+                        { __( 'header by computing:', 'rest-api-firewall' ) }
+                    </Typography>
+                    <Box
+                        component="pre"
+                        sx={ {
+                            p: 1.5,
+                            bgcolor: '#f5f5f5',
+                            borderRadius: 1,
+                            border: '1px solid #e0e0e0',
+                            fontSize: '0.85rem',
+                            overflow: 'auto',
+                            fontFamily: 'monospace',
+                        } }
+                    >
+                        { 'hash_hmac("sha256", payload + timestamp, secret)' }
+                    </Box>
+                    <Typography variant="body2">
+                        { __( 'The timestamp is sent in the', 'rest-api-firewall' ) }
+                        { ' ' }
+                        <code>X-Webhook-Timestamp</code>
+                        { ' ' }
+                        { __( 'header.', 'rest-api-firewall' ) }
+                    </Typography>
+                </Stack>
+            </Collapse>
+
         </Stack>
     </Stack>
 
@@ -311,7 +506,7 @@ return(<>
         open={ snackbarOpen }
         autoHideDuration={ 5000 }
         onClose={ () => setSnackbarOpen( false ) }
-        anchorOrigin={ { vertical: 'bottom', horizontal: 'right' } }
+        anchorOrigin={ { vertical: 'center', horizontal: 'center' } }
     >
         <Alert
             onClose={ () => setSnackbarOpen( false ) }
