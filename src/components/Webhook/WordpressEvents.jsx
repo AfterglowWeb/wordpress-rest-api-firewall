@@ -39,7 +39,7 @@ export default function WordpressEvents( { form, setField } ) {
     };
 
  return (
-    <Stack spacing={ 2 } flex={ 1 } maxWidth={500}>
+    <Stack spacing={ 2 } flex={ 1 } width={'100%'} maxWidth={500}>
         <Typography
             variant="subtitle1"
             fontWeight={ 600 }

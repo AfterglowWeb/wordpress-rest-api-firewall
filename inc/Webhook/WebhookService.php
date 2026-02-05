@@ -39,7 +39,7 @@ class WebhookService {
 		}
 
 		$payload = (array) apply_filters(
-			'rest_firewall_application_webhook_body_payload',
+			'rest_api_firewall_webhook_payload',
 			WebhookClient::build_event_payload( 'manual_trigger', array( 'group' => 'manual' ), array() )
 		);
 
@@ -109,7 +109,7 @@ class WebhookService {
 		$payload      = WebhookClient::build_event_payload( $event_key, $event_config, array() );
 
 		$payload = (array) apply_filters(
-			'rest_firewall_application_webhook_body_payload',
+			'rest_api_firewall_webhook_payload',
 			$payload
 		);
 
@@ -164,6 +164,7 @@ class WebhookService {
 		$response_code = wp_remote_retrieve_response_code( $response['result']);
 		$response_body = wp_remote_retrieve_body( $response['result'] );
 		$is_remote_error =  empty( $response_code ) || $response_code >= 400;
+		$endpoint = isset( $response['endpoint'] ) ? $response['endpoint'] : $webhook_endpoint;
 
 		wp_send_json_success(
 			array(

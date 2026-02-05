@@ -70,7 +70,7 @@ export default function WebhookTest( { hasSecret } ) {
 	console.log(testResult);
 
 	return (
-		<Stack spacing={ 2 } flex={1} maxWidth={500}>
+		<Stack spacing={ 2 } flex={1} width={'100%'} maxWidth={500}>
 			<Typography
 				variant="subtitle1"
 				fontWeight={ 600 }
@@ -222,8 +222,9 @@ export default function WebhookTest( { hasSecret } ) {
 									p: 1.5,
 									borderRadius: 1,
 									fontSize: '0.75rem',
-									overflow: 'auto',
+									overflow: 'scroll',
 									maxHeight: 150,
+									maxWidth:'100%'
 								} }
 							>
 								{ testResult.data.endpoint }
@@ -252,8 +253,9 @@ export default function WebhookTest( { hasSecret } ) {
 									p: 1.5,
 									borderRadius: 1,
 									fontSize: '0.75rem',
-									overflow: 'auto',
+									overflow: 'scroll',
 									maxHeight: 150,
+									maxWidth:'100%'
 								} }
 							>
 								{ JSON.stringify(
@@ -286,8 +288,9 @@ export default function WebhookTest( { hasSecret } ) {
 										p: 1.5,
 										borderRadius: 1,
 										fontSize: '0.75rem',
-										overflow: 'auto',
+										overflow: 'scroll',
 										maxHeight: 150,
+										maxWidth:'100%'
 									} }
 								>
 									{ JSON.stringify(
@@ -321,8 +324,9 @@ export default function WebhookTest( { hasSecret } ) {
 										borderRadius: 1,
 										fontSize: '0.75rem',
 										whiteSpace: 'wrap',
-										overflow: 'auto',
+										overflow: 'scroll',
 										maxHeight: 150,
+										maxWidth:'100%'
 									} }
 								>
 									{ testResult.data.response_body }
@@ -345,7 +349,7 @@ export default function WebhookTest( { hasSecret } ) {
 			sx={{ maxWidth: '100%' }}
 			>
 				{ __(
-					'You can edit the webhook payload through the "rest_firewall_application_webhook_body_payload" filter hook.',
+					'You can edit the webhook payload by using the filter: "rest_api_firewall_webhook_payload"',
 					'rest-api-firewall'
 				) }
 			</Alert>

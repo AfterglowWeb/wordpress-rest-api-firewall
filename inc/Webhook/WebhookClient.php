@@ -48,7 +48,8 @@ final class WebhookClient {
 
 		if(true === $is_test)  {
 			return [
-				'bli' => $result,
+				'result' => $result,
+				'endpoint' => $endpoint,
 				'headers_sent' => array(
 					'Content-Type'        => 'application/json',
 					'X-Webhook-Signature' => 'xxx-xxx-xxx-xxx',

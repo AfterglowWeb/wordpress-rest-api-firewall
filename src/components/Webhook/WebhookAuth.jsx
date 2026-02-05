@@ -146,7 +146,7 @@ export default function WebhookAuth( { hasSecret, setHasSecret, form, setField }
 
 
 return(<>
-    <Stack spacing={ 3 } flex={1} maxWidth={500}>
+    <Stack spacing={ 3 } flex={1} width={'100%'} maxWidth={500}>
         <Typography
             variant="subtitle1"
             fontWeight={ 600 }
