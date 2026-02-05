@@ -33,6 +33,7 @@ const MainContainer = styled( Box )( ( { theme } ) => ( {
 const BrandSection = styled( Box )( ( { theme } ) => ( {
 	display: 'flex',
 	alignItems: 'center',
+	flexWrap: 'wrap',
 	gap: theme.spacing( 2 ),
 } ) );
 

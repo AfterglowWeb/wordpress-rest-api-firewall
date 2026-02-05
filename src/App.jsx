@@ -13,7 +13,7 @@ import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 
 import ConfirmDialog from './components/ConfirmDialog';
-import Webhook from './components/Webhook';
+import Webhook from './components/Webhook/Webhook';
 
 import ThemeSettings from './components/ThemeSettings';
 import Models from './components/Models/Models';

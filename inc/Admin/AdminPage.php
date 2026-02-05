@@ -118,6 +118,9 @@ class AdminPage {
 		body.toplevel_page_rest-api-firewall-admin #wpcontent {
 			padding-left:0;
 		}
+		body.toplevel_page_rest-api-firewall-admin #wpbody-content .notice {
+			display:none;
+		}
 		#rest-api-firewall-admin-page input[type=color], 
 		#rest-api-firewall-admin-page input[type=date], 
 		#rest-api-firewall-admin-page input[type=datetime-local], 

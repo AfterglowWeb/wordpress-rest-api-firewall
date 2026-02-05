@@ -387,7 +387,7 @@ class CoreOptions {
 		return $sanitized;
 	}
 
-	private static function sanitize_option( string $option_key, $option_value ) {
+	public static function sanitize_option( string $option_key, $option_value ) {
 		$options_config = self::options_config();
 
 		if ( ! isset( $options_config[ $option_key ] ) ) {
