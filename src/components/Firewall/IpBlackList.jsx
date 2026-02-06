@@ -429,7 +429,7 @@ export default function IpBlackList() {
 				fullWidth
 				fullScreen={ true }
 				keepMounted={ true }
-				sx={ { ml: { xs: 0, sm: '45px', lg: '160px' }, mt: '32px' } }
+				sx={ { ml: { xs: 0, sm: '45px', lg: '160px' }, mt: { xs: 0, sm: '45px', lg: '32px' } } }
 			>
 				<DialogTitle
 					sx={ {

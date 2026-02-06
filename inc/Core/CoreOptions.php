@@ -98,6 +98,13 @@ class CoreOptions {
 			),
 
 			// Collections.
+			'rest_collections_per_page_enabled'=> array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+			),
 
 			'rest_collections_posts_per_page'            => array(
 				'default_value'     => 100,
