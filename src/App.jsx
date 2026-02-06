@@ -28,13 +28,13 @@ const SCHEMA_OPTIONS = [
 	'rest_models_embed_author_enabled',
 	'rest_models_with_acf_enabled',
 	'rest_models_remove_empty_props',
-	'rest_firewall_remove_links_prop',
+	'rest_models_remove_links_prop',
 	'rest_models_relative_url_enabled',
 	'rest_models_relative_attachment_url_enabled',
-	'rest_api_posts_per_page',
-	'rest_api_attachments_per_page',
-	'rest_api_restrict_post_types_enabled',
-	'rest_api_allowed_post_types',
+	'rest_collections_posts_per_page',
+	'rest_collections_attachments_per_page',
+	'rest_collections_restrict_post_types_enabled',
+	'rest_collections_allowed_post_types',
 ];
 
 const THEME_OPTIONS = [
@@ -58,6 +58,7 @@ const WEBHOOK_OPTIONS = [
 	'application_host',
 	'application_webhook_endpoint',
 	'application_webhook_auto_trigger_events',
+	'application_webhook_custom_secret_enabled'
 ];
 
 function TabPanel( { value, index, children } ) {

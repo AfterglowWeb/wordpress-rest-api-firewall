@@ -17,13 +17,14 @@ export default function useSettingsForm( {
 		rest_models_embed_terms_enabled: false,
 		rest_models_embed_author_enabled: false,
 		rest_models_with_acf_enabled: false,
-		rest_firewall_remove_links_prop: false,
+		rest_models_remove_links_prop: false,
 		rest_models_remove_empty_props: false,
-		rest_api_posts_per_page: 100,
-		rest_api_attachments_per_page: 100,
+		rest_collections_posts_per_page: 100,
+		rest_collections_attachments_per_page: 100,
 		application_host: '',
 		application_webhook_endpoint: '',
 		application_webhook_auto_trigger_events: [],
+		application_webhook_custom_secret_enabled: false,
 		theme_redirect_templates_enabled: false,
 		theme_redirect_templates_preset_url: '',
 		theme_disable_xmlrpc: false,
@@ -74,14 +75,14 @@ export default function useSettingsForm( {
 			rest_models_remove_empty_props: Boolean(
 				adminOptions.rest_models_remove_empty_props
 			),
-			rest_firewall_remove_links_prop: Boolean(
-				adminOptions.rest_firewall_remove_links_prop
+			rest_models_remove_links_prop: Boolean(
+				adminOptions.rest_models_remove_links_prop
 			),
-			rest_api_posts_per_page: Number(
-				adminOptions.rest_api_posts_per_page ?? 100
+			rest_collections_posts_per_page: Number(
+				adminOptions.rest_collections_posts_per_page ?? 100
 			),
-			rest_api_attachments_per_page: Number(
-				adminOptions.rest_api_attachments_per_page ?? 100
+			rest_collections_attachments_per_page: Number(
+				adminOptions.rest_collections_attachments_per_page ?? 100
 			),
 
 			application_host: adminOptions.application_host ?? '',
@@ -92,6 +93,7 @@ export default function useSettingsForm( {
 			)
 				? adminOptions.application_webhook_auto_trigger_events
 				: [],
+			application_webhook_custom_secret_enabled: Boolean( adminOptions.application_webhook_custom_secret_enabled ),
 
 			theme_redirect_templates_enabled: Boolean(
 				adminOptions.theme_redirect_templates_enabled
@@ -140,13 +142,13 @@ export default function useSettingsForm( {
 				adminOptions.rest_models_relative_attachment_url_enabled ??
 					false
 			);
-			baseForm.rest_api_restrict_post_types_enabled = Boolean(
-				adminOptions.rest_api_restrict_post_types_enabled ?? false
+			baseForm.rest_collections_restrict_post_types_enabled = Boolean(
+				adminOptions.rest_collections_restrict_post_types_enabled ?? false
 			);
-			baseForm.rest_api_allowed_post_types = Array.isArray(
-				adminOptions.rest_api_allowed_post_types
+			baseForm.rest_collections_allowed_post_types = Array.isArray(
+				adminOptions.rest_collections_allowed_post_types
 			)
-				? adminOptions.rest_api_allowed_post_types
+				? adminOptions.rest_collections_allowed_post_types
 				: [];
 			baseForm.theme_redirect_templates_free_url_enabled = Boolean(
 				adminOptions.theme_redirect_templates_free_url_enabled ?? false
@@ -209,18 +211,20 @@ export default function useSettingsForm( {
 					formData.rest_models_with_acf_enabled,
 				rest_models_remove_empty_props:
 					formData.rest_models_remove_empty_props,
-				rest_firewall_remove_links_prop:
-					formData.rest_firewall_remove_links_prop,
+				rest_models_remove_links_prop:
+					formData.rest_models_remove_links_prop,
 
-				rest_api_posts_per_page: formData.rest_api_posts_per_page,
-				rest_api_attachments_per_page:
-					formData.rest_api_attachments_per_page,
+				rest_collections_posts_per_page: formData.rest_collections_posts_per_page,
+				rest_collections_attachments_per_page:
+					formData.rest_collections_attachments_per_page,
 
 				application_host: formData.application_host,
 				application_webhook_endpoint:
 					formData.application_webhook_endpoint,
 				application_webhook_auto_trigger_events:
 					formData.application_webhook_auto_trigger_events,
+				application_webhook_custom_secret_enabled:
+					formData.application_webhook_custom_secret_enabled,
 
 				theme_redirect_templates_enabled:
 					formData.theme_redirect_templates_enabled,
@@ -249,10 +253,10 @@ export default function useSettingsForm( {
 					formData.rest_models_relative_url_enabled;
 				mapped.rest_models_relative_attachment_url_enabled =
 					formData.rest_models_relative_attachment_url_enabled;
-				mapped.rest_api_restrict_post_types_enabled =
-					formData.rest_api_restrict_post_types_enabled;
-				mapped.rest_api_allowed_post_types =
-					formData.rest_api_allowed_post_types;
+				mapped.rest_collections_restrict_post_types_enabled =
+					formData.rest_collections_restrict_post_types_enabled;
+				mapped.rest_collections_allowed_post_types =
+					formData.rest_collections_allowed_post_types;
 				mapped.theme_redirect_templates_free_url_enabled =
 					formData.theme_redirect_templates_free_url_enabled;
 				mapped.theme_redirect_templates_free_url =

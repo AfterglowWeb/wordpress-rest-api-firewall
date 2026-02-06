@@ -70,7 +70,7 @@ class ModelContext {
 		$context->relative_urls             = (bool) CoreOptions::read_option( 'rest_models_relative_url_enabled' );
 		$context->relative_attachment_urls  = (bool) CoreOptions::read_option( 'rest_models_relative_attachment_url_enabled' );
 		$context->resolve_rendered_props    = (bool) CoreOptions::read_option( 'rest_models_resolve_rendered_props' );
-		$context->remove_links_prop         = (bool) CoreOptions::read_option( 'rest_firewall_remove_links_prop' );
+		$context->remove_links_prop         = (bool) CoreOptions::read_option( 'rest_models_remove_links_prop' );
 		$context->remove_empty_props        = (bool) CoreOptions::read_option( 'rest_models_remove_empty_props' );
 		$context->disabled_properties       = array();
 

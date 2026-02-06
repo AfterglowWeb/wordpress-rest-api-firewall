@@ -36,8 +36,8 @@ export default function Collections( { form, setField, postTypes } ) {
 						'Applies to REST collections only',
 						'rest-api-firewall'
 					) }
-					name="rest_api_posts_per_page"
-					value={ form.rest_api_posts_per_page }
+					name="rest_collections_posts_per_page"
+					value={ form.rest_collections_posts_per_page }
 					onChange={ setField }
 					fullWidth
 				/>
@@ -51,8 +51,8 @@ export default function Collections( { form, setField, postTypes } ) {
 						'Applies to Blank REST attachment endpoints',
 						'rest-api-firewall'
 					) }
-					name="rest_api_attachments_per_page"
-					value={ form.rest_api_attachments_per_page }
+					name="rest_collections_attachments_per_page"
+					value={ form.rest_collections_attachments_per_page }
 					onChange={ setField }
 					fullWidth
 				/>
@@ -69,12 +69,12 @@ export default function Collections( { form, setField, postTypes } ) {
 					{ postTypes && (
 						<MultipleSelect
 							disabled={ ! hasValidLicense }
-							name="rest_api_allowed_post_types"
+							name="rest_collections_allowed_post_types"
 							label={ __(
 								'Restict to Posts Types',
 								'rest-api-firewall'
 							) }
-							value={ form.rest_api_allowed_post_types }
+							value={ form.rest_collections_allowed_post_types }
 							helperText={
 								'The selected Posts Types only will be visible in the REST API. If empty, default visibilty settings are applied'
 							}
@@ -89,9 +89,9 @@ export default function Collections( { form, setField, postTypes } ) {
 						control={
 							<Switch
 								checked={
-									!! form.rest_api_restrict_post_types_enabled
+									!! form.rest_collections_restrict_post_types_enabled
 								}
-								name="rest_api_restrict_post_types_enabled"
+								name="rest_collections_restrict_post_types_enabled"
 								onChange={ setField }
 							/>
 						}
