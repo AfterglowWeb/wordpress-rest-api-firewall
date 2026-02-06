@@ -38,7 +38,6 @@ export default function WebhookTest( { hasSecret } ) {
 		setTestLoading( true );
 		setTestResult( null );
 
-
 		try {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
@@ -63,12 +62,8 @@ export default function WebhookTest( { hasSecret } ) {
 	};
 
 	return (
-		<Stack spacing={ 2 } flex={1} width={'100%'} maxWidth={500}>
-			<Typography
-				variant="subtitle1"
-				fontWeight={ 600 }
-				sx={ { mb: 2 } }
-			>
+		<Stack spacing={ 2 } flex={ 1 } width={ '100%' } maxWidth={ 500 }>
+			<Typography variant="subtitle1" fontWeight={ 600 } sx={ { mb: 2 } }>
 				{ __( 'Test Webhook', 'rest-api-firewall' ) }
 			</Typography>
 			<FormHelperText sx={ { mb: 2 } }>
@@ -79,7 +74,7 @@ export default function WebhookTest( { hasSecret } ) {
 			</FormHelperText>
 
 			<Stack
-				direction={{ xs:'column', sm:'row' }}
+				direction={ { xs: 'column', sm: 'row' } }
 				spacing={ 2 }
 				alignItems="flex-start"
 				sx={ { mb: 2 } }
@@ -91,25 +86,17 @@ export default function WebhookTest( { hasSecret } ) {
 					<Select
 						labelId="test-event-label"
 						value={ testEventKey }
-						onChange={ ( e ) =>
-							setTestEventKey( e.target.value )
-						}
+						onChange={ ( e ) => setTestEventKey( e.target.value ) }
 						label={ __( 'Event', 'rest-api-firewall' ) }
 					>
 						<MenuItem value="">
 							<em>
-								{ __(
-									'Select an event',
-									'rest-api-firewall'
-								) }
+								{ __( 'Select an event', 'rest-api-firewall' ) }
 							</em>
 						</MenuItem>
 						{ Object.entries( webhookEvents ).map(
 							( [ eventKey, eventConfig ] ) => (
-								<MenuItem
-									key={ eventKey }
-									value={ eventKey }
-								>
+								<MenuItem key={ eventKey } value={ eventKey }>
 									{ eventConfig.label }
 								</MenuItem>
 							)
@@ -122,18 +109,13 @@ export default function WebhookTest( { hasSecret } ) {
 					size="small"
 					startIcon={
 						testLoading ? (
-							<CircularProgress
-								size={ 16 }
-								color="inherit"
-							/>
+							<CircularProgress size={ 16 } color="inherit" />
 						) : (
 							<PlayArrowIcon />
 						)
 					}
 					onClick={ handleTestWebhook }
-					disabled={
-						! testEventKey || testLoading || ! hasSecret
-					}
+					disabled={ ! testEventKey || testLoading || ! hasSecret }
 				>
 					{ testLoading
 						? __( 'Testing…', 'rest-api-firewall' )
@@ -156,14 +138,8 @@ export default function WebhookTest( { hasSecret } ) {
 							<Chip
 								label={
 									testResult.data?.type === 'success'
-										? __(
-												'Success',
-												'rest-api-firewall'
-											)
-										: __(
-												'Error',
-												'rest-api-firewall'
-											)
+										? __( 'Success', 'rest-api-firewall' )
+										: __( 'Error', 'rest-api-firewall' )
 								}
 								color={
 									testResult.data?.type === 'success'
@@ -195,85 +171,26 @@ export default function WebhookTest( { hasSecret } ) {
 						) }
 
 						{ testResult.data?.endpoint && (
-						<Box sx={ { mb: 2 } }>
-							<Stack direction="row" alignItems="center" spacing={ 1 } sx={ { mb: 0.5 } }>
-								<Typography
-									variant="body2"
-									color="text.secondary"
+							<Box sx={ { mb: 2 } }>
+								<Stack
+									direction="row"
+									alignItems="center"
+									spacing={ 1 }
+									sx={ { mb: 0.5 } }
 								>
-									{ __(
-										'Endpoint:',
-										'rest-api-firewall'
-									) }
-								</Typography>
-								<CopyButton toCopy={ testResult.data.endpoint } />
-							</Stack>
-							<Box
-								component="pre"
-								sx={ {
-									bgcolor: 'grey.100',
-									p: 1.5,
-									borderRadius: 1,
-									fontSize: '0.75rem',
-									overflow: 'scroll',
-									maxHeight: 150,
-									maxWidth:'100%'
-								} }
-							>
-								{ testResult.data.endpoint }
-							</Box>
-						</Box>
-					) }
-
-					{ testResult.data?.headers_sent && (
-						<Box sx={ { mb: 2 } }>
-							<Stack direction="row" alignItems="center" spacing={ 1 } sx={ { mb: 0.5 } }>
-								<Typography
-									variant="body2"
-									color="text.secondary"
-								>
-									{ __(
-										'Headers sent:',
-										'rest-api-firewall'
-									) }
-								</Typography>
-								<CopyButton toCopy={ JSON.stringify( testResult.data.headers_sent, null, 2 ) } />
-							</Stack>
-							<Box
-								component="pre"
-								sx={ {
-									bgcolor: 'grey.100',
-									p: 1.5,
-									borderRadius: 1,
-									fontSize: '0.75rem',
-									overflow: 'scroll',
-									maxHeight: 150,
-									maxWidth:'100%'
-								} }
-							>
-								{ JSON.stringify(
-									testResult.data.headers_sent,
-									null,
-									2
-								) }
-							</Box>
-						</Box>
-					) }
-
-					{ testResult.data?.payload && (
-						<Box sx={ { mb: 2 } }>
-							<Stack direction="row" alignItems="center" spacing={ 1 } sx={ { mb: 0.5 } }>
-								<Typography
-									variant="body2"
-									color="text.secondary"
-								>
-									{ __(
-										'Payload sent:',
-										'rest-api-firewall'
-									) }
-								</Typography>
-								<CopyButton toCopy={ JSON.stringify( testResult.data.payload, null, 2 ) } />
-							</Stack>
+									<Typography
+										variant="body2"
+										color="text.secondary"
+									>
+										{ __(
+											'Endpoint:',
+											'rest-api-firewall'
+										) }
+									</Typography>
+									<CopyButton
+										toCopy={ testResult.data.endpoint }
+									/>
+								</Stack>
 								<Box
 									component="pre"
 									sx={ {
@@ -283,7 +200,95 @@ export default function WebhookTest( { hasSecret } ) {
 										fontSize: '0.75rem',
 										overflow: 'scroll',
 										maxHeight: 150,
-										maxWidth:'100%'
+										maxWidth: '100%',
+									} }
+								>
+									{ testResult.data.endpoint }
+								</Box>
+							</Box>
+						) }
+
+						{ testResult.data?.headers_sent && (
+							<Box sx={ { mb: 2 } }>
+								<Stack
+									direction="row"
+									alignItems="center"
+									spacing={ 1 }
+									sx={ { mb: 0.5 } }
+								>
+									<Typography
+										variant="body2"
+										color="text.secondary"
+									>
+										{ __(
+											'Headers sent:',
+											'rest-api-firewall'
+										) }
+									</Typography>
+									<CopyButton
+										toCopy={ JSON.stringify(
+											testResult.data.headers_sent,
+											null,
+											2
+										) }
+									/>
+								</Stack>
+								<Box
+									component="pre"
+									sx={ {
+										bgcolor: 'grey.100',
+										p: 1.5,
+										borderRadius: 1,
+										fontSize: '0.75rem',
+										overflow: 'scroll',
+										maxHeight: 150,
+										maxWidth: '100%',
+									} }
+								>
+									{ JSON.stringify(
+										testResult.data.headers_sent,
+										null,
+										2
+									) }
+								</Box>
+							</Box>
+						) }
+
+						{ testResult.data?.payload && (
+							<Box sx={ { mb: 2 } }>
+								<Stack
+									direction="row"
+									alignItems="center"
+									spacing={ 1 }
+									sx={ { mb: 0.5 } }
+								>
+									<Typography
+										variant="body2"
+										color="text.secondary"
+									>
+										{ __(
+											'Payload sent:',
+											'rest-api-firewall'
+										) }
+									</Typography>
+									<CopyButton
+										toCopy={ JSON.stringify(
+											testResult.data.payload,
+											null,
+											2
+										) }
+									/>
+								</Stack>
+								<Box
+									component="pre"
+									sx={ {
+										bgcolor: 'grey.100',
+										p: 1.5,
+										borderRadius: 1,
+										fontSize: '0.75rem',
+										overflow: 'scroll',
+										maxHeight: 150,
+										maxWidth: '100%',
 									} }
 								>
 									{ JSON.stringify(
@@ -297,7 +302,12 @@ export default function WebhookTest( { hasSecret } ) {
 
 						{ testResult.data?.response_body && (
 							<Box>
-								<Stack direction="row" alignItems="center" spacing={ 1 } sx={ { mb: 0.5 } }>
+								<Stack
+									direction="row"
+									alignItems="center"
+									spacing={ 1 }
+									sx={ { mb: 0.5 } }
+								>
 									<Typography
 										variant="body2"
 										color="text.secondary"
@@ -307,7 +317,9 @@ export default function WebhookTest( { hasSecret } ) {
 											'rest-api-firewall'
 										) }
 									</Typography>
-									<CopyButton toCopy={ testResult.data.response_body } />
+									<CopyButton
+										toCopy={ testResult.data.response_body }
+									/>
 								</Stack>
 								<Box
 									component="pre"
@@ -319,7 +331,7 @@ export default function WebhookTest( { hasSecret } ) {
 										whiteSpace: 'wrap',
 										overflow: 'scroll',
 										maxHeight: 150,
-										maxWidth:'100%'
+										maxWidth: '100%',
 									} }
 								>
 									{ testResult.data.response_body }
@@ -329,16 +341,14 @@ export default function WebhookTest( { hasSecret } ) {
 					</CardContent>
 				</Card>
 			) : (
-				<Card variant="outlined"
+				<Card
+					variant="outlined"
 					height={ 300 }
-					sx={{ mt: 2, maxWidth: '100%' }}
+					sx={ { mt: 2, maxWidth: '100%' } }
 				/>
 			) }
 
-			<Alert 
-			severity="info"
-			sx={{ maxWidth: '100%' }}
-			>
+			<Alert severity="info" sx={ { maxWidth: '100%' } }>
 				{ __(
 					'You can edit the webhook payload by using the filter: "rest_api_firewall_webhook_payload"',
 					'rest-api-firewall'

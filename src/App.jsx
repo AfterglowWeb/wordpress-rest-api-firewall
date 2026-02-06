@@ -58,7 +58,7 @@ const WEBHOOK_OPTIONS = [
 	'application_host',
 	'application_webhook_endpoint',
 	'application_webhook_auto_trigger_events',
-	'application_webhook_custom_secret_enabled'
+	'application_webhook_custom_secret_enabled',
 ];
 
 function TabPanel( { value, index, children } ) {

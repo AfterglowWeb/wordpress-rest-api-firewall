@@ -37,10 +37,7 @@ function isValidIpOrCidr( value ) {
 	);
 }
 
-export default function IpDataGrid( {
-	listType = 'blacklist',
-	freeEntries = [],
-} ) {
+export default function IpDataGrid( { listType = 'blacklist', onMutate = null } ) {
 	const { adminData } = useAdminData();
 	const { hasValidLicense } = useLicense();
 	const { __ } = wp.i18n || {};
@@ -62,67 +59,6 @@ export default function IpDataGrid( {
 	const [ ipError, setIpError ] = useState( '' );
 	const [ adding, setAdding ] = useState( false );
 
-	const freeRows = useMemo( () => {
-		return freeEntries
-			.map( ( entry, index ) => {
-				const ip = typeof entry === 'string' ? entry : entry?.ip;
-				if ( ! ip ) {
-					return null;
-				}
-				const blockedTime = entry?.blocked_time
-					? new Date( entry.blocked_time * 1000 ).toISOString()
-					: null;
-				return {
-					id: index + 1,
-					actions: '',
-					ip,
-					entry_type: entry?.type || 'manual',
-					country_name: entry?.geoIp?.countryName || null,
-					country_code: entry?.geoIp?.country || null,
-					blocked_at: blockedTime,
-					expires_at: null,
-					agent: entry?.agent || null,
-				};
-			} )
-			.filter( Boolean );
-	}, [ freeEntries ] );
-
-	const processedFreeRows = useMemo( () => {
-		let result = [ ...freeRows ];
-
-		if ( filterValue ) {
-			const search = filterValue.toLowerCase();
-			result = result.filter(
-				( row ) =>
-					row.ip?.toLowerCase().includes( search ) ||
-					row.country_name?.toLowerCase().includes( search ) ||
-					row.agent?.toLowerCase().includes( search )
-			);
-		}
-
-		if ( sortModel.length > 0 ) {
-			const { field, sort } = sortModel[ 0 ];
-			result.sort( ( a, b ) => {
-				const aVal = a[ field ] || '';
-				const bVal = b[ field ] || '';
-				if ( sort === 'asc' ) {
-					return aVal > bVal ? 1 : -1;
-				}
-				return aVal < bVal ? 1 : -1;
-			} );
-		}
-
-		return result;
-	}, [ freeRows, filterValue, sortModel ] );
-
-	const paginatedFreeRows = useMemo( () => {
-		const start = paginationModel.page * paginationModel.pageSize;
-		return processedFreeRows.slice(
-			start,
-			start + paginationModel.pageSize
-		);
-	}, [ processedFreeRows, paginationModel ] );
-
 	const columns = useMemo( () => {
 		const baseColumns = [
 			{
@@ -135,7 +71,9 @@ export default function IpDataGrid( {
 					<IconButton
 						size="small"
 						color="default"
-						onClick={ () => handleDeleteOne( params.row.id ) }
+						onClick={ () =>
+							handleDeleteOne( params.row.id, params.row.ip )
+						}
 					>
 						<DeleteOutlineIcon fontSize="small" />
 					</IconButton>
@@ -229,42 +167,112 @@ export default function IpDataGrid( {
 	}, [ hasValidLicense, __ ] );
 
 	const fetchEntries = useCallback( async () => {
-		// For Free users, use local data
-		if ( ! hasValidLicense ) {
-			setRows( paginatedFreeRows );
-			setRowCount( processedFreeRows.length );
-			setLoading( false );
-			return;
-		}
-
 		setLoading( true );
+
 		try {
-			const sortField = sortModel[ 0 ]?.field || 'blocked_at';
-			const sortOrder = sortModel[ 0 ]?.sort?.toUpperCase() || 'DESC';
+			if ( ! hasValidLicense ) {
+				const response = await fetch( adminData.ajaxurl, {
+					method: 'POST',
+					headers: {
+						'Content-Type':
+							'application/x-www-form-urlencoded; charset=UTF-8',
+					},
+					body: new URLSearchParams( {
+						action: 'get_ip_filter',
+						nonce: adminData.nonce,
+					} ),
+				} );
 
-			const response = await fetch( adminData.ajaxurl, {
-				method: 'POST',
-				headers: {
-					'Content-Type':
-						'application/x-www-form-urlencoded; charset=UTF-8',
-				},
-				body: new URLSearchParams( {
-					action: 'get_ip_entries',
-					nonce: adminData.nonce,
-					list_type: listType,
-					page: paginationModel.page + 1,
-					per_page: paginationModel.pageSize,
-					order_by: sortField,
-					order: sortOrder,
-					search: filterValue,
-				} ),
-			} );
+				const result = await response.json();
 
-			const result = await response.json();
+				if ( result?.success && result?.data ) {
+					const entries = result.data[ listType ] || [];
 
-			if ( result?.success && result?.data ) {
-				setRows( result.data.entries || [] );
-				setRowCount( result.data.total || 0 );
+					let processedRows = entries
+						.map( ( entry, index ) => {
+							const ip =
+								typeof entry === 'string' ? entry : entry?.ip;
+							if ( ! ip ) {
+								return null;
+							}
+							const id = entry?.id || `free-${ index + 1 }`;
+							return {
+								id,
+								actions: '',
+								ip,
+								entry_type: entry?.entry_type || 'manual',
+								country_name: entry?.country_name || null,
+								country_code: entry?.country_code || null,
+								blocked_at: entry?.blocked_at || null,
+								expires_at: entry?.expires_at || null,
+								agent: entry?.agent || null,
+							};
+						} )
+						.filter( Boolean );
+
+					if ( filterValue ) {
+						const search = filterValue.toLowerCase();
+						processedRows = processedRows.filter(
+							( row ) =>
+								row.ip?.toLowerCase().includes( search ) ||
+								row.country_name
+									?.toLowerCase()
+									.includes( search ) ||
+								row.agent?.toLowerCase().includes( search )
+						);
+					}
+
+					if ( sortModel.length > 0 ) {
+						const { field, sort } = sortModel[ 0 ];
+						processedRows.sort( ( a, b ) => {
+							const aVal = a[ field ] || '';
+							const bVal = b[ field ] || '';
+							if ( sort === 'asc' ) {
+								return aVal > bVal ? 1 : -1;
+							}
+							return aVal < bVal ? 1 : -1;
+						} );
+					}
+
+					const total = processedRows.length;
+					const start =
+						paginationModel.page * paginationModel.pageSize;
+					const paginatedRows = processedRows.slice(
+						start,
+						start + paginationModel.pageSize
+					);
+
+					setRows( paginatedRows );
+					setRowCount( total );
+				}
+			} else {
+				const sortField = sortModel[ 0 ]?.field || 'blocked_at';
+				const sortOrder = sortModel[ 0 ]?.sort?.toUpperCase() || 'DESC';
+
+				const response = await fetch( adminData.ajaxurl, {
+					method: 'POST',
+					headers: {
+						'Content-Type':
+							'application/x-www-form-urlencoded; charset=UTF-8',
+					},
+					body: new URLSearchParams( {
+						action: 'get_ip_entries',
+						nonce: adminData.nonce,
+						list_type: listType,
+						page: paginationModel.page + 1,
+						per_page: paginationModel.pageSize,
+						order_by: sortField,
+						order: sortOrder,
+						search: filterValue,
+					} ),
+				} );
+
+				const result = await response.json();
+
+				if ( result?.success && result?.data ) {
+					setRows( result.data.entries || [] );
+					setRowCount( result.data.total || 0 );
+				}
 			}
 		} catch ( error ) {
 			console.error( 'Error fetching IP entries:', error );
@@ -278,8 +286,6 @@ export default function IpDataGrid( {
 		paginationModel,
 		sortModel,
 		filterValue,
-		paginatedFreeRows,
-		processedFreeRows,
 	] );
 
 	useEffect( () => {
@@ -326,6 +332,9 @@ export default function IpDataGrid( {
 
 			if ( result?.success ) {
 				setNewIp( '' );
+				if ( onMutate ) {
+					await onMutate();
+				}
 				fetchEntries();
 			} else {
 				setIpError(
@@ -340,7 +349,8 @@ export default function IpDataGrid( {
 		}
 	};
 
-	const handleDeleteOne = async ( id ) => {
+	const handleDeleteOne = async ( id, ip ) => {
+		setLoading( true );
 		try {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
@@ -351,17 +361,22 @@ export default function IpDataGrid( {
 				body: new URLSearchParams( {
 					action: 'delete_ip_entry',
 					nonce: adminData.nonce,
-					id,
+					...( hasValidLicense ? { id } : { ip } ),
 				} ),
 			} );
 
 			const result = await response.json();
 
 			if ( result?.success ) {
+				if ( onMutate ) {
+					await onMutate();
+				}
 				fetchEntries();
 			}
 		} catch ( error ) {
 			console.error( 'Error deleting IP entry:', error );
+		} finally {
+			setLoading( false );
 		}
 	};
 

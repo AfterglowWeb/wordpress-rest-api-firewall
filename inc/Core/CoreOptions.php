@@ -57,7 +57,7 @@ class CoreOptions {
 				'context'           => array( 'free', 'pro' ),
 			),
 
-			'rest_models_remove_links_prop'            => array(
+			'rest_models_remove_links_prop'              => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -99,7 +99,7 @@ class CoreOptions {
 
 			// Collections.
 
-			'rest_collections_posts_per_page'                    => array(
+			'rest_collections_posts_per_page'            => array(
 				'default_value'     => 100,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -107,7 +107,7 @@ class CoreOptions {
 				'context'           => array( 'free', 'pro' ),
 			),
 
-			'rest_collections_attachments_per_page'              => array(
+			'rest_collections_attachments_per_page'      => array(
 				'default_value'     => 100,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -133,7 +133,7 @@ class CoreOptions {
 				'context'           => array( 'free', 'pro' ),
 			),
 
-			'application_webhook_custom_secret_enabled'    => array(
+			'application_webhook_custom_secret_enabled'  => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -320,10 +320,12 @@ class CoreOptions {
 
 	public static function update_option( string $option_key, $new_option ) {
 
-		$old_option = self::read_option( $option_key );
-		if ( false === $old_option ) {
+		$options_config = self::options_config();
+		if ( ! isset( $options_config[ $option_key ] ) ) {
 			return false;
 		}
+
+		$old_option = self::read_option( $option_key );
 
 		$sanitized_option       = self::sanitize_option( $option_key, $new_option );
 		$options                = self::read_options();

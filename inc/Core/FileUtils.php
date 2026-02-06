@@ -186,13 +186,11 @@ class FileUtils {
 			$target_path = trailingslashit( $target ) . $filename;
 
 			if ( 'd' === $file_info['type'] ) {
-				// Directory: create and recurse.
 				if ( ! $wp_filesystem->is_dir( $target_path ) ) {
 					if ( ! $wp_filesystem->mkdir( $target_path, FS_CHMOD_DIR ) ) {
 						return new WP_Error(
 							'mkdir_error',
 							sprintf(
-								/* translators: %s is the directory path */
 								__( 'Failed to create directory: %s', 'rest-api-firewall' ),
 								$target_path
 							)

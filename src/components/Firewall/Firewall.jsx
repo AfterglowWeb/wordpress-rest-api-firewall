@@ -162,7 +162,6 @@ export default function Firewall() {
 				} );
 
 				try {
-					// Save both options and policy in parallel
 					const [ optionsResponse, policyResponse ] =
 						await Promise.all( [
 							fetch( adminData.ajaxurl, {

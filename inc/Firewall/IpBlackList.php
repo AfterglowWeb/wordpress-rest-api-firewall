@@ -26,6 +26,8 @@ class IpBlackList {
 	private function __construct() {
 		add_action( 'wp_ajax_get_ip_filter', array( $this, 'ajax_get_ip_filter' ) );
 		add_action( 'wp_ajax_save_ip_filter', array( $this, 'ajax_save_ip_filter' ) );
+		add_action( 'wp_ajax_add_ip_entry', array( $this, 'ajax_add_ip_entry' ) );
+		add_action( 'wp_ajax_delete_ip_entry', array( $this, 'ajax_delete_ip_entry' ) );
 	}
 
 	public static function default_options(): array {
@@ -38,24 +40,24 @@ class IpBlackList {
 
 	private static function ip_entry_config(): array {
 		return array(
+			'id'           => array(
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+				'default'           => null,
+			),
 			'ip'           => array(
 				'type'              => 'string',
 				'required'          => true,
 				'sanitize_callback' => 'sanitize_text_field',
 				'default'           => null,
 			),
-			'type'         => array(
+			'entry_type'   => array(
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
 				'default'           => 'manual',
 				'allowed_values'    => array( 'manual', 'rate_limit' ),
-			),
-			'blocked_time' => array(
-				'type'              => 'integer',
-				'required'          => false,
-				'sanitize_callback' => 'absint',
-				'default'           => null, // Will use time if null.
 			),
 			'agent'        => array(
 				'type'              => 'string',
@@ -63,33 +65,45 @@ class IpBlackList {
 				'sanitize_callback' => 'sanitize_text_field',
 				'default'           => null,
 			),
-			'geoIp'        => array(
-				'type'              => 'object',
+			'country_code' => array(
+				'type'              => 'string',
 				'required'          => false,
-				'sanitize_callback' => null, // Custom handling.
+				'sanitize_callback' => 'sanitize_text_field',
 				'default'           => null,
-				'properties'        => array(
-					'country'     => array(
-						'type'              => 'string',
-						'sanitize_callback' => 'sanitize_text_field',
-						'default'           => null,
-					),
-					'countryName' => array(
-						'type'              => 'string',
-						'sanitize_callback' => 'sanitize_text_field',
-						'default'           => null,
-					),
-				),
+			),
+			'country_name' => array(
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+				'default'           => null,
+			),
+			'blocked_at'   => array(
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+				'default'           => null,
+			),
+			'expires_at'   => array(
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+				'default'           => null,
+			),
+			'created_at'   => array(
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+				'default'           => null,
+			),
+			'updated_at'   => array(
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+				'default'           => null,
 			),
 		);
 	}
 
-	/**
-	 * Sanitize a single IP entry based on configuration.
-	 *
-	 * @param array|string $entry Raw entry data.
-	 * @return array|null Sanitized entry or null if invalid.
-	 */
 	private static function sanitize_ip_entry( $entry ): ?array {
 		$config = self::ip_entry_config();
 
@@ -106,32 +120,27 @@ class IpBlackList {
 			return null;
 		}
 
+		$entry = self::migrate_legacy_entry( $entry );
+
+		$now       = current_time( 'mysql' );
 		$sanitized = array();
 
 		foreach ( $config as $key => $field_config ) {
 			$value = $entry[ $key ] ?? null;
 
-			if ( 'object' === $field_config['type'] && isset( $field_config['properties'] ) ) {
-				// Handle nested object (geoIp).
-				if ( is_array( $value ) ) {
-					$nested = array();
-					foreach ( $field_config['properties'] as $prop_key => $prop_config ) {
-						$prop_value = $value[ $prop_key ] ?? $prop_config['default'];
-						if ( null !== $prop_value && is_callable( $prop_config['sanitize_callback'] ) ) {
-							$prop_value = call_user_func( $prop_config['sanitize_callback'], $prop_value );
-						}
-						$nested[ $prop_key ] = $prop_value;
-					}
-					$sanitized[ $key ] = $nested;
-				} else {
-					$sanitized[ $key ] = $field_config['default'];
+			if ( null === $value ) {
+				switch ( $key ) {
+					case 'id':
+						$sanitized[ $key ] = wp_generate_uuid4();
+						break;
+					case 'blocked_at':
+					case 'created_at':
+					case 'updated_at':
+						$sanitized[ $key ] = $now;
+						break;
+					default:
+						$sanitized[ $key ] = $field_config['default'];
 				}
-			} elseif ( null === $value ) {
-					$default = $field_config['default'];
-				if ( 'blocked_time' === $key && null === $default ) {
-					$default = time();
-				}
-					$sanitized[ $key ] = $default;
 			} else {
 				$callback          = $field_config['sanitize_callback'];
 				$sanitized[ $key ] = is_callable( $callback ) ? call_user_func( $callback, $value ) : $value;
@@ -143,6 +152,30 @@ class IpBlackList {
 		}
 
 		return $sanitized;
+	}
+
+	private static function migrate_legacy_entry( array $entry ): array {
+		if ( isset( $entry['type'] ) && ! isset( $entry['entry_type'] ) ) {
+			$entry['entry_type'] = $entry['type'];
+			unset( $entry['type'] );
+		}
+
+		if ( isset( $entry['blocked_time'] ) && ! isset( $entry['blocked_at'] ) ) {
+			$entry['blocked_at'] = gmdate( 'Y-m-d H:i:s', (int) $entry['blocked_time'] );
+			unset( $entry['blocked_time'] );
+		}
+
+		if ( isset( $entry['geoIp'] ) && is_array( $entry['geoIp'] ) ) {
+			if ( ! isset( $entry['country_code'] ) && isset( $entry['geoIp']['country'] ) ) {
+				$entry['country_code'] = $entry['geoIp']['country'];
+			}
+			if ( ! isset( $entry['country_name'] ) && isset( $entry['geoIp']['countryName'] ) ) {
+				$entry['country_name'] = $entry['geoIp']['countryName'];
+			}
+			unset( $entry['geoIp'] );
+		}
+
+		return $entry;
 	}
 
 	public static function get_options(): array {
@@ -197,7 +230,6 @@ class IpBlackList {
 				continue;
 			}
 
-			// Skip duplicates.
 			if ( in_array( $sanitized_entry['ip'], $seen_ips, true ) ) {
 				continue;
 			}
@@ -416,7 +448,7 @@ class IpBlackList {
 
 		$options = array();
 
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_has_firewall_update_caps()
 		if ( isset( $_POST['enabled'] ) ) {
 			$options['enabled'] = rest_sanitize_boolean( wp_unslash( $_POST['enabled'] ) );
 		}
@@ -437,5 +469,79 @@ class IpBlackList {
 		$updated = self::update_options( $options );
 
 		wp_send_json_success( $updated, 200 );
+	}
+
+	/**
+	 * Add a single IP entry to the blacklist.
+	 */
+	public function ajax_add_ip_entry(): void {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
+			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
+		$ip = isset( $_POST['ip'] ) ? sanitize_text_field( wp_unslash( $_POST['ip'] ) ) : '';
+
+		if ( empty( $ip ) || ! self::is_valid_ip_or_cidr( $ip ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid IP address', 'rest-api-firewall' ) ), 400 );
+		}
+
+		$options   = self::get_options();
+		$blacklist = $options['blacklist'];
+
+		foreach ( $blacklist as $entry ) {
+			$entry_ip = is_array( $entry ) ? $entry['ip'] : $entry;
+			if ( $entry_ip === $ip ) {
+				wp_send_json_error( array( 'message' => __( 'IP already in list', 'rest-api-firewall' ) ), 400 );
+			}
+		}
+
+		$new_entry   = self::sanitize_ip_entry( array( 'ip' => $ip, 'type' => 'manual' ) );
+		$blacklist[] = $new_entry;
+
+		self::update_options( array( 'blacklist' => $blacklist ) );
+
+		wp_send_json_success( array( 'entry' => $new_entry ), 201 );
+	}
+
+	/**
+	 * Delete a single IP entry from the blacklist.
+	 */
+	public function ajax_delete_ip_entry(): void {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
+			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
+		}
+
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
+		$ip = isset( $_POST['ip'] ) ? sanitize_text_field( wp_unslash( $_POST['ip'] ) ) : '';
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		if ( empty( $ip ) ) {
+			wp_send_json_error( array( 'message' => __( 'IP address required', 'rest-api-firewall' ) ), 400 );
+		}
+
+		$options   = self::get_options();
+		$blacklist = $options['blacklist'];
+		$found     = false;
+
+		$blacklist = array_filter(
+			$blacklist,
+			function ( $entry ) use ( $ip, &$found ) {
+				$entry_ip = is_array( $entry ) ? $entry['ip'] : $entry;
+				if ( $entry_ip === $ip ) {
+					$found = true;
+					return false;
+				}
+				return true;
+			}
+		);
+
+		if ( ! $found ) {
+			wp_send_json_error( array( 'message' => __( 'IP not found', 'rest-api-firewall' ) ), 404 );
+		}
+
+		self::update_options( array( 'blacklist' => array_values( $blacklist ) ) );
+
+		wp_send_json_success( array( 'deleted' => true ), 200 );
 	}
 }

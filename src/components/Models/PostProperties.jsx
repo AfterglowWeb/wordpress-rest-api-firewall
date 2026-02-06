@@ -118,7 +118,9 @@ export default function PostProperties( {
 									/>
 									{ settings.filters &&
 										settings.filters.map( ( filter ) => {
-											return <Checkbox checked={ filter } />;
+											return (
+												<Checkbox checked={ filter } />
+											);
 										} ) }
 								</Box>
 							);
