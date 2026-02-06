@@ -23,7 +23,6 @@ import Snackbar from '@mui/material/Snackbar';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 export default function WebhookAuth( { hasSecret, setHasSecret, form, setField } ) {
@@ -35,7 +34,6 @@ export default function WebhookAuth( { hasSecret, setHasSecret, form, setField }
     const isRevealed = webhookSecret !== null;
     const isLoading = hasSecret === null;
 
-    const [ useCustomSecret, setUseCustomSecret ] = useState( false );
     const [ customSecret, setCustomSecret ] = useState( '' );
     const [ showSecretGuide, setShowSecretGuide ] = useState( false );
 
@@ -90,6 +88,7 @@ export default function WebhookAuth( { hasSecret, setHasSecret, form, setField }
         if ( result?.success ) {
             setWebhookSecret( result.data.secret );
             setHasSecret( true );
+            setField( { target: { name: 'application_webhook_custom_secret_enabled', value: false } } );
 
             setSnackbarOpen( true );
             setSnackbarSeverity( 'success' );
@@ -120,6 +119,7 @@ export default function WebhookAuth( { hasSecret, setHasSecret, form, setField }
         if ( result?.success ) {
             setWebhookSecret( null );
             setHasSecret( false );
+            setField( { target: { name: 'application_webhook_custom_secret_enabled', value: false } } );
 
             setSnackbarOpen( true );
             setSnackbarSeverity( 'success' );
@@ -183,7 +183,7 @@ export default function WebhookAuth( { hasSecret, setHasSecret, form, setField }
             if ( result?.success ) {
                 setWebhookSecret( customSecret );
                 setHasSecret( true );
-                setUseCustomSecret( false );
+                setField( { target: { name: 'application_webhook_custom_secret_enabled', value: true } } );
                 setCustomSecret( '' );
 
                 setSnackbarOpen( true );
@@ -302,10 +302,10 @@ return(<>
                             )
                 }
                 fullWidth
-                sx={ { display: useCustomSecret ? 'none' : 'block' } }
+                sx={ { display: form.application_webhook_custom_secret_enabled ? 'none' : 'block' } }
             />
 
-            <Collapse in={ useCustomSecret } timeout="auto" unmountOnExit>
+            <Collapse in={ form.application_webhook_custom_secret_enabled } timeout="auto" unmountOnExit>
                 <Stack spacing={ 2 }>
                     <TextField
                         label={ __(
@@ -345,7 +345,7 @@ return(<>
                             size="small"
                             variant="outlined"
                             onClick={ () => {
-                                setUseCustomSecret( false );
+                                setField( { target: { name: 'application_webhook_custom_secret_enabled', value: false } } );
                                 setCustomSecret( '' );
                             } }
                         >
@@ -391,7 +391,7 @@ return(<>
                     onClick={ () =>
                         setConfirmAction( 'regenerate' )
                     }
-                    disabled={ useCustomSecret }
+                    disabled={ form.application_webhook_custom_secret_enabled }
                 >
                     { hasSecret ? __( 'Regenerate', 'rest-api-firewall' ) : __( 'Generate', 'rest-api-firewall' ) }
                 </Button>
@@ -399,9 +399,9 @@ return(<>
                 <FormControlLabel
                     control={
                         <Checkbox
-                            checked={ useCustomSecret }
+                            checked={ form.application_webhook_custom_secret_enabled }
                             onChange={ ( e ) =>
-                                setUseCustomSecret( e.target.checked )
+                                setField( { target: { name: 'application_webhook_custom_secret_enabled', value: e.target.checked } } )
                             }
                             size="small"
                         />

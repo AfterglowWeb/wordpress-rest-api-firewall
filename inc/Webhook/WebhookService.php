@@ -203,9 +203,11 @@ class WebhookService {
 		}
 
 		$secret = wp_generate_password( 64, true );
-		$result = update_option( 'rest_api_firewall_application_webhook_secret', $secret );
+		update_option( 'rest_api_firewall_application_webhook_secret', $secret );
 
-		if( true === $result) {
+		
+			CoreOptions::update_option( 'application_webhook_custom_secret_enabled', false );
+
 			wp_send_json_success(
 				array(
 					'secret'  => $secret,
@@ -216,14 +218,7 @@ class WebhookService {
 				),
 				200
 			);
-		}
 
-		wp_send_json_error(
-				array(
-					'message' => esc_html__( 'An error occured while generating the secret.', 'rest-api-firewall' ),
-				),
-				500
-			);
 	}
 
 	public function ajax_update_application_webhook_custom_secret(): void {
@@ -251,26 +246,21 @@ class WebhookService {
 			);
 		}
 
-		$result = update_option( 'rest_api_firewall_application_webhook_secret', $secret );
+		update_option( 'rest_api_firewall_application_webhook_secret', $secret );
 
-		if( true === $result) {
+			CoreOptions::update_option( 'application_webhook_custom_secret_enabled', true );
+
 			wp_send_json_success(
 				array(
 					'message' => esc_html__(
-						'Your secret has been saved. You will not be able to view it again.',
+						'Your secret has been saved.',
 						'rest-api-firewall'
 					),
 				),
 				200
 			);
-		}
+		
 
-		wp_send_json_error(
-				array(
-					'message' => esc_html__( 'An error occured while saving.', 'rest-api-firewall' ),
-				),
-				500
-			);
 	}
 
 	public function ajax_delete_application_webhook_secret(): void {
@@ -284,6 +274,8 @@ class WebhookService {
 		if ( ! empty( $webhook ) ) {
 
 				update_option( 'rest_api_firewall_application_webhook_secret', false );
+				// Reset custom secret flag when deleting
+				CoreOptions::update_option( 'application_webhook_custom_secret_enabled', false );
 
 				wp_send_json_success(
 					array(

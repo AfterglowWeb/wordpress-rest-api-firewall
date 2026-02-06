@@ -57,7 +57,7 @@ class CoreOptions {
 				'context'           => array( 'free', 'pro' ),
 			),
 
-			'rest_firewall_remove_links_prop'            => array(
+			'rest_models_remove_links_prop'            => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -99,7 +99,7 @@ class CoreOptions {
 
 			// Collections.
 
-			'rest_api_posts_per_page'                    => array(
+			'rest_collections_posts_per_page'                    => array(
 				'default_value'     => 100,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -107,7 +107,7 @@ class CoreOptions {
 				'context'           => array( 'free', 'pro' ),
 			),
 
-			'rest_api_attachments_per_page'              => array(
+			'rest_collections_attachments_per_page'              => array(
 				'default_value'     => 100,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -129,6 +129,14 @@ class CoreOptions {
 				'default_value'     => '',
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+			),
+
+			'application_webhook_custom_secret_enabled'    => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
 			),

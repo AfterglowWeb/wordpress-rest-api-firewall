@@ -218,8 +218,8 @@ export default function Models( { form, setField } ) {
 					control={
 						<Switch
 							size="small"
-							checked={ !! form.rest_firewall_remove_links_prop }
-							name="rest_firewall_remove_links_prop"
+							checked={ !! form.rest_models_remove_links_prop }
+							name="rest_models_remove_links_prop"
 							onChange={ setField }
 						/>
 					}
