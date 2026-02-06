@@ -36,7 +36,7 @@ export default function Webhook( { form, setField } ) {
 					flexItem
 				/>
 
-				<WordpressEvents form={ form } set={ setField } />
+				<WordpressEvents form={ form } setField={ setField } />
 
 				<Divider
 					sx={ { display: { xs: 'block', xl: 'none' } } }
