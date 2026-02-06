@@ -11,7 +11,7 @@ class PostTypesAllowed {
 
 	public static function is_allowed( string $post_type ): bool {
 
-		if ( false === CoreOptions::read_option( 'rest_api_restrict_post_types_enabled' ) ) {
+		if ( false === CoreOptions::read_option( 'rest_collections_restrict_post_types_enabled' ) ) {
 			return true;
 		}
 
@@ -19,7 +19,7 @@ class PostTypesAllowed {
 			return false;
 		}
 
-		$allowed_post_types = CoreOptions::read_option( 'rest_api_allowed_post_types' );
+		$allowed_post_types = CoreOptions::read_option( 'rest_collections_allowed_post_types' );
 
 		if ( empty( $allowed_post_types ) ) {
 			return true;
@@ -38,7 +38,7 @@ class PostTypesAllowed {
 			return $result;
 		}
 
-		if ( false === CoreOptions::read_option( 'rest_api_restrict_post_types_enabled' ) ) {
+		if ( false === CoreOptions::read_option( 'rest_collections_restrict_post_types_enabled' ) ) {
 			return $result;
 		}
 

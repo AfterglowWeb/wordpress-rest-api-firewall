@@ -75,7 +75,7 @@ If you plan to extend this approach, it is recommended to create a child theme.
 
  - Added filter on menu items 'rest_firewall_model_menu_item' to allow modification of individual menu items before returning in REST API.
  - Added endpoint '/images/{post_type}' to fetch flattened list of images used in specified post type.
- - Changed filter name from 'cmk_rest_api_allowed_post_types' to 'rest_api_allowed_post_types' for consistency.
+ - Changed filter name from 'cmk_rest_collections_allowed_post_types' to 'rest_collections_allowed_post_types' for consistency.
  - Added filter 'rest_firewall_model_image' to allow modification of image properties before returning in REST API.
 
 ## Contributing

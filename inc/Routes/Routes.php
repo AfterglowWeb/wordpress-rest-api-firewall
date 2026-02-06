@@ -57,7 +57,7 @@ class Routes {
 				'rest_' . $post_type . '_collection_params',
 				function ( $query_params ) {
 
-					$posts_per_page = CoreOptions::read_option( 'rest_api_posts_per_page' );
+					$posts_per_page = CoreOptions::read_option( 'rest_collections_posts_per_page' );
 
 					if ( ! empty( $posts_per_page ) && isset( $query_params['per_page'] ) ) {
 						$query_params['per_page']['default'] = $posts_per_page;

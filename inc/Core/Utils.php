@@ -93,6 +93,28 @@ class Utils {
 		return array_values( $list );
 	}
 
+	public static function list_posts( string $post_type ): array {
+		$posts = get_posts(
+			array(
+				'post_type'    => $post_type,
+			)
+		);
+
+		if ( empty( $posts ) ) {
+			return array();
+		}
+
+		$list = array_map(
+			static fn ( object $post ) => array(
+				'value' => absint( $post->ID ),
+				'label' => $post->post_title ? sanitize_text_field( $post->post_title ) : sanitize_key( $post->slug ),
+			),
+			$posts
+		);
+
+		return array_values( $list );
+	}
+
 	public static function is_current_screen( string $screen_name ): bool {
 		if ( ! is_admin() ) {
 			return false;
