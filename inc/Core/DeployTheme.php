@@ -100,16 +100,11 @@ class DeployTheme {
 		return null;
 	}
 
-	/**
-	 * Deploy the theme by copying files.
-	 * Returns an array of steps with status for progress tracking.
-	 */
 	public static function deploy(): array {
 		$source = self::get_source_dir();
 		$target = self::get_target_dir();
 		$steps  = array();
 
-		// Step 1: Validate source.
 		$steps[] = array(
 			'step'    => 'validate_source',
 			'label'   => __( 'Validating source files', 'rest-api-firewall' ),
@@ -125,7 +120,6 @@ class DeployTheme {
 
 		$steps[0]['status'] = 'done';
 
-		// Step 2: Create target directory.
 		$steps[] = array(
 			'step'    => 'create_directory',
 			'label'   => __( 'Creating theme directory', 'rest-api-firewall' ),
@@ -143,7 +137,6 @@ class DeployTheme {
 
 		$steps[1]['status'] = 'done';
 
-		// Step 3: Copy files.
 		$steps[] = array(
 			'step'    => 'copy_files',
 			'label'   => __( 'Copying theme files', 'rest-api-firewall' ),
@@ -168,7 +161,6 @@ class DeployTheme {
 			count( $copy_result )
 		);
 
-		// Step 4: Verify deployment.
 		$steps[] = array(
 			'step'    => 'verify',
 			'label'   => __( 'Verifying deployment', 'rest-api-firewall' ),
@@ -206,13 +198,10 @@ class DeployTheme {
 			);
 		}
 
-		// Switch theme.
 		switch_theme( self::THEME_SLUG );
 
-		// Clear caches.
 		wp_cache_flush();
 
-		// Verify activation.
 		if ( ! self::is_active() ) {
 			return array(
 				'success' => false,

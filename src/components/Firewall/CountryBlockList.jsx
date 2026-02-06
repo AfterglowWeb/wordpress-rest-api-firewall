@@ -42,8 +42,10 @@ export default function CountryBlockList( {
 
 		const countryMap = {};
 		freeEntries.forEach( ( entry ) => {
-			const countryCode = entry?.geoIp?.country || null;
-			const countryName = entry?.geoIp?.countryName || null;
+			const countryCode =
+				entry?.country_code || entry?.geoIp?.country || null;
+			const countryName =
+				entry?.country_name || entry?.geoIp?.countryName || null;
 			if ( countryCode ) {
 				if ( ! countryMap[ countryCode ] ) {
 					countryMap[ countryCode ] = {

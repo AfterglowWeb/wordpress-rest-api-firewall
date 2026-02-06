@@ -297,7 +297,7 @@ export default function ThemeSettings( {
 							) }
 						</FormHelperText>
 					</FormControl>
-					<FormControl disabled={disabled}>
+					<FormControl disabled={ disabled }>
 						<FormControlLabel
 							control={
 								<Switch

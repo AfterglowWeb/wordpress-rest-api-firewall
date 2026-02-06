@@ -93,7 +93,9 @@ export default function useSettingsForm( {
 			)
 				? adminOptions.application_webhook_auto_trigger_events
 				: [],
-			application_webhook_custom_secret_enabled: Boolean( adminOptions.application_webhook_custom_secret_enabled ),
+			application_webhook_custom_secret_enabled: Boolean(
+				adminOptions.application_webhook_custom_secret_enabled
+			),
 
 			theme_redirect_templates_enabled: Boolean(
 				adminOptions.theme_redirect_templates_enabled
@@ -143,7 +145,8 @@ export default function useSettingsForm( {
 					false
 			);
 			baseForm.rest_collections_restrict_post_types_enabled = Boolean(
-				adminOptions.rest_collections_restrict_post_types_enabled ?? false
+				adminOptions.rest_collections_restrict_post_types_enabled ??
+					false
 			);
 			baseForm.rest_collections_allowed_post_types = Array.isArray(
 				adminOptions.rest_collections_allowed_post_types
@@ -214,7 +217,8 @@ export default function useSettingsForm( {
 				rest_models_remove_links_prop:
 					formData.rest_models_remove_links_prop,
 
-				rest_collections_posts_per_page: formData.rest_collections_posts_per_page,
+				rest_collections_posts_per_page:
+					formData.rest_collections_posts_per_page,
 				rest_collections_attachments_per_page:
 					formData.rest_collections_attachments_per_page,
 

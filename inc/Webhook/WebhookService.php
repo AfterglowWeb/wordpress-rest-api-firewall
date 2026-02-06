@@ -133,7 +133,7 @@ class WebhookService {
 			true,
 		);
 
-		$duration = round( ( microtime( true ) - $start_time ) * 1000 );
+		$duration     = round( ( microtime( true ) - $start_time ) * 1000 );
 		$headers_sent = $response['headers_sent'];
 
 		if ( is_wp_error( $response['result'] ) ) {
@@ -162,10 +162,10 @@ class WebhookService {
 		 *
 		 * @var array $response
 		 * */
-		$response_code = wp_remote_retrieve_response_code( $response['result']);
-		$response_body = wp_remote_retrieve_body( $response['result'] );
-		$is_remote_error =  empty( $response_code ) || $response_code >= 400;
-		$endpoint = isset( $response['endpoint'] ) ? $response['endpoint'] : $webhook_endpoint;
+		$response_code   = wp_remote_retrieve_response_code( $response['result'] );
+		$response_body   = wp_remote_retrieve_body( $response['result'] );
+		$is_remote_error = empty( $response_code ) || $response_code >= 400;
+		$endpoint        = isset( $response['endpoint'] ) ? $response['endpoint'] : $webhook_endpoint;
 
 		wp_send_json_success(
 			array(
@@ -175,7 +175,7 @@ class WebhookService {
 				'response_body' => $response_body,
 				'headers_sent'  => $headers_sent,
 				'duration'      => $duration,
-				'endpoint'      => $endpoint
+				'endpoint'      => $endpoint,
 			)
 		);
 	}
@@ -183,7 +183,7 @@ class WebhookService {
 	public function ajax_has_application_webhook_secret(): void {
 
 		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
-			wp_send_json_error( array( 'message' => esc_html__('Unauthorized', 'rest-api-firewall') ), 403 );
+			wp_send_json_error( array( 'message' => esc_html__( 'Unauthorized', 'rest-api-firewall' ) ), 403 );
 		}
 
 		$has_secret = (bool) get_option( 'rest_api_firewall_application_webhook_secret' );
@@ -199,13 +199,12 @@ class WebhookService {
 	public function ajax_update_application_webhook_secret(): void {
 
 		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
-			wp_send_json_error( array( 'message' => esc_html__('Unauthorized', 'rest-api-firewall') ), 403 );
+			wp_send_json_error( array( 'message' => esc_html__( 'Unauthorized', 'rest-api-firewall' ) ), 403 );
 		}
 
 		$secret = wp_generate_password( 64, true );
 		update_option( 'rest_api_firewall_application_webhook_secret', $secret );
 
-		
 			CoreOptions::update_option( 'application_webhook_custom_secret_enabled', false );
 
 			wp_send_json_success(
@@ -218,16 +217,16 @@ class WebhookService {
 				),
 				200
 			);
-
 	}
 
 	public function ajax_update_application_webhook_custom_secret(): void {
 
 		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
-			wp_send_json_error( array( 'message' => esc_html__('Unauthorized', 'rest-api-firewall') ), 403 );
+			wp_send_json_error( array( 'message' => esc_html__( 'Unauthorized', 'rest-api-firewall' ) ), 403 );
 		}
 
-		if( ! isset( $_POST['custom_secret'] ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
+		if ( ! isset( $_POST['custom_secret'] ) ) {
 				wp_send_json_error(
 					array(
 						'message' => esc_html__( 'Missing data.', 'rest-api-firewall' ),
@@ -235,9 +234,9 @@ class WebhookService {
 					422
 				);
 		}
-
-		$secret = sanitize_text_field( wp_unslash( $_POST['custom_secret'] ));
-		if( empty ($secret)) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
+		$secret = sanitize_text_field( wp_unslash( $_POST['custom_secret'] ) );
+		if ( empty( $secret ) ) {
 			wp_send_json_error(
 				array(
 					'message' => esc_html__( 'Missing value.', 'rest-api-firewall' ),
@@ -259,14 +258,12 @@ class WebhookService {
 				),
 				200
 			);
-		
-
 	}
 
 	public function ajax_delete_application_webhook_secret(): void {
 
 		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
-			wp_send_json_error( array( 'message' => esc_html__('Unauthorized', 'rest-api-firewall') ), 403 );
+			wp_send_json_error( array( 'message' => esc_html__( 'Unauthorized', 'rest-api-firewall' ) ), 403 );
 		}
 
 		$webhook = get_option( 'rest_api_firewall_application_webhook_secret' );
@@ -274,7 +271,6 @@ class WebhookService {
 		if ( ! empty( $webhook ) ) {
 
 				update_option( 'rest_api_firewall_application_webhook_secret', false );
-				// Reset custom secret flag when deleting
 				CoreOptions::update_option( 'application_webhook_custom_secret_enabled', false );
 
 				wp_send_json_success(
