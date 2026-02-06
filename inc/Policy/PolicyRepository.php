@@ -26,7 +26,6 @@ class PolicyRepository {
 		add_action( 'wp_ajax_save_routes_policy_tree', array( $this, 'ajax_save_routes_policy_tree' ) );
 	}
 
-	/** Services */
 	public static function get_routes_policy_tree(): array {
 		$flat   = RoutesRepository::list_all_rest_routes();
 		$tree   = self::build_policy_tree( $flat );
@@ -97,7 +96,6 @@ class PolicyRepository {
 		);
 	}
 
-	/** Controller */
 	public static function save_diff( array $diff ): bool {
 		$diff = array(
 			'nodes'  => $diff['nodes'] ?? array(),
@@ -114,7 +112,6 @@ class PolicyRepository {
 		 */
 		$saved = apply_filters( 'rest_api_firewall_save_policy', false, $diff );
 
-		// Fallback to free version storage if no pro handler.
 		if ( ! $saved ) {
 			FirewallOptions::update_option( 'policy', $diff );
 			return true;
@@ -236,7 +233,6 @@ class PolicyRepository {
 		delete_transient( 'rest_firewall_routes_list' );
 	}
 
-	/** Tree Model */
 	public static function build_policy_tree( array $flat_routes ): array {
 
 		$tree = array();
@@ -370,7 +366,6 @@ class PolicyRepository {
 			$segments[] = $buffer;
 		}
 
-		// Need at least namespace.
 		if ( count( $segments ) < 2 ) {
 			return array();
 		}

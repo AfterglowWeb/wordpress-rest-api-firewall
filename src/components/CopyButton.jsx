@@ -6,39 +6,39 @@ import Alert from '@mui/material/Alert';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 export default function CopyButton( { toCopy } ) {
-    const [ copyFeedback, setCopyFeedback ] = useState( false );
+	const [ copyFeedback, setCopyFeedback ] = useState( false );
 
-    const handleCopy = ( e ) => {
-        e.stopPropagation();
-        navigator.clipboard.writeText( toCopy || '' );
-        setCopyFeedback( true );
-    };
+	const handleCopy = ( e ) => {
+		e.stopPropagation();
+		navigator.clipboard.writeText( toCopy || '' );
+		setCopyFeedback( true );
+	};
 
-    return (
-        <>
-            <Tooltip title="Copy">
-                <IconButton
-                    size="small"
-                    onClick={ handleCopy }
-                    sx={ { p: 0.25 } }
-                >
-                    <ContentCopyIcon sx={ { fontSize: 14 } } />
-                </IconButton>
-            </Tooltip>
-            <Snackbar
-                open={ copyFeedback }
-                autoHideDuration={ 2000 }
-                onClose={ () => setCopyFeedback( false ) }
-                anchorOrigin={ { vertical: 'center', horizontal: 'center' } }
-            >
-                <Alert
-                    onClose={ () => setCopyFeedback( false ) }
-                    severity="success"
-                    sx={ { width: '100%' } }
-                >
-                    Copied to clipboard
-                </Alert>
-            </Snackbar>
-        </>
-    );
+	return (
+		<>
+			<Tooltip title="Copy">
+				<IconButton
+					size="small"
+					onClick={ handleCopy }
+					sx={ { p: 0.25 } }
+				>
+					<ContentCopyIcon sx={ { fontSize: 14 } } />
+				</IconButton>
+			</Tooltip>
+			<Snackbar
+				open={ copyFeedback }
+				autoHideDuration={ 2000 }
+				onClose={ () => setCopyFeedback( false ) }
+				anchorOrigin={ { vertical: 'center', horizontal: 'center' } }
+			>
+				<Alert
+					onClose={ () => setCopyFeedback( false ) }
+					severity="success"
+					sx={ { width: '100%' } }
+				>
+					Copied to clipboard
+				</Alert>
+			</Snackbar>
+		</>
+	);
 }

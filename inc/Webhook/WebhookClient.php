@@ -15,9 +15,9 @@ final class WebhookClient {
 		$secret  = get_option( 'rest_api_firewall_application_webhook_secret' );
 
 		if ( ! $host || ! $secret ) {
-			return new WP_Error( 
-			'config', 
-			__('Webhook not configured', 'rest-api-firewall'), 
+			return new WP_Error(
+				'config',
+				__( 'Webhook not configured', 'rest-api-firewall' ),
 			);
 		}
 
@@ -46,21 +46,20 @@ final class WebhookClient {
 			)
 		);
 
-		if(true === $is_test)  {
-			return [
-				'result' => $result,
-				'endpoint' => $endpoint,
+		if ( true === $is_test ) {
+			return array(
+				'result'       => $result,
+				'endpoint'     => $endpoint,
 				'headers_sent' => array(
 					'Content-Type'        => 'application/json',
 					'X-Webhook-Signature' => 'xxx-xxx-xxx-xxx',
 					'X-Webhook-Timestamp' => $timestamp,
 					'X-Webhook-Source'    => 'wordpress',
 				),
-			];
+			);
 		}
 
 		return $result;
-
 	}
 
 

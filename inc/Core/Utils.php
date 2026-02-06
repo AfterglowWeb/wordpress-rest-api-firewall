@@ -96,7 +96,7 @@ class Utils {
 	public static function list_posts( string $post_type ): array {
 		$posts = get_posts(
 			array(
-				'post_type'    => $post_type,
+				'post_type' => $post_type,
 			)
 		);
 
