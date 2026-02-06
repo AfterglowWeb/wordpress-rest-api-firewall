@@ -19,6 +19,7 @@ export default function useSettingsForm( {
 		rest_models_with_acf_enabled: false,
 		rest_models_remove_links_prop: false,
 		rest_models_remove_empty_props: false,
+		rest_collections_per_page_enabled: false,
 		rest_collections_posts_per_page: 100,
 		rest_collections_attachments_per_page: 100,
 		application_host: '',
@@ -74,6 +75,9 @@ export default function useSettingsForm( {
 			),
 			rest_models_remove_empty_props: Boolean(
 				adminOptions.rest_models_remove_empty_props
+			),
+			rest_collections_per_page_enabled:  Boolean(
+				adminOptions.rest_collections_per_page_enabled
 			),
 			rest_models_remove_links_prop: Boolean(
 				adminOptions.rest_models_remove_links_prop
@@ -217,6 +221,8 @@ export default function useSettingsForm( {
 				rest_models_remove_links_prop:
 					formData.rest_models_remove_links_prop,
 
+				rest_collections_per_page_enabled:
+					formData.rest_collections_per_page_enabled,
 				rest_collections_posts_per_page:
 					formData.rest_collections_posts_per_page,
 				rest_collections_attachments_per_page:

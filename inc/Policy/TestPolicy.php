@@ -233,6 +233,7 @@ class TestPolicy {
 
 		// We won't actually trigger rate limiting as that would require many requests.
 		// Instead, we verify the policy is set and make a single request to confirm the route responds.
+		// To update to complete test
 		$response    = $this->make_request( $route, $method, false );
 		$status_code = wp_remote_retrieve_response_code( $response );
 

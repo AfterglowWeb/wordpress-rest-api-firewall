@@ -44,6 +44,10 @@ class Routes {
 
 	private static function set_posts_per_page(): void {
 
+		if( false === CoreOptions::read_option( 'rest_collections_per_page_enabled' ) ) {
+			return;
+		}
+
 		$post_types = get_post_types(
 			array(
 				'public'       => true,
@@ -51,17 +55,25 @@ class Routes {
 			)
 		);
 
+		if( empty( $post_types )) {
+			return;
+		}
+
 		foreach ( $post_types as $post_type ) {
 
 			add_filter(
 				'rest_' . $post_type . '_collection_params',
 				function ( $query_params ) {
 
-					$posts_per_page = CoreOptions::read_option( 'rest_collections_posts_per_page' );
+					$post_type            = $query_params['type'];
+					$posts_per_page       = CoreOptions::read_option( 'rest_collections_posts_per_page' );
+					$attachments_per_page = CoreOptions::read_option( 'rest_collections_attachments_per_page' );
+					
+					$per_page = $post_type !== 'attachment' ? $posts_per_page : $attachments_per_page;
 
-					if ( ! empty( $posts_per_page ) && isset( $query_params['per_page'] ) ) {
-						$query_params['per_page']['default'] = $posts_per_page;
-						$query_params['per_page']['maximum'] = $posts_per_page;
+					if ( ! empty( $per_page ) && isset( $query_params['per_page'] ) ) {
+						$query_params['per_page']['default'] = $per_page;
+						$query_params['per_page']['maximum'] = $per_page;
 					}
 					return $query_params;
 				},
