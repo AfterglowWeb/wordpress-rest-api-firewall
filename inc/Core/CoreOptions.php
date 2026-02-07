@@ -98,7 +98,7 @@ class CoreOptions {
 			),
 
 			// Collections.
-			'rest_collections_per_page_enabled'=> array(
+			'rest_collections_per_page_enabled'          => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',

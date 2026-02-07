@@ -496,7 +496,12 @@ class IpBlackList {
 			}
 		}
 
-		$new_entry   = self::sanitize_ip_entry( array( 'ip' => $ip, 'type' => 'manual' ) );
+		$new_entry   = self::sanitize_ip_entry(
+			array(
+				'ip'   => $ip,
+				'type' => 'manual',
+			)
+		);
 		$blacklist[] = $new_entry;
 
 		self::update_options( array( 'blacklist' => $blacklist ) );

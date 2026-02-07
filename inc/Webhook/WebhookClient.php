@@ -7,6 +7,92 @@ use WP_Error;
 
 final class WebhookClient {
 
+	/**
+	 * Send a webhook request using a webhook entry object.
+	 *
+	 * @param array $webhook  The webhook entry (from new schema).
+	 * @param array $payload  The payload data.
+	 * @param bool  $is_test  Whether this is a test request.
+	 * @return array|WP_Error The response or error.
+	 */
+	public static function post_with_webhook( array $webhook, array $payload, bool $is_test = false ) {
+		$options = CoreOptions::read_options();
+		$host    = rtrim( $options['application_host'], '/' );
+		$route   = ltrim( $webhook['endpoint'] ?? '', '/' );
+		$secret  = get_option( 'rest_api_firewall_application_webhook_secret' );
+		$timeout = isset( $webhook['timeout_seconds'] ) ? absint( $webhook['timeout_seconds'] ) : 10;
+		$method  = isset( $webhook['method'] ) ? strtoupper( $webhook['method'] ) : 'POST';
+
+		if ( ! $host || ! $secret ) {
+			return new WP_Error(
+				'config',
+				__( 'Webhook not configured', 'rest-api-firewall' ),
+			);
+		}
+
+		if ( empty( $route ) ) {
+			return new WP_Error(
+				'config',
+				__( 'Webhook endpoint not configured', 'rest-api-firewall' ),
+			);
+		}
+
+		$timestamp = time();
+		$body      = ! empty( $payload ) ? wp_json_encode( $payload ) : '';
+
+		$signature = hash_hmac(
+			'sha256',
+			$body . $timestamp,
+			$secret
+		);
+
+		$endpoint = $host . '/' . $route;
+
+		$headers = array(
+			'Content-Type'        => 'application/json',
+			'X-Webhook-Signature' => $signature,
+			'X-Webhook-Timestamp' => $timestamp,
+			'X-Webhook-Source'    => 'wordpress',
+		);
+
+		if ( ! empty( $webhook['headers'] ) && is_array( $webhook['headers'] ) ) {
+			$headers = array_merge( $headers, $webhook['headers'] );
+		}
+
+		$args = array(
+			'timeout' => $timeout,
+			'headers' => $headers,
+			'body'    => $body,
+		);
+
+		if ( 'GET' === $method ) {
+			$result = wp_remote_get( $endpoint, $args );
+		} else {
+			$result = wp_remote_post( $endpoint, $args );
+		}
+
+		if ( true === $is_test ) {
+			$headers_sent                        = $headers;
+			$headers_sent['X-Webhook-Signature'] = 'xxx-xxx-xxx-xxx';
+
+			return array(
+				'result'       => $result,
+				'endpoint'     => $endpoint,
+				'headers_sent' => $headers_sent,
+			);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Send a webhook request (legacy method, uses CoreOptions).
+	 *
+	 * @param string $route    The webhook route/endpoint.
+	 * @param array  $payload  The payload data.
+	 * @param bool   $is_test  Whether this is a test request.
+	 * @return array|WP_Error The response or error.
+	 */
 	public static function post( string $route, array $payload, $is_test = false ) {
 
 		$options = CoreOptions::read_options();
@@ -22,7 +108,7 @@ final class WebhookClient {
 		}
 
 		$timestamp = time();
-		$body      = ! empty( $payload ) ? wp_json_encode( $payload ) : array();
+		$body      = ! empty( $payload ) ? wp_json_encode( $payload ) : '';
 
 		$signature = hash_hmac(
 			'sha256',
