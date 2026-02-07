@@ -17,7 +17,7 @@ export default function WordpressEvents( { form, setField } ) {
 			return {
 				value: eventKey,
 				label: groupLabel
-					? `${ groupLabel }: ${ eventConfig.label }`
+					? `${ eventConfig.label }`
 					: eventConfig.label,
 			};
 		}
