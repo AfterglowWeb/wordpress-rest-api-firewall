@@ -1,12 +1,22 @@
-import { createContext, useContext } from '@wordpress/element';
+import { createContext, useContext, useState, useCallback } from '@wordpress/element';
 
 const LicenseContext = createContext( {
 	hasValidLicense: false,
+	status: null,
+	updateLicenseStatus: () => {},
 } );
 
-export function LicenseProvider( { children, hasValidLicense } ) {
+export function LicenseProvider( { children } ) {
+	const [ hasValidLicense, setHasValidLicense ] = useState( false );
+	const [ status, setStatus ] = useState( null );
+
+	const updateLicenseStatus = useCallback( ( newStatus ) => {
+		setStatus( newStatus );
+		setHasValidLicense( newStatus?.valid === true );
+	}, [] );
+
 	return (
-		<LicenseContext.Provider value={ { hasValidLicense } }>
+		<LicenseContext.Provider value={ { hasValidLicense, status, updateLicenseStatus } }>
 			{ children }
 		</LicenseContext.Provider>
 	);
