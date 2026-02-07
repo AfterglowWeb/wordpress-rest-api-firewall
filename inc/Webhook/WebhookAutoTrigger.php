@@ -6,6 +6,7 @@ defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Core\CoreOptions;
 use cmk\RestApiFirewall\Webhook\WebhookClient;
+use cmk\RestApiFirewall\Webhook\WebhookService;
 
 class WebhookAutoTrigger {
 
@@ -26,66 +27,76 @@ class WebhookAutoTrigger {
 		$events = array(
 
 			'save_post'          => array(
-				'label'       => __( 'Post saved', 'rest-api-firewall' ),
-				'description' => __( 'Triggered when a post is created or updated', 'rest-api-firewall' ),
-				'group'       => 'posts',
-				'context'     => array( 'free', 'pro' ),
+				'label'         => __( 'Post saved', 'rest-api-firewall' ),
+				'description'   => __( 'Triggered when a post is created or updated', 'rest-api-firewall' ),
+				'group'         => 'posts',
+				'context'       => array( 'free', 'pro' ),
+				'accepted_args' => 3, // post_id, post, update.
 			),
 			'before_delete_post' => array(
-				'label'       => __( 'Post deleted', 'rest-api-firewall' ),
-				'description' => __( 'Triggered before a post is permanently deleted', 'rest-api-firewall' ),
-				'group'       => 'posts',
-				'context'     => array( 'pro' ),
+				'label'         => __( 'Post deleted', 'rest-api-firewall' ),
+				'description'   => __( 'Triggered before a post is permanently deleted', 'rest-api-firewall' ),
+				'group'         => 'posts',
+				'context'       => array( 'pro' ),
+				'accepted_args' => 2, // post_id, post.
 			),
 			'trashed_post'       => array(
-				'label'       => __( 'Post trashed', 'rest-api-firewall' ),
-				'description' => __( 'Triggered when a post is moved to trash', 'rest-api-firewall' ),
-				'group'       => 'posts',
-				'context'     => array( 'pro' ),
+				'label'         => __( 'Post trashed', 'rest-api-firewall' ),
+				'description'   => __( 'Triggered when a post is moved to trash', 'rest-api-firewall' ),
+				'group'         => 'posts',
+				'context'       => array( 'pro' ),
+				'accepted_args' => 2, // post_id, previous_status.
 			),
 			'untrashed_post'     => array(
-				'label'       => __( 'Post restored', 'rest-api-firewall' ),
-				'description' => __( 'Triggered when a post is restored from trash', 'rest-api-firewall' ),
-				'group'       => 'posts',
-				'context'     => array( 'pro' ),
+				'label'         => __( 'Post restored', 'rest-api-firewall' ),
+				'description'   => __( 'Triggered when a post is restored from trash', 'rest-api-firewall' ),
+				'group'         => 'posts',
+				'context'       => array( 'pro' ),
+				'accepted_args' => 2, // post_id, previous_status.
 			),
 
 			'add_attachment'     => array(
-				'label'       => __( 'Attachment added', 'rest-api-firewall' ),
-				'description' => __( 'Triggered when a new attachment is uploaded', 'rest-api-firewall' ),
-				'group'       => 'attachments',
-				'context'     => array( 'free', 'pro' ),
+				'label'         => __( 'Attachment added', 'rest-api-firewall' ),
+				'description'   => __( 'Triggered when a new attachment is uploaded', 'rest-api-firewall' ),
+				'group'         => 'attachments',
+				'context'       => array( 'free', 'pro' ),
+				'accepted_args' => 1, // post_id.
 			),
 			'edit_attachment'    => array(
-				'label'       => __( 'Attachment edited', 'rest-api-firewall' ),
-				'description' => __( 'Triggered when an attachment is modified', 'rest-api-firewall' ),
-				'group'       => 'attachments',
-				'context'     => array( 'pro' ),
+				'label'         => __( 'Attachment edited', 'rest-api-firewall' ),
+				'description'   => __( 'Triggered when an attachment is modified', 'rest-api-firewall' ),
+				'group'         => 'attachments',
+				'context'       => array( 'pro' ),
+				'accepted_args' => 1, // post_id.
 			),
 			'delete_attachment'  => array(
-				'label'       => __( 'Attachment deleted', 'rest-api-firewall' ),
-				'description' => __( 'Triggered when an attachment is deleted', 'rest-api-firewall' ),
-				'group'       => 'attachments',
-				'context'     => array( 'pro' ),
+				'label'         => __( 'Attachment deleted', 'rest-api-firewall' ),
+				'description'   => __( 'Triggered when an attachment is deleted', 'rest-api-firewall' ),
+				'group'         => 'attachments',
+				'context'       => array( 'pro' ),
+				'accepted_args' => 1, // post_id.
 			),
 
 			'created_term'       => array(
-				'label'       => __( 'Term created', 'rest-api-firewall' ),
-				'description' => __( 'Triggered when a new term is created', 'rest-api-firewall' ),
-				'group'       => 'terms',
-				'context'     => array( 'free', 'pro' ),
+				'label'         => __( 'Term created', 'rest-api-firewall' ),
+				'description'   => __( 'Triggered when a new term is created', 'rest-api-firewall' ),
+				'group'         => 'terms',
+				'context'       => array( 'free', 'pro' ),
+				'accepted_args' => 3, // term_id, tt_id, taxonomy.
 			),
 			'edited_term'        => array(
-				'label'       => __( 'Term edited', 'rest-api-firewall' ),
-				'description' => __( 'Triggered when a term is modified', 'rest-api-firewall' ),
-				'group'       => 'terms',
-				'context'     => array( 'pro' ),
+				'label'         => __( 'Term edited', 'rest-api-firewall' ),
+				'description'   => __( 'Triggered when a term is modified', 'rest-api-firewall' ),
+				'group'         => 'terms',
+				'context'       => array( 'pro' ),
+				'accepted_args' => 3, // term_id, tt_id, taxonomy.
 			),
 			'delete_term'        => array(
-				'label'       => __( 'Term deleted', 'rest-api-firewall' ),
-				'description' => __( 'Triggered when a term is deleted', 'rest-api-firewall' ),
-				'group'       => 'terms',
-				'context'     => array( 'pro' ),
+				'label'         => __( 'Term deleted', 'rest-api-firewall' ),
+				'description'   => __( 'Triggered when a term is deleted', 'rest-api-firewall' ),
+				'group'         => 'terms',
+				'context'       => array( 'pro' ),
+				'accepted_args' => 5, // term_id, tt_id, taxonomy, deleted_term, object_ids.
 			),
 		);
 
@@ -103,6 +114,124 @@ class WebhookAutoTrigger {
 	}
 
 	public function register_event_hooks(): void {
+		$webhooks_data = WebhookService::get_webhooks();
+		$automations   = $webhooks_data['automations'] ?? array();
+		$webhooks      = $webhooks_data['webhooks'] ?? array();
+
+		if ( ! empty( $automations ) ) {
+			$this->register_automation_hooks( $automations, $webhooks );
+			return;
+		}
+
+		$this->register_legacy_event_hooks();
+	}
+
+	/**
+	 * Register hooks using new automation structure.
+	 *
+	 * @param array $automations The automations array.
+	 * @param array $webhooks    The webhooks array.
+	 */
+	private function register_automation_hooks( array $automations, array $webhooks ): void {
+		$available_events = self::get_available_events();
+
+		foreach ( $automations as $automation ) {
+			if ( empty( $automation['enabled'] ) ) {
+				continue;
+			}
+
+			$event_key = $automation['event'] ?? '';
+			if ( empty( $event_key ) || ! isset( $available_events[ $event_key ] ) ) {
+				continue;
+			}
+
+			$this->register_automation_hook( $automation, $webhooks, $event_key, $available_events[ $event_key ] );
+		}
+	}
+
+	/**
+	 * Register a single automation hook.
+	 *
+	 * @param array  $automation   The automation entry.
+	 * @param array  $webhooks     All webhooks.
+	 * @param string $event_key    The event hook name.
+	 * @param array  $event_config The event configuration.
+	 */
+	private function register_automation_hook( array $automation, array $webhooks, string $event_key, array $event_config ): void {
+		$callback = function ( ...$args ) use ( $automation, $webhooks, $event_key, $event_config ) {
+			$this->handle_automation_event( $automation, $webhooks, $event_key, $event_config, $args );
+		};
+
+		$accepted_args = $this->get_hook_accepted_args( $event_key );
+
+		add_action( $event_key, $callback, 99, $accepted_args );
+	}
+
+	/**
+	 * Handle an automation-triggered event.
+	 *
+	 * @param array  $automation   The automation entry.
+	 * @param array  $webhooks     All webhooks.
+	 * @param string $event_key    The event hook name.
+	 * @param array  $event_config The event configuration.
+	 * @param array  $args         The original hook arguments.
+	 */
+	private function handle_automation_event( array $automation, array $webhooks, string $event_key, array $event_config, array $args ): void {
+		$payload = WebhookClient::build_event_payload( $event_key, $event_config, $args );
+
+		/**
+		 * Filter payload before sending.
+		 *
+		 * @param array  $payload    Event payload.
+		 * @param string $event_key  Event hook name.
+		 * @param array  $args       Original hook arguments.
+		 * @param array  $automation The automation entry.
+		 */
+		$payload = apply_filters( 'rest_api_firewall_webhook_auto_trigger_payload', $payload, $event_key, $args, $automation );
+
+		if ( false === $payload ) {
+			return;
+		}
+
+		// Trigger all linked webhooks.
+		$webhook_ids = $automation['webhook_ids'] ?? array();
+		foreach ( $webhook_ids as $webhook_id ) {
+			$webhook = $this->find_webhook_by_id( $webhooks, $webhook_id );
+			if ( $webhook && ! empty( $webhook['enabled'] ) ) {
+				$response = WebhookClient::post_with_webhook( $webhook, $payload );
+
+				/**
+				 * Action after webhook is triggered.
+				 *
+				 * @param array|WP_Error $response   Webhook response.
+				 * @param array          $payload    Event payload.
+				 * @param string         $event_key  Event hook name.
+				 * @param array          $args       Original hook arguments.
+				 * @param array          $automation The automation entry.
+				 * @param array          $webhook    The webhook entry.
+				 */
+				do_action( 'rest_api_firewall_webhook_auto_trigger_complete', $response, $payload, $event_key, $args, $automation, $webhook );
+			}
+		}
+	}
+
+	/**
+	 * Find a webhook by ID in the webhooks array.
+	 *
+	 * @param array  $webhooks All webhooks.
+	 * @param string $id       The webhook ID.
+	 * @return array|null The webhook or null.
+	 */
+	private function find_webhook_by_id( array $webhooks, string $id ): ?array {
+		foreach ( $webhooks as $webhook ) {
+			if ( isset( $webhook['id'] ) && $webhook['id'] === $id ) {
+				return $webhook;
+			}
+		}
+		return null;
+	}
+
+	private function register_legacy_event_hooks(): void {
 		$enabled_events = CoreOptions::read_option( 'application_webhook_auto_trigger_events' );
 
 		if ( empty( $enabled_events ) || ! is_array( $enabled_events ) ) {
@@ -131,20 +260,9 @@ class WebhookAutoTrigger {
 	}
 
 	private function get_hook_accepted_args( string $event_key ): int {
-		$args_map = array(
-			'save_post'          => 3, // post_id, post, update.
-			'before_delete_post' => 2, // post_id, post.
-			'trashed_post'       => 2, // post_id, previous_status.
-			'untrashed_post'     => 2, // post_id, previous_status.
-			'add_attachment'     => 1, // post_id.
-			'edit_attachment'    => 1, // post_id.
-			'delete_attachment'  => 1, // post_id.
-			'created_term'       => 3, // term_id, tt_id, taxonomy.
-			'edited_term'        => 3, // term_id, tt_id, taxonomy.
-			'delete_term'        => 5, // term_id, tt_id, taxonomy, deleted_term, object_ids.
-		);
+		$available_events = self::get_available_events();
 
-		return $args_map[ $event_key ] ?? 1;
+		return $available_events[ $event_key ]['accepted_args'] ?? 1;
 	}
 
 	private function handle_event( string $event_key, array $event_config, array $args ): void {

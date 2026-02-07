@@ -191,6 +191,7 @@ class FileUtils {
 						return new WP_Error(
 							'mkdir_error',
 							sprintf(
+								/* translators: %s is the directory target path */
 								__( 'Failed to create directory: %s', 'rest-api-firewall' ),
 								$target_path
 							)

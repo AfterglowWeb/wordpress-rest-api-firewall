@@ -44,7 +44,7 @@ class Routes {
 
 	private static function set_posts_per_page(): void {
 
-		if( false === CoreOptions::read_option( 'rest_collections_per_page_enabled' ) ) {
+		if ( false === CoreOptions::read_option( 'rest_collections_per_page_enabled' ) ) {
 			return;
 		}
 
@@ -55,7 +55,7 @@ class Routes {
 			)
 		);
 
-		if( empty( $post_types )) {
+		if ( empty( $post_types ) ) {
 			return;
 		}
 
@@ -68,8 +68,8 @@ class Routes {
 					$post_type            = $query_params['type'];
 					$posts_per_page       = CoreOptions::read_option( 'rest_collections_posts_per_page' );
 					$attachments_per_page = CoreOptions::read_option( 'rest_collections_attachments_per_page' );
-					
-					$per_page = $post_type !== 'attachment' ? $posts_per_page : $attachments_per_page;
+
+					$per_page = 'attachment' !== $post_type ? $posts_per_page : $attachments_per_page;
 
 					if ( ! empty( $per_page ) && isset( $query_params['per_page'] ) ) {
 						$query_params['per_page']['default'] = $per_page;
