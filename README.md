@@ -38,8 +38,8 @@ It integrates seamlessly with external applications built with Next.js, React, V
   <tr>
     <td align="center" width="50%">
       <img src="docs/wordpress-rest-api-firewall-ip-filter-management-tab.webp" alt="IP Filter Management" />
-      <br /><strong>Webhook</strong><br />
-      <sub>Manage blocked IPs, bulk add IPs by CIDR and Country (pro version)</sub>
+      <br /><strong>IPs Data</strong><br />
+      <sub>Manage blocked IPs, block IPs by CIDR and Country (pro version)</sub>
     </td>
   </tr>
 </table>

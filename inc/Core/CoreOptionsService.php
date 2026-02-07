@@ -33,7 +33,7 @@ class CoreOptionsService {
 
 	public function ajax_update_options() {
 		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
-			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
+			wp_send_json_error( array( 'message' => esc_html__( 'Unauthorized', 'rest-api-firewall' ) ), 403 );
 		}
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
 		if ( isset( $_POST['action'] ) && 'rest_api_firewall_update_options' === $_POST['action'] && isset( $_POST['options'] ) ) {

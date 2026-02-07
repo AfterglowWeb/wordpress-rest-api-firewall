@@ -8,6 +8,7 @@ import Tooltip from '@mui/material/Tooltip';
 import { useAdminData } from './contexts/AdminDataContext';
 import sanitizeHtml from './utils/sanitizeHtml';
 import Documentation from './components/Documentation';
+import LicenseDialog from './components/LicenseDialog';
 
 const AppHeader = styled( Box )( ( { theme } ) => ( {
 	background: 'linear-gradient(135deg, #fafafa 0%, #ffffff 100%)',
@@ -120,6 +121,7 @@ export default function Header() {
 						/>
 					</Tooltip>
 				</BrandSection>
+				<LicenseDialog />
 			</MainContainer>
 		</AppHeader>
 	);
