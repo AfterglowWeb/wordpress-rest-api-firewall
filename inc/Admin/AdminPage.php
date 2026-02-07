@@ -134,7 +134,10 @@ class AdminPage {
 		#rest-api-firewall-admin-page input[type=text], 
 		#rest-api-firewall-admin-page input[type=time], 
 		#rest-api-firewall-admin-page input[type=url], 
-		#rest-api-firewall-admin-page input[type=week] {
+		#rest-api-firewall-admin-page input[type=week],
+		body.toplevel_page_rest-api-firewall-admin input[type=text],
+		body.toplevel_page_rest-api-firewall-admin input[type=password],
+		body.toplevel_page_rest-api-firewall-admin input[type=email] {
 			box-shadow: unset;
 			border-radius: 4px;
 			border: 0;
