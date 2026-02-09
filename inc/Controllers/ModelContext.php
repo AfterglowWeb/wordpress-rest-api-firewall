@@ -6,15 +6,19 @@ class ModelContext {
 
 	public bool $use_core_rest;
 	public bool $with_acf;
+	public bool $with_acf_options_page;
 	public bool $embed_terms;
 	public bool $embed_author;
 	public bool $embed_featured_attachment;
 	public bool $embed_attachments;
+	public bool $embed_menus;
 	public bool $relative_urls;
 	public bool $relative_attachment_urls;
 	public bool $resolve_rendered_props;
 	public bool $remove_links_prop;
 	public bool $remove_empty_props;
+	public bool $remove_site_url;
+	public bool $remove_site_email;
 	public array $disabled_properties = array();
 	public array $property_filters    = array();
 
@@ -63,15 +67,19 @@ class ModelContext {
 		$context                            = new self();
 		$context->use_core_rest             = (bool) CoreOptions::read_option( 'rest_models_enabled' );
 		$context->with_acf                  = (bool) CoreOptions::read_option( 'rest_models_with_acf_enabled' );
+		$context->with_acf_options_page     = (bool) CoreOptions::read_option( 'rest_models_acf_options_page_enabled' );
 		$context->embed_terms               = (bool) CoreOptions::read_option( 'rest_models_embed_terms_enabled' );
 		$context->embed_author              = (bool) CoreOptions::read_option( 'rest_models_embed_author_enabled' );
 		$context->embed_featured_attachment = (bool) CoreOptions::read_option( 'rest_models_embed_featured_attachment_enabled' );
 		$context->embed_attachments         = (bool) CoreOptions::read_option( 'rest_models_embed_post_attachments_enabled' );
+		$context->embed_menus               = (bool) CoreOptions::read_option( 'rest_models_embed_menus_enabled' );
 		$context->relative_urls             = (bool) CoreOptions::read_option( 'rest_models_relative_url_enabled' );
 		$context->relative_attachment_urls  = (bool) CoreOptions::read_option( 'rest_models_relative_attachment_url_enabled' );
 		$context->resolve_rendered_props    = (bool) CoreOptions::read_option( 'rest_models_resolve_rendered_props' );
 		$context->remove_links_prop         = (bool) CoreOptions::read_option( 'rest_models_remove_links_prop' );
 		$context->remove_empty_props        = (bool) CoreOptions::read_option( 'rest_models_remove_empty_props' );
+		$context->remove_site_url           = (bool) CoreOptions::read_option( 'rest_models_remove_site_url' );
+		$context->remove_site_email         = (bool) CoreOptions::read_option( 'rest_models_remove_site_email' );
 		$context->disabled_properties       = array();
 
 		/**

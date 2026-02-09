@@ -5,6 +5,7 @@ import Schemas from './Schemas';
 import SchemasPro from './SchemasPro';
 import Collections from './Collections';
 import Card from '@mui/material/Card';
+import SiteSettings from './SiteSettings';
 
 export default function Models( { form, setField, postTypes } ) {
 	return (
@@ -17,6 +18,12 @@ export default function Models( { form, setField, postTypes } ) {
 								form={ form }
 								setField={ setField }
 								postTypes={ postTypes }
+							/>
+						</Card>
+						<Card variant="outlined" sx={ { px: 2, py: 3 } }>
+							<SiteSettings
+								form={ form }
+								setField={ setField }
 							/>
 						</Card>
 						<Card variant="outlined" sx={ { px: 2, py: 3 } }>

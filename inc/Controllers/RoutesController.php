@@ -2,72 +2,126 @@
 
 defined( 'ABSPATH' ) || exit;
 
+use cmk\RestApiFirewall\Core\CoreOptions;
 use cmk\RestApiFirewall\Models\PostModel;
 use cmk\RestApiFirewall\Models\AttachmentModel;
 use cmk\RestApiFirewall\Models\AuthorModel;
 use cmk\RestApiFirewall\Models\MenuItemModel;
+use cmk\RestApiFirewall\Models\SettingsModel;
 use cmk\RestApiFirewall\Models\TermModel;
 use WP_REST_Request;
+use WP_REST_Response;
 use WP_User;
 use WP_Post;
 
 class RoutesController {
 
 	private ?ModelContext $context = null;
-	private string $post_type      = '';
-	private string $taxonomy       = '';
 	private string $application_id = '';
 
 	public function resolve_rest_controller( $result, $server, WP_REST_Request $request ) {
 
-		$route = $request->get_route();
-
-		$post_type = $this->extract_post_type_from_route( $route );
-
-		if ( $post_type ) {
-			$this->init( $post_type, $this->application_id, 'post_type' );
-		} else {
-			$taxonomy = $this->extract_taxonomy_from_route( $route );
-
-			if ( $taxonomy ) {
-				$this->init( $taxonomy, $this->application_id, 'taxonomy' );
-			}
-		}
-
-		if ( $this->should_use_core_rest() ) {
+		if ( false === $result instanceof WP_REST_Response || false === CoreOptions::read_option( 'rest_models_enabled' ) ) {
 			return $result;
 		}
+
+		$data = $result->get_data();
+
+		if ( empty( $data ) ) {
+			return $result;
+		}
+
+		$route     = $request->get_route();
+		$post_type = $this->extract_post_type_from_route( $route );
+		$taxonomy  = $this->extract_taxonomy_from_route( $route );
+
+		if ( $post_type ) {
+			$object_type = 'attachment' === $post_type ? 'attachment' : ( 'nav_menu_item' === $post_type ? 'menu_item' : 'post_type' );
+		} elseif ( $taxonomy ) {
+			$object_type = 'taxonomy';
+		} elseif ( $this->is_settings_route( $route ) ) {
+			$object_type = 'settings';
+		} else {
+			$object_type = 'post_type';
+		}
+
+		$this->context = ModelContext::from_options( $object_type, $this->application_id );
+
+		switch ( $object_type ) {
+
+			case 'attachment':
+				if ( $this->is_collection( $data ) ) {
+					$data = array_map( fn( $attachment ) => $this->attachment_model( $attachment['id'] ?? 0 ), $data );
+				}
+				$data = $this->attachment_model( $data['id'] ?? 0 );
+				break;
+			case 'taxonomy':
+				if ( $this->is_collection( $data ) ) {
+					$data = array_map( fn( $term ) => $this->term_model( $term ), $data );
+				}
+				$data = $this->term_model( $data );
+				break;
+			case 'settings':
+				$data = $this->settings_model( $data );
+				break;
+			case 'post_type':
+			default:
+				if ( $this->is_collection( $data ) ) {
+					$data = array_map( fn( $post ) => $this->post_model( $post ), $data );
+				}
+				$data = $this->post_model( $data );
+				break;
+		}
+
+		$result->set_data( $data );
 
 		return $result;
 	}
 
-	private function init( string $object_type, string $application_id = '', string $object_kind = 'post_type' ): self {
-		$this->application_id = $application_id;
-
-		if ( 'taxonomy' === $object_kind ) {
-			$this->taxonomy  = $object_type;
-			$this->post_type = '';
-		} else {
-			$this->post_type = $object_type;
-			$this->taxonomy  = '';
-		}
-
-		$this->context = ModelContext::from_options( $object_type, $application_id );
-
-		return $this;
+	public function post_model( array $post ): array {
+		$post_model = new PostModel();
+		return $post_model( $post, $this->context );
 	}
 
-	private function get_context(): ModelContext {
-		if ( null === $this->context ) {
-			$object_type   = $this->post_type ? $this->post_type : $this->taxonomy;
-			$this->context = ModelContext::from_options( $object_type, $this->application_id );
-		}
-
-		return $this->context;
+	public function term_model( array $term ): array {
+		$term_model = new TermModel();
+		return $term_model( $term, $this->context );
 	}
 
-	private function should_use_core_rest(): bool {
-		return $this->get_context()->use_core_rest;
+	public function author_model( int $user_id ) {
+		$user = get_userdata( $user_id );
+
+		if ( ! $user instanceof WP_User ) {
+			return $user_id;
+		}
+
+		$author_model = new AuthorModel();
+		return $author_model( $user, $this->context );
+	}
+
+	public function attachment_model( int $attachment_id ) {
+		$attachment = get_post( $attachment_id );
+
+		if ( ! $attachment instanceof WP_Post ) {
+			return $attachment_id;
+		}
+
+		$attachment_model = new AttachmentModel();
+		return $attachment_model( $attachment_id, $this->context );
+	}
+
+	public function menu_item_model( array $menu_item ): array {
+		$menu_item_model = new MenuItemModel();
+		return $menu_item_model( $menu_item, $this->context );
+	}
+
+	public function settings_model( array $settings ): array {
+		$settings_model = new SettingsModel();
+		return $settings_model( $settings, $this->context );
+	}
+
+	private function is_collection( $data ): bool {
+		return is_array( $data ) && isset( $data[0] ) && is_array( $data[0] );
 	}
 
 	private function extract_post_type_from_route( string $route ): string {
@@ -87,7 +141,7 @@ class RoutesController {
 		return '';
 	}
 
-	protected function extract_taxonomy_from_route( string $route ): string {
+	private function extract_taxonomy_from_route( string $route ): string {
 		if ( preg_match( '#^/wp/v2/([a-z0-9_-]+)#i', $route, $matches ) ) {
 			$potential_taxonomy = $matches[1];
 
@@ -112,40 +166,7 @@ class RoutesController {
 		return '';
 	}
 
-	public function post_model( array $post ): array {
-		$post_model = new PostModel();
-		return $post_model( $post, $this->get_context() );
-	}
-
-	public function term_model( array $term ): array {
-		$term_model = new TermModel();
-		return $term_model( $term, $this->get_context() );
-	}
-
-	public function author_model( int $user_id ) {
-		$user = get_userdata( $user_id );
-
-		if ( ! $user instanceof WP_User ) {
-			return $user_id;
-		}
-
-		$author_model = new AuthorModel();
-		return $author_model( $user, $this->get_context() );
-	}
-
-	public function attachment_model( int $attachment_id ) {
-		$attachment = get_post( $attachment_id );
-
-		if ( ! $attachment instanceof WP_Post ) {
-			return $attachment_id;
-		}
-
-		$attachment_model = new AttachmentModel();
-		return $attachment_model( $attachment_id, $this->get_context() );
-	}
-
-	public function menu_item_model( array $menu_item ): array {
-		$menu_item_model = new MenuItemModel();
-		return $menu_item_model( $menu_item, $this->get_context() );
+	private function is_settings_route( string $route ): bool {
+		return (bool) preg_match( '#^/wp/v2/settings#i', $route );
 	}
 }
