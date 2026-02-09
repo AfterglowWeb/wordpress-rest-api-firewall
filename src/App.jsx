@@ -16,7 +16,7 @@ import ConfirmDialog from './components/ConfirmDialog';
 import Webhook from './components/Webhook/Webhook';
 
 import ThemeSettings from './components/ThemeSettings';
-import Models from './components/Models/Models';
+import DataFilters from './components/DataFilters/DataFilters';
 import Firewall from './components/Firewall/Firewall';
 
 const SCHEMA_OPTIONS = [
@@ -26,14 +26,20 @@ const SCHEMA_OPTIONS = [
 	'rest_models_resolve_rendered_props',
 	'rest_models_embed_terms_enabled',
 	'rest_models_embed_author_enabled',
+	'rest_models_embed_menus_enabled',
 	'rest_models_with_acf_enabled',
 	'rest_models_remove_empty_props',
 	'rest_models_remove_links_prop',
 	'rest_models_relative_url_enabled',
 	'rest_models_relative_attachment_url_enabled',
+	'rest_models_remove_site_email',
+	'rest_models_remove_site_url',
+	'rest_models_acf_options_page_enabled',
+	'rest_models_acf_options_page_endpoint',
+	'rest_collections_per_page_enabled',
 	'rest_collections_posts_per_page',
 	'rest_collections_attachments_per_page',
-	'rest_collections_restrict_post_types_enabled',
+	'rest_collections_allowed_post_types_enabled',
 	'rest_collections_allowed_post_types',
 ];
 
@@ -42,6 +48,7 @@ const THEME_OPTIONS = [
 	'theme_disable_xmlrpc',
 	'theme_disable_filedit',
 	'theme_disable_pingbacks',
+	'theme_remove_emoji_scripts',
 	'theme_redirect_templates_preset_url',
 	'theme_redirect_templates_free_url_enabled',
 	'theme_redirect_templates_free_url',
@@ -167,7 +174,7 @@ function AppContent() {
 				aria-label="REST API settings tabs"
 			>
 				<Tab label={ __( 'Firewall', 'rest-api-firewall' ) } />
-				<Tab label={ __( 'Schemas', 'rest-api-firewall' ) } />
+				<Tab label={ __( 'Data Filters', 'rest-api-firewall' ) } />
 				<Tab label={ __( 'Webhook', 'rest-api-firewall' ) } />
 				<Tab label={ __( 'Theme', 'rest-api-firewall' ) } />
 			</Tabs>
@@ -186,7 +193,7 @@ function AppContent() {
 					alignItems={ 'center' }
 				>
 					<Typography variant="h6" fontWeight={ 600 }>
-						{ __( 'Schemas Settings', 'rest-api-firewall' ) }
+						{ __( 'Data Filters', 'rest-api-firewall' ) }
 					</Typography>
 					<Button
 						variant="contained"
@@ -199,7 +206,7 @@ function AppContent() {
 					</Button>
 				</Stack>
 
-				<Models
+				<DataFilters
 					form={ form }
 					setField={ setField }
 					postTypes={ postTypes }

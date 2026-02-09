@@ -479,28 +479,27 @@ export default function IpBlackList() {
 						} }
 					>
 						<Tab
-							icon={ <PublicIcon /> }
-							iconPosition="start"
-							label={ __( 'By Country', 'rest-api-firewall' ) }
-						/>
-						<Tab
 							icon={ <TableViewIcon /> }
 							iconPosition="start"
 							label={ __( 'All IPs', 'rest-api-firewall' ) }
 						/>
+						<Tab
+							icon={ <PublicIcon /> }
+							iconPosition="start"
+							label={ __( 'By Country', 'rest-api-firewall' ) }
+						/>
 					</Tabs>
-
 					{ dialogTab === 0 && (
-						<CountryBlockList
+						<IpDataGrid
 							listType={ activeListKey }
-							freeEntries={ activeList }
+							onMutate={ loadSettings }
 						/>
 					) }
 
 					{ dialogTab === 1 && (
-						<IpDataGrid
+						<CountryBlockList
 							listType={ activeListKey }
-							onMutate={ loadSettings }
+							freeEntries={ activeList }
 						/>
 					) }
 				</DialogContent>

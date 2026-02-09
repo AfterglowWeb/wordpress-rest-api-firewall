@@ -10,7 +10,7 @@ use WP_Post;
 class SchemaFilters {
 
 
-	public static function embed_acf_fields( int $object_id ): array {
+	public static function embed_acf_fields( $object_id ): array {
 		return function_exists( 'get_fields' ) ? (array) get_fields( $object_id ) : array();
 	}
 

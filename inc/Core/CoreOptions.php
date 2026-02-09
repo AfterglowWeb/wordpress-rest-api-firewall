@@ -97,6 +97,44 @@ class CoreOptions {
 				'context'           => array( 'free', 'pro' ),
 			),
 
+			// Site Data.
+			'rest_models_remove_site_url'                => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+			),
+			'rest_models_remove_site_email'              => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+			),
+			'rest_models_embed_menus_enabled'            => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+			),
+			'rest_models_acf_options_page_enabled'       => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+			),
+
+			'rest_models_acf_options_page_endpoint'      => array(
+				'default_value'     => '',
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+			),
+
 			// Collections.
 			'rest_collections_per_page_enabled'          => array(
 				'default_value'     => false,
@@ -307,12 +345,6 @@ class CoreOptions {
 		return isset( $options[ $option_key ] ) ? $options[ $option_key ] : false;
 	}
 
-	/**
-	 * Update options with partial support.
-	 * Only provided options are updated, others keep their current values.
-	 *
-	 * @param array $new_options Options to update.
-	 */
 	public static function update_options( array $new_options ): array {
 
 		$old_options       = self::read_options();
@@ -381,12 +413,6 @@ class CoreOptions {
 		return $defaults;
 	}
 
-	/**
-	 * Sanitize options array.
-	 *
-	 * @param array $options        Options to sanitize.
-	 * @param bool  $use_defaults   If true, merge with defaults. If false, merge with current saved options.
-	 */
 	public static function sanitize_options( array $options, bool $use_defaults = true ): array {
 		$options_config = self::options_config();
 		$base_values    = $use_defaults ? self::default_options() : MultiSite::multisite_get_option( 'rest_api_firewall_options', self::default_options() );

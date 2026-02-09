@@ -265,8 +265,8 @@ class WebhookService {
 		foreach ( $data['webhooks'] as $index => $webhook ) {
 			if ( isset( $webhook['id'] ) && $webhook['id'] === $id ) {
 				$merged                     = array_merge( $webhook, $updates );
-				$merged['id']               = $id; // Preserve ID.
-				$merged['created_at']       = $webhook['created_at']; // Preserve created_at.
+				$merged['id']               = $id; 
+				$merged['created_at']       = $webhook['created_at'];
 				$data['webhooks'][ $index ] = self::sanitize_webhook_entry( $merged );
 				$found                      = true;
 				break;
@@ -578,7 +578,7 @@ class WebhookService {
 
 	public function enqueue_scripts(): void {
 
-		if ( ! current_user_can( 'rest_api_firewall_edit_options' ) ) {
+		if ( false === Permissions::has_webhook_capabilities() ) {
 			return;
 		}
 

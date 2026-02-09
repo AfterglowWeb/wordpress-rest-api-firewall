@@ -20,7 +20,7 @@ class PostModel {
 		);
 	}
 
-	protected function remove_disabled_properties( array $post, ModelContext $context ): array {
+	private function remove_disabled_properties( array $post, ModelContext $context ): array {
 
 		foreach ( array_keys( $post ) as $property_key ) {
 			if ( $context->is_disabled( $property_key ) ) {
@@ -31,7 +31,7 @@ class PostModel {
 		return $post;
 	}
 
-	protected function apply_filters( array $post, ModelContext $context ): array {
+	private function apply_filters( array $post, ModelContext $context ): array {
 
 		if ( isset( $post['link'] ) && $context->should_relative_url( 'link' ) ) {
 			$post['link'] = SchemaFilters::relative_url( $post['link'] );
@@ -83,7 +83,7 @@ class PostModel {
 		return $post;
 	}
 
-	protected function embed_terms( array $post, ModelContext $context ): array {
+	private function embed_terms( array $post, ModelContext $context ): array {
 
 		if ( empty( $post['id'] ) ) {
 			return array();
