@@ -7,8 +7,10 @@ import FormHelperText from '@mui/material/FormHelperText';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
+import ProBadge from '../ProBadge';
 
-export default function Models( { form, setField } ) {
+
+export default function BulkFilters( { form, setField } ) {
 	const { __ } = wp.i18n || {};
 	const { hasValidLicense } = useLicense();
 
@@ -28,13 +30,14 @@ export default function Models( { form, setField } ) {
 					fontWeight={ 600 }
 					sx={ { mb: 2 } }
 				>
-					{ __( 'Bulk Schemas Filtering', 'rest-api-firewall' ) }
+					{ __( 'Bulk Filters', 'rest-api-firewall' ) }
 				</Typography>
 
 				<FormControl>
 					<FormControlLabel
 						control={
 							<Switch
+								size="small"
 								checked={ !! form.rest_models_enabled }
 								name="rest_models_enabled"
 								onChange={ setField }
@@ -46,25 +49,105 @@ export default function Models( { form, setField } ) {
 			</Stack>
 			<Divider />
 
-			<FormControl disabled={ isProDisabled }>
+			<Stack sx={{position:'relative'}}>
+				<FormControl disabled={ isProDisabled }>
+					<FormControlLabel
+						control={
+							<Switch
+								size="small"
+								checked={ !! form.rest_models_relative_url_enabled }
+								name="rest_models_relative_url_enabled"
+								onChange={ setField }
+							/>
+						}
+						label={ __( 'Relative urls', 'rest-api-firewall' ) }
+					/>
+					<FormHelperText>
+						{ __(
+							'Remove host from post and term urls.',
+							'rest-api-firewall'
+						) }
+					</FormHelperText>
+				</FormControl>
+				<ProBadge position={'right'} />
+			</Stack>
+			
+			<Stack sx={{position:'relative'}}>
+				<FormControl disabled={ isProDisabled }>
+					<FormControlLabel
+						control={
+							<Switch
+								size="small"
+								checked={
+									!! form.rest_models_relative_attachment_url_enabled
+								}
+								name="rest_models_relative_attachment_url_enabled"
+								onChange={ setField }
+							/>
+						}
+						label={ __(
+							'Relative attachment urls',
+							'rest-api-firewall'
+						) }
+					/>
+					<FormHelperText>
+						<Typography variant="caption">
+							{ __(
+								'Remove host and upload path from attachment urls',
+								'rest-api-firewall'
+							) }
+						</Typography>
+						<br />
+						<Typography variant="caption">
+							https://www.domain-example.com/wp-content/uploads
+						</Typography>
+					</FormHelperText>
+				</FormControl>
+				<ProBadge position={'right'} />
+			</Stack>
+
+
+			<Stack sx={{position:'relative'}}>
+				<FormControl disabled={ isProDisabled }>
+					<FormControlLabel
+						control={
+							<Switch
+								size="small"
+								checked={ !! form.rest_models_remove_empty_props }
+								name="rest_models_remove_empty_props"
+								onChange={ setField }
+							/>
+						}
+						label={ __( 'Remove Empty Properties', 'rest-api-firewall' ) }
+					/>
+				</FormControl>
+				<ProBadge position={'right'} />
+			</Stack>
+
+			<FormControl disabled={ isSchemaDisabled }>
 				<FormControlLabel
 					control={
 						<Switch
 							size="small"
-							checked={ !! form.rest_models_relative_url_enabled }
-							name="rest_models_relative_url_enabled"
+							checked={ !! form.rest_models_remove_links_prop }
+							name="rest_models_remove_links_prop"
 							onChange={ setField }
 						/>
 					}
-					label={ __( 'Relative urls', 'rest-api-firewall' ) }
+					label={ __(
+						'Remove _links property',
+						'rest-api-firewall'
+					) }
 				/>
 				<FormHelperText>
 					{ __(
-						'Remove host from post and term urls (http[s]://www.domain-example.com).',
+						'Remove the `_links` property from REST responses',
 						'rest-api-firewall'
 					) }
 				</FormHelperText>
 			</FormControl>
+
+			<Divider />
 
 			<FormControl disabled={ isSchemaDisabled }>
 				<FormControlLabel
@@ -121,37 +204,6 @@ export default function Models( { form, setField } ) {
 							'Includes featured attachment and ACF fields according to their type.',
 							'rest-api-firewall'
 						) }
-					</Typography>
-				</FormHelperText>
-			</FormControl>
-
-			<FormControl disabled={ isProDisabled }>
-				<FormControlLabel
-					control={
-						<Switch
-							size="small"
-							checked={
-								!! form.rest_models_relative_attachment_url_enabled
-							}
-							name="rest_models_relative_attachment_url_enabled"
-							onChange={ setField }
-						/>
-					}
-					label={ __(
-						'Relative attachment urls',
-						'rest-api-firewall'
-					) }
-				/>
-				<FormHelperText>
-					<Typography variant="caption">
-						{ __(
-							'Remove host and upload path from attachment urls',
-							'rest-api-firewall'
-						) }
-					</Typography>
-					<br />
-					<Typography variant="caption">
-						https://www.domain-example.com/wp-content/uploads
 					</Typography>
 				</FormHelperText>
 			</FormControl>
@@ -213,28 +265,8 @@ export default function Models( { form, setField } ) {
 				</FormHelperText>
 			</FormControl>
 
-			<FormControl disabled={ isSchemaDisabled }>
-				<FormControlLabel
-					control={
-						<Switch
-							size="small"
-							checked={ !! form.rest_models_remove_links_prop }
-							name="rest_models_remove_links_prop"
-							onChange={ setField }
-						/>
-					}
-					label={ __(
-						'Remove _links property',
-						'rest-api-firewall'
-					) }
-				/>
-				<FormHelperText>
-					{ __(
-						'Remove the `_links` property from REST responses',
-						'rest-api-firewall'
-					) }
-				</FormHelperText>
-			</FormControl>
+			
+
 		</Stack>
 	);
 }

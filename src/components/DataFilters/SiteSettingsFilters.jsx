@@ -10,7 +10,7 @@ import TextField from '@mui/material/TextField';
 import ProBadge from '../ProBadge';
 
 
-export default function SiteSettings( { form, setField } ) {
+export default function SiteSettingsFilters( { form, setField } ) {
 	const { __ } = wp.i18n || {};
 	const { hasValidLicense } = useLicense();
 
@@ -20,7 +20,7 @@ export default function SiteSettings( { form, setField } ) {
 	return (
 		<Stack spacing={ 3 }>
 			<Typography variant="subtitle1" fontWeight={ 600 }>
-				{ __( 'Settings Route', 'rest-api-firewall' ) }
+				{ __( 'Route wp/v2/settings filters', 'rest-api-firewall' ) }
 			</Typography>
 			<Stack
 			spacing={ 3 }
@@ -91,7 +91,7 @@ export default function SiteSettings( { form, setField } ) {
 							/>
 						}
 						label={ __(
-							'ACF Options Pages Route',
+							'Add ACF Options Pages',
 							'rest-api-firewall'
 						) }
 					/>
@@ -113,9 +113,9 @@ export default function SiteSettings( { form, setField } ) {
 
 					<TextField
 					sx={ { flex: 1 } }
-					label={ __( 'Use Custom Route', 'rest-api-firewall' ) }
+					label={ __( 'Custom ACF Options Pages Route', 'rest-api-firewall' ) }
 					helperText={ __(
-						'Use wp/v2/my-route instead of wp/v2/settings',
+						'Use wp/v2/my-route for ACF options pages fields',
 						'rest-api-firewall'
 					) }
 					name="rest_models_acf_options_page_endpoint"

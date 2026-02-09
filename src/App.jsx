@@ -16,7 +16,7 @@ import ConfirmDialog from './components/ConfirmDialog';
 import Webhook from './components/Webhook/Webhook';
 
 import ThemeSettings from './components/ThemeSettings';
-import Models from './components/Models/Models';
+import DataFilters from './components/DataFilters/DataFilters';
 import Firewall from './components/Firewall/Firewall';
 
 const SCHEMA_OPTIONS = [
@@ -174,7 +174,7 @@ function AppContent() {
 				aria-label="REST API settings tabs"
 			>
 				<Tab label={ __( 'Firewall', 'rest-api-firewall' ) } />
-				<Tab label={ __( 'Schemas', 'rest-api-firewall' ) } />
+				<Tab label={ __( 'Data Filters', 'rest-api-firewall' ) } />
 				<Tab label={ __( 'Webhook', 'rest-api-firewall' ) } />
 				<Tab label={ __( 'Theme', 'rest-api-firewall' ) } />
 			</Tabs>
@@ -193,7 +193,7 @@ function AppContent() {
 					alignItems={ 'center' }
 				>
 					<Typography variant="h6" fontWeight={ 600 }>
-						{ __( 'Schemas Settings', 'rest-api-firewall' ) }
+						{ __( 'Data Filters', 'rest-api-firewall' ) }
 					</Typography>
 					<Button
 						variant="contained"
@@ -206,7 +206,7 @@ function AppContent() {
 					</Button>
 				</Stack>
 
-				<Models
+				<DataFilters
 					form={ form }
 					setField={ setField }
 					postTypes={ postTypes }

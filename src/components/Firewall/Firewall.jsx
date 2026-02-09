@@ -338,6 +338,7 @@ export default function Firewall() {
 						<IpBlackList />
 					</Card>
 				</Grid>
+
 			</Grid>
 
 			<Divider />

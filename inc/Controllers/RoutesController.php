@@ -52,14 +52,16 @@ class RoutesController {
 			case 'attachment':
 				if ( $this->is_collection( $data ) ) {
 					$data = array_map( fn( $attachment ) => $this->attachment_model( $attachment['id'] ?? 0 ), $data );
+				} else {
+					$data = $this->attachment_model( $data['id'] ?? 0 );
 				}
-				$data = $this->attachment_model( $data['id'] ?? 0 );
 				break;
 			case 'taxonomy':
 				if ( $this->is_collection( $data ) ) {
 					$data = array_map( fn( $term ) => $this->term_model( $term ), $data );
+				} else {
+					$data = $this->term_model( $data );
 				}
-				$data = $this->term_model( $data );
 				break;
 			case 'settings':
 				$data = $this->settings_model( $data );
@@ -68,8 +70,9 @@ class RoutesController {
 			default:
 				if ( $this->is_collection( $data ) ) {
 					$data = array_map( fn( $post ) => $this->post_model( $post ), $data );
+				} else {
+					$data = $this->post_model( $data );
 				}
-				$data = $this->post_model( $data );
 				break;
 		}
 

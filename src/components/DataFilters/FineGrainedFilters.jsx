@@ -11,7 +11,7 @@ import MenuItem from '@mui/material/MenuItem';
 import PostProperties from './PostProperties';
 import ProBadge from '../ProBadge';
 
-export default function ModelsPro( { setField, postTypes } ) {
+export default function FineGrainedFilters( { setField, postTypes } ) {
 	const { hasValidLicense } = useLicense();
 	const { __ } = wp.i18n || {};
 	const [ selectedPostType, setSelectedPostType ] = useState( 'post' );
@@ -28,7 +28,7 @@ export default function ModelsPro( { setField, postTypes } ) {
 				fontWeight={ 600 }
 				sx={ { mb: 2, position: 'relative' } }
 			>
-				{ __( 'Fine Grained Schemas Settings', 'rest-api-firewall' ) }
+				{ __( 'Fine Grained Filters', 'rest-api-firewall' ) }
 				{ ! hasValidLicense && <ProBadge position={ 'right' } /> }
 			</Typography>
 
