@@ -4,7 +4,6 @@ import Box from '@mui/material/Box';
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
-import FormHelperText from '@mui/material/FormHelperText';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
@@ -71,7 +70,7 @@ export default function Collections( { form, setField, postTypes } ) {
 					<FormControlLabel
 						control={
 							<Switch
-								checked={ !! form.rest_collections_posts_per_page }
+								checked={ !! form.rest_collections_per_page_enabled }
 								onChange={ setField }
 								size="small"
 								name="rest_collections_per_page_enabled"
@@ -117,9 +116,9 @@ export default function Collections( { form, setField, postTypes } ) {
 							<Switch
 								size="small"
 								checked={
-									!! form.rest_collections_restrict_post_types_enabled
+									!! form.rest_collections_allowed_post_types_enabled
 								}
-								name="rest_collections_restrict_post_types_enabled"
+								name="rest_collections_allowed_post_types_enabled"
 								onChange={ setField }
 							/>
 						}

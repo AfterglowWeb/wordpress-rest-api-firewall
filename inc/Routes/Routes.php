@@ -8,12 +8,23 @@ use cmk\RestApiFirewall\Firewall\UsersRouteHider;
 use cmk\RestApiFirewall\Controllers\RoutesController;
 
 use WP_REST_Request;
+use WP_REST_Response;
 
 class Routes {
 
 	public static function register() {
 
 		self::set_posts_per_page();
+
+		add_action(
+			'rest_pre_serve_request',
+			function () {
+				header_remove( 'Cache-Control' );
+				header_remove( 'Expires' );
+				header_remove( 'Pragma' );
+			},
+			5
+		);
 
 		add_filter( 'rest_json_encode_options', fn() => JSON_UNESCAPED_SLASHES );
 
@@ -68,8 +79,7 @@ class Routes {
 					$post_type            = $query_params['type'];
 					$posts_per_page       = CoreOptions::read_option( 'rest_collections_posts_per_page' );
 					$attachments_per_page = CoreOptions::read_option( 'rest_collections_attachments_per_page' );
-
-					$per_page = 'attachment' !== $post_type ? $posts_per_page : $attachments_per_page;
+					$per_page             = 'attachment' !== $post_type ? $posts_per_page : $attachments_per_page;
 
 					if ( ! empty( $per_page ) && isset( $query_params['per_page'] ) ) {
 						$query_params['per_page']['default'] = $per_page;
@@ -82,5 +92,12 @@ class Routes {
 			);
 
 		}
+	}
+
+	private static function deactivate_cache( WP_REST_Response $response ): WP_REST_Response {
+		$response->header( 'Cache-Control', 'no-cache, must-revalidate, max-age=0' );
+		$response->header( 'Expires', gmdate( 'D, d M Y H:i:s', time() - 1800 ) . ' GMT' );
+		$response->header( 'Pragma', 'no-cache' );
+		return $response;
 	}
 }

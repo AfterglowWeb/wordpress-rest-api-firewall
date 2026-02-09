@@ -23,7 +23,7 @@ class Permissions {
 			'sanitize_key',
 			apply_filters(
 				'rest_firewall_webhook_capabilities',
-				array( 'manage_options', 'rest_api_firewall_edit_options' )
+				array( 'delete_others_posts' )
 			)
 		);
 	}
@@ -44,7 +44,7 @@ class Permissions {
 		$filtered_capabilities = array_filter(
 			$capabilities,
 			function ( $capability ) use ( $user ) {
-				return $user->user_has_cap( $capability );
+				return $user->has_cap( $capability );
 			}
 		);
 

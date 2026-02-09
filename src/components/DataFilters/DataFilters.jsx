@@ -1,35 +1,42 @@
 import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Grid';
 
-import Schemas from './Schemas';
-import SchemasPro from './SchemasPro';
+import BulkFilters from './BulkFilters';
+import FineGrainedFilters from './FineGrainedFilters';
+import SiteSettings from './SiteSettingsFilters';
 import Collections from './Collections';
 import Card from '@mui/material/Card';
 
-export default function Models( { form, setField, postTypes } ) {
+export default function DataFilters( { form, setField, postTypes } ) {
 	return (
 		<Stack spacing={ 3 }>
 			<Grid container spacing={ 4 } py={ 3 }>
 				<Grid size={ { xs: 12, md: 6 } } spacing={ 4 }>
 					<Stack spacing={ 3 }>
-						<Card variant="outlined" sx={ { px: 2, py: 3 } }>
+						<Card variant="outlined" sx={ { px: {xs:2,xl:4}, py: {xs:2,xl:4} } }>
 							<Collections
 								form={ form }
 								setField={ setField }
 								postTypes={ postTypes }
 							/>
 						</Card>
-						<Card variant="outlined" sx={ { px: 2, py: 3 } }>
-							<Schemas
+						<Card variant="outlined" sx={ { px: {xs:2,xl:4}, py: {xs:2,xl:4} } }>
+							<BulkFilters
 								form={ form }
 								setField={ setField }
 								postTypes={ postTypes }
 							/>
 						</Card>
+						<Card variant="outlined" sx={ { px: {xs:2,xl:4}, py: {xs:2,xl:4} } }>
+							<SiteSettings
+								form={ form }
+								setField={ setField }
+							/>
+						</Card>
 					</Stack>
 				</Grid>
 				<Grid size={ { xs: 12, md: 6 } }>
-					<SchemasPro
+					<FineGrainedFilters
 						form={ form }
 						setField={ setField }
 						postTypes={ postTypes }
