@@ -1,17 +1,24 @@
-window.restApiFirewallTriggerWebhook = function ( e ) {
-	if ( ! confirm( restApiFirewallWebhookService.confirmMessage ) ) {
+window.restApiFirewallTriggerWebhook = function () {
+	const restApiFirewallWebhookService =
+		window.restApiFirewallWebhookService || {};
+
+	if ( ! confirm( restApiFirewallWebhookService?.confirmMessage ) ) {
 		return;
 	}
+
 	jQuery.post(
-		restApiFirewallWebhookService.ajaxurl,
+		restApiFirewallWebhookService?.ajaxurl,
 		{
 			action: 'trigger_application_webhook',
-			nonce: restApiFirewallWebhookService.nonce,
+			nonce: restApiFirewallWebhookService?.nonce,
 		},
 		function ( response ) {
 			if ( response.success && response.data ) {
+				const data = JSON.parse( response.data );
+				const d = data.timestamp ? new Date(data.timestamp).toLocaleDateString() : '';
+				const t = data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : '';
 				alert(
-					`Success:\n${ response.data.message } at ${ response.data.timestamp }`
+					`Success\n${ data.message }\n${ d } @ ${t}`
 				);
 			} else {
 				alert(

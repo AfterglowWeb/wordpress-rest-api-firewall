@@ -9,7 +9,6 @@ import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 import ProBadge from '../ProBadge';
 
-
 export default function BulkFilters( { form, setField } ) {
 	const { __ } = wp.i18n || {};
 	const { hasValidLicense } = useLicense();
@@ -49,13 +48,15 @@ export default function BulkFilters( { form, setField } ) {
 			</Stack>
 			<Divider />
 
-			<Stack sx={{position:'relative'}}>
+			<Stack sx={ { position: 'relative' } }>
 				<FormControl disabled={ isProDisabled }>
 					<FormControlLabel
 						control={
 							<Switch
 								size="small"
-								checked={ !! form.rest_models_relative_url_enabled }
+								checked={
+									!! form.rest_models_relative_url_enabled
+								}
 								name="rest_models_relative_url_enabled"
 								onChange={ setField }
 							/>
@@ -69,10 +70,10 @@ export default function BulkFilters( { form, setField } ) {
 						) }
 					</FormHelperText>
 				</FormControl>
-				<ProBadge position={'right'} />
+				<ProBadge position={ 'right' } />
 			</Stack>
-			
-			<Stack sx={{position:'relative'}}>
+
+			<Stack sx={ { position: 'relative' } }>
 				<FormControl disabled={ isProDisabled }>
 					<FormControlLabel
 						control={
@@ -103,25 +104,29 @@ export default function BulkFilters( { form, setField } ) {
 						</Typography>
 					</FormHelperText>
 				</FormControl>
-				<ProBadge position={'right'} />
+				<ProBadge position={ 'right' } />
 			</Stack>
 
-
-			<Stack sx={{position:'relative'}}>
+			<Stack sx={ { position: 'relative' } }>
 				<FormControl disabled={ isProDisabled }>
 					<FormControlLabel
 						control={
 							<Switch
 								size="small"
-								checked={ !! form.rest_models_remove_empty_props }
+								checked={
+									!! form.rest_models_remove_empty_props
+								}
 								name="rest_models_remove_empty_props"
 								onChange={ setField }
 							/>
 						}
-						label={ __( 'Remove Empty Properties', 'rest-api-firewall' ) }
+						label={ __(
+							'Remove Empty Properties',
+							'rest-api-firewall'
+						) }
 					/>
 				</FormControl>
-				<ProBadge position={'right'} />
+				<ProBadge position={ 'right' } />
 			</Stack>
 
 			<FormControl disabled={ isSchemaDisabled }>
@@ -264,9 +269,6 @@ export default function BulkFilters( { form, setField } ) {
 					{ __( 'Activate the `acf` property', 'rest-api-firewall' ) }
 				</FormHelperText>
 			</FormControl>
-
-			
-
 		</Stack>
 	);
 }
