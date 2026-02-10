@@ -122,48 +122,50 @@ export default function ManuallyAddIp( {
 		}
 	};
 
-    return (<Box sx={ { flex: 1 } }>
-        <Typography variant="subtitle2" sx={ { mb: 1 } }>
-            { __( 'Add IP Address Manually', 'rest-api-firewall' ) }
-        </Typography>
-        <Stack direction="row" spacing={ 1 }>
-            <TextField
-                value={ newIp }
-                onChange={ handleNewIpChange }
-                onKeyDown={ handleKeyDown }
-                placeholder={
-                    hasValidLicense
-                        ? '192.168.1.1 or 10.0.0.0/24'
-                        : '192.168.1.1'
-                }
-                size="small"
-                error={ !! ipError }
-                helperText={
-                    ipError ||
-                    ( hasValidLicense
-                        ? __(
-                                'IP address or CIDR range',
-                                'rest-api-firewall'
-                        )
-                        : __(
-                                'IP address (CIDR requires Pro)',
-                                'rest-api-firewall'
-                        ) )
-                }
-                disabled={ ! settings.enabled || adding }
-                sx={ { flexGrow: 1 } }
-            />
-            <Button
-                variant="outlined"
-                sx={ { alignSelf: 'flex-start' } }
-                onClick={ handleAddIp }
-                disabled={ ! settings.enabled || ! newIp.trim() || adding }
-                startIcon={ <AddIcon /> }
-            >
-                { adding
-                    ? __( 'Adding…', 'rest-api-firewall' )
-                    : __( 'Add', 'rest-api-firewall' ) }
-            </Button>
-        </Stack>
-    </Box>);
+	return (
+		<Box sx={ { flex: 1 } }>
+			<Typography variant="subtitle2" sx={ { mb: 1 } }>
+				{ __( 'Add IP Address Manually', 'rest-api-firewall' ) }
+			</Typography>
+			<Stack direction="row" spacing={ 1 }>
+				<TextField
+					value={ newIp }
+					onChange={ handleNewIpChange }
+					onKeyDown={ handleKeyDown }
+					placeholder={
+						hasValidLicense
+							? '192.168.1.1 or 10.0.0.0/24'
+							: '192.168.1.1'
+					}
+					size="small"
+					error={ !! ipError }
+					helperText={
+						ipError ||
+						( hasValidLicense
+							? __(
+									'IP address or CIDR range',
+									'rest-api-firewall'
+							  )
+							: __(
+									'IP address (CIDR requires Pro)',
+									'rest-api-firewall'
+							  ) )
+					}
+					disabled={ ! settings.enabled || adding }
+					sx={ { flexGrow: 1 } }
+				/>
+				<Button
+					variant="outlined"
+					sx={ { alignSelf: 'flex-start' } }
+					onClick={ handleAddIp }
+					disabled={ ! settings.enabled || ! newIp.trim() || adding }
+					startIcon={ <AddIcon /> }
+				>
+					{ adding
+						? __( 'Adding…', 'rest-api-firewall' )
+						: __( 'Add', 'rest-api-firewall' ) }
+				</Button>
+			</Stack>
+		</Box>
+	);
 }

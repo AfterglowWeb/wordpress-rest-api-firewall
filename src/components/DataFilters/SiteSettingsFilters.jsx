@@ -9,26 +9,25 @@ import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import ProBadge from '../ProBadge';
 
-
 export default function SiteSettingsFilters( { form, setField } ) {
 	const { __ } = wp.i18n || {};
 	const { hasValidLicense } = useLicense();
 
 	const isDisabled = ! form.rest_models_acf_options_page_enabled;
 	const isProDisabled = ! hasValidLicense || isDisabled;
-	
+
 	return (
 		<Stack spacing={ 3 }>
 			<Typography variant="subtitle1" fontWeight={ 600 }>
 				{ __( 'Route wp/v2/settings filters', 'rest-api-firewall' ) }
 			</Typography>
 			<Stack
-			spacing={ 3 }
-			direction={{xs:'column', xl:'row'}}
-			justifyContent={ 'space-between' }
-			alignItems={ 'flex-start' }
-			>	
-				<FormControl sx={{flex:1}}>
+				spacing={ 3 }
+				direction={ { xs: 'column', xl: 'row' } }
+				justifyContent={ 'space-between' }
+				alignItems={ 'flex-start' }
+			>
+				<FormControl sx={ { flex: 1 } }>
 					<FormControlLabel
 						control={
 							<Switch
@@ -38,10 +37,7 @@ export default function SiteSettingsFilters( { form, setField } ) {
 								name="rest_models_remove_site_url"
 							/>
 						}
-						label={ __(
-							'Remove site url',
-							'rest-api-firewall'
-						) }
+						label={ __( 'Remove site url', 'rest-api-firewall' ) }
 					/>
 					<FormHelperText>
 						{ __(
@@ -50,20 +46,19 @@ export default function SiteSettingsFilters( { form, setField } ) {
 						) }
 					</FormHelperText>
 				</FormControl>
-				<FormControl sx={{flex:1}}>
+				<FormControl sx={ { flex: 1 } }>
 					<FormControlLabel
 						control={
 							<Switch
-								checked={ !! form.rest_models_remove_site_email }
+								checked={
+									!! form.rest_models_remove_site_email
+								}
 								onChange={ setField }
 								size="small"
 								name="rest_models_remove_site_email"
 							/>
 						}
-						label={ __(
-							'Remove site email',
-							'rest-api-firewall'
-						) }
+						label={ __( 'Remove site email', 'rest-api-firewall' ) }
 					/>
 					<FormHelperText>
 						{ __(
@@ -75,16 +70,18 @@ export default function SiteSettingsFilters( { form, setField } ) {
 			</Stack>
 
 			<Stack
-			spacing={ 3 }
-			direction={{xs:'column', xl:'row'}}
-			justifyContent={ 'space-between' }
-			alignItems={ 'flex-start' }
-			>	
-				<FormControl sx={{flex:1}}>
+				spacing={ 3 }
+				direction={ { xs: 'column', xl: 'row' } }
+				justifyContent={ 'space-between' }
+				alignItems={ 'flex-start' }
+			>
+				<FormControl sx={ { flex: 1 } }>
 					<FormControlLabel
 						control={
 							<Switch
-								checked={ !! form.rest_models_acf_options_page_enabled }
+								checked={
+									!! form.rest_models_acf_options_page_enabled
+								}
 								onChange={ setField }
 								size="small"
 								name="rest_models_acf_options_page_enabled"
@@ -104,25 +101,27 @@ export default function SiteSettingsFilters( { form, setField } ) {
 				</FormControl>
 
 				<Stack
-				sx={ { position: 'relative', flex: 1 } }
-				spacing={ 3 }
-				direction={ 'row' }
-				justifyContent={ 'space-between' }
-				alignItems={ 'flex-start' }
+					sx={ { position: 'relative', flex: 1 } }
+					spacing={ 3 }
+					direction={ 'row' }
+					justifyContent={ 'space-between' }
+					alignItems={ 'flex-start' }
 				>
-
 					<TextField
-					sx={ { flex: 1 } }
-					label={ __( 'Custom ACF Options Pages Route', 'rest-api-firewall' ) }
-					helperText={ __(
-						'Use wp/v2/my-route for ACF options pages fields',
-						'rest-api-firewall'
-					) }
-					name="rest_models_acf_options_page_endpoint"
-					value={ form.rest_models_acf_options_page_endpoint }
-					onChange={ setField }
-					disabled={ isProDisabled }
-					fullWidth
+						sx={ { flex: 1 } }
+						label={ __(
+							'Custom ACF Options Pages Route',
+							'rest-api-firewall'
+						) }
+						helperText={ __(
+							'Use wp/v2/my-route for ACF options pages fields',
+							'rest-api-firewall'
+						) }
+						name="rest_models_acf_options_page_endpoint"
+						value={ form.rest_models_acf_options_page_endpoint }
+						onChange={ setField }
+						disabled={ isProDisabled }
+						fullWidth
 					/>
 					<ProBadge position={ 'bottom-right' } />
 				</Stack>

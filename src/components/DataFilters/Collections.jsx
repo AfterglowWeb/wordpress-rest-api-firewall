@@ -22,19 +22,19 @@ export default function Collections( { form, setField, postTypes } ) {
 			</Typography>
 			<Stack
 				spacing={ 3 }
-				direction={'row'}
+				direction={ 'row' }
 				justifyContent={ 'space-between' }
 				alignItems={ 'flex-start' }
 			>
 				<Stack
 					sx={ { flex: 1 } }
 					spacing={ 3 }
-					direction={{ xs: 'column', sm:'row' }}
+					direction={ { xs: 'column', sm: 'row' } }
 					justifyContent={ 'space-between' }
-					alignItems={{ xs: 'stretch', sm: 'flex-start'} }
+					alignItems={ { xs: 'stretch', sm: 'flex-start' } }
 				>
 					<TextField
-					sx={ { flex: 1 } }
+						sx={ { flex: 1 } }
 						label={ __( 'Posts Per Page', 'rest-api-firewall' ) }
 						type="number"
 						min="0"
@@ -50,8 +50,11 @@ export default function Collections( { form, setField, postTypes } ) {
 					/>
 
 					<TextField
-					sx={ { flex: 1 } }
-						label={ __( 'Attachments Per Page', 'rest-api-firewall' ) }
+						sx={ { flex: 1 } }
+						label={ __(
+							'Attachments Per Page',
+							'rest-api-firewall'
+						) }
 						type="number"
 						min="0"
 						max="10000"
@@ -65,21 +68,20 @@ export default function Collections( { form, setField, postTypes } ) {
 						fullWidth
 					/>
 				</Stack>
-					
+
 				<FormControl>
 					<FormControlLabel
 						control={
 							<Switch
-								checked={ !! form.rest_collections_per_page_enabled }
+								checked={
+									!! form.rest_collections_per_page_enabled
+								}
 								onChange={ setField }
 								size="small"
 								name="rest_collections_per_page_enabled"
 							/>
 						}
-						label={ __(
-							'Enable',
-							'rest-api-firewall'
-						) }
+						label={ __( 'Enable', 'rest-api-firewall' ) }
 					/>
 				</FormControl>
 			</Stack>

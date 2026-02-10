@@ -8,7 +8,7 @@
  *
  * @wordpress-plugin
  * Plugin Name:       REST API Firewall
- * Version:           0.1.0-alpha.2
+ * Version:           0.1.0-alpha.4
  * Description:       Secure REST API endpoints through authentication, rate limiting and much more. Set application Webhook with authentication to trigger external front-end application routines.
  * Tags:              firewall, rest api, rest, headless, webhook
  * Plugin URI:        https://www.blank-plugins.com/wordpress-rest-api-firewall

@@ -5,6 +5,7 @@ defined( 'ABSPATH' ) || exit;
 use cmk\RestApiFirewall\Admin\AdminPage;
 use cmk\RestApiFirewall\Admin\Documentation;
 use cmk\RestApiFirewall\Routes\Routes;
+use cmk\RestApiFirewall\Controllers\SortablePosts;
 use cmk\RestApiFirewall\Firewall\FirewallOptions;
 use cmk\RestApiFirewall\Firewall\IpBlackList;
 use cmk\RestApiFirewall\Policy\PolicyRepository;
@@ -32,6 +33,7 @@ final class Bootstrap {
 		PolicyRepository::get_instance();
 		WebhookService::get_instance();
 		WebhookAutoTrigger::get_instance();
+		SortablePosts::get_instance();
 
 		if ( is_admin() ) {
 			CoreOptionsService::get_instance();

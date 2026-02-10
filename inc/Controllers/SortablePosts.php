@@ -1,9 +1,10 @@
-<?php namespace cmk\RestApiFirewall\Theme;
+<?php namespace cmk\RestApiFirewall\Controllers;
 
 defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Core\FileUtils;
 use cmk\RestApiFirewall\Core\Utils;
+use WP_REST_Request;
 
 class SortablePosts {
 
@@ -24,6 +25,8 @@ class SortablePosts {
 		add_action( 'wp_ajax_sortable_posts_update_order', array( $this, 'ajax_update_order' ) );
 		add_action( 'pre_get_posts', array( $this, 'set_default_order' ) );
 		add_action( 'admin_footer', array( $this, 'print_sortable_styles' ) );
+
+		add_action( 'rest_api_init', array( $this, 'register_rest_hooks' ) );
 	}
 
 	private static function get_sortable_post_types(): array {
@@ -123,8 +126,45 @@ class SortablePosts {
 		wp_send_json_success( array( 'message' => 'Order updated' ) );
 	}
 
+	public function register_rest_hooks(): void {
+		foreach ( self::get_sortable_post_types() as $post_type ) {
+			add_filter( 'rest_' . $post_type . '_collection_params', array( $this, 'add_menu_order_param' ) );
+			add_filter( 'rest_' . $post_type . '_query', array( $this, 'apply_rest_order' ), 10, 2 );
+
+			register_rest_field(
+				$post_type,
+				'menu_order',
+				array(
+					'get_callback' => function ( $post ) {
+						return (int) get_post_field( 'menu_order', $post['id'] );
+					},
+					'schema'       => array(
+						'description' => 'Menu order for sorting',
+						'type'        => 'integer',
+						'context'     => array( 'view', 'edit' ),
+					),
+				)
+			);
+		}
+	}
+
+	public function add_menu_order_param( array $query_params ): array {
+		$query_params['orderby']['enum'][]  = 'menu_order';
+		$query_params['orderby']['default'] = 'menu_order';
+		return $query_params;
+	}
+
+	public function apply_rest_order( array $args, WP_REST_Request $request ): array {
+		$orderby = $request->get_param( 'orderby' );
+		if ( empty( $orderby ) || 'menu_order' === $orderby ) {
+			$args['orderby'] = 'menu_order';
+			$args['order']   = 'ASC';
+		}
+		return $args;
+	}
+
 	public function set_default_order( $query ): void {
-		if ( ! is_admin() || ! $query->is_main_query() ) {
+		if ( ! $query->is_main_query() ) {
 			return;
 		}
 
@@ -135,7 +175,13 @@ class SortablePosts {
 
 		$orderby = $query->get( 'orderby' );
 		if ( empty( $orderby ) || 'menu_order' === $orderby ) {
-			$query->set( 'orderby', array( 'menu_order' => 'ASC', 'date' => 'DESC' ) );
+			$query->set(
+				'orderby',
+				array(
+					'menu_order' => 'ASC',
+					'date'       => 'DESC',
+				)
+			);
 		}
 	}
 
