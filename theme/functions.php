@@ -52,4 +52,5 @@ PostContent::get_instance();
 ImageFiles::get_instance();
 RedirectTemplates::get_instance();
 CustomPosts::get_instance();
+SortablePosts::get_instance();
 DisableComments::get_instance();

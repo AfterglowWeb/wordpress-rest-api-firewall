@@ -25,9 +25,7 @@ import CountryBlockList from './CountryBlockList';
 export default function IpBlackList() {
 	const { adminData } = useAdminData();
 	const { __ } = wp.i18n || {};
-
 	const [ loading, setLoading ] = useState( true );
-
 	const [ settings, setSettings ] = useState( {
 		enabled: false,
 		mode: 'blacklist',
@@ -35,7 +33,6 @@ export default function IpBlackList() {
 		blacklist: [],
 	} );
 	const [ currentTab, setCurrentTab ] = useState( 0 );
-
 	const { hasValidLicense } = useLicense();
 	const { openDialog, updateDialog } = useDialog();
 	const isIpFilterDisabled = ! settings.enabled;
