@@ -51,13 +51,11 @@ class ImageFiles {
 
 		$file_size        = absint( $file['size'] );
 		$max_upload_size  = absint(CoreOptions::read_option( 'theme_max_upload_weight' ) );
-
-
-		if ( $file_size && $max_upload_size && $file_size > $max_upload_size ) {
+		if ( $file_size && $max_upload_size && $file_size > $max_upload_size * 1024 ) {
 			$file['error'] = sprintf(
 				/* translators: %d is the image weight in ko */
 				esc_html__( 'The maximum allowed images weight is %d Ko. Try converting to .webp format to reduce it.', 'rest-api-firewall' ),
-				(int) round( $max_upload_size / 1024 )
+				(int) round( $max_upload_size )
 			);
 		}
 
