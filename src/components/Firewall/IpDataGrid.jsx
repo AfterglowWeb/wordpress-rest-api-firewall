@@ -37,7 +37,10 @@ function isValidIpOrCidr( value ) {
 	);
 }
 
-export default function IpDataGrid( { listType = 'blacklist', onMutate = null } ) {
+export default function IpDataGrid( {
+	listType = 'blacklist',
+	onMutate = null,
+} ) {
 	const { adminData } = useAdminData();
 	const { hasValidLicense } = useLicense();
 	const { __ } = wp.i18n || {};

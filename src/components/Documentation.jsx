@@ -60,7 +60,10 @@ export default function Documentation( {
 				onClose={ closeDoc }
 				sx={ {
 					'& .MuiDrawer-paper': {
-						height: { sm: 'calc(100% - 46px)', md: 'calc(100% - 32px)'},
+						height: {
+							sm: 'calc(100% - 46px)',
+							md: 'calc(100% - 32px)',
+						},
 						mt: { sm: '46px', md: '32px' },
 						boxSizing: 'border-box',
 						width: '100%',

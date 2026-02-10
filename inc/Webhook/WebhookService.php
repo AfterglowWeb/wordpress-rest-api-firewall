@@ -265,7 +265,7 @@ class WebhookService {
 		foreach ( $data['webhooks'] as $index => $webhook ) {
 			if ( isset( $webhook['id'] ) && $webhook['id'] === $id ) {
 				$merged                     = array_merge( $webhook, $updates );
-				$merged['id']               = $id; 
+				$merged['id']               = $id;
 				$merged['created_at']       = $webhook['created_at'];
 				$data['webhooks'][ $index ] = self::sanitize_webhook_entry( $merged );
 				$found                      = true;
@@ -349,7 +349,7 @@ class WebhookService {
 			wp_send_json_error( $error );
 		}
 
-		wp_send_json_success( $response );
+		wp_send_json_success( wp_remote_retrieve_body($response) );
 	}
 
 	public function ajax_test_webhook_event(): void {

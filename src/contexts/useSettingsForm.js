@@ -100,7 +100,7 @@ export default function useSettingsForm( {
 			rest_models_acf_options_page_endpoint:
 				adminOptions.rest_models_acf_options_page_endpoint ?? '',
 
-			rest_collections_per_page_enabled:  Boolean(
+			rest_collections_per_page_enabled: Boolean(
 				adminOptions.rest_collections_per_page_enabled
 			),
 			rest_collections_posts_per_page: Number(
@@ -110,8 +110,7 @@ export default function useSettingsForm( {
 				adminOptions.rest_collections_attachments_per_page ?? 100
 			),
 
-			application_host: 
-				adminOptions.application_host ?? '',
+			application_host: adminOptions.application_host ?? '',
 			application_webhook_endpoint:
 				adminOptions.application_webhook_endpoint ?? '',
 			application_webhook_auto_trigger_events: Array.isArray(

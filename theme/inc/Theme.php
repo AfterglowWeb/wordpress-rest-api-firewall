@@ -102,8 +102,6 @@ class Theme {
 			remove_action( 'admin_enqueue_scripts', 'wp_enqueue_emoji_styles', 20 );
 			remove_action( 'admin_print_scripts', 'print_emoji_detection_script', 20 );
 			remove_action( 'admin_print_scripts', 'print_emoji_detection_script', 20 );
-
-			add_filter( 'tiny_mce_plugins', [ __CLASS__, 'disable_emojis_tinymce' ] );
 		}
 
 	}

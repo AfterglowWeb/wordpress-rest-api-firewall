@@ -1,4 +1,9 @@
-import { createContext, useContext, useState, useCallback } from '@wordpress/element';
+import {
+	createContext,
+	useContext,
+	useState,
+	useCallback,
+} from '@wordpress/element';
 
 const LicenseContext = createContext( {
 	hasValidLicense: false,
@@ -16,7 +21,9 @@ export function LicenseProvider( { children } ) {
 	}, [] );
 
 	return (
-		<LicenseContext.Provider value={ { hasValidLicense, status, updateLicenseStatus } }>
+		<LicenseContext.Provider
+			value={ { hasValidLicense, status, updateLicenseStatus } }
+		>
 			{ children }
 		</LicenseContext.Provider>
 	);
