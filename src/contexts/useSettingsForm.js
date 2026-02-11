@@ -27,6 +27,10 @@ export default function useSettingsForm( {
 		rest_collections_per_page_enabled: false,
 		rest_collections_posts_per_page: 100,
 		rest_collections_attachments_per_page: 100,
+		rest_collections_sortable_enabled: false,
+		rest_collections_sortable_rest_enforce: false,
+		rest_collections_sortable_wp_query_enforce: false,
+		rest_collections_sortable_post_types: [],
 		application_host: '',
 		application_webhook_endpoint: '',
 		application_webhook_auto_trigger_events: [],
@@ -108,6 +112,19 @@ export default function useSettingsForm( {
 			),
 			rest_collections_attachments_per_page: Number(
 				adminOptions.rest_collections_attachments_per_page ?? 100
+			),
+
+			rest_collections_sortable_enabled: Boolean(
+				adminOptions.rest_collections_sortable_enabled
+			),
+			rest_collections_sortable_rest_enforce: Boolean(
+				adminOptions.rest_collections_sortable_rest_enforce
+			),
+			rest_collections_sortable_wp_query_enforce: Boolean(
+				adminOptions.rest_collections_sortable_wp_query_enforce
+			),
+			rest_collections_sortable_post_types: Boolean(
+				adminOptions.rest_collections_sortable_post_types
 			),
 
 			application_host: adminOptions.application_host ?? '',
@@ -259,6 +276,14 @@ export default function useSettingsForm( {
 					formData.rest_collections_posts_per_page,
 				rest_collections_attachments_per_page:
 					formData.rest_collections_attachments_per_page,
+				rest_collections_sortable_enabled:
+					formData.rest_collections_sortable_enabled,
+				rest_collections_sortable_rest_enforce:
+					formData.rest_collections_sortable_rest_enforce,
+				rest_collections_sortable_wp_query_enforce:
+					formData.rest_collections_sortable_wp_query_enforce,
+				rest_collections_sortable_post_types:
+					formData.rest_collections_sortable_post_types,
 
 				application_host: formData.application_host,
 				application_webhook_endpoint:

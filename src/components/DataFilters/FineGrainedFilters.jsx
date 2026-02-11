@@ -28,18 +28,18 @@ export default function FineGrainedFilters( { setField, postTypes } ) {
 				fontWeight={ 600 }
 				sx={ { mb: 2, position: 'relative' } }
 			>
-				{ __( 'Fine Grained Filters', 'rest-api-firewall' ) }
+				{ __( 'Fine-Grained Property Filtering', 'rest-api-firewall' ) }
 				{ ! hasValidLicense && <ProBadge position={ 'right' } /> }
 			</Typography>
 
 			<FormControl fullWidth>
 				<InputLabel>
-					{ __( 'Post type', 'rest-api-firewall' ) }
+					{ __( 'Post Type', 'rest-api-firewall' ) }
 				</InputLabel>
 				<Select
 					value={ selectedPostType }
 					defaultValue={ postTypes[ 0 ].value || '' }
-					label={ __( 'Post type', 'rest-api-firewall' ) }
+					label={ __( 'Post Type', 'rest-api-firewall' ) }
 					onChange={ ( e ) => setSelectedPostType( e.target.value ) }
 				>
 					{ postTypes &&

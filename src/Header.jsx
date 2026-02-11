@@ -96,7 +96,7 @@ export default function Header() {
 		<AppHeader>
 			<MainContainer>
 				<BrandSection>
-					<AppLogo>raf.</AppLogo>
+					<AppLogo>hT.</AppLogo>
 
 					<BrandInfo>
 						<AppName
@@ -114,12 +114,10 @@ export default function Header() {
 						} }
 					/>
 
-					<Tooltip title={ 'Open Theme Github in a new tab' }>
 						<Documentation
 							page="getting-started"
 							buttonText="Documentation"
 						/>
-					</Tooltip>
 				</BrandSection>
 				<LicenseDialog />
 			</MainContainer>

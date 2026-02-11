@@ -1,13 +1,13 @@
 <?php namespace cmk\RestApiFirewall;
 
 /**
- * REST API Firewall
+ * Headless Toolkit
  *
- * @package REST API Firewall
+ * @package Headless Toolkit
  * @author  Cédric Moris Kelly
  *
  * @wordpress-plugin
- * Plugin Name:       REST API Firewall
+ * Plugin Name:       Headless Toolkit
  * Version:           0.1.0-alpha.6
  * Description:       Secure REST API endpoints through authentication, rate limiting and much more. Set application Webhook with authentication to trigger external front-end application routines.
  * Tags:              firewall, rest api, rest, headless, webhook
@@ -38,7 +38,7 @@ if ( file_exists( REST_API_FIREWALL_DIR . '/vendor/autoload.php' ) ) {
 		'admin_notices',
 		function (): void {
 			echo '<div class="notice notice-error"><p>';
-			echo esc_html__( 'REST API Firewall encountered an error and could not be activated.', 'rest-api-firewall' );
+			echo esc_html__( 'Headless Toolkit encountered an error and could not be activated.', 'rest-api-firewall' );
 			echo '</p></div>';
 		}
 	);
@@ -72,14 +72,14 @@ add_action(
 		if ( $requires_wp && version_compare( get_bloginfo( 'version' ), $requires_wp, '<' ) ) {
 			echo '<div class="notice notice-error"><p>';
 			/* translators: %s is the WordPress version */
-			printf( esc_html__( 'REST API Firewall requires WordPress version %s.', 'rest-api-firewall' ), esc_html( $requires_wp ) );
+			printf( esc_html__( 'Headless Toolkit requires WordPress version %s.', 'rest-api-firewall' ), esc_html( $requires_wp ) );
 			echo '</p></div>';
 		}
 
 		if ( $requires_php && version_compare( PHP_VERSION, $requires_php, '<' ) ) {
 			echo '<div class="notice notice-error"><p>';
 			/* translators: %s is the PHP version */
-			printf( esc_html__( 'REST API Firewall requires PHP version %s.', 'rest-api-firewall' ), esc_html( $requires_php ) );
+			printf( esc_html__( 'Headless Toolkit requires PHP version %s.', 'rest-api-firewall' ), esc_html( $requires_php ) );
 			echo '</p></div>';
 		}
 	}

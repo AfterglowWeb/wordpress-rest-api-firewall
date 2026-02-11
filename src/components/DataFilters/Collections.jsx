@@ -10,13 +10,15 @@ import TextField from '@mui/material/TextField';
 import ProBadge from '../ProBadge';
 
 import MultipleSelect from '../MultipleSelect';
+import Divider from '@mui/material/Divider';
+import SortableFilters from './SortableFilters';
 
 export default function Collections( { form, setField, postTypes } ) {
 	const { __ } = wp.i18n || {};
 	const { hasValidLicense } = useLicense();
 
 	return (
-		<Stack spacing={ 3 }>
+		<Stack spacing={ 3 } >
 			<Typography variant="subtitle1" fontWeight={ 600 }>
 				{ __( 'Collections', 'rest-api-firewall' ) }
 			</Typography>
@@ -39,10 +41,6 @@ export default function Collections( { form, setField, postTypes } ) {
 						type="number"
 						min="0"
 						max="10000"
-						helperText={ __(
-							'Applies to posts collections',
-							'rest-api-firewall'
-						) }
 						name="rest_collections_posts_per_page"
 						value={ form.rest_collections_posts_per_page }
 						onChange={ setField }
@@ -58,10 +56,6 @@ export default function Collections( { form, setField, postTypes } ) {
 						type="number"
 						min="0"
 						max="10000"
-						helperText={ __(
-							'Applies to attachment collections',
-							'rest-api-firewall'
-						) }
 						name="rest_collections_attachments_per_page"
 						value={ form.rest_collections_attachments_per_page }
 						onChange={ setField }
@@ -99,12 +93,12 @@ export default function Collections( { form, setField, postTypes } ) {
 							disabled={ ! hasValidLicense }
 							name="rest_collections_allowed_post_types"
 							label={ __(
-								'Restict to Posts Types',
+								'Restrict to Post Types',
 								'rest-api-firewall'
 							) }
 							value={ form.rest_collections_allowed_post_types }
 							helperText={
-								'The selected Posts Types only will be visible in the REST API. If empty, default visibilty settings are applied'
+								__( 'Only the selected post types will be exposed via the REST API. Leave empty to use default visibility settings.', 'rest-api-firewall' )
 							}
 							options={ postTypes }
 							onChange={ setField }
@@ -129,6 +123,8 @@ export default function Collections( { form, setField, postTypes } ) {
 				</FormControl>
 				<ProBadge position={ 'right' } />
 			</Stack>
+
+
 		</Stack>
 	);
 }

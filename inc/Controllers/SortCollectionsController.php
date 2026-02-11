@@ -2,15 +2,14 @@
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Core\FileUtils;
-use cmk\RestApiFirewall\Core\Utils;
+use cmk\RestApiFirewall\Core\CoreOptions;
+
 use WP_REST_Request;
 
-class SortablePosts {
+class SortCollectionsController {
 
 	protected static $instance = null;
-
-	private static $sortable_post_types = null;
+	protected static $post_types_names = null;
 
 	public static function get_instance() {
 		if ( null === static::$instance ) {
@@ -20,49 +19,41 @@ class SortablePosts {
 	}
 
 	private function __construct() {
-		add_action( 'init', array( $this, 'hook_order_column' ) );
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_sortable_scripts' ) );
-		add_action( 'wp_ajax_sortable_posts_update_order', array( $this, 'ajax_update_order' ) );
-		add_action( 'pre_get_posts', array( $this, 'set_default_order' ) );
-		add_action( 'admin_footer', array( $this, 'print_sortable_styles' ) );
+		if( true === CoreOptions::read_option('rest_collections_sortable_enabled') ) {
+			add_action( 'admin_init', array( $this, 'hook_order_column' ) );
+			add_action( 'admin_footer', array( $this, 'print_sortable_styles' ) );
+			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_sortable_scripts' ) );
+			add_action( 'wp_ajax_sortable_posts_update_order', array( $this, 'ajax_update_order' ) );
+			
+			add_action( 'pre_get_posts', array( $this, 'apply_wp_query_order' ) );
+			add_action( 'rest_api_init', function (): void {
+				foreach ( self::get_sortable_post_types() as $post_type ) {
+					add_filter( 'rest_' . $post_type . '_collection_params', array( $this, 'add_menu_order_param' ) );
+					add_filter( 'rest_' . $post_type . '_query', array( $this, 'apply_rest_order' ), 10, 2 );
 
-		add_action( 'rest_api_init', array( $this, 'register_rest_hooks' ) );
-	}
-
-	private static function get_sortable_post_types(): array {
-		if ( null !== self::$sortable_post_types ) {
-			return self::$sortable_post_types;
+					register_rest_field(
+						$post_type,
+						'menu_order',
+						array(
+							'get_callback' => function ( $post ) {
+								return (int) get_post_field( 'menu_order', $post['id'] );
+							},
+							'schema'       => array(
+								'description' => 'Menu order for sorting',
+								'type'        => 'integer',
+								'context'     => array( 'view', 'edit' ),
+							),
+						)
+					);
+				}
+			} );
 		}
-
-		$json_content = FileUtils::read_file( realpath( get_stylesheet_directory() . '/config/posts.json' ) );
-		if ( ! $json_content ) {
-			self::$sortable_post_types = array();
-			return self::$sortable_post_types;
-		}
-
-		$config = Utils::json_decode( $json_content );
-		if ( empty( $config['posts'] ) || ! is_array( $config['posts'] ) ) {
-			self::$sortable_post_types = array();
-			return self::$sortable_post_types;
-		}
-
-		self::$sortable_post_types = array_filter(
-			array_map(
-				function ( $post ) {
-					return isset( $post['slug'] ) ? sanitize_key( $post['slug'] ) : '';
-				},
-				$config['posts']
-			)
-		);
-
-		return self::$sortable_post_types;
 	}
 
 	public function enqueue_sortable_scripts( string $hook ): void {
 		if ( 'edit.php' !== $hook ) {
 			return;
 		}
-
 		$screen = get_current_screen();
 		if ( ! $screen || ! in_array( $screen->post_type, self::get_sortable_post_types(), true ) ) {
 			return;
@@ -126,28 +117,6 @@ class SortablePosts {
 		wp_send_json_success( array( 'message' => 'Order updated' ) );
 	}
 
-	public function register_rest_hooks(): void {
-		foreach ( self::get_sortable_post_types() as $post_type ) {
-			add_filter( 'rest_' . $post_type . '_collection_params', array( $this, 'add_menu_order_param' ) );
-			add_filter( 'rest_' . $post_type . '_query', array( $this, 'apply_rest_order' ), 10, 2 );
-
-			register_rest_field(
-				$post_type,
-				'menu_order',
-				array(
-					'get_callback' => function ( $post ) {
-						return (int) get_post_field( 'menu_order', $post['id'] );
-					},
-					'schema'       => array(
-						'description' => 'Menu order for sorting',
-						'type'        => 'integer',
-						'context'     => array( 'view', 'edit' ),
-					),
-				)
-			);
-		}
-	}
-
 	public function add_menu_order_param( array $query_params ): array {
 		$query_params['orderby']['enum'][]  = 'menu_order';
 		$query_params['orderby']['default'] = 'menu_order';
@@ -156,14 +125,19 @@ class SortablePosts {
 
 	public function apply_rest_order( array $args, WP_REST_Request $request ): array {
 		$orderby = $request->get_param( 'orderby' );
-		if ( empty( $orderby ) || 'menu_order' === $orderby ) {
+
+		if( true === CoreOptions::read_option('rest_collections_sortable_rest_enforce') ) {
+			$orderby = 'menu_order';
+		}
+
+		if ( 'menu_order' === $orderby ) {
 			$args['orderby'] = 'menu_order';
 			$args['order']   = 'ASC';
 		}
 		return $args;
 	}
 
-	public function set_default_order( $query ): void {
+	public function apply_wp_query_order( $query ): void {
 		if ( ! $query->is_main_query() ) {
 			return;
 		}
@@ -174,7 +148,12 @@ class SortablePosts {
 		}
 
 		$orderby = $query->get( 'orderby' );
-		if ( empty( $orderby ) || 'menu_order' === $orderby ) {
+
+		if( true === CoreOptions::read_option('rest_collections_sortable_wp_query_enforce') ) {
+			$orderby = 'menu_order';
+		}
+		
+		if ( 'menu_order' === $orderby ) {
 			$query->set(
 				'orderby',
 				array(
@@ -187,7 +166,6 @@ class SortablePosts {
 
 	public function hook_order_column(): void {
 		$post_types = self::get_sortable_post_types();
-
 		foreach ( $post_types as $post_type ) {
 			add_filter(
 				'manage_' . $post_type . '_posts_columns',
@@ -218,13 +196,13 @@ class SortablePosts {
 				2
 			);
 
-			add_filter(
+			/*add_filter(
 				'manage_edit-' . $post_type . '_sortable_columns',
 				function ( $columns ) {
 					$columns['menu_order'] = 'menu_order';
 					return $columns;
 				}
-			);
+			);*/
 		}
 	}
 
@@ -268,4 +246,28 @@ class SortablePosts {
 		</style>
 		<?php
 	}
+
+	private static function get_sortable_post_types(): array {
+		
+		if( null !== self::$post_types_names) {
+			return self::$post_types_names;
+		}
+
+		$post_types = get_post_types(
+			array(
+				'public'       => true,
+				'show_in_rest' => true,
+			),
+			'names',
+		);
+
+		if ( empty( $post_types ) ) {
+			return [];
+		}
+
+		self::$post_types_names = array_values( array_filter( $post_types, fn( $post_type ) =>  'attachment' !== $post_type ) );
+		return self::$post_types_names;
+
+	}
+
 }

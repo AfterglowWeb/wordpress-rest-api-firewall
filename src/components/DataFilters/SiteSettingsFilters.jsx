@@ -19,7 +19,7 @@ export default function SiteSettingsFilters( { form, setField } ) {
 	return (
 		<Stack spacing={ 3 }>
 			<Typography variant="subtitle1" fontWeight={ 600 }>
-				{ __( 'Route wp/v2/settings filters', 'rest-api-firewall' ) }
+				{ __( 'Settings Route (wp/v2/settings)', 'rest-api-firewall' ) }
 			</Typography>
 			<Stack
 				spacing={ 3 }
@@ -37,11 +37,11 @@ export default function SiteSettingsFilters( { form, setField } ) {
 								name="rest_models_remove_site_url"
 							/>
 						}
-						label={ __( 'Remove site url', 'rest-api-firewall' ) }
+						label={ __( 'Remove Site URL', 'rest-api-firewall' ) }
 					/>
 					<FormHelperText>
 						{ __(
-							'Remove site url from wp/v2/settings',
+							'Remove the site URL from wp/v2/settings responses.',
 							'rest-api-firewall'
 						) }
 					</FormHelperText>
@@ -58,11 +58,11 @@ export default function SiteSettingsFilters( { form, setField } ) {
 								name="rest_models_remove_site_email"
 							/>
 						}
-						label={ __( 'Remove site email', 'rest-api-firewall' ) }
+						label={ __( 'Remove Site Email', 'rest-api-firewall' ) }
 					/>
 					<FormHelperText>
 						{ __(
-							'Remove site email from wp/v2/settings',
+							'Remove the site email from wp/v2/settings responses.',
 							'rest-api-firewall'
 						) }
 					</FormHelperText>
@@ -94,7 +94,7 @@ export default function SiteSettingsFilters( { form, setField } ) {
 					/>
 					<FormHelperText>
 						{ __(
-							'Add ACF options pages fields to wp/v2/settings',
+							'Expose ACF options page fields via wp/v2/settings.',
 							'rest-api-firewall'
 						) }
 					</FormHelperText>
@@ -114,7 +114,7 @@ export default function SiteSettingsFilters( { form, setField } ) {
 							'rest-api-firewall'
 						) }
 						helperText={ __(
-							'Use wp/v2/my-route for ACF options pages fields',
+							'Serve ACF options page fields at a custom route instead of wp/v2/settings.',
 							'rest-api-firewall'
 						) }
 						name="rest_models_acf_options_page_endpoint"
