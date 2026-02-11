@@ -160,6 +160,31 @@ class CoreOptions {
 				'context'           => array( 'free', 'pro' ),
 			),
 
+			'rest_collections_sortable_enabled' => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+			),
+
+			'rest_collections_sortable_rest_enforce' => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+			),
+
+			'rest_collections_sortable_wp_query_enforce' => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+			),
+
+
 			// Application.
 
 			'application_host'                           => array(
