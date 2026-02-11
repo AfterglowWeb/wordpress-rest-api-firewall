@@ -2,11 +2,6 @@
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Controllers\RoutesController;
-use cmk\RestApiFirewall\Controllers\AttachmentController;
-
-use WP_Post;
-
 class SchemaFilters {
 
 

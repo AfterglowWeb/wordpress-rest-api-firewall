@@ -41,6 +41,10 @@ const SCHEMA_OPTIONS = [
 	'rest_collections_attachments_per_page',
 	'rest_collections_allowed_post_types_enabled',
 	'rest_collections_allowed_post_types',
+	'rest_collections_sortable_enabled',
+	'rest_collections_sortable_rest_enforce',
+	'rest_collections_sortable_wp_query_enforce',
+	'rest_collections_sortable_post_types',
 ];
 
 const THEME_OPTIONS = [
@@ -174,7 +178,7 @@ function AppContent() {
 				aria-label="REST API settings tabs"
 			>
 				<Tab label={ __( 'Firewall', 'rest-api-firewall' ) } />
-				<Tab label={ __( 'Data Filters', 'rest-api-firewall' ) } />
+				<Tab label={ __( 'API Output', 'rest-api-firewall' ) } />
 				<Tab label={ __( 'Webhook', 'rest-api-firewall' ) } />
 				<Tab label={ __( 'Theme', 'rest-api-firewall' ) } />
 			</Tabs>
@@ -193,7 +197,7 @@ function AppContent() {
 					alignItems={ 'center' }
 				>
 					<Typography variant="h6" fontWeight={ 600 }>
-						{ __( 'Data Filters', 'rest-api-firewall' ) }
+						{ __( 'API Output', 'rest-api-firewall' ) }
 					</Typography>
 					<Button
 						variant="contained"

@@ -29,7 +29,7 @@ export default function BulkFilters( { form, setField } ) {
 					fontWeight={ 600 }
 					sx={ { mb: 2 } }
 				>
-					{ __( 'Bulk Filters', 'rest-api-firewall' ) }
+					{ __( 'Property Filtering', 'rest-api-firewall' ) }
 				</Typography>
 
 				<FormControl>
@@ -46,7 +46,6 @@ export default function BulkFilters( { form, setField } ) {
 					/>
 				</FormControl>
 			</Stack>
-			<Divider />
 
 			<Stack sx={ { position: 'relative' } }>
 				<FormControl disabled={ isProDisabled }>
@@ -61,11 +60,11 @@ export default function BulkFilters( { form, setField } ) {
 								onChange={ setField }
 							/>
 						}
-						label={ __( 'Relative urls', 'rest-api-firewall' ) }
+						label={ __( 'Relative URLs', 'rest-api-firewall' ) }
 					/>
 					<FormHelperText>
 						{ __(
-							'Remove host from post and term urls.',
+							'Remove the host from post and term URLs.',
 							'rest-api-firewall'
 						) }
 					</FormHelperText>
@@ -87,14 +86,14 @@ export default function BulkFilters( { form, setField } ) {
 							/>
 						}
 						label={ __(
-							'Relative attachment urls',
+							'Relative Attachment URLs',
 							'rest-api-firewall'
 						) }
 					/>
 					<FormHelperText>
 						<Typography variant="caption">
 							{ __(
-								'Remove host and upload path from attachment urls',
+								'Remove the host and upload path from attachment URLs.',
 								'rest-api-firewall'
 							) }
 						</Typography>
@@ -146,13 +145,11 @@ export default function BulkFilters( { form, setField } ) {
 				/>
 				<FormHelperText>
 					{ __(
-						'Remove the `_links` property from REST responses',
+						'Remove the `_links` property from REST responses.',
 						'rest-api-firewall'
 					) }
 				</FormHelperText>
 			</FormControl>
-
-			<Divider />
 
 			<FormControl disabled={ isSchemaDisabled }>
 				<FormControlLabel
@@ -167,13 +164,13 @@ export default function BulkFilters( { form, setField } ) {
 						/>
 					}
 					label={ __(
-						'Embed featured attachments',
+						'Embed Featured Attachments',
 						'rest-api-firewall'
 					) }
 				/>
 				<FormHelperText>
 					{ __(
-						'Replace featured attachment ids by simple objects.',
+						'Replace featured attachment IDs with simplified objects.',
 						'rest-api-firewall'
 					) }
 				</FormHelperText>
@@ -192,14 +189,14 @@ export default function BulkFilters( { form, setField } ) {
 						/>
 					}
 					label={ __(
-						'Embed attachments on posts',
+						'Embed Post Attachments',
 						'rest-api-firewall'
 					) }
 				/>
 				<FormHelperText>
 					<Typography variant="caption">
 						{ __(
-							'Add a simplified array of attachments on posts',
+							'Add a simplified array of attachments to posts.',
 							'rest-api-firewall'
 						) }
 					</Typography>
@@ -223,11 +220,11 @@ export default function BulkFilters( { form, setField } ) {
 							onChange={ setField }
 						/>
 					}
-					label={ __( 'Embed terms', 'rest-api-firewall' ) }
+					label={ __( 'Embed Terms', 'rest-api-firewall' ) }
 				/>
 				<FormHelperText>
 					{ __(
-						'Replace terms ids by simplified term objects',
+						'Replace term IDs with simplified term objects.',
 						'rest-api-firewall'
 					) }
 				</FormHelperText>
@@ -247,7 +244,7 @@ export default function BulkFilters( { form, setField } ) {
 				/>
 				<FormHelperText>
 					{ __(
-						'Replace author id by a simplified author object',
+						'Replace the author ID with a simplified author object.',
 						'rest-api-firewall'
 					) }
 				</FormHelperText>
@@ -266,7 +263,7 @@ export default function BulkFilters( { form, setField } ) {
 					label={ __( 'Embed ACF Fields', 'rest-api-firewall' ) }
 				/>
 				<FormHelperText>
-					{ __( 'Activate the `acf` property', 'rest-api-firewall' ) }
+					{ __( 'Enable the `acf` property on REST responses.', 'rest-api-firewall' ) }
 				</FormHelperText>
 			</FormControl>
 		</Stack>
