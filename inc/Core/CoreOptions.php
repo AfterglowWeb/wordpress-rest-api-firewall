@@ -35,8 +35,6 @@ class CoreOptions {
 
 		$options = array(
 
-			// Models.
-
 			'rest_models_enabled'                        => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
@@ -175,7 +173,6 @@ class CoreOptions {
 			),
 
 			// Collections.
-
 			'rest_collections_per_page_enabled'          => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
@@ -359,9 +356,7 @@ class CoreOptions {
 				'context'           => array( 'free', 'pro' ),
 				'group'             => 'theme',
 			),
-
-			// Firewall.
-
+			
 			'enforce_auth'              => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
@@ -460,9 +455,6 @@ class CoreOptions {
 		return self::is_pro_active() ? apply_filters( 'rest_api_firewall_core_options', $options ) : $options;
 	}
 
-	/**
-	 * Returns options_config stripped of PHP-only fields, suitable for JS consumption.
-	 */
 	public static function options_config_for_js(): array {
 		$config    = self::options_config();
 		$js_config = array();
@@ -471,7 +463,7 @@ class CoreOptions {
 			$js_config[ $key ] = array(
 				'default_value' => $c['default_value'],
 				'type'          => $c['type'],
-				'group'         => $c['group'] ?? 'schema',
+				'group'         => $c['group'] ?? 'firewall',
 				'context'       => $c['context'] ?? array( 'free' ),
 			);
 		}
@@ -637,45 +629,5 @@ class CoreOptions {
 				return (string) call_user_func( $callback, $option_value );
 		}
 	}
-
-	/**
-	 * Backward compatibility: Convert old firewall option keys to new CoreOptions keys
-	 */
-	public static function get_firewall_option( string $key ) {
-		$key_mapping = array(
-			'user_id' => 'firewall_user_id',
-			'policy' => 'firewall_policy',
-		);
-
-		$mapped_key = $key_mapping[ $key ] ?? $key;
-		return self::read_option( $mapped_key );
-	}
-
-	public static function get_firewall_options(): array {
-		$all_options = self::read_options();
-		$firewall_options = array();
-
-		$firewall_keys = array(
-			'enforce_auth',
-			'enforce_rate_limit',
-			'firewall_user_id' => 'user_id',
-			'rate_limit',
-			'rate_limit_time',
-			'rate_limit_release',
-			'rate_limit_blacklist',
-			'rate_limit_blacklist_time',
-			'firewall_policy' => 'policy',
-			'hide_user_routes',
-		);
-
-		foreach ( $firewall_keys as $new_key => $old_key ) {
-			$key = is_string( $new_key ) ? $new_key : $old_key;
-			$output_key = is_string( $new_key ) ? $old_key : $key;
-			$firewall_options[ $output_key ] = $all_options[ $key ] ?? null;
-		}
-
-		return $firewall_options;
-	}
-
 
 }

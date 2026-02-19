@@ -118,7 +118,10 @@ class AdminPage {
 			padding-left:0;
 		}
 		body.toplevel_page_rest-api-firewall-admin #wpbody-content {
-			padding-bottom:40px;
+			padding-bottom:0;
+		}
+		body.toplevel_page_rest-api-firewall-admin #wpfooter {
+			display:none;
 		}
 		body.toplevel_page_rest-api-firewall-admin #wpbody-content .notice {
 			display:none;

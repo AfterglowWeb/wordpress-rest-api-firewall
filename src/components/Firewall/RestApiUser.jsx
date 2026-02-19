@@ -1,8 +1,6 @@
 import { useAdminData } from '../../contexts/AdminDataContext';
 
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
 import FormHelperText from '@mui/material/FormHelperText';
 import InputLabel from '@mui/material/InputLabel';
@@ -111,46 +109,6 @@ export default function RestApiUser( {
 							</Typography>
 						</>
 					) }
-				</FormHelperText>
-			</FormControl>
-
-			<FormControl sx={ { flex: 1, maxWidth: 270 } }>
-				<FormControlLabel
-					control={
-						<Switch
-							checked={ !! form.enforce_auth }
-							name="enforce_auth"
-							size="small"
-							onChange={ setField }
-						/>
-					}
-					label={ __(
-						'Enforce Authentication',
-						'rest-api-firewall'
-					) }
-				/>
-				<FormHelperText>
-					{ __(
-						'Enforce authentication on all routes',
-						'rest-api-firewall'
-					) }
-				</FormHelperText>
-			</FormControl>
-
-			<FormControl sx={ { flex: 1, maxWidth: 270 } }>
-				<FormControlLabel
-					control={
-						<Switch
-							checked={ !! form.hide_user_routes }
-							name="hide_user_routes"
-							size="small"
-							onChange={ setField }
-						/>
-					}
-					label={ __( 'Hide User Routes', 'rest-api-firewall' ) }
-				/>
-				<FormHelperText>
-					{ __( 'Block /wp/v2/users endpoint', 'rest-api-firewall' ) }
 				</FormHelperText>
 			</FormControl>
 		</Stack>

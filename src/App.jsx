@@ -17,39 +17,46 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Toolbar from '@mui/material/Toolbar';
-import Breadcrumbs from '@mui/material/Breadcrumbs';
-import Card from '@mui/material/Card';
+import IconButton from '@mui/material/IconButton';
 import Avatar from '@mui/material/Avatar';
+import AppBar from '@mui/material/AppBar';
+import Stack from '@mui/material/Stack';
+
+
 
 import SecurityOutlined from '@mui/icons-material/SecurityOutlined';
-import SyncOutlined from '@mui/icons-material/SyncOutlined';
 import PaletteOutlined from '@mui/icons-material/PaletteOutlined';
 import EmailOutlined from '@mui/icons-material/EmailOutlined';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import MenuIcon from '@mui/icons-material/Menu';
 import ApiIcon from '@mui/icons-material/Api';
+import WebhookIcon from '@mui/icons-material/Webhook';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import VpnLockOutlinedIcon from '@mui/icons-material/VpnLockOutlined';
+import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined';
+import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
+import CardMembershipOutlinedIcon from '@mui/icons-material/CardMembershipOutlined';
 
 import ConfirmDialog from './components/ConfirmDialog';
 import ThemeSettings from './components/ThemeSettings';
 
-import ModelsProperties from './components/ApiOutput/ModelsProperties';
+import Properties from './components/ApiOutput/Properties';
 import SiteSettings from './components/ApiOutput/SettingsRoute';
-import CollectionSorting from './components/ApiOutput/CollectionSorting';
-import PropertiesCleanup from './components/ApiOutput/PropertiesCleanup';
-import ModelsEmbed from './components/ApiOutput/ModelsEmbed';
-import CollectionsPerPage from './components/ApiOutput/CollectionsPerPage';
 import Firewall from './components/Firewall/Firewall';
 import Smtp from './components/Emails/Smtp';
 import Webhook from './components/Webhook/Webhook';
 
 import Documentation from './components/Documentation';
 import LicenseDialog from './components/LicenseDialog';
-import AppBar from '@mui/material/AppBar';
+import Collections from './components/ApiOutput/Collections';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 const DRAWER_WIDTH = 220;
 const APP_BAR_HEIGHT = 75;
-const WP_MENU_WIDTH = 160;
-const WP_ADMIN_BAR_HEIGHT = 32;
-const WP_FOOTER_HEIGHT = 80;
+const WP_FOOTER_HEIGHT = 40;
+const WP_ADMIN_BAR_HEIGHT_DESKTOP = 32;   // >= md
+const WP_ADMIN_BAR_HEIGHT_MOBILE  = 46;   // < md
+const WP_MENU_WIDTH_MD = 36;              // md → lg : menu replié
+const WP_MENU_WIDTH_LG = 160;             // lg+     : menu complet
 
 const AppLogo = styled( Avatar )( () => ( {
 	width: 48,
@@ -69,10 +76,11 @@ function AppContent() {
 	const { __ } = wp.i18n || {};
 	const { save, saving } = useSaveOptions();
 	const theme = useTheme();
+	const isMobile = useMediaQuery( theme.breakpoints.down( 'md' ) );
 
 	const [ postTypes, setPostTypes ] = useState( [] );
-	const [ panelIndex, setPanelIndex ] = useState( 0 );
-	const [ activeAnchor, setActiveAnchor ] = useState( null );
+	const [ mobileOpen, setMobileOpen ] = useState( false );
+	const [ panelGroup, setPanelGroup ] = useState( 1 );
 	const [ themeStatus, setThemeStatus ] = useState( null );
 
 	const { form, setField, setSlider, pickGroup } = useSettingsForm( {
@@ -80,34 +88,30 @@ function AppContent() {
 	} );
 
 	const menuItems = [
-	{ type: 'section', label: __( 'Firewall', 'rest-api-firewall' ), icon: SecurityOutlined },
-	{ key: 'user-rate-limiting', label: __( 'User & Rate Limiting', 'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', panelIndex: 1 },
-	{ key: 'ip-filtering', label: __( 'IP Filtering', 'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', panelIndex: 2 },
-	{ key: 'per-route-settings', label: __( 'Per Route Settings', 'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', panelIndex: 3 },
+	{ type: 'section', label: __( 'Firewall', 'rest-api-firewall' ) },
+	{ key: 'user-rate-limiting', label: __( 'Auth. & Rate Limit', 'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', panelGroup: 1, icon: SecurityOutlined },
+	{ key: 'per-route-settings', label: __( 'Routes', 'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', panelGroup: 3, icon: AccountTreeIcon },
+	{ key: 'ip-filtering', label: __( 'IP Filtering', 'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', panelGroup: 2, icon: VpnLockOutlinedIcon },
 
-	{ type: 'section', label: __( 'API Output', 'rest-api-firewall'), icon: ApiIcon },
-	{ key: 'collections-per-page', label: __( 'Collections Per Page', 'rest-api-firewall' ), breadcrumbPrefix: 'API Output', panelIndex: 4 },
-	{ key: 'collection-sorting', label: __( 'Collections Sorting', 'rest-api-firewall' ), breadcrumbPrefix: 'API Output', panelIndex: 5 },
-	{ key: 'properties-cleanup', label: __( 'Properties Cleanup', 'rest-api-firewall' ), breadcrumbPrefix: 'API Output', panelIndex: 6 },
-	{ key: 'models-embed', label: __( 'Properties Embed', 'rest-api-firewall' ), breadcrumbPrefix: 'API Output', panelIndex: 7 },
-	{ key: 'models-properties', label: __( 'Properties Model', 'rest-api-firewall' ), breadcrumbPrefix: 'API Output', panelIndex: 8 },
+	{ type: 'section', label: __( 'API Output', 'rest-api-firewall')},
+	{ key: 'collections', label: __( 'Collections', 'rest-api-firewall' ), breadcrumbPrefix: 'API Output', panelGroup: 4, icon: ApiIcon },
+	{ key: 'models-properties', label: __( 'Properties', 'rest-api-firewall' ), breadcrumbPrefix: 'API Output', panelGroup: 5, icon: RuleOutlinedIcon },
+	{ key: 'settings-route', label: __( 'Settings Route', 'rest-api-firewall'),  breadcrumbPrefix: 'API Output', secondary: 'wp/v2/settings', panelGroup: 6, icon: BusinessOutlinedIcon },
 	
-	{ key: 'settings-route', label: __( 'Settings Route', 'rest-api-firewall' ), panelIndex: 9 },
+	{ type: 'section', label: __( 'Integrations', 'rest-api-firewall') },
+	{ key: 'webhook', label: __( 'Webhook', 'rest-api-firewall' ), breadcrumbPrefix: 'Integrations', panelGroup: 7, icon: WebhookIcon },
+	{ key: 'emails', label: __( 'Emails', 'rest-api-firewall' ), breadcrumbPrefix: 'Integrations', panelGroup: 8, icon: EmailOutlined },
 	
-	{ type: 'section', label: __( 'Integrations', 'rest-api-firewall'), icon: ApiIcon },
-	{ key: 'webhook', label: __( 'Webhook', 'rest-api-firewall' ), breadcrumbPrefix: 'Integrations', panelIndex: 10, icon: SyncOutlined },
-	{ key: 'emails', label: __( 'Emails', 'rest-api-firewall' ), breadcrumbPrefix: 'Integrations', panelIndex: 11, icon: EmailOutlined },
-	
-	{ type: 'section', label: __( 'Modules', 'rest-api-firewall'), icon: ApiIcon },
-	{ key: 'theme', label: __( 'Theme', 'rest-api-firewall' ), breadcrumbPrefix: 'Modules', panelIndex: 12, icon: PaletteOutlined },
-
+	{ type: 'section', label: __( '', 'rest-api-firewall') },
+	{ key: 'theme', label: __( 'Theme', 'rest-api-firewall' ), breadcrumbPrefix: 'Modules', panelGroup: 9, icon: PaletteOutlined },
+	{ key: 'license', label: __( 'License Management', 'rest-api-firewall' ), breadcrumbPrefix: '', panelGroup: 10, icon: CardMembershipOutlinedIcon },
 ];
 
 	useEffect( () => {
 		const lastTab =
 			window.localStorage.getItem( 'rest_api_firewall_last_tab' ) || null;
 		if ( lastTab ) {
-			setPanelIndex( Number( lastTab ) );
+			setPanelGroup( Number( lastTab ) );
 		}
 	}, [] );
 
@@ -117,71 +121,24 @@ function AppContent() {
 		}
 	}, [ adminData ] );
 
-	const scrollToAnchor = useCallback( ( anchor ) => {
-		setTimeout( () => {
-			const el = document.getElementById( anchor );
-			if ( el ) {
-				el.scrollIntoView( { behavior: 'smooth', block: 'start' } );
-			}
-		}, 50 );
-	}, [] );
-
 	const handleMenuClick = useCallback(
 		( newIndex, anchor ) => {
 			if(! newIndex && ! anchor) {
 				return false;
 			}
-			const changing = panelIndex !== newIndex;
+			const changing = panelGroup !== newIndex;
 			if ( changing ) {
-				setPanelIndex( newIndex );
+				setPanelGroup( newIndex );
 				window.localStorage.setItem(
 					'rest_api_firewall_last_tab',
 					newIndex
 				);
 			}
-			setActiveAnchor( anchor || null );
-			if ( anchor ) {
-				if ( changing ) {
-					scrollToAnchor( anchor );
-				} else {
-					const el = document.getElementById( anchor );
-					if ( el ) {
-						el.scrollIntoView( {
-							behavior: 'smooth',
-							block: 'start',
-						} );
-					}
-				}
-			}
 		},
-		[ panelIndex, scrollToAnchor ]
+		[ panelGroup ]
 	);
 
-	const getBreadcrumb = () => {
-		const item = menuItems.find( ( m ) => m.panelIndex === panelIndex );
-		if ( ! item ) return [];
-		const trail = [ item.breadcrumbPrefix ];
-		trail.push(item.label);
-		if ( ! activeAnchor || ! item.subItems ) return trail;
-		for ( const sub of item.subItems ) {
-			if ( sub.anchor === activeAnchor ) {
-				trail.push( sub.label );
-				return trail;
-			}
-			if ( sub.subItems ) {
-				for ( const subsub of sub.subItems ) {
-					if ( subsub.anchor === activeAnchor ) {
-						trail.push( sub.label );
-						trail.push( subsub.label );
-						return trail;
-					}
-				}
-			}
-		}
-		return trail;
-	};
-
-	const breadcrumb = getBreadcrumb();
+	const activeMenuItem = menuItems.find( ( m ) => m.panelGroup === panelGroup ) || null;
 
 	const handleSaveFirewall = () => {
 		save( pickGroup( 'firewall' ), {
@@ -201,7 +158,7 @@ function AppContent() {
 				'Schemas settings saved successfully.',
 				'rest-api-firewall'
 			),
-			confirmMessage: __( 'Save schemas settings?', 'rest-api-firewall' ),
+			confirmMessage: __( 'Save API output settings?', 'rest-api-firewall' ),
 		} );
 	};
 
@@ -246,14 +203,19 @@ function AppContent() {
 		<Box sx={ { display: 'flex' } }>
 			
 			<Drawer
-			variant="permanent"
+			variant={ isMobile ? 'temporary' : 'permanent' }
 			anchor="left"
+			open={ isMobile ? mobileOpen : true }
+			onClose={ () => setMobileOpen( false ) }
 			sx={{
 				'.MuiPaper-root': {
 				width: DRAWER_WIDTH,
-				top: WP_ADMIN_BAR_HEIGHT,
-				left: WP_MENU_WIDTH,
-				maxHeight: `calc(100vh - ${WP_ADMIN_BAR_HEIGHT + WP_FOOTER_HEIGHT}px)`,
+				top: { xs: WP_ADMIN_BAR_HEIGHT_MOBILE, md: WP_ADMIN_BAR_HEIGHT_DESKTOP },
+				left: { xs: 0, md: WP_MENU_WIDTH_MD, lg: WP_MENU_WIDTH_LG },
+				minHeight: {
+					xs: `calc(100vh - ${ WP_ADMIN_BAR_HEIGHT_MOBILE + WP_FOOTER_HEIGHT }px)`,
+					md: `calc(100vh - ${ WP_ADMIN_BAR_HEIGHT_DESKTOP + WP_FOOTER_HEIGHT }px)`,
+				},
 				overflowY: 'auto',
 				}
 			}}
@@ -272,95 +234,91 @@ function AppContent() {
 				<Divider />
 				
 				<List component="nav" disablePadding>
-				{menuItems.map((item, index) => {
+					{menuItems.map((item, index) => {
 
-					if (item.type === 'section') {
-						const Icon = item.icon;
-						return (
-							<>
-							<Box key={`section-${index}`} sx={{ mt: 3, mb: 1, px: 2, display: 'flex', alignItems: 'center', gap: '4px' }}>
-								
-								<Typography
+						if (item.type === 'section') {
+							return (
+						
+								<Stack sx={{ mt: 2 }} key={`section-${index}`}>
+									{0 !== index && <Divider  />}
+
+									{item.label ? <Typography
+									key={`section-${index}`}
 									variant="caption"
 									sx={{
+										display: 'block', 
+										px: 2,
+										mb: 1,
+										mt: 2,
 										textTransform: 'uppercase',
-										fontWeight: 700,
-										letterSpacing: 1,
-										fontSize: '0.65rem',
-										color: 'text.disabled',
+										letterSpacing: 0.5,
+										fontSize: '0.7rem',
+										color: 'text.secondary',
 									}}
-								>
-									{item.label}
-								</Typography>
-							</Box>
-							</>
-						);
-					}
+									>
+										{item.label}
+									</Typography> : <Stack py={1} />}
+								</Stack>
+								
+							);
+						}
 
-					if (item.type === 'subsection') {
+						const isActive = panelGroup === item.panelGroup;
 						const Icon = item.icon;
+
 						return (
-							<Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-					
-							<Typography
-								key={`sub-${index}`}
-								variant="caption"
+							<ListItemButton
 								sx={{
-									display: 'block',
 									px: 3,
-									pt: 2,
-									pb: 0.5,
-									fontWeight: 600,
-									fontSize: '0.7rem',
-									color: 'text.secondary',
+									backgroundColor: isActive ? 'grey.100' : '',
 								}}
+								key={item.key}
+								onClick={ () => { handleMenuClick( item.panelGroup ); setMobileOpen( false ); } }
 							>
-								{item.label}
-							</Typography>
-							</Box>
-						);
-					}
-
-					const isActive = panelIndex === item.panelIndex;
-					const Icon = item.icon;
-
-					return (
-						<ListItemButton
-							key={item.key}
-							onClick={() => handleMenuClick(item.panelIndex)}
-						>
-							{Icon && (
-								<ListItemIcon
-									sx={{
-										minWidth: 32,
-										color: isActive ? 'primary.main' : 'text.secondary',
+								{Icon && (
+									<ListItemIcon
+										sx={{
+											px: 1,
+											minWidth: 32,
+											color: isActive ? 'primary.main' : 'text.secondary',
+										}}
+									>
+										<Icon fontSize="small" />
+									</ListItemIcon>
+								)}
+								
+								<ListItemText
+									sx={{'& .MuiTypography-root': 
+										{
+											fontSize:'0.9rem',
+											lineHeight:'normal',
+										}
 									}}
-								>
-									<Icon fontSize="small" />
-								</ListItemIcon>
-							)}
+									primary={item.label}
+									secondary={item.secondary}
+								/>
 
-							<ListItemText
-								primary={item.label}
+								
 
-							/>
-						</ListItemButton>
-					);
-				})}
-			</List>
-			<Documentation
-				page="getting-started"
-				buttonText="Documentation"
-			/>
-			<LicenseDialog />
+							</ListItemButton>
+						);
+					})}
+				</List>
+
+
 			</Drawer>
 
 			<AppBar
 			elevation={0}
 			sx={{
 				'&.MuiAppBar-positionFixed': {
-					top: WP_ADMIN_BAR_HEIGHT,
-					left: DRAWER_WIDTH + WP_MENU_WIDTH,
+					top: { xs: WP_ADMIN_BAR_HEIGHT_MOBILE, md: WP_ADMIN_BAR_HEIGHT_DESKTOP },
+					left: { xs: 0, md: DRAWER_WIDTH + WP_MENU_WIDTH_MD, lg: DRAWER_WIDTH + WP_MENU_WIDTH_LG },
+					width: {
+						xs: '100%',
+						md: `calc(100% - ${ DRAWER_WIDTH + WP_MENU_WIDTH_MD }px)`,
+						lg: `calc(100% - ${ DRAWER_WIDTH + WP_MENU_WIDTH_LG }px)`,
+					},
 				}
 			}}
 			>
@@ -376,34 +334,48 @@ function AppContent() {
 							gap: 2,
 						} }
 					>
-						<Breadcrumbs
-							separator={ <NavigateNextIcon sx={ { fontSize: 16 } } /> }
-							sx={ { flex: 1, '& .MuiBreadcrumbs-li': { mb: 0 }} }
+					{ isMobile && (
+						<IconButton
+							edge="start"
+							onClick={ () => setMobileOpen( true ) }
+							sx={ { mr: 1, color: 'text.primary' } }
 						>
-							{ breadcrumb.map( ( label, i ) => (
-								<Typography
-									key={ i }
-									variant="h6"
-									fontWeight={ i === 0 ? 600 : 400 }
-									color={ i === breadcrumb.length - 1 ? 'text.primary' : 'text.secondary' }
-								>
-									{ label }
-								</Typography>
-							) ) }
-						</Breadcrumbs>
+							<MenuIcon />
+						</IconButton>
+					) }
+					<Box sx={ { flex: 1, minWidth: 0 } }>
+						{ activeMenuItem?.breadcrumbPrefix && (
+							<Typography
+								variant="caption"
+								color="text.secondary"
+								sx={ { display: 'block', textTransform: 'uppercase', letterSpacing: 0.5 } }
+							>
+								{ activeMenuItem.breadcrumbPrefix }
+							</Typography>
+						) }
+						<Typography variant="h6" fontWeight={ 600 } color="text.primary" sx={ { lineHeight: 1.2 } }>
+							{ activeMenuItem?.label || '' }
+						</Typography>
+					</Box>
+					<Stack direction="row" gap={ 2 } alignItems="center">
+						<Documentation
+							page="getting-started"
+							buttonText="Doc."
+						/>
 
-						{ panelIndex >= 1 && panelIndex <= 3 && (
-						<Button
-							variant="contained"
-							disableElevation
-							size="small"
-							onClick={ handleSaveFirewall }
-							disabled={ saving }
-						>
-							{ __( 'Save', 'rest-api-firewall' ) }
-						</Button>) }
+						{panelGroup >= 1 && panelGroup <= 3 && (
+							<Button
+								variant="contained"
+								disableElevation
+								size="small"
+								onClick={ handleSaveFirewall }
+								disabled={ saving }
+							>
+								{ __( 'Save', 'rest-api-firewall' ) }
+							</Button>
+						) }
 						
-						{ panelIndex >= 4 && panelIndex <= 10 && (
+						{ panelGroup >= 4 && panelGroup <= 6 && (
 							<Button
 								variant="contained"
 								disableElevation
@@ -415,7 +387,7 @@ function AppContent() {
 							</Button>
 						) }
 
-						{ panelIndex === 11 && (
+						{ panelGroup === 7 && (
 							<Button
 								variant="contained"
 								disableElevation
@@ -426,18 +398,8 @@ function AppContent() {
 								{ __( 'Save', 'rest-api-firewall' ) }
 							</Button>
 						) }
-						{ panelIndex === 12 && themeStatus?.active && (
-							<Button
-								variant="contained"
-								disableElevation
-								size="small"
-								onClick={ handleSaveTheme }
-								disabled={ saving }
-							>
-								{ __( 'Save', 'rest-api-firewall' ) }
-							</Button>
-						) }
-						{ panelIndex === 13 && (
+
+						{ panelGroup === 8 && (
 							<Button
 								variant="contained"
 								disableElevation
@@ -448,96 +410,84 @@ function AppContent() {
 								{ __( 'Save', 'rest-api-firewall' ) }
 							</Button>
 						) }
+
+						{ panelGroup === 9 && themeStatus?.active && (
+							<Button
+								variant="contained"
+								disableElevation
+								size="small"
+								onClick={ handleSaveTheme }
+								disabled={ saving }
+							>
+								{ __( 'Save', 'rest-api-firewall' ) }
+							</Button>
+						) }
+					</Stack>
+						
 				</Toolbar>
 			</AppBar>
 
 			<Box sx={ { 
 				flexGrow: 1, 
 				minWidth: 0, 
-				pl: DRAWER_WIDTH + 'px',
-				pt: (APP_BAR_HEIGHT) + 'px',
-				minHeight: `calc(100svh - ${(WP_FOOTER_HEIGHT + APP_BAR_HEIGHT + WP_ADMIN_BAR_HEIGHT)}px)`, 
+				pl: { xs: 0, md: DRAWER_WIDTH + 'px' },
+				pt: APP_BAR_HEIGHT + 'px',
+				minHeight: {
+					xs: `calc(100svh - ${ WP_FOOTER_HEIGHT + APP_BAR_HEIGHT + WP_ADMIN_BAR_HEIGHT_MOBILE }px)`,
+					md: `calc(100svh - ${ WP_FOOTER_HEIGHT + APP_BAR_HEIGHT + WP_ADMIN_BAR_HEIGHT_DESKTOP }px)`,
+				},
 				bgcolor: theme.palette.background.paper
 				} }>
 				
 				<Box sx={ { p: 3 } }>
 					<Firewall 
-						panelIndex={ panelIndex }
+						panelGroup={ panelGroup }
 						form={ form }
 						setField={ setField }
 						postTypes={ postTypes }
 					 />
 
-					{ panelIndex === 4 && (
-					<Card
+					{ panelGroup === 4 && (
+					<Stack
 						id="section-collections-per-page"
-						variant="outlined"
 					>
-						<CollectionsPerPage
+						<Collections
 							form={ form }
 							setField={ setField }
 							postTypes={ postTypes }
 						/>
-					</Card>)}
-					{ panelIndex === 5 && (
-					<Card
-						id="section-collection-sorting"
-						variant="outlined"
-					>
-						<CollectionSorting
-							form={form}
-							setField={setField}
-							postTypes={postTypes}
-						/>
-					</Card>)}
-					{ panelIndex === 6 && (
-					<Card
-						id="section-properties-cleanup"
-						variant="outlined"
-					>
-						<PropertiesCleanup
-							form={ form }
-							setField={ setField }
-							postTypes={ postTypes }
-						/>
-					</Card>)}
-					{ panelIndex === 7 && (
-					<Card
-						id="section-models-embed"
-						variant="outlined"
-					>
-						<ModelsEmbed
-							form={ form }
-							setField={ setField }
-							postTypes={ postTypes }
-						/>
-					</Card>)}
-					{ panelIndex === 8 && (
-					<Card
+					</Stack>)}
+					
+					{ panelGroup === 5 && (
+					<Stack
 						id="section-models-properties"
-						variant="outlined"
 					>
-						<ModelsProperties
+						<Properties
 							form={ form }
 							setField={ setField }
 							postTypes={ postTypes }
 						/>
-					</Card>)}
-					{ panelIndex === 9 && (
-					<Card
+					</Stack>)}
+
+					{ panelGroup === 6 && (
+					<Stack
 						id="section-settings-route"
-						variant="outlined"
 					>
 						<SiteSettings 
 						form={ form } 
 						setField={ setField } />
-					</Card>)}
+					</Stack>)}
 
-					{ panelIndex === 10 && (
+					{ panelGroup === 7 && (
 						<Webhook form={ form } setField={ setField } />
 					) }
 
-					{ panelIndex === 11 && (
+
+					{ panelGroup === 8 && (
+						<Smtp form={ form } setField={ setField } />
+					) }
+
+					{ panelGroup === 9 && (
 						<ThemeSettings
 							form={ form }
 							setField={ setField }
@@ -547,9 +497,10 @@ function AppContent() {
 						/>
 					) }
 
-					{ panelIndex === 12 && (
-						<Smtp form={ form } setField={ setField } />
+					{ panelGroup === 10 && (
+						<LicenseDialog />
 					) }
+
 				</Box>
 			</Box>
 		</Box>

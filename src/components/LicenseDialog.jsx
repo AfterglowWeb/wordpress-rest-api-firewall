@@ -8,7 +8,6 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import Drawer from '@mui/material/Drawer';
 import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -18,8 +17,6 @@ import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import InfoIcon from '@mui/icons-material/Info';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import IconButton from '@mui/material/IconButton';
 
 const STORAGE_KEY = 'rest_api_firewall_licence_state';
 
@@ -32,7 +29,6 @@ export default function LicenseDialog() {
 	const [ status, setStatus ] = useState( null );
 	const [ error, setError ] = useState( '' );
 	const [ successMessage, setSuccessMessage ] = useState( '' );
-	const [ licenseOpen, setLicenseOpen ] = useState( false );
 	const [ confirmOpen, setConfirmOpen ] = useState( false );
 	const { __ } = wp.i18n || {};
 
@@ -40,7 +36,6 @@ export default function LicenseDialog() {
 		const stored = localStorage.getItem( STORAGE_KEY );
 		if ( stored ) {
 			localStorage.removeItem( STORAGE_KEY );
-			setLicenseOpen( true );
 			if ( stored === 'activate' ) {
 				setSuccessMessage(
 					__(
@@ -59,25 +54,12 @@ export default function LicenseDialog() {
 		}
 	}, [] );
 
-	const toggleDrawer = ( open ) => ( event ) => {
-		if (
-			event.type === 'keydown' &&
-			( event.key === 'Tab' || event.key === 'Shift' )
-		) {
-			return;
-		}
-		setLicenseOpen( open );
-		if ( ! open ) {
-			setSuccessMessage( '' );
-			setError( '' );
-		}
-	};
 
 	useEffect( () => {
-		if ( licenseOpen ) {
+		if ( null === status ) {
 			checkLicenseStatus();
 		}
-	}, [ licenseOpen ] );
+	}, [ status ] );
 
 	const checkLicenseStatus = async () => {
 		setCheckingStatus( true );
@@ -220,12 +202,9 @@ export default function LicenseDialog() {
 		} );
 	};
 
-	const drawerContent = (
-		<Box sx={ { width: 320, p: 2 } } role="presentation">
-			<IconButton sx={{position:'absolute', top: 5, right: 5}} onClick={() => setLicenseOpen(false) }>
-				<ArrowForwardIosIcon />
-			</IconButton>
-			<Stack gap={ 2 }>
+	return (<>
+		<Stack gap={ 2 } p={2} width={320}>
+				
 				<Stack direction="row" alignItems="center" gap={ 1 }>
 					{ isLicenseActive ? (
 						<CheckCircleIcon sx={ { color: 'success.main' } } />
@@ -235,8 +214,6 @@ export default function LicenseDialog() {
 					<Typography variant="h6" sx={ { fontWeight: 600 } }>
 						{ __( 'License Management', 'rest-api-firewall' ) }
 					</Typography>
-
-					
 				</Stack>
 
 				{ successMessage && (
@@ -498,56 +475,36 @@ export default function LicenseDialog() {
 						) }
 					</>
 				) }
-			</Stack>
-		</Box>
-	);
 
-	return (
-		<>
-			<Button onClick={ toggleDrawer( true ) }>
-				{ __( 'Manage License', 'rest-api-firewall' ) }
-			</Button>
-			<Drawer
-				anchor="right"
-				open={ licenseOpen }
-				onClose={ toggleDrawer( false ) }
-				sx={ {
-					'& .MuiPaper-root': {
-						mt: { sm: '46px', md: '32px' },
-					},
-				} }
-			>
-				{ drawerContent }
-			</Drawer>
+		</Stack>
 
-			<Dialog
-				open={ confirmOpen }
-				onClose={ () => setConfirmOpen( false ) }
-			>
-				<DialogTitle>
-					{ __( 'Deactivate License', 'rest-api-firewall' ) }
-				</DialogTitle>
-				<DialogContent>
-					<DialogContentText>
-						{ __(
-							'Are you sure you want to deactivate this license? Pro features will be disabled.',
-							'rest-api-firewall'
-						) }
-					</DialogContentText>
-				</DialogContent>
-				<DialogActions>
-					<Button onClick={ () => setConfirmOpen( false ) }>
-						{ __( 'Cancel', 'rest-api-firewall' ) }
-					</Button>
-					<Button
-						onClick={ confirmDeactivate }
-						variant="contained"
-						disableElevation
-					>
-						{ __( 'Deactivate', 'rest-api-firewall' ) }
-					</Button>
-				</DialogActions>
-			</Dialog>
-		</>
-	);
+		<Dialog
+		open={ confirmOpen }
+		onClose={ () => setConfirmOpen( false ) }
+		>
+			<DialogTitle>
+				{ __( 'Deactivate License', 'rest-api-firewall' ) }
+			</DialogTitle>
+			<DialogContent>
+				<DialogContentText>
+					{ __(
+						'Are you sure you want to deactivate this license? Pro features will be disabled.',
+						'rest-api-firewall'
+					) }
+				</DialogContentText>
+			</DialogContent>
+			<DialogActions>
+				<Button onClick={ () => setConfirmOpen( false ) }>
+					{ __( 'Cancel', 'rest-api-firewall' ) }
+				</Button>
+				<Button
+					onClick={ confirmDeactivate }
+					variant="contained"
+					disableElevation
+				>
+					{ __( 'Deactivate', 'rest-api-firewall' ) }
+				</Button>
+			</DialogActions>
+		</Dialog>
+	</>);
 }

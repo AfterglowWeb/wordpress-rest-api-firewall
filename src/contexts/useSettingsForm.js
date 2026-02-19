@@ -76,7 +76,7 @@ export default function useSettingsForm( { adminData } ) {
 	const optionsByGroup = useMemo( () => {
 		const groups = {};
 		for ( const [ key, config ] of Object.entries( optionsConfig ) ) {
-			const group = config.group || 'schema';
+			const group = config.group || 'firewall';
 			if ( ! groups[ group ] ) {
 				groups[ group ] = [];
 			}

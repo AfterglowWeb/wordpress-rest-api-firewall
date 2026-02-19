@@ -20,7 +20,7 @@ export default function Footer() {
 		<Box
 			component="footer"
 			sx={ {
-				px: { xs: 2, md: 3 },
+				px: 2,
 				py: 1,
 				height: 40,
 				boxSizing: 'border-box',
@@ -33,15 +33,16 @@ export default function Footer() {
 				alignItems: 'center',
 			} }
 		>
-			<Tooltip title={ 'Open in a new tab' }>
+			<Tooltip title={ 'Open in a new tab GPL-V2 License CC BY-SA 4.0' }>
 				<Button
 					size="small"
 					color="primary"
 					href="https://creativecommons.org/licenses/by-sa/4.0/"
 					target="_blank"
 					rel="nofollow noreferer noopener"
+					sx={{ textTransform: "none" }}
 				>
-					GPL-V2 License CC BY-SA 4.0
+					GPL-V2 License
 				</Button>
 			</Tooltip>
 		</Box>

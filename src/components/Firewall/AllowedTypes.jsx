@@ -11,17 +11,14 @@ import Typography from '@mui/material/Typography';
 import ProBadge from '../ProBadge';
 import MultipleSelect from '../MultipleSelect';
 
-export default function CollectionsAllowedTypes( { form, setField } ) {
+export default function AllowedTypes( { form, setField } ) {
 	const { __ } = wp.i18n || {};
 	const { hasValidLicense } = useLicense();
 	const { adminData } = useAdminData();
 
 	return (
 		<Stack spacing={ 3 } >
-			<Typography variant="subtitle1" fontWeight={ 600 }>
-				{ __( 'Allowed Post Types', 'rest-api-firewall' ) }
-			</Typography>
-			
+
 			<Stack
 				sx={ { position: 'relative' } }
 				spacing={ 3 }
