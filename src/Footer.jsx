@@ -22,6 +22,8 @@ export default function Footer() {
 			sx={ {
 				px: { xs: 2, md: 3 },
 				py: 1,
+				height: 40,
+				boxSizing: 'border-box',
 				borderTop: '1px solid rgba(0, 0, 0, 0.08)',
 				background: 'linear-gradient(135deg, #ffffff 0%, #fafafa 100%)',
 				backdropFilter: 'blur(10px)',

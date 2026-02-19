@@ -1,126 +1,115 @@
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from './contexts/AdminDataContext';
+import { styled } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
+
 import { DialogProvider } from './contexts/DialogContext';
 import useSettingsForm from './contexts/useSettingsForm';
 import useSaveOptions from './hooks/useSaveOptions';
 
-import Stack from '@mui/material/Stack';
-import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
+import Divider from '@mui/material/Divider';
+import List from '@mui/material/List';
+import Drawer from '@mui/material/Drawer';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Toolbar from '@mui/material/Toolbar';
+import Breadcrumbs from '@mui/material/Breadcrumbs';
+import Card from '@mui/material/Card';
+import Avatar from '@mui/material/Avatar';
+
+import SecurityOutlined from '@mui/icons-material/SecurityOutlined';
+import SyncOutlined from '@mui/icons-material/SyncOutlined';
+import PaletteOutlined from '@mui/icons-material/PaletteOutlined';
+import EmailOutlined from '@mui/icons-material/EmailOutlined';
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import ApiIcon from '@mui/icons-material/Api';
 
 import ConfirmDialog from './components/ConfirmDialog';
+import ThemeSettings from './components/ThemeSettings';
+
+import ModelsProperties from './components/ApiOutput/ModelsProperties';
+import SiteSettings from './components/ApiOutput/SettingsRoute';
+import CollectionSorting from './components/ApiOutput/CollectionSorting';
+import PropertiesCleanup from './components/ApiOutput/PropertiesCleanup';
+import ModelsEmbed from './components/ApiOutput/ModelsEmbed';
+import CollectionsPerPage from './components/ApiOutput/CollectionsPerPage';
+import Firewall from './components/Firewall/Firewall';
+import Smtp from './components/Emails/Smtp';
 import Webhook from './components/Webhook/Webhook';
 
-import ThemeSettings from './components/ThemeSettings';
-import DataFilters from './components/DataFilters/DataFilters';
-import Firewall from './components/Firewall/Firewall';
+import Documentation from './components/Documentation';
+import LicenseDialog from './components/LicenseDialog';
+import AppBar from '@mui/material/AppBar';
 
-const SCHEMA_OPTIONS = [
-	'rest_models_enabled',
-	'rest_models_embed_featured_attachment_enabled',
-	'rest_models_embed_post_attachments_enabled',
-	'rest_models_resolve_rendered_props',
-	'rest_models_embed_terms_enabled',
-	'rest_models_embed_author_enabled',
-	'rest_models_embed_menus_enabled',
-	'rest_models_with_acf_enabled',
-	'rest_models_remove_empty_props',
-	'rest_models_remove_links_prop',
-	'rest_models_relative_url_enabled',
-	'rest_models_relative_attachment_url_enabled',
-	'rest_models_remove_site_email',
-	'rest_models_remove_site_url',
-	'rest_models_acf_options_page_enabled',
-	'rest_models_acf_options_page_endpoint',
-	'rest_collections_per_page_enabled',
-	'rest_collections_posts_per_page',
-	'rest_collections_attachments_per_page',
-	'rest_collections_allowed_post_types_enabled',
-	'rest_collections_allowed_post_types',
-	'rest_collections_sortable_enabled',
-	'rest_collections_sortable_rest_enforce',
-	'rest_collections_sortable_wp_query_enforce',
-	'rest_collections_sortable_post_types',
-];
+const DRAWER_WIDTH = 220;
+const APP_BAR_HEIGHT = 75;
+const WP_MENU_WIDTH = 160;
+const WP_ADMIN_BAR_HEIGHT = 32;
+const WP_FOOTER_HEIGHT = 80;
 
-const THEME_OPTIONS = [
-	'theme_redirect_templates_enabled',
-	'theme_disable_xmlrpc',
-	'theme_disable_filedit',
-	'theme_disable_pingbacks',
-	'theme_remove_emoji_scripts',
-	'theme_redirect_templates_preset_url',
-	'theme_redirect_templates_free_url_enabled',
-	'theme_redirect_templates_free_url',
-	'theme_disable_gutenberg',
-	'theme_disable_comments',
-	'theme_remove_empty_p_tags_enabled',
-	'theme_svg_webp_support_enabled',
-	'theme_max_upload_weight',
-	'theme_max_upload_weight_enabled',
-	'theme_json_acf_fields_enabled',
-];
-
-const WEBHOOK_OPTIONS = [
-	'application_host',
-	'application_webhook_endpoint',
-	'application_webhook_auto_trigger_events',
-	'application_webhook_custom_secret_enabled',
-];
-
-function TabPanel( { value, index, children } ) {
-	return (
-		<div role="tabpanel" hidden={ value !== index }>
-			{ value === index && (
-				<Box maxWidth="xl" minHeight={ 'calc(100vh - 340px)' } py={ 4 }>
-					{ children }
-				</Box>
-			) }
-		</div>
-	);
-}
-
-function pickOptions( form, keys ) {
-	const result = {};
-	for ( const key of keys ) {
-		if ( key in form ) {
-			result[ key ] = form[ key ];
-		}
-	}
-	return result;
-}
+const AppLogo = styled( Avatar )( () => ( {
+	width: 48,
+	height: 48,
+	background: 'linear-gradient(307deg, #ffb7c4 0%, #ff002e 100%)',
+	borderRadius: 12,
+	fontSize: '1.4rem',
+	fontWeight: 500,
+	fontFamily: 'Helvetica, Arial, sans-serif',
+	color: 'white',
+	boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+	position: 'relative',
+} ) );
 
 function AppContent() {
-	const { adminData, updateAdminData } = useAdminData();
+	const { adminData } = useAdminData();
 	const { __ } = wp.i18n || {};
 	const { save, saving } = useSaveOptions();
+	const theme = useTheme();
 
 	const [ postTypes, setPostTypes ] = useState( [] );
-	const [ tabIndex, setTabIndex ] = useState( 0 );
+	const [ panelIndex, setPanelIndex ] = useState( 0 );
+	const [ activeAnchor, setActiveAnchor ] = useState( null );
 	const [ themeStatus, setThemeStatus ] = useState( null );
 
-	const { form, setField, setSlider } = useSettingsForm( {
+	const { form, setField, setSlider, pickGroup } = useSettingsForm( {
 		adminData,
-		updateAdminData,
-		action: 'rest_api_firewall_update_options',
 	} );
 
-	const handleTabChange = ( _, newValue ) => {
-		setTabIndex( newValue );
-		window.localStorage.setItem( 'rest_api_firewall_last_tab', newValue );
-	};
+	const menuItems = [
+	{ type: 'section', label: __( 'Firewall', 'rest-api-firewall' ), icon: SecurityOutlined },
+	{ key: 'user-rate-limiting', label: __( 'User & Rate Limiting', 'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', panelIndex: 1 },
+	{ key: 'ip-filtering', label: __( 'IP Filtering', 'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', panelIndex: 2 },
+	{ key: 'per-route-settings', label: __( 'Per Route Settings', 'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', panelIndex: 3 },
+
+	{ type: 'section', label: __( 'API Output', 'rest-api-firewall'), icon: ApiIcon },
+	{ key: 'collections-per-page', label: __( 'Collections Per Page', 'rest-api-firewall' ), breadcrumbPrefix: 'API Output', panelIndex: 4 },
+	{ key: 'collection-sorting', label: __( 'Collections Sorting', 'rest-api-firewall' ), breadcrumbPrefix: 'API Output', panelIndex: 5 },
+	{ key: 'properties-cleanup', label: __( 'Properties Cleanup', 'rest-api-firewall' ), breadcrumbPrefix: 'API Output', panelIndex: 6 },
+	{ key: 'models-embed', label: __( 'Properties Embed', 'rest-api-firewall' ), breadcrumbPrefix: 'API Output', panelIndex: 7 },
+	{ key: 'models-properties', label: __( 'Properties Model', 'rest-api-firewall' ), breadcrumbPrefix: 'API Output', panelIndex: 8 },
+	
+	{ key: 'settings-route', label: __( 'Settings Route', 'rest-api-firewall' ), panelIndex: 9 },
+	
+	{ type: 'section', label: __( 'Integrations', 'rest-api-firewall'), icon: ApiIcon },
+	{ key: 'webhook', label: __( 'Webhook', 'rest-api-firewall' ), breadcrumbPrefix: 'Integrations', panelIndex: 10, icon: SyncOutlined },
+	{ key: 'emails', label: __( 'Emails', 'rest-api-firewall' ), breadcrumbPrefix: 'Integrations', panelIndex: 11, icon: EmailOutlined },
+	
+	{ type: 'section', label: __( 'Modules', 'rest-api-firewall'), icon: ApiIcon },
+	{ key: 'theme', label: __( 'Theme', 'rest-api-firewall' ), breadcrumbPrefix: 'Modules', panelIndex: 12, icon: PaletteOutlined },
+
+];
 
 	useEffect( () => {
 		const lastTab =
 			window.localStorage.getItem( 'rest_api_firewall_last_tab' ) || null;
 		if ( lastTab ) {
-			setTabIndex( Number( lastTab ) );
+			setPanelIndex( Number( lastTab ) );
 		}
-	}, [ setTabIndex ] );
+	}, [] );
 
 	useEffect( () => {
 		if ( Array.isArray( adminData?.post_types ) ) {
@@ -128,9 +117,86 @@ function AppContent() {
 		}
 	}, [ adminData ] );
 
+	const scrollToAnchor = useCallback( ( anchor ) => {
+		setTimeout( () => {
+			const el = document.getElementById( anchor );
+			if ( el ) {
+				el.scrollIntoView( { behavior: 'smooth', block: 'start' } );
+			}
+		}, 50 );
+	}, [] );
+
+	const handleMenuClick = useCallback(
+		( newIndex, anchor ) => {
+			if(! newIndex && ! anchor) {
+				return false;
+			}
+			const changing = panelIndex !== newIndex;
+			if ( changing ) {
+				setPanelIndex( newIndex );
+				window.localStorage.setItem(
+					'rest_api_firewall_last_tab',
+					newIndex
+				);
+			}
+			setActiveAnchor( anchor || null );
+			if ( anchor ) {
+				if ( changing ) {
+					scrollToAnchor( anchor );
+				} else {
+					const el = document.getElementById( anchor );
+					if ( el ) {
+						el.scrollIntoView( {
+							behavior: 'smooth',
+							block: 'start',
+						} );
+					}
+				}
+			}
+		},
+		[ panelIndex, scrollToAnchor ]
+	);
+
+	const getBreadcrumb = () => {
+		const item = menuItems.find( ( m ) => m.panelIndex === panelIndex );
+		if ( ! item ) return [];
+		const trail = [ item.breadcrumbPrefix ];
+		trail.push(item.label);
+		if ( ! activeAnchor || ! item.subItems ) return trail;
+		for ( const sub of item.subItems ) {
+			if ( sub.anchor === activeAnchor ) {
+				trail.push( sub.label );
+				return trail;
+			}
+			if ( sub.subItems ) {
+				for ( const subsub of sub.subItems ) {
+					if ( subsub.anchor === activeAnchor ) {
+						trail.push( sub.label );
+						trail.push( subsub.label );
+						return trail;
+					}
+				}
+			}
+		}
+		return trail;
+	};
+
+	const breadcrumb = getBreadcrumb();
+
+	const handleSaveFirewall = () => {
+		save( pickGroup( 'firewall' ), {
+			successTitle: __( 'Firewall Saved', 'rest-api-firewall' ),
+			successMessage: __(
+				'Firewall settings saved successfully.',
+				'rest-api-firewall'
+			),
+			confirmMessage: __( 'Save firewall settings?', 'rest-api-firewall' ),
+		} );
+	};
+
 	const handleSaveSchemas = () => {
-		save( pickOptions( form, SCHEMA_OPTIONS ), {
-			successTitle: __( 'Schemas Saved', 'rest-api-firewall' ),
+		save( pickGroup( 'schema' ), {
+			successTitle: __( 'API Output Saved', 'rest-api-firewall' ),
 			successMessage: __(
 				'Schemas settings saved successfully.',
 				'rest-api-firewall'
@@ -139,19 +205,8 @@ function AppContent() {
 		} );
 	};
 
-	const handleSaveTheme = () => {
-		save( pickOptions( form, THEME_OPTIONS ), {
-			successTitle: __( 'Theme Saved', 'rest-api-firewall' ),
-			successMessage: __(
-				'Theme settings saved successfully.',
-				'rest-api-firewall'
-			),
-			confirmMessage: __( 'Save theme settings?', 'rest-api-firewall' ),
-		} );
-	};
-
 	const handleSaveWebhook = () => {
-		save( pickOptions( form, WEBHOOK_OPTIONS ), {
+		save( pickGroup( 'webhook' ), {
 			successTitle: __( 'Webhook Saved', 'rest-api-firewall' ),
 			successMessage: __(
 				'Webhook settings saved successfully.',
@@ -161,124 +216,343 @@ function AppContent() {
 		} );
 	};
 
+	const handleSaveEmails = () => {
+		save( pickGroup( 'email' ), {
+			successTitle: __( 'Emails Saved', 'rest-api-firewall' ),
+			successMessage: __(
+				'Email settings saved successfully.',
+				'rest-api-firewall'
+			),
+			confirmMessage: __( 'Save email settings?', 'rest-api-firewall' ),
+		} );
+	};
+
+	const handleSaveTheme = () => {
+		save( pickGroup( 'theme' ), {
+			successTitle: __( 'Theme Saved', 'rest-api-firewall' ),
+			successMessage: __(
+				'Theme settings saved successfully.',
+				'rest-api-firewall'
+			),
+			confirmMessage: __( 'Save theme settings?', 'rest-api-firewall' ),
+		} );
+	};
+
 	if ( ! adminData ) {
 		return null;
 	}
 
 	return (
-		<Paper
-			sx={ { maxWidth: '100%', mx: 'auto', px: 3, pb: 3 } }
-			elevation={ 2 }
-		>
-			<Tabs
-				value={ tabIndex }
-				onChange={ handleTabChange }
-				variant="scrollable"
-				scrollButtons="auto"
-				aria-label="REST API settings tabs"
+		<Box sx={ { display: 'flex' } }>
+			
+			<Drawer
+			variant="permanent"
+			anchor="left"
+			sx={{
+				'.MuiPaper-root': {
+				width: DRAWER_WIDTH,
+				top: WP_ADMIN_BAR_HEIGHT,
+				left: WP_MENU_WIDTH,
+				maxHeight: `calc(100vh - ${WP_ADMIN_BAR_HEIGHT + WP_FOOTER_HEIGHT}px)`,
+				overflowY: 'auto',
+				}
+			}}
 			>
-				<Tab label={ __( 'Firewall', 'rest-api-firewall' ) } />
-				<Tab label={ __( 'API Output', 'rest-api-firewall' ) } />
-				<Tab label={ __( 'Webhook', 'rest-api-firewall' ) } />
-				<Tab label={ __( 'Theme', 'rest-api-firewall' ) } />
-			</Tabs>
-
-			<TabPanel value={ tabIndex } index={ 0 }>
-				<Firewall />
-			</TabPanel>
-
-			<TabPanel value={ tabIndex } index={ 1 }>
-				<Stack
-					direction={ 'row' }
-					justifyContent={ 'space-between' }
-					gap={ 2 }
-					py={ 3 }
-					flexWrap={ 'wrap' }
-					alignItems={ 'center' }
-				>
-					<Typography variant="h6" fontWeight={ 600 }>
-						{ __( 'API Output', 'rest-api-firewall' ) }
+				<Box sx={ { p: 2, height:75, display:'flex', gap:1, boxSizing: 'border-box' } }>
+					<AppLogo>hT.</AppLogo>
+					<Box>
+					<Typography variant="subtitle2" fontWeight={ 600 }>
+						{ adminData.plugin_name }
 					</Typography>
-					<Button
-						variant="contained"
-						disableElevation
-						size="small"
-						onClick={ handleSaveSchemas }
-						disabled={ saving }
-					>
-						{ __( 'Save', 'rest-api-firewall' ) }
-					</Button>
-				</Stack>
-
-				<DataFilters
-					form={ form }
-					setField={ setField }
-					postTypes={ postTypes }
-				/>
-			</TabPanel>
-
-			<TabPanel value={ tabIndex } index={ 2 }>
-				<Stack
-					direction={ 'row' }
-					justifyContent={ 'space-between' }
-					gap={ 2 }
-					py={ 3 }
-					flexWrap={ 'wrap' }
-					alignItems={ 'center' }
-				>
-					<Typography variant="h6" fontWeight={ 600 }>
-						{ __( 'Application Webhook', 'rest-api-firewall' ) }
+					<Typography variant="caption" color="text.secondary">
+						v{ adminData.plugin_version }
 					</Typography>
-					<Button
-						size="small"
-						disableElevation
-						variant="contained"
-						onClick={ handleSaveWebhook }
-						disabled={ saving }
+					</Box>
+				</Box>
+				<Divider />
+				
+				<List component="nav" disablePadding>
+				{menuItems.map((item, index) => {
+
+					if (item.type === 'section') {
+						const Icon = item.icon;
+						return (
+							<>
+							<Box key={`section-${index}`} sx={{ mt: 3, mb: 1, px: 2, display: 'flex', alignItems: 'center', gap: '4px' }}>
+								
+								<Typography
+									variant="caption"
+									sx={{
+										textTransform: 'uppercase',
+										fontWeight: 700,
+										letterSpacing: 1,
+										fontSize: '0.65rem',
+										color: 'text.disabled',
+									}}
+								>
+									{item.label}
+								</Typography>
+							</Box>
+							</>
+						);
+					}
+
+					if (item.type === 'subsection') {
+						const Icon = item.icon;
+						return (
+							<Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+					
+							<Typography
+								key={`sub-${index}`}
+								variant="caption"
+								sx={{
+									display: 'block',
+									px: 3,
+									pt: 2,
+									pb: 0.5,
+									fontWeight: 600,
+									fontSize: '0.7rem',
+									color: 'text.secondary',
+								}}
+							>
+								{item.label}
+							</Typography>
+							</Box>
+						);
+					}
+
+					const isActive = panelIndex === item.panelIndex;
+					const Icon = item.icon;
+
+					return (
+						<ListItemButton
+							key={item.key}
+							onClick={() => handleMenuClick(item.panelIndex)}
+						>
+							{Icon && (
+								<ListItemIcon
+									sx={{
+										minWidth: 32,
+										color: isActive ? 'primary.main' : 'text.secondary',
+									}}
+								>
+									<Icon fontSize="small" />
+								</ListItemIcon>
+							)}
+
+							<ListItemText
+								primary={item.label}
+
+							/>
+						</ListItemButton>
+					);
+				})}
+			</List>
+			<Documentation
+				page="getting-started"
+				buttonText="Documentation"
+			/>
+			<LicenseDialog />
+			</Drawer>
+
+			<AppBar
+			elevation={0}
+			sx={{
+				'&.MuiAppBar-positionFixed': {
+					top: WP_ADMIN_BAR_HEIGHT,
+					left: DRAWER_WIDTH + WP_MENU_WIDTH,
+				}
+			}}
+			>
+				<Toolbar
+						variant="dense"
+						sx={ {
+							bgcolor: 'background.paper',
+							borderBottom: 1,
+							borderColor: 'divider',
+							px: 2,
+							height: APP_BAR_HEIGHT,
+							overflow: 'hidden',
+							gap: 2,
+						} }
 					>
-						{ __( 'Save', 'rest-api-firewall' ) }
-					</Button>
-				</Stack>
+						<Breadcrumbs
+							separator={ <NavigateNextIcon sx={ { fontSize: 16 } } /> }
+							sx={ { flex: 1, '& .MuiBreadcrumbs-li': { mb: 0 }} }
+						>
+							{ breadcrumb.map( ( label, i ) => (
+								<Typography
+									key={ i }
+									variant="h6"
+									fontWeight={ i === 0 ? 600 : 400 }
+									color={ i === breadcrumb.length - 1 ? 'text.primary' : 'text.secondary' }
+								>
+									{ label }
+								</Typography>
+							) ) }
+						</Breadcrumbs>
 
-				<Webhook form={ form } setField={ setField } />
-			</TabPanel>
-
-			<TabPanel value={ tabIndex } index={ 3 }>
-				{ themeStatus && themeStatus?.active && (
-					<Stack
-						direction={ 'row' }
-						justifyContent={ 'space-between' }
-						gap={ 2 }
-						py={ 3 }
-						flexWrap={ 'wrap' }
-						alignItems={ 'center' }
-					>
-						<Typography variant="h6" fontWeight={ 600 }>
-							{ __( 'Theme Options', 'rest-api-firewall' ) }
-						</Typography>
-
+						{ panelIndex >= 1 && panelIndex <= 3 && (
 						<Button
 							variant="contained"
-							onClick={ handleSaveTheme }
-							disabled={ saving }
 							disableElevation
 							size="small"
-							sx={ { ml: 3 } }
+							onClick={ handleSaveFirewall }
+							disabled={ saving }
 						>
 							{ __( 'Save', 'rest-api-firewall' ) }
-						</Button>
-					</Stack>
-				) }
+						</Button>) }
+						
+						{ panelIndex >= 4 && panelIndex <= 10 && (
+							<Button
+								variant="contained"
+								disableElevation
+								size="small"
+								onClick={ handleSaveSchemas }
+								disabled={ saving }
+							>
+								{ __( 'Save', 'rest-api-firewall' ) }
+							</Button>
+						) }
 
-				<ThemeSettings
-					form={ form }
-					setField={ setField }
-					setSlider={ setSlider }
-					themeStatus={ themeStatus }
-					setThemeStatus={ setThemeStatus }
-				/>
-			</TabPanel>
-		</Paper>
+						{ panelIndex === 11 && (
+							<Button
+								variant="contained"
+								disableElevation
+								size="small"
+								onClick={ handleSaveWebhook }
+								disabled={ saving }
+							>
+								{ __( 'Save', 'rest-api-firewall' ) }
+							</Button>
+						) }
+						{ panelIndex === 12 && themeStatus?.active && (
+							<Button
+								variant="contained"
+								disableElevation
+								size="small"
+								onClick={ handleSaveTheme }
+								disabled={ saving }
+							>
+								{ __( 'Save', 'rest-api-firewall' ) }
+							</Button>
+						) }
+						{ panelIndex === 13 && (
+							<Button
+								variant="contained"
+								disableElevation
+								size="small"
+								onClick={ handleSaveEmails }
+								disabled={ saving }
+							>
+								{ __( 'Save', 'rest-api-firewall' ) }
+							</Button>
+						) }
+				</Toolbar>
+			</AppBar>
+
+			<Box sx={ { 
+				flexGrow: 1, 
+				minWidth: 0, 
+				pl: DRAWER_WIDTH + 'px',
+				pt: (APP_BAR_HEIGHT) + 'px',
+				minHeight: `calc(100svh - ${(WP_FOOTER_HEIGHT + APP_BAR_HEIGHT + WP_ADMIN_BAR_HEIGHT)}px)`, 
+				bgcolor: theme.palette.background.paper
+				} }>
+				
+				<Box sx={ { p: 3 } }>
+					<Firewall 
+						panelIndex={ panelIndex }
+						form={ form }
+						setField={ setField }
+						postTypes={ postTypes }
+					 />
+
+					{ panelIndex === 4 && (
+					<Card
+						id="section-collections-per-page"
+						variant="outlined"
+					>
+						<CollectionsPerPage
+							form={ form }
+							setField={ setField }
+							postTypes={ postTypes }
+						/>
+					</Card>)}
+					{ panelIndex === 5 && (
+					<Card
+						id="section-collection-sorting"
+						variant="outlined"
+					>
+						<CollectionSorting
+							form={form}
+							setField={setField}
+							postTypes={postTypes}
+						/>
+					</Card>)}
+					{ panelIndex === 6 && (
+					<Card
+						id="section-properties-cleanup"
+						variant="outlined"
+					>
+						<PropertiesCleanup
+							form={ form }
+							setField={ setField }
+							postTypes={ postTypes }
+						/>
+					</Card>)}
+					{ panelIndex === 7 && (
+					<Card
+						id="section-models-embed"
+						variant="outlined"
+					>
+						<ModelsEmbed
+							form={ form }
+							setField={ setField }
+							postTypes={ postTypes }
+						/>
+					</Card>)}
+					{ panelIndex === 8 && (
+					<Card
+						id="section-models-properties"
+						variant="outlined"
+					>
+						<ModelsProperties
+							form={ form }
+							setField={ setField }
+							postTypes={ postTypes }
+						/>
+					</Card>)}
+					{ panelIndex === 9 && (
+					<Card
+						id="section-settings-route"
+						variant="outlined"
+					>
+						<SiteSettings 
+						form={ form } 
+						setField={ setField } />
+					</Card>)}
+
+					{ panelIndex === 10 && (
+						<Webhook form={ form } setField={ setField } />
+					) }
+
+					{ panelIndex === 11 && (
+						<ThemeSettings
+							form={ form }
+							setField={ setField }
+							setSlider={ setSlider }
+							themeStatus={ themeStatus }
+							setThemeStatus={ setThemeStatus }
+						/>
+					) }
+
+					{ panelIndex === 12 && (
+						<Smtp form={ form } setField={ setField } />
+					) }
+				</Box>
+			</Box>
+		</Box>
 	);
 }
 

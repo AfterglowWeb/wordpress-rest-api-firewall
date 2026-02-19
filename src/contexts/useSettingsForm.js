@@ -1,209 +1,45 @@
-import { useState, useEffect, useCallback } from '@wordpress/element';
-import { useLicense } from '../contexts/LicenseContext';
+import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 
-export default function useSettingsForm( {
-	adminData,
-	updateAdminData,
-	action,
-} ) {
-	const [ adminOptions, setAdminOptions ] = useState( {} );
-	const { hasValidLicense } = useLicense();
-	const [ form, setForm ] = useState( {
-		/** Free core options */
-		rest_models_enabled: false,
-		rest_models_embed_featured_attachment_enabled: false,
-		rest_models_embed_post_attachments_enabled: false,
-		rest_models_resolve_rendered_props: false,
-		rest_models_embed_terms_enabled: false,
-		rest_models_embed_author_enabled: false,
-		rest_models_embed_menus_enabled: false,
-		rest_models_with_acf_enabled: false,
-		rest_models_remove_links_prop: false,
-		rest_models_remove_empty_props: false,
-		rest_models_remove_site_url: false,
-		rest_models_remove_site_email: false,
-		rest_models_acf_options_page_enabled: false,
-		rest_models_acf_options_page_endpoint: '',
-		rest_collections_per_page_enabled: false,
-		rest_collections_posts_per_page: 100,
-		rest_collections_attachments_per_page: 100,
-		rest_collections_sortable_enabled: false,
-		rest_collections_sortable_rest_enforce: false,
-		rest_collections_sortable_wp_query_enforce: false,
-		rest_collections_sortable_post_types: [],
-		application_host: '',
-		application_webhook_endpoint: '',
-		application_webhook_auto_trigger_events: [],
-		application_webhook_custom_secret_enabled: false,
-		theme_redirect_templates_enabled: false,
-		theme_redirect_templates_preset_url: '',
-		theme_disable_xmlrpc: false,
-		theme_disable_filedit: false,
-		theme_disable_pingbacks: false,
-		theme_disable_gutenberg: false,
-		theme_disable_comments: false,
-		theme_remove_empty_p_tags_enabled: false,
-		theme_remove_emoji_scripts: false,
-		theme_max_upload_weight: 1024,
-		theme_max_upload_weight_enabled: false,
-		theme_svg_webp_support_enabled: false,
-		theme_json_acf_fields_enabled: false,
-	} );
+function castValue( type, value ) {
+	switch ( type ) {
+		case 'boolean':
+			return Boolean( value );
+		case 'integer':
+			return Number( value ) || 0;
+		case 'array':
+			return Array.isArray( value ) ? value : [];
+		default:
+			return value ?? '';
+	}
+}
+
+export default function useSettingsForm( { adminData } ) {
+	const optionsConfig = adminData?.options_config || {};
+
+	const defaults = useMemo( () => {
+		const d = {};
+		for ( const [ key, config ] of Object.entries( optionsConfig ) ) {
+			d[ key ] = castValue( config.type, config.default_value );
+		}
+		return d;
+	}, [ optionsConfig ] );
+
+	const [ form, setForm ] = useState( defaults );
 
 	useEffect( () => {
 		if ( ! adminData?.admin_options ) {
 			return;
 		}
-		setAdminOptions( adminData.admin_options );
-	}, [ adminData ] );
-
-	useEffect( () => {
-		if ( ! adminOptions ) {
-			return;
+		const hydrated = {};
+		for ( const [ key, config ] of Object.entries( optionsConfig ) ) {
+			const serverVal = adminData.admin_options[ key ];
+			hydrated[ key ] = castValue(
+				config.type,
+				serverVal ?? config.default_value
+			);
 		}
-
-		const baseForm = {
-			rest_models_enabled: Boolean( adminOptions.rest_models_enabled ),
-			rest_models_embed_featured_attachment_enabled: Boolean(
-				adminOptions.rest_models_embed_featured_attachment_enabled
-			),
-			rest_models_embed_author_enabled: Boolean(
-				adminOptions.rest_models_embed_author_enabled
-			),
-			rest_models_embed_post_attachments_enabled: Boolean(
-				adminOptions.rest_models_embed_post_attachments_enabled
-			),
-			rest_models_resolve_rendered_props: Boolean(
-				adminOptions.rest_models_resolve_rendered_props
-			),
-			rest_models_embed_terms_enabled: Boolean(
-				adminOptions.rest_models_embed_terms_enabled
-			),
-			rest_models_embed_menus_enabled: Boolean(
-				adminOptions.rest_models_embed_menus_enabled
-			),
-			rest_models_with_acf_enabled: Boolean(
-				adminOptions.rest_models_with_acf_enabled
-			),
-			rest_models_remove_empty_props: Boolean(
-				adminOptions.rest_models_remove_empty_props
-			),
-			rest_models_remove_links_prop: Boolean(
-				adminOptions.rest_models_remove_links_prop
-			),
-			rest_models_remove_site_url: Boolean(
-				adminOptions.rest_models_remove_site_url
-			),
-			rest_models_remove_site_email: Boolean(
-				adminOptions.rest_models_remove_site_email
-			),
-
-			rest_models_acf_options_page_enabled: Boolean(
-				adminOptions.rest_models_acf_options_page_enabled
-			),
-			rest_models_acf_options_page_endpoint:
-				adminOptions.rest_models_acf_options_page_endpoint ?? '',
-
-			rest_collections_per_page_enabled: Boolean(
-				adminOptions.rest_collections_per_page_enabled
-			),
-			rest_collections_posts_per_page: Number(
-				adminOptions.rest_collections_posts_per_page ?? 100
-			),
-			rest_collections_attachments_per_page: Number(
-				adminOptions.rest_collections_attachments_per_page ?? 100
-			),
-
-			rest_collections_sortable_enabled: Boolean(
-				adminOptions.rest_collections_sortable_enabled
-			),
-			rest_collections_sortable_rest_enforce: Boolean(
-				adminOptions.rest_collections_sortable_rest_enforce
-			),
-			rest_collections_sortable_wp_query_enforce: Boolean(
-				adminOptions.rest_collections_sortable_wp_query_enforce
-			),
-			rest_collections_sortable_post_types: Boolean(
-				adminOptions.rest_collections_sortable_post_types
-			),
-
-			application_host: adminOptions.application_host ?? '',
-			application_webhook_endpoint:
-				adminOptions.application_webhook_endpoint ?? '',
-			application_webhook_auto_trigger_events: Array.isArray(
-				adminOptions.application_webhook_auto_trigger_events
-			)
-				? adminOptions.application_webhook_auto_trigger_events
-				: [],
-			application_webhook_custom_secret_enabled: Boolean(
-				adminOptions.application_webhook_custom_secret_enabled
-			),
-
-			theme_redirect_templates_enabled: Boolean(
-				adminOptions.theme_redirect_templates_enabled
-			),
-			theme_redirect_templates_preset_url:
-				adminOptions.theme_redirect_templates_preset_url ?? '',
-
-			theme_disable_xmlrpc: Boolean( adminOptions.theme_disable_xmlrpc ),
-			theme_disable_filedit: Boolean(
-				adminOptions.theme_disable_filedit
-			),
-			theme_disable_pingbacks: Boolean(
-				adminOptions.theme_disable_pingbacks
-			),
-			theme_disable_gutenberg: Boolean(
-				adminOptions.theme_disable_gutenberg
-			),
-			theme_disable_comments: Boolean(
-				adminOptions.theme_disable_comments
-			),
-			theme_remove_empty_p_tags_enabled: Boolean(
-				adminOptions.theme_remove_empty_p_tags_enabled
-			),
-			theme_max_upload_weight: Number(
-				adminOptions.theme_max_upload_weight ?? 1024
-			),
-			theme_max_upload_weight_enabled: Boolean(
-				adminOptions.theme_max_upload_weight_enabled
-			),
-			theme_svg_webp_support_enabled: Boolean(
-				adminOptions.theme_svg_webp_support_enabled
-			),
-			theme_remove_emoji_scripts: Boolean(
-				adminOptions.theme_remove_emoji_scripts
-			),
-			theme_json_acf_fields_enabled: Boolean(
-				adminOptions.theme_json_acf_fields_enabled
-			),
-		};
-
-		if ( hasValidLicense ) {
-			baseForm.rest_models_relative_url_enabled = Boolean(
-				adminOptions.rest_models_relative_url_enabled ?? false
-			);
-			baseForm.rest_models_relative_attachment_url_enabled = Boolean(
-				adminOptions.rest_models_relative_attachment_url_enabled ??
-					false
-			);
-			baseForm.rest_collections_allowed_post_types_enabled = Boolean(
-				adminOptions.rest_collections_allowed_post_types_enabled ??
-					false
-			);
-			baseForm.rest_collections_allowed_post_types = Array.isArray(
-				adminOptions.rest_collections_allowed_post_types
-			)
-				? adminOptions.rest_collections_allowed_post_types
-				: [];
-			baseForm.theme_redirect_templates_free_url_enabled = Boolean(
-				adminOptions.theme_redirect_templates_free_url_enabled ?? false
-			);
-			baseForm.theme_redirect_templates_free_url =
-				adminOptions.theme_redirect_templates_free_url ?? '';
-		}
-
-		setForm( baseForm );
-	}, [ adminOptions, hasValidLicense ] );
+		setForm( hydrated );
+	}, [ adminData?.admin_options, optionsConfig ] );
 
 	const setField = useCallback( ( eventOrName, maybeValue ) => {
 		if ( eventOrName?.target ) {
@@ -211,7 +47,6 @@ export default function useSettingsForm( {
 			if ( ! name ) {
 				return;
 			}
-
 			setForm( ( prev ) => ( {
 				...prev,
 				[ name ]: type === 'checkbox' ? Boolean( checked ) : value,
@@ -238,146 +73,31 @@ export default function useSettingsForm( {
 		} ) );
 	}, [] );
 
-	const mapFormToAdminOptions = useCallback(
-		( formData ) => {
-			const mapped = {
-				rest_models_enabled: formData.rest_models_enabled,
-				rest_models_embed_featured_attachment_enabled:
-					formData.rest_models_embed_featured_attachment_enabled,
-				rest_models_embed_post_attachments_enabled:
-					formData.rest_models_embed_post_attachments_enabled,
-				rest_models_resolve_rendered_props:
-					formData.rest_models_resolve_rendered_props,
-				rest_models_embed_terms_enabled:
-					formData.rest_models_embed_terms_enabled,
-				rest_models_embed_author_enabled:
-					formData.rest_models_embed_author_enabled,
-				rest_models_embed_menus_enabled:
-					formData.rest_models_embed_menus_enabled,
-				rest_models_with_acf_enabled:
-					formData.rest_models_with_acf_enabled,
-				rest_models_remove_empty_props:
-					formData.rest_models_remove_empty_props,
-				rest_models_remove_links_prop:
-					formData.rest_models_remove_links_prop,
-				rest_models_remove_site_url:
-					formData.rest_models_remove_site_url,
-				rest_models_remove_site_email:
-					formData.rest_models_remove_site_email,
-
-				rest_models_acf_options_page_enabled:
-					formData.rest_models_acf_options_page_enabled,
-				rest_models_acf_options_page_endpoint:
-					formData.rest_models_acf_options_page_endpoint,
-
-				rest_collections_per_page_enabled:
-					formData.rest_collections_per_page_enabled,
-				rest_collections_posts_per_page:
-					formData.rest_collections_posts_per_page,
-				rest_collections_attachments_per_page:
-					formData.rest_collections_attachments_per_page,
-				rest_collections_sortable_enabled:
-					formData.rest_collections_sortable_enabled,
-				rest_collections_sortable_rest_enforce:
-					formData.rest_collections_sortable_rest_enforce,
-				rest_collections_sortable_wp_query_enforce:
-					formData.rest_collections_sortable_wp_query_enforce,
-				rest_collections_sortable_post_types:
-					formData.rest_collections_sortable_post_types,
-
-				application_host: formData.application_host,
-				application_webhook_endpoint:
-					formData.application_webhook_endpoint,
-				application_webhook_auto_trigger_events:
-					formData.application_webhook_auto_trigger_events,
-				application_webhook_custom_secret_enabled:
-					formData.application_webhook_custom_secret_enabled,
-
-				theme_redirect_templates_enabled:
-					formData.theme_redirect_templates_enabled,
-				theme_redirect_templates_preset_url:
-					formData.theme_redirect_templates_preset_url,
-				theme_disable_xmlrpc: formData.theme_disable_xmlrpc,
-				theme_disable_filedit: formData.theme_disable_filedit,
-				theme_disable_pingbacks: formData.theme_disable_pingbacks,
-				theme_svg_webp_support_enabled:
-					formData.theme_svg_webp_support_enabled,
-				theme_max_upload_weight: formData.theme_max_upload_weight,
-				theme_max_upload_weight_enabled:
-					formData.theme_max_upload_weight_enabled,
-
-				theme_disable_gutenberg: formData.theme_disable_gutenberg,
-				theme_disable_comments: formData.theme_disable_comments,
-				theme_remove_empty_p_tags_enabled:
-					formData.theme_remove_empty_p_tags_enabled,
-				theme_remove_emoji_scripts: formData.theme_remove_emoji_scripts,
-				theme_json_acf_fields_enabled:
-					formData.theme_json_acf_fields_enabled,
-			};
-
-			if ( hasValidLicense ) {
-				mapped.rest_models_relative_url_enabled =
-					formData.rest_models_relative_url_enabled;
-				mapped.rest_models_relative_attachment_url_enabled =
-					formData.rest_models_relative_attachment_url_enabled;
-				mapped.rest_collections_allowed_post_types_enabled =
-					formData.rest_collections_allowed_post_types_enabled;
-				mapped.rest_collections_allowed_post_types =
-					formData.rest_collections_allowed_post_types;
-				mapped.theme_redirect_templates_free_url_enabled =
-					formData.theme_redirect_templates_free_url_enabled;
-				mapped.theme_redirect_templates_free_url =
-					formData.theme_redirect_templates_free_url;
+	const optionsByGroup = useMemo( () => {
+		const groups = {};
+		for ( const [ key, config ] of Object.entries( optionsConfig ) ) {
+			const group = config.group || 'schema';
+			if ( ! groups[ group ] ) {
+				groups[ group ] = [];
 			}
+			groups[ group ].push( key );
+		}
+		return groups;
+	}, [ optionsConfig ] );
 
-			return mapped;
+	const pickGroup = useCallback(
+		( groupName ) => {
+			const keys = optionsByGroup[ groupName ] || [];
+			const result = {};
+			for ( const key of keys ) {
+				if ( key in form ) {
+					result[ key ] = form[ key ];
+				}
+			}
+			return result;
 		},
-		[ hasValidLicense ]
+		[ form, optionsByGroup ]
 	);
 
-	const submit = useCallback( async () => {
-		if ( ! adminData?.nonce || ! adminData?.ajaxurl ) {
-			throw new Error( 'Missing AJAX configuration' );
-		}
-
-		const response = await fetch( adminData.ajaxurl, {
-			method: 'POST',
-			headers: {
-				'Content-Type':
-					'application/x-www-form-urlencoded; charset=UTF-8',
-			},
-			body: new URLSearchParams( {
-				action,
-				nonce: adminData.nonce,
-				options: JSON.stringify( form ),
-			} ),
-		} );
-
-		const data = await response.json();
-
-		if ( ! data.success ) {
-			throw new Error( data.data?.error || 'Unknown error' );
-		}
-
-		updateAdminData( {
-			admin_options: {
-				...adminOptions,
-				...mapFormToAdminOptions( form ),
-			},
-		} );
-	}, [
-		adminData,
-		form,
-		updateAdminData,
-		adminOptions,
-		mapFormToAdminOptions,
-		action,
-	] );
-
-	return {
-		form,
-		setField,
-		setSlider,
-		submit,
-	};
+	return { form, setField, setSlider, optionsByGroup, pickGroup };
 }

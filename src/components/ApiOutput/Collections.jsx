@@ -10,8 +10,6 @@ import TextField from '@mui/material/TextField';
 import ProBadge from '../ProBadge';
 
 import MultipleSelect from '../MultipleSelect';
-import Divider from '@mui/material/Divider';
-import SortableFilters from './SortableFilters';
 
 export default function Collections( { form, setField, postTypes } ) {
 	const { __ } = wp.i18n || {};

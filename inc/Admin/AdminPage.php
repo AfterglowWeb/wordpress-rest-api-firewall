@@ -6,7 +6,7 @@ defined( 'ABSPATH' ) || exit;
 use cmk\RestApiFirewall\Core\CoreOptions;
 use cmk\RestApiFirewall\Core\FileUtils;
 use cmk\RestApiFirewall\Core\Utils;
-use cmk\RestApiFirewall\Schemas\SchemaRepo;
+use cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController;
 use cmk\RestApiFirewall\Webhook\WebhookAutoTrigger;
 
 class AdminPage {
@@ -34,8 +34,8 @@ class AdminPage {
 
 	public function register_admin_page() {
 		add_menu_page(
-			__( 'REST API Firewall Admin', 'rest-api-firewall' ),
-			__( 'REST Firewall', 'rest-api-firewall' ),
+			__( 'Headless Toolkit', 'rest-api-firewall' ),
+			__( 'Headless Toolkit', 'rest-api-firewall' ),
 			'rest_api_firewall_edit_options',
 			'rest-api-firewall-admin',
 			array( $this, 'render_admin_page' ),
@@ -86,10 +86,9 @@ class AdminPage {
 			'ajaxurl'                 => admin_url( 'admin-ajax.php' ),
 			'users'                   => Utils::list_users(),
 			'post_types'              => Utils::list_post_types(),
-			'post_types_schemas'      => SchemaRepo::post_schemas(),
-			'taxonomies_schemas'      => SchemaRepo::taxonomy_schemas(),
-			'post_properties_filters' => SchemaRepo::properties_filters(),
+			'models_properties'       => ModelsPropertiesController::models_properties(),
 			'admin_options'           => CoreOptions::read_options(),
+			'options_config'          => CoreOptions::options_config_for_js(),
 			'plugin_name'             => sanitize_text_field( $plugin_data['Name'] ),
 			'plugin_version'          => sanitize_text_field( REST_API_FIREWALL_VERSION ),
 			'plugin_uri'              => sanitize_url( $plugin_data['PluginURI'] ),
@@ -117,6 +116,9 @@ class AdminPage {
 		$custom_css = '
 		body.toplevel_page_rest-api-firewall-admin #wpcontent {
 			padding-left:0;
+		}
+		body.toplevel_page_rest-api-firewall-admin #wpbody-content {
+			padding-bottom:40px;
 		}
 		body.toplevel_page_rest-api-firewall-admin #wpbody-content .notice {
 			display:none;

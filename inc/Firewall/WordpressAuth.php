@@ -2,8 +2,6 @@
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Firewall\FirewallOptions;
-use WP_Error;
 use WP_User;
 
 class WordpressAuth {

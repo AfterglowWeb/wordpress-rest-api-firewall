@@ -3,7 +3,7 @@
 defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Controllers\ModelContext;
-use cmk\RestApiFirewall\Schemas\SchemaFilters;
+use cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController;
 
 class AttachmentModel {
 
@@ -45,11 +45,16 @@ class AttachmentModel {
 		);
 
 		$data['src'] = $context->relative_attachment_urls
-			? SchemaFilters::relative_attachment_url( $meta['file'] )
+			? ModelsPropertiesController::relative_attachment_url( $meta['file'] )
 			: $url;
 
 		if ( $context->with_acf ) {
-			$data['acf'] = SchemaFilters::embed_acf_fields( $attachment_id );
+			$acf = ModelsPropertiesController::embed_acf_fields( $attachment_id );
+			if($acf) {
+				$data['acf'] = $acf;
+			} elseif( isset($data['acf']) ) {
+				unset( $data['acf']);
+			}
 		}
 
 		return $data;

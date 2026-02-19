@@ -8,30 +8,36 @@ import FormHelperText from '@mui/material/FormHelperText';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import ProBadge from '../ProBadge';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 
 import MultipleSelect from '../MultipleSelect';
 import Alert from '@mui/material/Alert';
 
-export default function SortableFilters( { form, setField, postTypes } ) {
+export default function CollectionSorting( { form, setField, postTypes } ) {
 	const { __ } = wp.i18n || {};
 	const { hasValidLicense } = useLicense();
 	const isEnabled = form?.rest_collections_sortable_enabled;
 	const isProActive = hasValidLicense && isEnabled;				
 
 	return (
-		<Stack spacing={ 3 }>
+		<Stack position={"relative"} spacing={ 3 }>									
+			<ProBadge position={ 'top-right' } />
 			<Stack
 				spacing={ 3 }
 				direction={ 'row' }
 				justifyContent={ 'space-between' }
 				alignItems={ 'flex-start' }
+				
 			>
-				<Typography variant="subtitle1" fontWeight={ 600 }>
+				<Typography 
+				variant="subtitle1" 
+				fontWeight={ 600 } 
+				color={hasValidLicense ? 'textPrimary' : 'textSecondary'}
+				sx={{opacity:hasValidLicense ? 1 : .7}}
+				>
 					{ __( 'Collection Sorting', 'rest-api-firewall' ) }
 				</Typography>
 
-				<FormControl>
+				<FormControl disabled={!hasValidLicense}>
 					<FormControlLabel
 						control={
 							<Switch
@@ -46,6 +52,7 @@ export default function SortableFilters( { form, setField, postTypes } ) {
 						label={ __( 'Enable', 'rest-api-firewall' ) }
 					/>
 				</FormControl>
+
 			</Stack>
 
 			<Alert severity='info'>
@@ -56,7 +63,7 @@ export default function SortableFilters( { form, setField, postTypes } ) {
 
 			<Stack spacing={ 3 }>
 
-				<FormControl disabled={!isEnabled}>
+				<FormControl disabled={!isProActive}>
 					<FormControlLabel
 						control={
 							<Switch
@@ -78,7 +85,7 @@ export default function SortableFilters( { form, setField, postTypes } ) {
 					</FormHelperText>
 				</FormControl>
 
-				<FormControl disabled={!isEnabled}>
+				<FormControl disabled={!isProActive}>
 					<FormControlLabel
 						control={
 							<Switch
@@ -112,12 +119,12 @@ export default function SortableFilters( { form, setField, postTypes } ) {
 							<MultipleSelect
 								name="rest_collections_sortable_post_types"
 								label={ __(
-									'Restrict to Post Types',
+									'Enable On Post Types',
 									'rest-api-firewall'
 								) }
 								value={ form.rest_collections_sortable_post_types }
 								helperText={
-									__( 'Only enable sorting for the selected post types.', 'rest-api-firewall' )
+									__( 'Enable sorting for the selected post types.', 'rest-api-firewall' )
 								}
 								disabled={ ! isProActive }
 								options={ postTypes }
@@ -125,7 +132,6 @@ export default function SortableFilters( { form, setField, postTypes } ) {
 							/>
 						) }
 					</Box>
-					<ProBadge position={ 'bottom-right' } />
 				</Stack>
 			</Stack>
 

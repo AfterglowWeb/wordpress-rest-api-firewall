@@ -5,8 +5,6 @@ defined( 'ABSPATH' ) || exit;
 use cmk\RestApiFirewall\Admin\AdminPage;
 use cmk\RestApiFirewall\Admin\Documentation;
 use cmk\RestApiFirewall\Routes\Routes;
-use cmk\RestApiFirewall\Controllers\SortCollectionsController;
-use cmk\RestApiFirewall\Firewall\FirewallOptions;
 use cmk\RestApiFirewall\Firewall\IpBlackList;
 use cmk\RestApiFirewall\Policy\PolicyRepository;
 use cmk\RestApiFirewall\Policy\TestPolicy;
@@ -20,6 +18,7 @@ final class Bootstrap {
 	public static function init(): self {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
+			do_action( 'rest_api_firewall_loaded' );
 		}
 		return self::$instance;
 	}
@@ -27,13 +26,11 @@ final class Bootstrap {
 	private function __construct() {
 
 		CoreOptions::get_instance();
-		FirewallOptions::get_instance();
 		IpBlackList::get_instance();
 		Routes::register();
 		PolicyRepository::get_instance();
 		WebhookService::get_instance();
 		WebhookAutoTrigger::get_instance();
-		SortCollectionsController::get_instance();
 
 		if ( is_admin() ) {
 			CoreOptionsService::get_instance();

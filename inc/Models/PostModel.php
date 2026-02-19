@@ -3,7 +3,7 @@
 defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Controllers\ModelContext;
-use cmk\RestApiFirewall\Schemas\SchemaFilters;
+use cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController;
 use WP_User;
 
 class PostModel {
@@ -34,13 +34,13 @@ class PostModel {
 	private function apply_filters( array $post, ModelContext $context ): array {
 
 		if ( isset( $post['link'] ) && $context->should_relative_url( 'link' ) ) {
-			$post['link'] = SchemaFilters::relative_url( $post['link'] );
+			$post['link'] = ModelsPropertiesController::relative_url( $post['link'] );
 		}
 
 		if ( isset( $post['guid'] ) && $context->should_relative_url( 'guid' ) ) {
 			$post['guid'] = is_array( $post['guid'] )
-				? SchemaFilters::relative_url( $post['guid']['rendered'] ?? '' )
-				: SchemaFilters::relative_url( $post['guid'] );
+				? ModelsPropertiesController::relative_url( $post['guid']['rendered'] ?? '' )
+				: ModelsPropertiesController::relative_url( $post['guid'] );
 		}
 
 		foreach ( array( 'title', 'excerpt', 'content', 'guid' ) as $rendered_prop ) {
@@ -69,7 +69,12 @@ class PostModel {
 		}
 
 		if ( $context->with_acf && isset( $post['id'] ) ) {
-			$post['acf'] = SchemaFilters::embed_acf_fields( $post['id'] );
+			$acf = ModelsPropertiesController::embed_acf_fields( $post['id'] );
+			if($acf) {
+				$post['acf'] = $acf;
+			} elseif( isset($post['acf']) ) {
+				unset( $post['acf']);
+			}
 		}
 
 		if ( $context->remove_links_prop && isset( $post['_links'] ) ) {

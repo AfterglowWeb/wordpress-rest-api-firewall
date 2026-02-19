@@ -9,7 +9,7 @@ import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import ProBadge from '../ProBadge';
 
-export default function SiteSettingsFilters( { form, setField } ) {
+export default function SettingsRoute( { form, setField } ) {
 	const { __ } = wp.i18n || {};
 	const { hasValidLicense } = useLicense();
 
