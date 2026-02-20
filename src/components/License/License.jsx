@@ -1,6 +1,6 @@
 import { useState, useEffect } from '@wordpress/element';
-import { useAdminData } from '../contexts/AdminDataContext';
-import { useLicense } from '../contexts/LicenseContext';
+import { useAdminData } from '../../contexts/AdminDataContext';
+import { useLicense } from '../../contexts/LicenseContext';
 
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
@@ -20,7 +20,7 @@ import InfoIcon from '@mui/icons-material/Info';
 
 const STORAGE_KEY = 'rest_api_firewall_licence_state';
 
-export default function LicenseDialog() {
+export default function License() {
 	const { adminData } = useAdminData();
 	const { updateLicenseStatus } = useLicense();
 	const [ loading, setLoading ] = useState( false );

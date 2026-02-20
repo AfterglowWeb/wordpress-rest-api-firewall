@@ -180,25 +180,25 @@ export default function Firewall({
 
 						<Stack spacing={ 1 }>
 							<Tooltip 
-							title={ ! proActive ? __( 'Buy a licence to restrict by post types.', 'rest-api-firewall' ) : '' } 
+							title={ ! proActive ? __( 'Licence required', 'rest-api-firewall' ) : '' } 
 							followCursor
 							>
-							<FormControl disabled={ ! proActive }>
-								<FormControlLabel
-									control={
-										<Switch
-											size="small"
-											checked={
-												!! form.rest_collections_allowed_post_types_enabled
-											}
-											name="rest_collections_allowed_post_types_enabled"
-											onChange={ setField }
-										/>
-									}
-									label={ __( 'Restrict Post Types', 'rest-api-firewall' ) }
-								/>
-								
-							</FormControl>
+								<FormControl disabled={ ! proActive }>
+									<FormControlLabel
+										control={
+											<Switch
+												size="small"
+												checked={
+													!! form.rest_collections_allowed_post_types_enabled
+												}
+												name="rest_collections_allowed_post_types_enabled"
+												onChange={ setField }
+											/>
+										}
+										label={ __( 'Restrict Post Types', 'rest-api-firewall' ) }
+									/>
+									
+								</FormControl>
 							</Tooltip>
 
 							{ adminData?.post_types && (

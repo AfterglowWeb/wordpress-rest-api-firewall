@@ -58,7 +58,7 @@ class Firewall {
 		return $result;
 	}
 
-	public static function wordpress_auth( $result ) {
+	private static function wordpress_auth( $result ) {
 
 		if ( is_wp_error( $result ) ) {
 			return $result;

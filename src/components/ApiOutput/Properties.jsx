@@ -41,24 +41,51 @@ export default function Properties( { setField, postTypes, form } ) {
 
 	return (
 		<Stack spacing={ 3 }>
-
-			<FormControl>
-				<FormControlLabel
-					control={
-						<Switch
-							size="small"
-							checked={ !! form.rest_models_enabled }
-							name="rest_models_enabled"
-							onChange={ setField }
-						/>
-					}
-					label={ __( 'Enable Properties Filtering', 'rest-api-firewall' ) }
-				/>
-			</FormControl>
-
-			<Divider />
 			
-			<Stack spacing={ 3 }>
+			
+			<Tooltip
+				followCursor
+				title={
+					! hasValidLicense
+						? __(
+								'Licence required',
+								'rest-api-firewall'
+						  )
+						: ''
+				}
+			>
+				<FormControl disabled={ ! hasValidLicense }>
+					<FormControlLabel
+						control={
+							<Switch
+								size="small"
+								checked={ !! form.rest_models_enabled }
+								name="rest_models_enabled"
+								onChange={ setField }
+							/>
+						}
+						label={ __( 'Enable Properties Filtering', 'rest-api-firewall' ) }
+					/>
+				</FormControl>
+			</Tooltip>
+
+			<Stack
+				spacing={ 3 }
+				pl={3.5}
+			>	
+				<Typography
+				variant="caption"
+				sx={{
+					display: 'block', 
+					mt: 1,
+					textTransform: 'uppercase',
+					letterSpacing: 0.5,
+					fontSize: '0.75rem',
+					color: ! hasValidLicense ? 'text.disabled' : 'text.secondary',
+				}}
+				>
+					{__( 'Global Settings', 'rest-api-firewall' ) }
+				</Typography>
 
 				<FormControl disabled={ ! hasValidLicense }>
 					<FormControlLabel
@@ -108,11 +135,6 @@ export default function Properties( { setField, postTypes, form } ) {
 						</Typography>
 					</FormHelperText>
 				</FormControl>
-			
-
-			</Stack>
-
-			<Stack spacing={ 3 }>
 
 				<FormControl disabled={ ! hasValidLicense }>
 					<FormControlLabel
@@ -137,13 +159,7 @@ export default function Properties( { setField, postTypes, form } ) {
 							'rest-api-firewall'
 						) }
 					</FormHelperText>
-				</FormControl>
-
-				
-
-			</Stack>
-
-			<Stack spacing={ 3 }>
+				</FormControl>		
 
 				<FormControl disabled={ ! hasValidLicense }>
 					<FormControlLabel
@@ -306,7 +322,8 @@ export default function Properties( { setField, postTypes, form } ) {
 						{ __( 'Enable the `acf` property on REST responses.', 'rest-api-firewall' ) }
 					</FormHelperText>
 				</FormControl>
-				
+			
+			
 				<Stack
 					spacing={ 0 }
 				>
@@ -347,39 +364,52 @@ export default function Properties( { setField, postTypes, form } ) {
 							) }
 						/>
 					</FormControl>
-				</Stack>
+				</Stack>	
 				
-			</Stack>
-			
-			<Divider />
+				<Divider />
 
-			<FormControl fullWidth sx={{maxWidth: 270}}>
-				<InputLabel>
-					{ __( 'Select Post Type', 'rest-api-firewall' ) }
-				</InputLabel>
-				<Select
-					value={ selectedPostType }
-					defaultValue={ postTypes[ 0 ].value || '' }
-					label={ __( 'Select Post Type', 'rest-api-firewall' ) }
-					onChange={ ( e ) => setSelectedPostType( e.target.value ) }
+				<Typography
+				variant="caption"
+				sx={{
+					display: 'block', 
+					mt: 1,
+					textTransform: 'uppercase',
+					letterSpacing: 0.5,
+					fontSize: '0.75rem',
+					color: ! hasValidLicense ? 'text.disabled' : 'text.secondary',
+				}}
 				>
-					{ postTypes &&
-						postTypes.map( ( postType ) => (
-							<MenuItem
-								key={ postType.value }
-								value={ postType.value }
-							>
-								{ postType.label }
-							</MenuItem>
-						) ) }
-				</Select>
-			</FormControl>
+					{__( 'Per Property Settings', 'rest-api-firewall' ) }
+				</Typography>
 
+				<FormControl fullWidth sx={{maxWidth: 270}}>
+					<InputLabel>
+						{ __( 'Select Post Type', 'rest-api-firewall' ) }
+					</InputLabel>
+					<Select
+						value={ selectedPostType }
+						defaultValue={ postTypes[ 0 ].value || '' }
+						label={ __( 'Select Post Type', 'rest-api-firewall' ) }
+						onChange={ ( e ) => setSelectedPostType( e.target.value ) }
+					>
+						{ postTypes &&
+							postTypes.map( ( postType ) => (
+								<MenuItem
+									key={ postType.value }
+									value={ postType.value }
+								>
+									{ postType.label }
+								</MenuItem>
+							) ) }
+					</Select>
+				</FormControl>
 
-			<ModelProperties
-				selectedPostType={ selectedPostType }
-				setField={ setField }
-			/>
+				<ModelProperties
+					selectedPostType={ selectedPostType }
+					setField={ setField }
+				/>
+
+			</Stack>
 		</Stack>
 	);
 }
@@ -476,10 +506,6 @@ function PropertyRow( {
 						<Box sx={ { width: 26, flexShrink: 0 } } />
 					) }
 
-					<Tooltip
-						title={ propConfig.description || '' }
-						placement="bottom-start"
-					>
 						<Stack direction={"row"} alignItems={"center"} gap={1}>
 						<Typography
 							sx={ {
@@ -496,7 +522,6 @@ function PropertyRow( {
 						<CopyButton sx={{flex:0}} toCopy={ propName } />
 						</Stack>
 
-					</Tooltip>
 
 
 					{ typeLabel && (
@@ -530,6 +555,18 @@ function PropertyRow( {
 				</Stack>
 
 				{ depth === 0 && (
+					<Tooltip
+						followCursor
+						title={
+							! hasValidLicense
+								? __(
+										'Licence required',
+										'rest-api-firewall'
+								  )
+								: ''
+						}
+					>
+					
 					<Stack
 						direction="row"
 						gap={ 1 }
@@ -556,6 +593,7 @@ function PropertyRow( {
 												whiteSpace: 'nowrap',
 											} }
 											fontSize="0.75rem"
+											color={ ! hasValidLicense ? 'text.disabled' : 'text.primary' }
 										>
 											{ filter.label }
 										</Typography>
@@ -564,10 +602,10 @@ function PropertyRow( {
 							) ) }
 
 						<FormControlLabel
+							disabled={ ! hasValidLicense }
 							control={
 								<Switch
 									size="small"
-									disabled={ ! hasValidLicense }
 									checked={ settings.disable }
 									onChange={ ( e ) => {
 										setField( {
@@ -579,38 +617,37 @@ function PropertyRow( {
 									} }
 								/>
 							}
-							label={ __(
-								'Disabled',
-								'rest-api-firewall'
-							) }
+							label={ <Typography
+								sx={ {
+									width: 55,
+									whiteSpace: 'nowrap',
+								} }
+								fontSize="0.75rem"
+								color={ ! hasValidLicense ? 'text.disabled' : 'text.primary' }
+							>
+								{ __('Disable', 'rest-api-firewall') }
+							</Typography> }
 						/>
 					</Stack>
+					</Tooltip>
 				) }
 			</Box>
-
 			
 
 			<Collapse in={ detailsOpen }>
 			{ propConfig.description && depth === 0 && (
-				<Tooltip
-					title={ propConfig.description || '' }
-					placement="bottom-start"
-				>
+				
 					<Typography
 						variant="caption"
 						color="text.secondary"
 						sx={ {
 							display: 'block',
 							pl: 4.25,
-							maxWidth: 400,
-							textOverflow: 'ellipsis',
-							overflow: 'hidden',
-							whiteSpace: 'nowrap',
 						} }
 					>
 						{ propConfig.description }
 					</Typography>
-				</Tooltip>
+		
 			) }
 				<Box
 					sx={ {

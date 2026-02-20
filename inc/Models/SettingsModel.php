@@ -2,7 +2,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController;
+use cmk\RestApiFirewallPro\Controllers\ModelsPropertiesControllerPro;
 use cmk\RestApiFirewall\Controllers\ModelContext;
 
 class SettingsModel {
@@ -31,8 +31,8 @@ class SettingsModel {
 			$settings['menus'] = self::menus_flat( $context );
 		}
 
-		if ( class_exists( '\cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController' ) && $context->with_acf_options_page ) {
-			$settings['acf_options_page'] = ModelsPropertiesController::embed_acf_fields( 'options' );
+		if ( class_exists( '\cmk\RestApiFirewallPro\Controllers\ModelsPropertiesControllerPro' ) && $context->with_acf_options_page ) {
+			$settings['acf_options_page'] = ModelsPropertiesControllerPro::embed_acf_fields( 'options' );
 		}
 
 		if ( $context->remove_empty_props ) {

@@ -185,19 +185,11 @@ class IpBlackList {
 	public static function sanitize_options( array $options ): array {
 		$defaults = self::default_options();
 
-		$mode = sanitize_text_field( $options['mode'] ?? $defaults['mode'] );
-		if ( ! in_array( $mode, array( 'blacklist', 'whitelist' ), true ) ) {
-			$mode = 'blacklist';
-		}
-		if ( 'whitelist' === $mode && ! self::has_pro_features() ) {
-			$mode = 'blacklist';
-		}
-
 		return array(
 			'enabled'   => (bool) ( $options['enabled'] ?? $defaults['enabled'] ),
-			'mode'      => $mode,
+			'mode'      => 'blacklist',
 			'blacklist' => self::sanitize_ip_list( $options['blacklist'] ?? array() ),
-			'whitelist' => self::has_pro_features() ? self::sanitize_ip_list( $options['whitelist'] ?? array() ) : array(),
+			'whitelist' => array(),
 		);
 	}
 
@@ -421,7 +413,7 @@ class IpBlackList {
 			'enabled'   => $options['enabled'],
 			'mode'      => $options['mode'],
 			'blacklist' => $options['blacklist'],
-			'whitelist' => [],
+			'whitelist' => array(),
 			'client_ip' => $client_ip,
 		);
 
@@ -469,7 +461,7 @@ class IpBlackList {
 
 		$options = self::get_options();
 
-		wp_send_json_success( array( 'entries' => $options[ 'blacklist' ] ), 200 );
+		wp_send_json_success( array( 'entries' => $options['blacklist'] ), 200 );
 	}
 
 	public function ajax_add_ip_entry(): void {
@@ -480,18 +472,15 @@ class IpBlackList {
 		}
 
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
-		$ip        = isset( $_POST['ip'] ) ? sanitize_text_field( wp_unslash( $_POST['ip'] ) ) : '';
-		$list_type = isset( $_POST['list_type'] ) ? sanitize_text_field( wp_unslash( $_POST['list_type'] ) ) : 'blacklist';
+		$ip = isset( $_POST['ip'] ) ? sanitize_text_field( wp_unslash( $_POST['ip'] ) ) : '';
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
-
-		$list_key = 'whitelist' === $list_type ? 'whitelist' : 'blacklist';
 
 		if ( empty( $ip ) || ! self::is_valid_ip_or_cidr( $ip ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid IP address', 'rest-api-firewall' ) ), 400 );
 		}
 
 		$options = self::get_options();
-		$list    = $options[ $list_key ];
+		$list    = $options['blacklist'];
 
 		foreach ( $list as $entry ) {
 			$entry_ip = is_array( $entry ) ? $entry['ip'] : $entry;
@@ -508,7 +497,7 @@ class IpBlackList {
 		);
 		$list[]    = $new_entry;
 
-		self::update_options( array( $list_key => $list ) );
+		self::update_options( array( 'blacklist' => $list ) );
 
 		wp_send_json_success( array( 'entry' => $new_entry ), 201 );
 	}
@@ -521,18 +510,15 @@ class IpBlackList {
 		}
 
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
-		$id        = isset( $_POST['id'] ) ? sanitize_text_field( wp_unslash( $_POST['id'] ) ) : '';
-		$list_type = isset( $_POST['list_type'] ) ? sanitize_text_field( wp_unslash( $_POST['list_type'] ) ) : 'blacklist';
+		$id = isset( $_POST['id'] ) ? sanitize_text_field( wp_unslash( $_POST['id'] ) ) : '';
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
-
-		$list_key = 'whitelist' === $list_type ? 'whitelist' : 'blacklist';
 
 		if ( empty( $id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Entry ID required', 'rest-api-firewall' ) ), 400 );
 		}
 
 		$options = self::get_options();
-		$list    = $options[ $list_key ];
+		$list    = $options['blacklist'];
 		$found   = false;
 
 		$list = array_filter(
@@ -551,9 +537,8 @@ class IpBlackList {
 			wp_send_json_error( array( 'message' => __( 'Entry not found', 'rest-api-firewall' ) ), 404 );
 		}
 
-		self::update_options( array( $list_key => array_values( $list ) ) );
+		self::update_options( array( 'blacklist' => array_values( $list ) ) );
 
 		wp_send_json_success( array( 'deleted' => true ), 200 );
 	}
-
 }

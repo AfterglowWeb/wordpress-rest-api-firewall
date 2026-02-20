@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from './contexts/AdminDataContext';
 import { DialogProvider } from './contexts/DialogContext';
-import useSettingsForm from './contexts/useSettingsForm';
+import useSettingsForm from './hooks/useSettingsForm';
 import useSaveOptions from './hooks/useSaveOptions';
 
 import { styled } from '@mui/material/styles';
@@ -35,17 +35,17 @@ import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 import CardMembershipOutlinedIcon from '@mui/icons-material/CardMembershipOutlined';
 
 import ConfirmDialog from './components/ConfirmDialog';
-import ThemeSettings from './components/ThemeSettings';
 
+import Firewall from './components/Firewall/Firewall';
 import Properties from './components/ApiOutput/Properties';
 import SiteSettings from './components/ApiOutput/SettingsRoute';
-import Firewall from './components/Firewall/Firewall';
-import Smtp from './components/Emails/Smtp';
-import Webhook from './components/Webhook/Webhook';
-
-import Documentation from './components/Documentation';
-import LicenseDialog from './components/LicenseDialog';
 import Collections from './components/ApiOutput/Collections';
+import Webhook from './components/Webhook/Webhook';
+import Smtp from './components/Emails/Smtp';
+import ThemeSettings from './components/Theme/ThemeSettings';
+
+import Documentation from './components/Documentation/Documentation';
+import License from './components/License/License';
 
 const DRAWER_WIDTH = 220;
 const APP_BAR_HEIGHT = 75;
@@ -495,7 +495,7 @@ function AppContent() {
 					) }
 
 					{ panelGroup === 10 && (
-						<LicenseDialog />
+						<License />
 					) }
 
 				</Box>

@@ -3,7 +3,7 @@
 defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Controllers\ModelContext;
-use cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController;
+use cmk\RestApiFirewallPro\Controllers\ModelsPropertiesControllerPro;
 
 class TermModel {
 
@@ -32,8 +32,8 @@ class TermModel {
 
 	protected function apply_filters( array $term, ModelContext $context ): array {
 
-		if ( class_exists( '\cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController' ) && isset( $term['link'] ) && $context->should_relative_url( 'link' ) ) {
-			$term['link'] = ModelsPropertiesController::relative_url( $term['link'] );
+		if ( class_exists( '\cmk\RestApiFirewallPro\Controllers\ModelsPropertiesControllerPro' ) && isset( $term['link'] ) && $context->should_relative_url( 'link' ) ) {
+			$term['link'] = ModelsPropertiesControllerPro::relative_url( $term['link'] );
 		}
 
 		foreach ( array( 'name', 'description' ) as $rendered_prop ) {
@@ -44,8 +44,8 @@ class TermModel {
 			}
 		}
 
-		if ( class_exists( '\cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController' ) && $context->with_acf && isset( $term['id'] ) ) {
-			$term['acf'] = ModelsPropertiesController::embed_acf_fields( 'term_' . $term['id'] );
+		if ( class_exists( '\cmk\RestApiFirewallPro\Controllers\ModelsPropertiesControllerPro' ) && $context->with_acf && isset( $term['id'] ) ) {
+			$term['acf'] = ModelsPropertiesControllerPro::embed_acf_fields( 'term_' . $term['id'] );
 		} elseif ( isset( $term['acf'] ) ) {
 			unset( $term['acf'] );
 		}
