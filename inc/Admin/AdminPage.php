@@ -82,20 +82,23 @@ class AdminPage {
 
 		$plugin_data = get_plugin_data( REST_API_FIREWALL_FILE );
 		$args        = array(
-			'nonce'                   => wp_create_nonce( 'rest_api_firewall_update_options_nonce' ),
-			'ajaxurl'                 => admin_url( 'admin-ajax.php' ),
-			'users'                   => Utils::list_users(),
-			'post_types'              => Utils::list_post_types(),
-			'models_properties'       => ModelsPropertiesController::models_properties(),
-			'admin_options'           => CoreOptions::read_options(),
-			'options_config'          => CoreOptions::options_config_for_js(),
-			'plugin_name'             => sanitize_text_field( $plugin_data['Name'] ),
-			'plugin_version'          => sanitize_text_field( REST_API_FIREWALL_VERSION ),
-			'plugin_uri'              => sanitize_url( $plugin_data['PluginURI'] ),
-			'home_url'                => get_home_url( '/' ),
-			'webhook_events'          => WebhookAutoTrigger::get_available_events(),
-			'webhook_event_groups'    => WebhookAutoTrigger::get_event_groups(),
+			'nonce'                => wp_create_nonce( 'rest_api_firewall_update_options_nonce' ),
+			'ajaxurl'              => admin_url( 'admin-ajax.php' ),
+			'users'                => Utils::list_users(),
+			'post_types'           => Utils::list_post_types(),
+			'admin_options'        => CoreOptions::read_options(),
+			'options_config'       => CoreOptions::options_config_for_js(),
+			'plugin_name'          => sanitize_text_field( $plugin_data['Name'] ),
+			'plugin_version'       => sanitize_text_field( REST_API_FIREWALL_VERSION ),
+			'plugin_uri'           => sanitize_url( $plugin_data['PluginURI'] ),
+			'home_url'             => get_home_url( '/' ),
+			'webhook_events'       => WebhookAutoTrigger::get_available_events(),
+			'webhook_event_groups' => WebhookAutoTrigger::get_event_groups(),
 		);
+
+		if ( class_exists( '\cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController' ) ) {
+			$args['models_properties'] = ModelsPropertiesController::models_properties();
+		}
 
 		if ( class_exists( '\cmk\RestApiFirewall\Theme\RedirectTemplates' ) ) {
 			$args['redirect_preset_url_options'] = \cmk\RestApiFirewall\Theme\RedirectTemplates::redirect_preset_url_options();

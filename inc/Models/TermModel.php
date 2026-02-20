@@ -32,7 +32,7 @@ class TermModel {
 
 	protected function apply_filters( array $term, ModelContext $context ): array {
 
-		if ( isset( $term['link'] ) && $context->should_relative_url( 'link' ) ) {
+		if ( class_exists( '\cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController' ) && isset( $term['link'] ) && $context->should_relative_url( 'link' ) ) {
 			$term['link'] = ModelsPropertiesController::relative_url( $term['link'] );
 		}
 
@@ -44,10 +44,10 @@ class TermModel {
 			}
 		}
 
-		if ( $context->with_acf && isset( $term['id'] ) ) {
+		if ( class_exists( '\cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController' ) && $context->with_acf && isset( $term['id'] ) ) {
 			$term['acf'] = ModelsPropertiesController::embed_acf_fields( 'term_' . $term['id'] );
-		} elseif( isset($term['acf']) ) {
-			unset( $term['acf']);
+		} elseif ( isset( $term['acf'] ) ) {
+			unset( $term['acf'] );
 		}
 
 		if ( $context->remove_links_prop && isset( $term['_links'] ) ) {

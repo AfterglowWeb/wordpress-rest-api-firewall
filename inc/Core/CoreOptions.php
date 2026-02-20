@@ -356,8 +356,8 @@ class CoreOptions {
 				'context'           => array( 'free', 'pro' ),
 				'group'             => 'theme',
 			),
-			
-			'enforce_auth'              => array(
+
+			'enforce_auth'                               => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -366,7 +366,7 @@ class CoreOptions {
 				'group'             => 'firewall',
 			),
 
-			'enforce_rate_limit'        => array(
+			'enforce_rate_limit'                         => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -375,7 +375,7 @@ class CoreOptions {
 				'group'             => 'firewall',
 			),
 
-			'firewall_user_id'          => array(
+			'firewall_user_id'                           => array(
 				'default_value'     => 0,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -384,7 +384,7 @@ class CoreOptions {
 				'group'             => 'firewall',
 			),
 
-			'rate_limit'                => array(
+			'rate_limit'                                 => array(
 				'default_value'     => 30,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -393,7 +393,7 @@ class CoreOptions {
 				'group'             => 'firewall',
 			),
 
-			'rate_limit_time'           => array(
+			'rate_limit_time'                            => array(
 				'default_value'     => 60,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -402,7 +402,7 @@ class CoreOptions {
 				'group'             => 'firewall',
 			),
 
-			'rate_limit_release'        => array(
+			'rate_limit_release'                         => array(
 				'default_value'     => 300,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -411,7 +411,7 @@ class CoreOptions {
 				'group'             => 'firewall',
 			),
 
-			'rate_limit_blacklist'      => array(
+			'rate_limit_blacklist'                       => array(
 				'default_value'     => 5,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -420,7 +420,7 @@ class CoreOptions {
 				'group'             => 'firewall',
 			),
 
-			'rate_limit_blacklist_time' => array(
+			'rate_limit_blacklist_time'                  => array(
 				'default_value'     => 3600,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -429,7 +429,7 @@ class CoreOptions {
 				'group'             => 'firewall',
 			),
 
-			'firewall_policy'           => array(
+			'firewall_policy'                            => array(
 				'default_value'     => array(
 					'nodes'  => array(),
 					'routes' => array(),
@@ -441,7 +441,7 @@ class CoreOptions {
 				'group'             => 'firewall',
 			),
 
-			'hide_user_routes'          => array(
+			'hide_user_routes'                           => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -629,5 +629,4 @@ class CoreOptions {
 				return (string) call_user_func( $callback, $option_value );
 		}
 	}
-
 }

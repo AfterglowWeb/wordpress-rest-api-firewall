@@ -31,7 +31,7 @@ class SettingsModel {
 			$settings['menus'] = self::menus_flat( $context );
 		}
 
-		if ( $context->with_acf_options_page ) {
+		if ( class_exists( '\cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController' ) && $context->with_acf_options_page ) {
 			$settings['acf_options_page'] = ModelsPropertiesController::embed_acf_fields( 'options' );
 		}
 

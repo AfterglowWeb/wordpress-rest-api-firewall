@@ -32,12 +32,13 @@ class AuthorModel {
 			'description'  => $user->get( 'description' ),
 		);
 
-		if ( $context->with_acf ) {
+		if ( class_exists( '\cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController' ) && $context->with_acf ) {
+
 			$acf = ModelsPropertiesController::embed_acf_fields( 'user_' . $user->ID );
-			if($acf) {
+			if ( $acf ) {
 				$data['acf'] = $acf;
-			} elseif( isset($data['acf']) ) {
-				unset( $data['acf']);
+			} elseif ( isset( $data['acf'] ) ) {
+				unset( $data['acf'] );
 			}
 		}
 

@@ -30,10 +30,11 @@ function isValidIpOrCidr( value ) {
 	if ( ! value ) {
 		return false;
 	}
+	const { hasValidLicense } = useLicense();
 	const trimmed = value.trim();
 	return (
 		IP_REGEX.test( trimmed ) ||
-		CIDR_REGEX.test( trimmed ) ||
+		( hasValidLicense && CIDR_REGEX.test( trimmed ) ) ||
 		IPV6_REGEX.test( trimmed )
 	);
 }
@@ -209,14 +210,14 @@ export default function IpDataGrid( {
 
 		if ( ! trimmed ) {
 			setIpError(
-				__( 'Please enter an IP address', 'rest-api-firewall' )
+				hasValidLicense ? __( 'Please enter an IP address or CIDR range', 'rest-api-firewall' ) : __( 'Please enter a valid IP address', 'rest-api-firewall' )
 			);
 			return;
 		}
 
 		if ( ! isValidIpOrCidr( trimmed ) ) {
 			setIpError(
-				__( 'Invalid IP address or CIDR range', 'rest-api-firewall' )
+				hasValidLicense ? __( 'Invalid IP address or CIDR range', 'rest-api-firewall' ) : __( 'Invalid IP address', 'rest-api-firewall' )
 			);
 			return;
 		}
@@ -340,40 +341,37 @@ export default function IpDataGrid( {
 					sx={ { mb: 2 } }
 				>
 					{ __(
-						'Upgrade to Pro for advanced IP management: Add IP, add CIDR, block by country, block by CIDR, bulk delete, set retention time, export and more.',
+						'Upgrade to Pro for advanced IP management: block by CIDR, block by country, bulk delete, set retention time, export and more.',
 						'rest-api-firewall'
 					) }
 				</Alert>
 			) }
 
 			<Toolbar disableGutters sx={ { gap: 2, mb: 2, flexWrap: 'wrap' } }>
-				{ hasValidLicense && (
-					<>
-						<TextField
-							value={ newIp }
-							onChange={ ( e ) => {
-								setNewIp( e.target.value );
-								setIpError( '' );
-							} }
-							onKeyDown={ handleKeyDown }
-							placeholder="192.168.1.1 or 10.0.0.0/24"
-							size="small"
-							error={ !! ipError }
-							helperText={ ipError }
-							sx={ { minWidth: 250 } }
-						/>
-						<Button
-							variant="contained"
-							size="small"
-							onClick={ handleAddIp }
-							disabled={ adding || ! newIp.trim() }
-							startIcon={ <AddIcon /> }
-						>
-							{ __( 'Add IP or CIDR', 'rest-api-firewall' ) }
-						</Button>
-					</>
-				) }
-
+				
+				<TextField
+					value={ newIp }
+					onChange={ ( e ) => {
+						setNewIp( e.target.value );
+						setIpError( '' );
+					} }
+					onKeyDown={ handleKeyDown }
+					placeholder="192.168.1.1 or 10.0.0.0/24"
+					size="small"
+					error={ !! ipError }
+					helperText={ ipError }
+					sx={ { minWidth: 250 } }
+				/>
+				<Button
+					variant="contained"
+					size="small"
+					onClick={ handleAddIp }
+					disabled={ adding || ! newIp.trim() }
+					startIcon={ <AddIcon /> }
+				>
+					{ __( 'Add IP or CIDR', 'rest-api-firewall' ) }
+				</Button>
+		
 				<Box sx={ { flexGrow: 1 } } />
 
 
