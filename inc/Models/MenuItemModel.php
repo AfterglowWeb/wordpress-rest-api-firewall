@@ -32,8 +32,8 @@ class MenuItemModel {
 
 	protected function apply_filters( array $menu_item, ModelContext $context ): array {
 
-		if ( isset( $menu_item['url'] ) && $context->should_relative_url( 'url' ) ) {
-			$menu_item['url'] = ModelsPropertiesController::relative_url( $menu_item['url'] );
+		if ( class_exists( '\cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController' ) && isset( $menu_item['url'] ) && $context->should_relative_url( 'url' ) ) {
+				$menu_item['url'] = ModelsPropertiesController::relative_url( $menu_item['url'] );
 		}
 
 		if ( isset( $menu_item['title'] ) && $context->should_render( 'title' ) ) {
@@ -42,13 +42,13 @@ class MenuItemModel {
 			}
 		}
 
-		if ( $context->with_acf && isset( $menu_item['id'] ) ) {
+		if ( class_exists( '\cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController' ) && $context->with_acf && isset( $menu_item['id'] ) ) {
 
 			$acf = ModelsPropertiesController::embed_acf_fields( $menu_item['id'] );
-			if($acf) {
+			if ( $acf ) {
 				$menu_item['acf'] = $acf;
-			} elseif( isset($menu_item['acf']) ) {
-				unset( $menu_item['acf']);
+			} elseif ( isset( $menu_item['acf'] ) ) {
+				unset( $menu_item['acf'] );
 			}
 		}
 

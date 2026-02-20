@@ -44,16 +44,19 @@ class AttachmentModel {
 			'filesize'  => $meta['filesize'] ?? null,
 		);
 
-		$data['src'] = $context->relative_attachment_urls
-			? ModelsPropertiesController::relative_attachment_url( $meta['file'] )
-			: $url;
+		if ( class_exists( '\cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController' ) ) {
 
-		if ( $context->with_acf ) {
-			$acf = ModelsPropertiesController::embed_acf_fields( $attachment_id );
-			if($acf) {
-				$data['acf'] = $acf;
-			} elseif( isset($data['acf']) ) {
-				unset( $data['acf']);
+			$data['src'] = $context->relative_attachment_urls
+				? ModelsPropertiesController::relative_attachment_url( $meta['file'] )
+				: $url;
+
+			if ( $context->with_acf ) {
+				$acf = ModelsPropertiesController::embed_acf_fields( $attachment_id );
+				if ( $acf ) {
+					$data['acf'] = $acf;
+				} elseif ( isset( $data['acf'] ) ) {
+					unset( $data['acf'] );
+				}
 			}
 		}
 

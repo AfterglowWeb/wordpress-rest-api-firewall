@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from './contexts/AdminDataContext';
-import { styled } from '@mui/material/styles';
-import { useTheme } from '@mui/material/styles';
-
 import { DialogProvider } from './contexts/DialogContext';
 import useSettingsForm from './contexts/useSettingsForm';
 import useSaveOptions from './hooks/useSaveOptions';
 
+import { styled } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
@@ -21,8 +21,6 @@ import IconButton from '@mui/material/IconButton';
 import Avatar from '@mui/material/Avatar';
 import AppBar from '@mui/material/AppBar';
 import Stack from '@mui/material/Stack';
-
-
 
 import SecurityOutlined from '@mui/icons-material/SecurityOutlined';
 import PaletteOutlined from '@mui/icons-material/PaletteOutlined';
@@ -48,15 +46,14 @@ import Webhook from './components/Webhook/Webhook';
 import Documentation from './components/Documentation';
 import LicenseDialog from './components/LicenseDialog';
 import Collections from './components/ApiOutput/Collections';
-import useMediaQuery from '@mui/material/useMediaQuery';
 
 const DRAWER_WIDTH = 220;
 const APP_BAR_HEIGHT = 75;
-const WP_FOOTER_HEIGHT = 40;
-const WP_ADMIN_BAR_HEIGHT_DESKTOP = 32;   // >= md
-const WP_ADMIN_BAR_HEIGHT_MOBILE  = 46;   // < md
-const WP_MENU_WIDTH_MD = 36;              // md → lg : menu replié
-const WP_MENU_WIDTH_LG = 160;             // lg+     : menu complet
+const APP_FOOTER_HEIGHT = 40;
+const WP_ADMIN_BAR_HEIGHT_DESKTOP = 32;   // >= md.  : desktop admin bar
+const WP_ADMIN_BAR_HEIGHT_MOBILE  = 46;   // < md.   : mobile admin bar
+const WP_MENU_WIDTH_MD = 36;              // md → lg : collapsed menu
+const WP_MENU_WIDTH_LG = 160;             // lg+     : complete menu
 
 const AppLogo = styled( Avatar )( () => ( {
 	width: 48,
@@ -213,8 +210,8 @@ function AppContent() {
 				top: { xs: WP_ADMIN_BAR_HEIGHT_MOBILE, md: WP_ADMIN_BAR_HEIGHT_DESKTOP },
 				left: { xs: 0, md: WP_MENU_WIDTH_MD, lg: WP_MENU_WIDTH_LG },
 				minHeight: {
-					xs: `calc(100vh - ${ WP_ADMIN_BAR_HEIGHT_MOBILE + WP_FOOTER_HEIGHT }px)`,
-					md: `calc(100vh - ${ WP_ADMIN_BAR_HEIGHT_DESKTOP + WP_FOOTER_HEIGHT }px)`,
+					xs: `calc(100vh - ${ WP_ADMIN_BAR_HEIGHT_MOBILE + APP_FOOTER_HEIGHT }px)`,
+					md: `calc(100vh - ${ WP_ADMIN_BAR_HEIGHT_DESKTOP + APP_FOOTER_HEIGHT }px)`,
 				},
 				overflowY: 'auto',
 				}
@@ -433,8 +430,8 @@ function AppContent() {
 				pl: { xs: 0, md: DRAWER_WIDTH + 'px' },
 				pt: APP_BAR_HEIGHT + 'px',
 				minHeight: {
-					xs: `calc(100svh - ${ WP_FOOTER_HEIGHT + APP_BAR_HEIGHT + WP_ADMIN_BAR_HEIGHT_MOBILE }px)`,
-					md: `calc(100svh - ${ WP_FOOTER_HEIGHT + APP_BAR_HEIGHT + WP_ADMIN_BAR_HEIGHT_DESKTOP }px)`,
+					xs: `calc(100svh - ${ APP_FOOTER_HEIGHT + APP_BAR_HEIGHT + WP_ADMIN_BAR_HEIGHT_MOBILE }px)`,
+					md: `calc(100svh - ${ APP_FOOTER_HEIGHT + APP_BAR_HEIGHT + WP_ADMIN_BAR_HEIGHT_DESKTOP }px)`,
 				},
 				bgcolor: theme.palette.background.paper
 				} }>

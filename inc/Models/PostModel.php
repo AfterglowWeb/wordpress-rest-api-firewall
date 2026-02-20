@@ -33,14 +33,25 @@ class PostModel {
 
 	private function apply_filters( array $post, ModelContext $context ): array {
 
-		if ( isset( $post['link'] ) && $context->should_relative_url( 'link' ) ) {
-			$post['link'] = ModelsPropertiesController::relative_url( $post['link'] );
-		}
+		if ( class_exists( '\cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController' ) ) {
+			if ( isset( $post['link'] ) && $context->should_relative_url( 'link' ) ) {
+				$post['link'] = ModelsPropertiesController::relative_url( $post['link'] );
+			}
 
-		if ( isset( $post['guid'] ) && $context->should_relative_url( 'guid' ) ) {
-			$post['guid'] = is_array( $post['guid'] )
-				? ModelsPropertiesController::relative_url( $post['guid']['rendered'] ?? '' )
-				: ModelsPropertiesController::relative_url( $post['guid'] );
+			if ( isset( $post['guid'] ) && $context->should_relative_url( 'guid' ) ) {
+				$post['guid'] = is_array( $post['guid'] )
+					? ModelsPropertiesController::relative_url( $post['guid']['rendered'] ?? '' )
+					: ModelsPropertiesController::relative_url( $post['guid'] );
+			}
+
+			if ( $context->with_acf && isset( $post['id'] ) ) {
+				$acf = ModelsPropertiesController::embed_acf_fields( $post['id'] );
+				if ( $acf ) {
+					$post['acf'] = $acf;
+				} elseif ( isset( $post['acf'] ) ) {
+					unset( $post['acf'] );
+				}
+			}
 		}
 
 		foreach ( array( 'title', 'excerpt', 'content', 'guid' ) as $rendered_prop ) {
@@ -66,15 +77,6 @@ class PostModel {
 
 		if ( $context->should_embed( 'terms' ) ) {
 			$post['terms'] = $this->embed_terms( $post, $context );
-		}
-
-		if ( $context->with_acf && isset( $post['id'] ) ) {
-			$acf = ModelsPropertiesController::embed_acf_fields( $post['id'] );
-			if($acf) {
-				$post['acf'] = $acf;
-			} elseif( isset($post['acf']) ) {
-				unset( $post['acf']);
-			}
 		}
 
 		if ( $context->remove_links_prop && isset( $post['_links'] ) ) {
