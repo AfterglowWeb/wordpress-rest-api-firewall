@@ -70,6 +70,10 @@ class RoutesRepository {
 		return $output;
 	}
 
+	public static function flush_routes_cache(): void {
+		delete_transient( 'rest_firewall_routes_list' );
+	}
+
 	private static function normalize_callable( $callback_name ) {
 
 		if ( is_string( $callback_name ) ) {
@@ -138,4 +142,5 @@ class RoutesRepository {
 
 		return $params;
 	}
+
 }

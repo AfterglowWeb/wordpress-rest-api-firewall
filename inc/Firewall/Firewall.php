@@ -3,6 +3,7 @@ namespace cmk\RestApiFirewall\Firewall;
 
 defined( 'ABSPATH' ) || exit;
 
+use cmk\RestApiFirewall\Core\CoreOptions;
 use cmk\RestApiFirewall\Firewall\WordpressAuth;
 use cmk\RestApiFirewall\Firewall\IpBlackList;
 use cmk\RestApiFirewall\Firewall\RateLimit;
@@ -44,7 +45,7 @@ class Firewall {
 			return $result;
 		}
 
-		if ( false === FirewallOptions::get_option( 'enforce_ip_blacklist' ) ) {
+		if ( false === CoreOptions::read_option( 'enforce_ip_blacklist' ) ) {
 			return $result;
 		}
 
@@ -63,7 +64,7 @@ class Firewall {
 			return $result;
 		}
 
-		if ( false === FirewallOptions::get_option( 'enforce_auth' ) ) {
+		if ( false === CoreOptions::read_option( 'enforce_auth' ) ) {
 			return $result;
 		}
 
@@ -100,7 +101,7 @@ class Firewall {
 		}
 
 		$key              = 'rest_firewall_rl_' . md5( $client_id . $request->get_route() );
-		$firewall_options = FirewallOptions::get_options();
+		$firewall_options = CoreOptions::read_options();
 
 		$rate_limit          = false !== $rate_limit ? (int) $rate_limit : (int) $firewall_options['rate_limit'];
 		$time_limit          = false !== $time_limit ? (int) $time_limit : (int) $firewall_options['rate_limit_time'];

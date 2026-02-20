@@ -8,12 +8,14 @@ import {
 const LicenseContext = createContext( {
 	hasValidLicense: false,
 	status: null,
+	proNonce: null,
 	updateLicenseStatus: () => {},
 } );
 
-export function LicenseProvider( { children } ) {
-	const [ hasValidLicense, setHasValidLicense ] = useState( false );
+export function LicenseProvider( { children, hasValidLicense: initialValid = false } ) {
+	const [ hasValidLicense, setHasValidLicense ] = useState( initialValid );
 	const [ status, setStatus ] = useState( null );
+	const proNonce = window.restApiFirewallPro?.nonce || null;
 
 	const updateLicenseStatus = useCallback( ( newStatus ) => {
 		setStatus( newStatus );
@@ -22,7 +24,7 @@ export function LicenseProvider( { children } ) {
 
 	return (
 		<LicenseContext.Provider
-			value={ { hasValidLicense, status, updateLicenseStatus } }
+			value={ { hasValidLicense, status, proNonce, updateLicenseStatus } }
 		>
 			{ children }
 		</LicenseContext.Provider>
@@ -35,4 +37,9 @@ export function useLicense() {
 		throw new Error( 'useLicense must be used within a LicenseProvider' );
 	}
 	return context;
+}
+
+export function useProNonce() {
+	const { proNonce } = useLicense();
+	return proNonce;
 }

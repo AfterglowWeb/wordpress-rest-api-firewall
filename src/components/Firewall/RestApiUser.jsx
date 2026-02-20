@@ -1,8 +1,6 @@
 import { useAdminData } from '../../contexts/AdminDataContext';
 
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
 import FormHelperText from '@mui/material/FormHelperText';
 import InputLabel from '@mui/material/InputLabel';
@@ -13,8 +11,8 @@ import Typography from '@mui/material/Typography';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 export default function RestApiUser( {
-	firewallOptions,
-	handleOptionChange,
+	form,
+	setField,
 	users,
 	restApiUser,
 } ) {
@@ -26,22 +24,21 @@ export default function RestApiUser( {
 
 	return (
 		<Stack
-			direction={ { xs: 'column', md: 'row' } }
-			my={ 3.6 }
+			direction={ { xs: 'column', lg: 'row' } }
 			gap={ 2 }
 			justifyContent={ 'space-between' }
 		>
-			<FormControl>
+			<FormControl sx={ { flex: 1, maxWidth: 270 } }>
 				<InputLabel id="user-id-label">
 					{ __( 'REST API User', 'rest-api-firewall' ) }
 				</InputLabel>
 				<Select
 					labelId="user-id-label"
-					id="user_id"
-					name="user_id"
-					value={ firewallOptions.user_id }
+					id="firewall_user_id"
+					name="firewall_user_id"
+					value={ form.firewall_user_id || 0 }
 					label={ __( 'REST API User', 'rest-api-firewall' ) }
-					onChange={ handleOptionChange }
+					onChange={ setField }
 				>
 					<MenuItem value={ 0 }>
 						<em>{ __( 'Select User', 'rest-api-firewall' ) }</em>
@@ -55,7 +52,7 @@ export default function RestApiUser( {
 					) }
 				</Select>
 				<FormHelperText>
-					{ firewallOptions.user_id &&
+					{ form.firewall_user_id &&
 					restApiUser &&
 					restApiUser?.label &&
 					restApiUser?.admin_url ? (
@@ -83,7 +80,7 @@ export default function RestApiUser( {
 								} }
 							>
 								{ __( 'user profile', 'rest-api-firewall' ) }
-								<OpenInNewIcon fontSize="inherut" />
+								<OpenInNewIcon fontSize="inherit" />
 							</Typography>
 						</>
 					) : (
@@ -112,46 +109,6 @@ export default function RestApiUser( {
 							</Typography>
 						</>
 					) }
-				</FormHelperText>
-			</FormControl>
-
-			<FormControl sx={ { minWidth: 240 } }>
-				<FormControlLabel
-					control={
-						<Switch
-							checked={ !! firewallOptions.enforce_auth }
-							name="enforce_auth"
-							size="small"
-							onChange={ handleOptionChange }
-						/>
-					}
-					label={ __(
-						'Enforce Authentication',
-						'rest-api-firewall'
-					) }
-				/>
-				<FormHelperText>
-					{ __(
-						'Enforce authentication on all routes',
-						'rest-api-firewall'
-					) }
-				</FormHelperText>
-			</FormControl>
-
-			<FormControl sx={ { minWidth: 240 } }>
-				<FormControlLabel
-					control={
-						<Switch
-							checked={ !! firewallOptions.hide_user_routes }
-							name="hide_user_routes"
-							size="small"
-							onChange={ handleOptionChange }
-						/>
-					}
-					label={ __( 'Hide User Routes', 'rest-api-firewall' ) }
-				/>
-				<FormHelperText>
-					{ __( 'Block /wp/v2/users endpoint', 'rest-api-firewall' ) }
 				</FormHelperText>
 			</FormControl>
 		</Stack>

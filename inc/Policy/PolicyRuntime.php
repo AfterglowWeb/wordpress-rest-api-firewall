@@ -2,9 +2,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
-use WP_REST_Request;
-use cmk\RestApiFirewall\Firewall\FirewallOptions;
+use cmk\RestApiFirewall\Core\CoreOptions;
 use cmk\RestApiFirewall\Policy\PolicyRepository;
+use WP_REST_Request;
 
 class PolicyRuntime {
 
@@ -118,7 +118,7 @@ class PolicyRuntime {
 
 	protected static function resolve_settings( array $node_settings_chain, array $route_settings ): array {
 
-		$firewall_options       = FirewallOptions::get_options();
+		$firewall_options       = CoreOptions::read_options();
 		$global_enforce_auth    = (bool) ( $firewall_options['enforce_auth'] ?? false );
 		$global_enforce_rate    = (bool) ( $firewall_options['enforce_rate_limit'] ?? false );
 		$global_rate_limit      = (int) ( $firewall_options['rate_limit'] ?? 30 );

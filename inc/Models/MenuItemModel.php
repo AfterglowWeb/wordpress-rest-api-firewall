@@ -3,7 +3,7 @@
 defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Controllers\ModelContext;
-use cmk\RestApiFirewall\Schemas\SchemaFilters;
+use cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController;
 
 class MenuItemModel {
 
@@ -33,7 +33,7 @@ class MenuItemModel {
 	protected function apply_filters( array $menu_item, ModelContext $context ): array {
 
 		if ( isset( $menu_item['url'] ) && $context->should_relative_url( 'url' ) ) {
-			$menu_item['url'] = SchemaFilters::relative_url( $menu_item['url'] );
+			$menu_item['url'] = ModelsPropertiesController::relative_url( $menu_item['url'] );
 		}
 
 		if ( isset( $menu_item['title'] ) && $context->should_render( 'title' ) ) {
@@ -43,7 +43,13 @@ class MenuItemModel {
 		}
 
 		if ( $context->with_acf && isset( $menu_item['id'] ) ) {
-			$menu_item['acf'] = SchemaFilters::embed_acf_fields( $menu_item['id'] );
+
+			$acf = ModelsPropertiesController::embed_acf_fields( $menu_item['id'] );
+			if($acf) {
+				$menu_item['acf'] = $acf;
+			} elseif( isset($menu_item['acf']) ) {
+				unset( $menu_item['acf']);
+			}
 		}
 
 		if ( $context->remove_links_prop && isset( $menu_item['_links'] ) ) {

@@ -14,7 +14,7 @@ use WP_REST_Response;
 use WP_User;
 use WP_Post;
 
-class RoutesController {
+class ModelsController {
 
 	private ?ModelContext $context = null;
 	private string $application_id = '';

@@ -15,6 +15,7 @@ export default function MultipleSelect( {
 	value,
 	options,
 	onChange,
+	sx,
 } ) {
 	const MenuProps = {
 		PaperProps: {
@@ -28,12 +29,11 @@ export default function MultipleSelect( {
 	const safeValue = Array.isArray( value ) ? value : [];
 
 	return (
-		<FormControl fullWidth>
-			<InputLabel disabled={ disabled } id={ `${ name }-label` }>
+		<FormControl  sx={{sx}} disabled={ disabled }>
+			<InputLabel id={ `${ name }-label` }>
 				{ label }
 			</InputLabel>
 			<Select
-				disabled={ disabled }
 				labelId={ `${ name }-label` }
 				id={ name }
 				name={ name }
@@ -71,7 +71,7 @@ export default function MultipleSelect( {
 				) }
 			</Select>
 			{ helperText && (
-				<FormHelperText disabled={ disabled }>
+				<FormHelperText>
 					{ helperText }
 				</FormHelperText>
 			) }

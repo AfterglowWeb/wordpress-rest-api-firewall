@@ -10,8 +10,10 @@ import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+
 import CloseIcon from '@mui/icons-material/Close';
 import MenuIcon from '@mui/icons-material/Menu';
+import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
 
 import contentStyles from '../utils/contentStyles';
 import Button from '@mui/material/Button';
@@ -46,14 +48,11 @@ export default function Documentation( {
 
 	return (
 		<>
-			<Button
-				variant={ variant }
-				size={ size }
-				color={ color }
-				onClick={ () => openDoc( { page } ) }
+			<IconButton
+			onClick={ () => openDoc( { page } ) }
 			>
-				{ buttonText }
-			</Button>
+				<HelpOutlineOutlinedIcon />
+			</IconButton>
 			<Drawer
 				anchor="right"
 				open={ open }

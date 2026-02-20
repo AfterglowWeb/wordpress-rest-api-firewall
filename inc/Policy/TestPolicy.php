@@ -2,11 +2,11 @@
 
 defined( 'ABSPATH' ) || exit;
 
-use WP_REST_Request;
-use cmk\RestApiFirewall\Firewall\FirewallOptions;
+use cmk\RestApiFirewall\Core\Permissions;
+use cmk\RestApiFirewall\Core\CoreOptions;
 use cmk\RestApiFirewall\Policy\PolicyRuntime;
 use cmk\RestApiFirewall\Policy\PolicyRepository;
-use cmk\RestApiFirewall\Core\Permissions;
+use WP_REST_Request;
 
 class TestPolicy {
 
@@ -252,18 +252,17 @@ class TestPolicy {
 		$args = array(
 			'method'    => $method,
 			'timeout'   => 10,
-			'sslverify' => false, // Local dev may not have valid SSL.
+			'sslverify' => false,
 			'headers'   => array(
 				'Content-Type' => 'application/json',
 			),
 		);
 
 		if ( $with_auth ) {
-			$user_id = FirewallOptions::get_option( 'user_id' );
+			$user_id = CoreOptions::read_option( 'user_id' );
 			if ( $user_id ) {
 				$user = get_user_by( 'id', $user_id );
 				if ( $user ) {
-					// Generate a temporary application password for testing.
 					$app_pass = $this->get_or_create_test_app_password( $user_id );
 					if ( $app_pass ) {
 						// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Used for encoding API response data, not obfuscation
