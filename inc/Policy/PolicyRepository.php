@@ -2,9 +2,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
+use cmk\RestApiFirewall\Core\CoreOptions;
 use cmk\RestApiFirewall\Core\Permissions;
 use cmk\RestApiFirewall\Routes\RoutesRepository;
-use cmk\RestApiFirewall\Firewall\FirewallOptions;
 
 class PolicyRepository {
 
@@ -113,7 +113,7 @@ class PolicyRepository {
 		$saved = apply_filters( 'rest_api_firewall_save_policy', false, $diff );
 
 		if ( ! $saved ) {
-			FirewallOptions::update_option( 'policy', $diff );
+			CoreOptions::update_option( 'policy', $diff );
 			return true;
 		}
 
@@ -136,7 +136,8 @@ class PolicyRepository {
 		$policy = apply_filters( 'rest_api_firewall_get_policy', $default );
 
 		if ( $policy === $default ) {
-			return FirewallOptions::get_option( 'policy' );
+			$saved = CoreOptions::read_option( 'policy' );
+			return is_array( $saved ) ? $saved : $default;
 		}
 
 		return $policy;
@@ -229,8 +230,7 @@ class PolicyRepository {
 	}
 
 	public static function flush(): void {
-		FirewallOptions::flush();
-		delete_transient( 'rest_firewall_routes_list' );
+		RoutesRepository::flush_routes_cache();
 	}
 
 	public static function build_policy_tree( array $flat_routes ): array {

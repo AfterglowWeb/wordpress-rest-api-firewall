@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 
-import { DataGrid } from '@mui/x-data-grid';
+import { DataGrid, ExportPrint, ExportCsv } from '@mui/x-data-grid';
+
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
@@ -39,15 +40,14 @@ function isValidIpOrCidr( value ) {
 
 export default function IpDataGrid( {
 	listType = 'blacklist',
-	onMutate = null,
 } ) {
 	const { adminData } = useAdminData();
-	const { hasValidLicense } = useLicense();
+	const { hasValidLicense, proNonce } = useLicense();
+	const nonce = proNonce || adminData.nonce;
 	const { __ } = wp.i18n || {};
 
 	const [ rows, setRows ] = useState( [] );
 	const [ loading, setLoading ] = useState( true );
-	const [ rowCount, setRowCount ] = useState( 0 );
 	const [ paginationModel, setPaginationModel ] = useState( {
 		page: 0,
 		pageSize: 25,
@@ -55,8 +55,10 @@ export default function IpDataGrid( {
 	const [ sortModel, setSortModel ] = useState( [
 		{ field: 'blocked_at', sort: 'desc' },
 	] );
-	const [ filterValue, setFilterValue ] = useState( '' );
-	const [ rowSelectionModel, setRowSelectionModel ] = useState( [] );
+	const [ rowSelectionModel, setRowSelectionModel ] = useState( {
+		type: 'include',
+		ids: new Set( [] ),
+	} );
 
 	const [ newIp, setNewIp ] = useState( '' );
 	const [ ipError, setIpError ] = useState( '' );
@@ -75,7 +77,7 @@ export default function IpDataGrid( {
 						size="small"
 						color="default"
 						onClick={ () =>
-							handleDeleteOne( params.row.id, params.row.ip )
+							handleDeleteOne( params.row.id )
 						}
 					>
 						<DeleteOutlineIcon fontSize="small" />
@@ -159,9 +161,9 @@ export default function IpDataGrid( {
 				width: 180,
 				renderCell: ( params ) => {
 					if ( ! params.value ) {
-						return __( 'Unknown', 'rest-api-firewall' );
+						return '-';
 					}
-					return new Date( params.value ).toLocaleString();
+					return params.value;
 				},
 			},
 		];
@@ -173,123 +175,30 @@ export default function IpDataGrid( {
 		setLoading( true );
 
 		try {
-			if ( ! hasValidLicense ) {
-				const response = await fetch( adminData.ajaxurl, {
-					method: 'POST',
-					headers: {
-						'Content-Type':
-							'application/x-www-form-urlencoded; charset=UTF-8',
-					},
-					body: new URLSearchParams( {
-						action: 'get_ip_filter',
-						nonce: adminData.nonce,
-					} ),
-				} );
+			const response = await fetch( adminData.ajaxurl, {
+				method: 'POST',
+				headers: {
+					'Content-Type':
+						'application/x-www-form-urlencoded; charset=UTF-8',
+				},
+				body: new URLSearchParams( {
+					action: 'get_ip_entries',
+					nonce,
+					list_type: listType,
+				} ),
+			} );
 
-				const result = await response.json();
+			const result = await response.json();
 
-				if ( result?.success && result?.data ) {
-					const entries = result.data[ listType ] || [];
-
-					let processedRows = entries
-						.map( ( entry, index ) => {
-							const ip =
-								typeof entry === 'string' ? entry : entry?.ip;
-							if ( ! ip ) {
-								return null;
-							}
-							const id = entry?.id || `free-${ index + 1 }`;
-							return {
-								id,
-								actions: '',
-								ip,
-								entry_type: entry?.entry_type || 'manual',
-								country_name: entry?.country_name || null,
-								country_code: entry?.country_code || null,
-								blocked_at: entry?.blocked_at || null,
-								expires_at: entry?.expires_at || null,
-								agent: entry?.agent || null,
-							};
-						} )
-						.filter( Boolean );
-
-					if ( filterValue ) {
-						const search = filterValue.toLowerCase();
-						processedRows = processedRows.filter(
-							( row ) =>
-								row.ip?.toLowerCase().includes( search ) ||
-								row.country_name
-									?.toLowerCase()
-									.includes( search ) ||
-								row.agent?.toLowerCase().includes( search )
-						);
-					}
-
-					if ( sortModel.length > 0 ) {
-						const { field, sort } = sortModel[ 0 ];
-						processedRows.sort( ( a, b ) => {
-							const aVal = a[ field ] || '';
-							const bVal = b[ field ] || '';
-							if ( sort === 'asc' ) {
-								return aVal > bVal ? 1 : -1;
-							}
-							return aVal < bVal ? 1 : -1;
-						} );
-					}
-
-					const total = processedRows.length;
-					const start =
-						paginationModel.page * paginationModel.pageSize;
-					const paginatedRows = processedRows.slice(
-						start,
-						start + paginationModel.pageSize
-					);
-
-					setRows( paginatedRows );
-					setRowCount( total );
-				}
-			} else {
-				const sortField = sortModel[ 0 ]?.field || 'blocked_at';
-				const sortOrder = sortModel[ 0 ]?.sort?.toUpperCase() || 'DESC';
-
-				const response = await fetch( adminData.ajaxurl, {
-					method: 'POST',
-					headers: {
-						'Content-Type':
-							'application/x-www-form-urlencoded; charset=UTF-8',
-					},
-					body: new URLSearchParams( {
-						action: 'get_ip_entries',
-						nonce: adminData.nonce,
-						list_type: listType,
-						page: paginationModel.page + 1,
-						per_page: paginationModel.pageSize,
-						order_by: sortField,
-						order: sortOrder,
-						search: filterValue,
-					} ),
-				} );
-
-				const result = await response.json();
-
-				if ( result?.success && result?.data ) {
-					setRows( result.data.entries || [] );
-					setRowCount( result.data.total || 0 );
-				}
+			if ( result?.success && result?.data ) {
+				setRows( result.data.entries || [] );
 			}
 		} catch ( error ) {
 			console.error( 'Error fetching IP entries:', error );
 		} finally {
 			setLoading( false );
 		}
-	}, [
-		adminData,
-		hasValidLicense,
-		listType,
-		paginationModel,
-		sortModel,
-		filterValue,
-	] );
+	}, [ adminData, nonce, listType ] );
 
 	useEffect( () => {
 		fetchEntries();
@@ -324,7 +233,7 @@ export default function IpDataGrid( {
 				},
 				body: new URLSearchParams( {
 					action: 'add_ip_entry',
-					nonce: adminData.nonce,
+					nonce,
 					ip: trimmed,
 					list_type: listType,
 					entry_type: 'manual',
@@ -333,12 +242,9 @@ export default function IpDataGrid( {
 
 			const result = await response.json();
 
-			if ( result?.success ) {
+			if ( result?.success && result?.data?.entry ) {
 				setNewIp( '' );
-				if ( onMutate ) {
-					await onMutate();
-				}
-				fetchEntries();
+				setRows( ( prev ) => [ result.data.entry, ...prev ] );
 			} else {
 				setIpError(
 					result?.data?.message ||
@@ -352,8 +258,9 @@ export default function IpDataGrid( {
 		}
 	};
 
-	const handleDeleteOne = async ( id, ip ) => {
-		setLoading( true );
+	const handleDeleteOne = async ( id ) => {
+		setRows( ( prev ) => prev.filter( ( row ) => row.id !== id ) );
+
 		try {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
@@ -363,30 +270,33 @@ export default function IpDataGrid( {
 				},
 				body: new URLSearchParams( {
 					action: 'delete_ip_entry',
-					nonce: adminData.nonce,
-					...( hasValidLicense ? { id } : { ip } ),
+					nonce,
+					id,
+					list_type: listType,
 				} ),
 			} );
 
 			const result = await response.json();
 
-			if ( result?.success ) {
-				if ( onMutate ) {
-					await onMutate();
-				}
+			if ( ! result?.success ) {
 				fetchEntries();
 			}
 		} catch ( error ) {
 			console.error( 'Error deleting IP entry:', error );
-		} finally {
-			setLoading( false );
+			fetchEntries();
 		}
 	};
 
 	const handleDeleteSelected = async () => {
-		if ( rowSelectionModel.length === 0 ) {
+		if ( rowSelectionModel && rowSelectionModel.ids.size === 0 ) {
 			return;
 		}
+
+		const selectedIds = [ ...rowSelectionModel.ids ];
+		const selectedSet = new Set( selectedIds );
+
+		setRows( ( prev ) => prev.filter( ( row ) => ! selectedSet.has( row.id ) ) );
+		setRowSelectionModel( { type: 'include', ids: new Set() } );
 
 		try {
 			const response = await fetch( adminData.ajaxurl, {
@@ -397,19 +307,20 @@ export default function IpDataGrid( {
 				},
 				body: new URLSearchParams( {
 					action: 'delete_ip_entries',
-					nonce: adminData.nonce,
-					ids: JSON.stringify( rowSelectionModel ),
+					nonce,
+					ids: JSON.stringify( selectedIds ),
+					list_type: listType,
 				} ),
 			} );
 
 			const result = await response.json();
 
-			if ( result?.success ) {
-				setRowSelectionModel( [] );
+			if ( ! result?.success ) {
 				fetchEntries();
 			}
 		} catch ( error ) {
 			console.error( 'Error deleting IP entries:', error );
+			fetchEntries();
 		}
 	};
 
@@ -421,7 +332,7 @@ export default function IpDataGrid( {
 	};
 
 	return (
-		<Box sx={ { height: 500, width: '100%' } }>
+		<Box>
 			{ ! hasValidLicense && (
 				<Alert
 					severity="info"
@@ -429,7 +340,7 @@ export default function IpDataGrid( {
 					sx={ { mb: 2 } }
 				>
 					{ __(
-						'Upgrade to Pro for advanced IP management: CIDR support, block by country, block by CIDR, bulk delete, set retention time, export and more.',
+						'Upgrade to Pro for advanced IP management: Add IP, add CIDR, block by country, block by CIDR, bulk delete, set retention time, export and more.',
 						'rest-api-firewall'
 					) }
 				</Alert>
@@ -458,28 +369,20 @@ export default function IpDataGrid( {
 							disabled={ adding || ! newIp.trim() }
 							startIcon={ <AddIcon /> }
 						>
-							{ __( 'Add IP', 'rest-api-firewall' ) }
+							{ __( 'Add IP or CIDR', 'rest-api-firewall' ) }
 						</Button>
 					</>
 				) }
 
 				<Box sx={ { flexGrow: 1 } } />
 
-				<TextField
-					value={ filterValue }
-					onChange={ ( e ) => setFilterValue( e.target.value ) }
-					placeholder={ __( 'Search…', 'rest-api-firewall' ) }
-					size="small"
-					sx={ { minWidth: 200 } }
-				/>
 
-				{ hasValidLicense && (
 					<IconButton onClick={ fetchEntries } disabled={ loading }>
 						<RefreshIcon />
 					</IconButton>
-				) }
+		
 
-				{ hasValidLicense && rowSelectionModel.length > 0 && (
+				{ hasValidLicense && rowSelectionModel.ids.size > 0 && (
 					<Button
 						variant="outlined"
 						color="error"
@@ -488,47 +391,29 @@ export default function IpDataGrid( {
 						startIcon={ <DeleteOutlineIcon /> }
 					>
 						{ __( 'Delete', 'rest-api-firewall' ) } (
-						{ rowSelectionModel.length })
+						{ rowSelectionModel.ids.size })
 					</Button>
 				) }
 			</Toolbar>
 
 			<DataGrid
+				showToolbar
 				rows={ rows }
 				columns={ columns }
 				loading={ loading }
-				{ ...( hasValidLicense ? { rowCount } : {} ) }
 				pageSizeOptions={ [ 10, 25, 50, 100 ] }
 				paginationModel={ paginationModel }
 				onPaginationModelChange={ setPaginationModel }
-				paginationMode={ hasValidLicense ? 'server' : 'client' }
-				sortingMode={ hasValidLicense ? 'server' : 'client' }
 				sortModel={ sortModel }
 				onSortModelChange={ setSortModel }
-				checkboxSelection={ hasValidLicense }
+				checkboxSelection={ !! hasValidLicense }
 				disableRowSelectionOnClick
-				{ ...( hasValidLicense
-					? {
-							rowSelectionModel,
-							onRowSelectionModelChange: setRowSelectionModel,
-					  }
-					: {} ) }
+				rowSelectionModel={ rowSelectionModel }
+				onRowSelectionModelChange={ setRowSelectionModel }
 				sx={ {
 					'& .MuiDataGrid-cell': {
 						display: 'flex',
 						alignItems: 'center',
-					},
-				} }
-				localeText={ {
-					noRowsLabel: __(
-						'No IPs in the list',
-						'rest-api-firewall'
-					),
-					MuiTablePagination: {
-						labelRowsPerPage: __(
-							'Rows per page:',
-							'rest-api-firewall'
-						),
 					},
 				} }
 			/>

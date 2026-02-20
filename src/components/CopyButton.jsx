@@ -5,7 +5,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
-export default function CopyButton( { toCopy } ) {
+export default function CopyButton( { toCopy, sx = {} } ) {
 	const [ copyFeedback, setCopyFeedback ] = useState( false );
 
 	const handleCopy = ( e ) => {
@@ -20,7 +20,7 @@ export default function CopyButton( { toCopy } ) {
 				<IconButton
 					size="small"
 					onClick={ handleCopy }
-					sx={ { p: 0.25 } }
+					sx={ { p: 0.25, ...sx } }
 				>
 					<ContentCopyIcon sx={ { fontSize: 14 } } />
 				</IconButton>

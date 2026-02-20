@@ -2,6 +2,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
+use cmk\RestApiFirewall\Core\CoreOptions;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Server;
@@ -10,7 +11,7 @@ class UsersRouteHider {
 
 
 	public static function is_hidden(): bool {
-		return (bool) FirewallOptions::get_option( 'hide_user_routes' );
+		return (bool) CoreOptions::read_option( 'hide_user_routes' );
 	}
 
 	/**

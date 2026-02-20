@@ -1,11 +1,7 @@
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-import Switch from '@mui/material/Switch';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormControl from '@mui/material/FormControl';
-import FormHelperText from '@mui/material/FormHelperText';
 
-export default function RateLimit( { firewallOptions, handleOptionChange } ) {
+export default function RateLimit( { form, setField } ) {
 	const { __ } = wp.i18n || {};
 
 	return (
@@ -15,7 +11,7 @@ export default function RateLimit( { firewallOptions, handleOptionChange } ) {
 			spacing={ 3 }
 			justifyContent={ 'space-around' }
 		>
-			<Stack direction={ { xs: 'column', md: 'row' } } gap={ 2 }>
+			<Stack direction={ { xs: 'column', lg: 'row' } } gap={ 2 }>
 				<TextField
 					label={ __( 'Rate Limit Requests', 'rest-api-firewall' ) }
 					type="number"
@@ -23,10 +19,10 @@ export default function RateLimit( { firewallOptions, handleOptionChange } ) {
 						'Maximum requests before limiting',
 						'rest-api-firewall'
 					) }
-					name="rate_limit"
-					value={ firewallOptions.rate_limit }
-					onChange={ handleOptionChange }
+					value={ form.rate_limit || 30 }
+					onChange={ setField }
 					fullWidth
+					sx={ { flex: 1, maxWidth: 270 } }
 				/>
 
 				<TextField
@@ -39,39 +35,16 @@ export default function RateLimit( { firewallOptions, handleOptionChange } ) {
 						'Time window for requests count',
 						'rest-api-firewall'
 					) }
-					name="rate_limit_time"
-					value={ firewallOptions.rate_limit_time }
-					onChange={ handleOptionChange }
+					value={ form.rate_limit_time || 60 }
+					onChange={ setField }
 					fullWidth
+					sx={ { flex: 1, maxWidth: 270 } }
 				/>
 
-				<FormControl sx={ { minWidth: 240 } }>
-					<FormControlLabel
-						control={
-							<Switch
-								checked={
-									!! firewallOptions.enforce_rate_limit
-								}
-								name="enforce_rate_limit"
-								onChange={ handleOptionChange }
-								size="small"
-							/>
-						}
-						label={ __(
-							'Enforce Rate Limiting',
-							'rest-api-firewall'
-						) }
-					/>
-					<FormHelperText>
-						{ __(
-							'Apply rate limiting to all routes',
-							'rest-api-firewall'
-						) }
-					</FormHelperText>
-				</FormControl>
+				
 			</Stack>
 
-			<Stack direction={ { xs: 'column', md: 'row' } } gap={ 2 }>
+			<Stack direction={ { xs: 'column', lg: 'row' } } gap={ 2 }>
 				<TextField
 					label={ __(
 						'Rate Limit Release (seconds)',
@@ -82,10 +55,10 @@ export default function RateLimit( { firewallOptions, handleOptionChange } ) {
 						'Wait time before limitation resets',
 						'rest-api-firewall'
 					) }
-					name="rate_limit_release"
-					value={ firewallOptions.rate_limit_release }
-					onChange={ handleOptionChange }
+					value={ form.rate_limit_release || 300 }
+					onChange={ setField }
 					fullWidth
+					sx={ { flex: 1, maxWidth: 270 } }
 				/>
 
 				<TextField
@@ -95,10 +68,10 @@ export default function RateLimit( { firewallOptions, handleOptionChange } ) {
 						'Number of limitation periods before blacklisted',
 						'rest-api-firewall'
 					) }
-					name="rate_limit_blacklist"
-					value={ firewallOptions.rate_limit_blacklist }
-					onChange={ handleOptionChange }
+					value={ form.rate_limit_blacklist || 5 }
+					onChange={ setField }
 					fullWidth
+					sx={ { flex: 1, maxWidth: 270 } }
 				/>
 
 				<TextField
@@ -111,10 +84,10 @@ export default function RateLimit( { firewallOptions, handleOptionChange } ) {
 						'Time window for limitation periods count',
 						'rest-api-firewall'
 					) }
-					name="rate_limit_blacklist_time"
-					value={ firewallOptions.rate_limit_blacklist_time }
-					onChange={ handleOptionChange }
+					value={ form.rate_limit_blacklist_time || 3600 }
+					onChange={ setField }
 					fullWidth
+					sx={ { flex: 1, maxWidth: 270 } }
 				/>
 			</Stack>
 		</Stack>

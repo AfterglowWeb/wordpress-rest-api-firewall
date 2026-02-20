@@ -2,7 +2,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Schemas\SchemaFilters;
+use cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController;
 use cmk\RestApiFirewall\Controllers\ModelContext;
 
 class SettingsModel {
@@ -32,7 +32,7 @@ class SettingsModel {
 		}
 
 		if ( $context->with_acf_options_page ) {
-			$settings['acf_options_page'] = SchemaFilters::embed_acf_fields( 'options' );
+			$settings['acf_options_page'] = ModelsPropertiesController::embed_acf_fields( 'options' );
 		}
 
 		if ( $context->remove_empty_props ) {

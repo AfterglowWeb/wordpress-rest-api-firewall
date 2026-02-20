@@ -8,13 +8,13 @@
  *
  * @wordpress-plugin
  * Plugin Name:       Headless Toolkit
- * Version:           0.1.0-alpha.6
+ * Version:           0.1.0-alpha.7
  * Description:       Secure REST API endpoints through authentication, rate limiting and much more. Set application Webhook with authentication to trigger external front-end application routines.
  * Tags:              firewall, rest api, rest, headless, webhook
- * Plugin URI:        https://www.blank-plugins.com/wordpress-rest-api-firewall
+ * Plugin URI:        https://www.abc-plugins.com/wordpress-rest-api-firewall
  * Author:            Cédric Moris Kelly
  * Author URI:        https://www.moriskelly.com
- * Update URI:        https://www.blank-plugins.com/wordpress-rest-api-firewall
+ * Update URI:        https://www.abc-plugins.com/wordpress-rest-api-firewall
  * Text Domain:       rest-api-firewall
  * Domain Path:       /languages
  * Requires PHP:      7.4
@@ -26,7 +26,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'REST_API_FIREWALL_VERSION', '0.1.0-alpha.5' );
+define( 'REST_API_FIREWALL_VERSION', '0.1.0-alpha.7' );
 define( 'REST_API_FIREWALL_DIR', plugin_dir_path( __FILE__ ) );
 define( 'REST_API_FIREWALL_URL', plugin_dir_url( __FILE__ ) );
 define( 'REST_API_FIREWALL_FILE', __FILE__ );
@@ -105,7 +105,7 @@ add_filter(
 	function ( array $links ): array {
 		$settings_link = sprintf(
 			'<a href="%s">%s</a>',
-			admin_url( 'admin.php?page=rest-api-firewall' ),
+			admin_url( 'admin.php?page=rest-api-firewall-admin' ),
 			esc_html__( 'Settings', 'rest-api-firewall' )
 		);
 		array_unshift( $links, $settings_link );
@@ -113,4 +113,4 @@ add_filter(
 	}
 );
 
-add_action( 'plugins_loaded', array( Core\Bootstrap::class, 'init' ) );
+add_action( 'plugins_loaded', array( Core\Bootstrap::class, 'init' ), 10 );

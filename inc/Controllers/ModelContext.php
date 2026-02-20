@@ -62,6 +62,7 @@ class ModelContext {
 
 		return $this->resolve_rendered_props;
 	}
+	
 
 	public static function from_options( string $post_type = '', string $application_id = '' ): self {
 		$context                            = new self();
