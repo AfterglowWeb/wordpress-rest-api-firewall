@@ -3,7 +3,7 @@
 defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Controllers\ModelContext;
-use cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController;
+use cmk\RestApiFirewallPro\Controllers\ModelsPropertiesControllerPro;
 use WP_User;
 
 class PostModel {
@@ -33,19 +33,19 @@ class PostModel {
 
 	private function apply_filters( array $post, ModelContext $context ): array {
 
-		if ( class_exists( '\cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController' ) ) {
+		if ( class_exists( '\cmk\RestApiFirewallPro\Controllers\ModelsPropertiesControllerPro' ) ) {
 			if ( isset( $post['link'] ) && $context->should_relative_url( 'link' ) ) {
-				$post['link'] = ModelsPropertiesController::relative_url( $post['link'] );
+				$post['link'] = ModelsPropertiesControllerPro::relative_url( $post['link'] );
 			}
 
 			if ( isset( $post['guid'] ) && $context->should_relative_url( 'guid' ) ) {
 				$post['guid'] = is_array( $post['guid'] )
-					? ModelsPropertiesController::relative_url( $post['guid']['rendered'] ?? '' )
-					: ModelsPropertiesController::relative_url( $post['guid'] );
+					? ModelsPropertiesControllerPro::relative_url( $post['guid']['rendered'] ?? '' )
+					: ModelsPropertiesControllerPro::relative_url( $post['guid'] );
 			}
 
 			if ( $context->with_acf && isset( $post['id'] ) ) {
-				$acf = ModelsPropertiesController::embed_acf_fields( $post['id'] );
+				$acf = ModelsPropertiesControllerPro::embed_acf_fields( $post['id'] );
 				if ( $acf ) {
 					$post['acf'] = $acf;
 				} elseif ( isset( $post['acf'] ) ) {

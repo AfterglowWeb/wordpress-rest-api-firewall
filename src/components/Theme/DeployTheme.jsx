@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from '@wordpress/element';
-import { useAdminData } from '../contexts/AdminDataContext';
+import { useAdminData } from '../../contexts/AdminDataContext';
 
 import Button from '@mui/material/Button';
 import LinearProgress from '@mui/material/LinearProgress';

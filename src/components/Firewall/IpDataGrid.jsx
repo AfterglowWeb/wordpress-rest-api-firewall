@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 
-import { DataGrid, ExportPrint, ExportCsv } from '@mui/x-data-grid';
+import { DataGrid } from '@mui/x-data-grid';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -12,12 +12,10 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import Alert from '@mui/material/Alert';
 
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import LockOutlineIcon from '@mui/icons-material/LockOutline';
 
 const IP_REGEX =
 	/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
@@ -334,19 +332,6 @@ export default function IpDataGrid( {
 
 	return (
 		<Box>
-			{ ! hasValidLicense && (
-				<Alert
-					severity="info"
-					icon={ <LockOutlineIcon /> }
-					sx={ { mb: 2 } }
-				>
-					{ __(
-						'Upgrade to Pro for advanced IP management: block by CIDR, block by country, bulk delete, set retention time, export and more.',
-						'rest-api-firewall'
-					) }
-				</Alert>
-			) }
-
 			<Toolbar disableGutters sx={ { gap: 2, mb: 2, flexWrap: 'wrap' } }>
 				
 				<TextField
@@ -356,7 +341,7 @@ export default function IpDataGrid( {
 						setIpError( '' );
 					} }
 					onKeyDown={ handleKeyDown }
-					placeholder="192.168.1.1 or 10.0.0.0/24"
+					placeholder={ hasValidLicense ? __( '192.168.1.1 or 10.0.0.0/24', 'rest-api-firewall' ) : __( '192.168.1.1', 'rest-api-firewall' ) }
 					size="small"
 					error={ !! ipError }
 					helperText={ ipError }
@@ -369,7 +354,7 @@ export default function IpDataGrid( {
 					disabled={ adding || ! newIp.trim() }
 					startIcon={ <AddIcon /> }
 				>
-					{ __( 'Add IP or CIDR', 'rest-api-firewall' ) }
+					{ hasValidLicense ? __( 'Add IP or CIDR', 'rest-api-firewall' ) : __( 'Add IP', 'rest-api-firewall' ) }
 				</Button>
 		
 				<Box sx={ { flexGrow: 1 } } />
@@ -395,7 +380,7 @@ export default function IpDataGrid( {
 			</Toolbar>
 
 			<DataGrid
-				showToolbar
+				showToolbar={ !! hasValidLicense}
 				rows={ rows }
 				columns={ columns }
 				loading={ loading }
