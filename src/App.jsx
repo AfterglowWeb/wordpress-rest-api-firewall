@@ -85,15 +85,15 @@ function AppContent() {
 	} );
 
 	const menuItems = [
-	{ type: 'section', label: __( 'Firewall', 'rest-api-firewall' ) },
-	{ key: 'user-rate-limiting', label: __( 'Auth. & Rate Limit', 'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', panelGroup: 1, icon: SecurityOutlined },
-	{ key: 'per-route-settings', label: __( 'Routes', 'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', panelGroup: 3, icon: AccountTreeIcon },
-	{ key: 'ip-filtering', label: __( 'IP Filtering', 'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', panelGroup: 2, icon: VpnLockOutlinedIcon },
+	{ type: 'section', label: __( 'REST API Firewall', 'rest-api-firewall' ) },
+	{ key: 'user-rate-limiting', label: __( 'Auth. & Rate Limit', 'rest-api-firewall' ), breadcrumbPrefix: 'REST API Firewall', panelGroup: 1, icon: SecurityOutlined },
+	{ key: 'per-route-settings', label: __( 'Routes', 'rest-api-firewall' ), breadcrumbPrefix: 'REST API Firewall', panelGroup: 3, icon: AccountTreeIcon },
+	{ key: 'ip-filtering', label: __( 'IP Filtering', 'rest-api-firewall' ), breadcrumbPrefix: 'REST API Firewall', panelGroup: 2, icon: VpnLockOutlinedIcon },
 
-	{ type: 'section', label: __( 'API Output', 'rest-api-firewall')},
-	{ key: 'collections', label: __( 'Collections', 'rest-api-firewall' ), breadcrumbPrefix: 'API Output', panelGroup: 4, icon: ApiIcon },
-	{ key: 'models-properties', label: __( 'Properties', 'rest-api-firewall' ), breadcrumbPrefix: 'API Output', panelGroup: 5, icon: RuleOutlinedIcon },
-	{ key: 'settings-route', label: __( 'Settings Route', 'rest-api-firewall'),  breadcrumbPrefix: 'API Output', secondary: 'wp/v2/settings', panelGroup: 6, icon: BusinessOutlinedIcon },
+	{ type: 'section', label: __( 'REST API Output', 'rest-api-firewall')},
+	{ key: 'collections', label: __( 'Collections', 'rest-api-firewall' ), breadcrumbPrefix: 'REST API Output', panelGroup: 4, icon: ApiIcon },
+	{ key: 'models-properties', label: __( 'Properties', 'rest-api-firewall' ), breadcrumbPrefix: 'REST API Output', panelGroup: 5, icon: RuleOutlinedIcon },
+	{ key: 'settings-route', label: __( 'Settings Route', 'rest-api-firewall'),  breadcrumbPrefix: 'REST API Output', secondary: 'wp/v2/settings', panelGroup: 6, icon: BusinessOutlinedIcon },
 	
 	{ type: 'section', label: __( 'Integrations', 'rest-api-firewall') },
 	{ key: 'webhook', label: __( 'Webhook', 'rest-api-firewall' ), breadcrumbPrefix: 'Integrations', panelGroup: 7, icon: WebhookIcon },
