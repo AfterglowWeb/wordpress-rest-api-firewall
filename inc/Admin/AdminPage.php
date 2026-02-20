@@ -6,7 +6,7 @@ defined( 'ABSPATH' ) || exit;
 use cmk\RestApiFirewall\Core\CoreOptions;
 use cmk\RestApiFirewall\Core\FileUtils;
 use cmk\RestApiFirewall\Core\Utils;
-use cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController;
+use cmk\RestApiFirewall\Controllers\ModelsPropertiesController;
 use cmk\RestApiFirewall\Webhook\WebhookAutoTrigger;
 
 class AdminPage {
@@ -86,6 +86,7 @@ class AdminPage {
 			'ajaxurl'              => admin_url( 'admin-ajax.php' ),
 			'users'                => Utils::list_users(),
 			'post_types'           => Utils::list_post_types(),
+			'models_properties'    => ModelsPropertiesController::models_properties(),
 			'admin_options'        => CoreOptions::read_options(),
 			'options_config'       => CoreOptions::options_config_for_js(),
 			'plugin_name'          => sanitize_text_field( $plugin_data['Name'] ),
@@ -95,10 +96,6 @@ class AdminPage {
 			'webhook_events'       => WebhookAutoTrigger::get_available_events(),
 			'webhook_event_groups' => WebhookAutoTrigger::get_event_groups(),
 		);
-
-		if ( class_exists( '\cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController' ) ) {
-			$args['models_properties'] = ModelsPropertiesController::models_properties();
-		}
 
 		if ( class_exists( '\cmk\RestApiFirewall\Theme\RedirectTemplates' ) ) {
 			$args['redirect_preset_url_options'] = \cmk\RestApiFirewall\Theme\RedirectTemplates::redirect_preset_url_options();

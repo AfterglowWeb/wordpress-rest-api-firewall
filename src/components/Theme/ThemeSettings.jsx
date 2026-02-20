@@ -1,6 +1,6 @@
 import { useTheme } from '@mui/material/styles';
-import { useAdminData } from '../contexts/AdminDataContext';
-import { useLicense } from '../contexts/LicenseContext';
+import { useAdminData } from '../../contexts/AdminDataContext';
+import { useLicense } from '../../contexts/LicenseContext';
 
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';

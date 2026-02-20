@@ -4,6 +4,7 @@ import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
 import { useLicense } from '../../contexts/LicenseContext';
 
 import Box from '@mui/material/Box';
+import Alert from '@mui/material/Alert';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormHelperText from '@mui/material/FormHelperText';
@@ -18,6 +19,7 @@ import Typography from '@mui/material/Typography';
 
 import PublicIcon from '@mui/icons-material/Public';
 import TableViewIcon from '@mui/icons-material/TableView';
+import LockOutlineIcon from '@mui/icons-material/LockOutline';
 
 import IpDataGrid from './IpDataGrid';
 import CountryBlockList from './CountryBlockList';
@@ -164,6 +166,18 @@ export default function IpBlackList() {
 
 	return (
 		<Stack spacing={ 3 }>
+			{ ! hasValidLicense && (
+				<Alert
+					severity="info"
+					icon={ <LockOutlineIcon /> }
+					sx={ { mb: 2 } }
+				>
+					{ __(
+						'Buy a licence for advanced IP management: White List, Block by CIDR, Block by Country, Bulk Delete, Set Retention Time, Export and More...',
+						'rest-api-firewall'
+					) }
+				</Alert>
+			) }
 			<Stack direction={ { xs: 'column', sm: 'row' } } justifyContent="space-between" spacing={ 3 }>
 				<FormControl sx={ { flex: 1 } }>
 					<FormControlLabel
@@ -181,7 +195,7 @@ export default function IpBlackList() {
 					/>
 					<FormHelperText>
 						{ __(
-							'Block or allow requests based on IP address',
+							'Block or allow REST API requests based on IP address',
 							'rest-api-firewall'
 						) }
 					</FormHelperText>

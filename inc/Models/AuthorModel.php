@@ -3,7 +3,7 @@
 defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Controllers\ModelContext;
-use cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController;
+use cmk\RestApiFirewallPro\Controllers\ModelsPropertiesControllerPro;
 use WP_User;
 
 class AuthorModel {
@@ -32,9 +32,9 @@ class AuthorModel {
 			'description'  => $user->get( 'description' ),
 		);
 
-		if ( class_exists( '\cmk\RestApiFirewallPro\Controllers\ModelsPropertiesController' ) && $context->with_acf ) {
+		if ( class_exists( '\cmk\RestApiFirewallPro\Controllers\ModelsPropertiesControllerPro' ) && $context->with_acf ) {
 
-			$acf = ModelsPropertiesController::embed_acf_fields( 'user_' . $user->ID );
+			$acf = ModelsPropertiesControllerPro::embed_acf_fields( 'user_' . $user->ID );
 			if ( $acf ) {
 				$data['acf'] = $acf;
 			} elseif ( isset( $data['acf'] ) ) {

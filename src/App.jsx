@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from './contexts/AdminDataContext';
 import { DialogProvider } from './contexts/DialogContext';
-import useSettingsForm from './contexts/useSettingsForm';
+import useSettingsForm from './hooks/useSettingsForm';
 import useSaveOptions from './hooks/useSaveOptions';
 
 import { styled } from '@mui/material/styles';
@@ -35,17 +35,17 @@ import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 import CardMembershipOutlinedIcon from '@mui/icons-material/CardMembershipOutlined';
 
 import ConfirmDialog from './components/ConfirmDialog';
-import ThemeSettings from './components/ThemeSettings';
 
+import Firewall from './components/Firewall/Firewall';
 import Properties from './components/ApiOutput/Properties';
 import SiteSettings from './components/ApiOutput/SettingsRoute';
-import Firewall from './components/Firewall/Firewall';
-import Smtp from './components/Emails/Smtp';
-import Webhook from './components/Webhook/Webhook';
-
-import Documentation from './components/Documentation';
-import LicenseDialog from './components/LicenseDialog';
 import Collections from './components/ApiOutput/Collections';
+import Webhook from './components/Webhook/Webhook';
+import Smtp from './components/Emails/Smtp';
+import ThemeSettings from './components/Theme/ThemeSettings';
+
+import Documentation from './components/Documentation/Documentation';
+import License from './components/License/License';
 
 const DRAWER_WIDTH = 220;
 const APP_BAR_HEIGHT = 75;
@@ -85,15 +85,15 @@ function AppContent() {
 	} );
 
 	const menuItems = [
-	{ type: 'section', label: __( 'Firewall', 'rest-api-firewall' ) },
-	{ key: 'user-rate-limiting', label: __( 'Auth. & Rate Limit', 'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', panelGroup: 1, icon: SecurityOutlined },
-	{ key: 'per-route-settings', label: __( 'Routes', 'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', panelGroup: 3, icon: AccountTreeIcon },
-	{ key: 'ip-filtering', label: __( 'IP Filtering', 'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', panelGroup: 2, icon: VpnLockOutlinedIcon },
+	{ type: 'section', label: __( 'REST API Firewall', 'rest-api-firewall' ) },
+	{ key: 'user-rate-limiting', label: __( 'Auth. & Rate Limit', 'rest-api-firewall' ), breadcrumbPrefix: 'REST API Firewall', panelGroup: 1, icon: SecurityOutlined },
+	{ key: 'per-route-settings', label: __( 'Routes', 'rest-api-firewall' ), breadcrumbPrefix: 'REST API Firewall', panelGroup: 3, icon: AccountTreeIcon },
+	{ key: 'ip-filtering', label: __( 'IP Filtering', 'rest-api-firewall' ), breadcrumbPrefix: 'REST API Firewall', panelGroup: 2, icon: VpnLockOutlinedIcon },
 
-	{ type: 'section', label: __( 'API Output', 'rest-api-firewall')},
-	{ key: 'collections', label: __( 'Collections', 'rest-api-firewall' ), breadcrumbPrefix: 'API Output', panelGroup: 4, icon: ApiIcon },
-	{ key: 'models-properties', label: __( 'Properties', 'rest-api-firewall' ), breadcrumbPrefix: 'API Output', panelGroup: 5, icon: RuleOutlinedIcon },
-	{ key: 'settings-route', label: __( 'Settings Route', 'rest-api-firewall'),  breadcrumbPrefix: 'API Output', secondary: 'wp/v2/settings', panelGroup: 6, icon: BusinessOutlinedIcon },
+	{ type: 'section', label: __( 'REST API Output', 'rest-api-firewall')},
+	{ key: 'collections', label: __( 'Collections', 'rest-api-firewall' ), breadcrumbPrefix: 'REST API Output', panelGroup: 4, icon: ApiIcon },
+	{ key: 'models-properties', label: __( 'Properties', 'rest-api-firewall' ), breadcrumbPrefix: 'REST API Output', panelGroup: 5, icon: RuleOutlinedIcon },
+	{ key: 'settings-route', label: __( 'Settings Route', 'rest-api-firewall'),  breadcrumbPrefix: 'REST API Output', secondary: 'wp/v2/settings', panelGroup: 6, icon: BusinessOutlinedIcon },
 	
 	{ type: 'section', label: __( 'Integrations', 'rest-api-firewall') },
 	{ key: 'webhook', label: __( 'Webhook', 'rest-api-firewall' ), breadcrumbPrefix: 'Integrations', panelGroup: 7, icon: WebhookIcon },
@@ -495,7 +495,7 @@ function AppContent() {
 					) }
 
 					{ panelGroup === 10 && (
-						<LicenseDialog />
+						<License />
 					) }
 
 				</Box>

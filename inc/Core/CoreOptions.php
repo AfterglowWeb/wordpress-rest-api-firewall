@@ -35,145 +35,8 @@ class CoreOptions {
 
 		$options = array(
 
-			'rest_models_enabled'                        => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'schema',
-			),
-
-			'rest_models_embed_featured_attachment_enabled' => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'schema',
-			),
-
-			'rest_models_embed_terms_enabled'            => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'schema',
-			),
-
-			'rest_models_embed_author_enabled'           => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'schema',
-			),
-
-			'rest_models_with_acf_enabled'               => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'schema',
-			),
-
-			'rest_models_resolve_rendered_props'         => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'schema',
-			),
-
-			'rest_models_embed_post_attachments_enabled' => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'schema',
-			),
-
-			'rest_models_remove_empty_props'             => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'schema',
-			),
-
-			'rest_models_remove_links_prop'              => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'schema',
-			),
-
-			'rest_models_remove_embed_prop'              => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'schema',
-			),
-
-			// Site Data.
-
-			'rest_models_remove_site_url'                => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'schema',
-			),
-
-			'rest_models_remove_site_email'              => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'schema',
-			),
-
-			'rest_models_embed_menus_enabled'            => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'schema',
-			),
-
-			'rest_models_acf_options_page_enabled'       => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'schema',
-			),
-
-			'rest_models_acf_options_page_endpoint'      => array(
-				'default_value'     => '',
-				'type'              => 'string',
-				'sanitize_callback' => 'sanitize_text_field',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'schema',
-			),
-
 			// Collections.
-			'rest_collections_per_page_enabled'          => array(
+			'rest_collections_per_page_enabled'         => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -182,7 +45,7 @@ class CoreOptions {
 				'group'             => 'schema',
 			),
 
-			'rest_collections_posts_per_page'            => array(
+			'rest_collections_posts_per_page'           => array(
 				'default_value'     => 100,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -191,7 +54,7 @@ class CoreOptions {
 				'group'             => 'schema',
 			),
 
-			'rest_collections_attachments_per_page'      => array(
+			'rest_collections_attachments_per_page'     => array(
 				'default_value'     => 100,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -202,7 +65,7 @@ class CoreOptions {
 
 			// Application.
 
-			'application_host'                           => array(
+			'application_host'                          => array(
 				'default_value'     => '',
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
@@ -211,7 +74,7 @@ class CoreOptions {
 				'group'             => 'webhook',
 			),
 
-			'application_webhook_endpoint'               => array(
+			'application_webhook_endpoint'              => array(
 				'default_value'     => '',
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
@@ -220,7 +83,7 @@ class CoreOptions {
 				'group'             => 'webhook',
 			),
 
-			'application_webhook_custom_secret_enabled'  => array(
+			'application_webhook_custom_secret_enabled' => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -229,7 +92,7 @@ class CoreOptions {
 				'group'             => 'webhook',
 			),
 
-			'application_webhook_auto_trigger_events'    => array(
+			'application_webhook_auto_trigger_events'   => array(
 				'default_value'     => array(),
 				'type'              => 'array',
 				'sanitize_callback' => 'sanitize_key',
@@ -240,7 +103,7 @@ class CoreOptions {
 
 			// Theme.
 
-			'theme_redirect_templates_enabled'           => array(
+			'theme_redirect_templates_enabled'          => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -249,7 +112,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_redirect_templates_preset_url'        => array(
+			'theme_redirect_templates_preset_url'       => array(
 				'default_value'     => '',
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_key',
@@ -258,7 +121,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_disable_xmlrpc'                       => array(
+			'theme_disable_xmlrpc'                      => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -267,7 +130,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_disable_filedit'                      => array(
+			'theme_disable_filedit'                     => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -276,7 +139,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_disable_gutenberg'                    => array(
+			'theme_disable_gutenberg'                   => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -285,7 +148,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_disable_comments'                     => array(
+			'theme_disable_comments'                    => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -294,7 +157,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_disable_pingbacks'                    => array(
+			'theme_disable_pingbacks'                   => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -303,7 +166,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_remove_empty_p_tags_enabled'          => array(
+			'theme_remove_empty_p_tags_enabled'         => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -312,7 +175,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_remove_emoji_scripts'                 => array(
+			'theme_remove_emoji_scripts'                => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -321,7 +184,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_svg_webp_support_enabled'             => array(
+			'theme_svg_webp_support_enabled'            => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -330,7 +193,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_max_upload_weight'                    => array(
+			'theme_max_upload_weight'                   => array(
 				'default_value'     => 1024, // KB.
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -339,7 +202,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_max_upload_weight_enabled'            => array(
+			'theme_max_upload_weight_enabled'           => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -348,7 +211,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_json_acf_fields_enabled'              => array(
+			'theme_json_acf_fields_enabled'             => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -357,7 +220,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'enforce_auth'                               => array(
+			'enforce_auth'                              => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -366,7 +229,7 @@ class CoreOptions {
 				'group'             => 'firewall',
 			),
 
-			'enforce_rate_limit'                         => array(
+			'enforce_rate_limit'                        => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -375,7 +238,7 @@ class CoreOptions {
 				'group'             => 'firewall',
 			),
 
-			'firewall_user_id'                           => array(
+			'firewall_user_id'                          => array(
 				'default_value'     => 0,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -384,7 +247,7 @@ class CoreOptions {
 				'group'             => 'firewall',
 			),
 
-			'rate_limit'                                 => array(
+			'rate_limit'                                => array(
 				'default_value'     => 30,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -393,7 +256,7 @@ class CoreOptions {
 				'group'             => 'firewall',
 			),
 
-			'rate_limit_time'                            => array(
+			'rate_limit_time'                           => array(
 				'default_value'     => 60,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -402,7 +265,7 @@ class CoreOptions {
 				'group'             => 'firewall',
 			),
 
-			'rate_limit_release'                         => array(
+			'rate_limit_release'                        => array(
 				'default_value'     => 300,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -411,7 +274,7 @@ class CoreOptions {
 				'group'             => 'firewall',
 			),
 
-			'rate_limit_blacklist'                       => array(
+			'rate_limit_blacklist'                      => array(
 				'default_value'     => 5,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -420,7 +283,7 @@ class CoreOptions {
 				'group'             => 'firewall',
 			),
 
-			'rate_limit_blacklist_time'                  => array(
+			'rate_limit_blacklist_time'                 => array(
 				'default_value'     => 3600,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -429,7 +292,7 @@ class CoreOptions {
 				'group'             => 'firewall',
 			),
 
-			'firewall_policy'                            => array(
+			'firewall_policy'                           => array(
 				'default_value'     => array(
 					'nodes'  => array(),
 					'routes' => array(),
@@ -441,7 +304,7 @@ class CoreOptions {
 				'group'             => 'firewall',
 			),
 
-			'hide_user_routes'                           => array(
+			'hide_user_routes'                          => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from '@wordpress/element';
-import { useDocumentation } from '../contexts/DocumentationContext';
+import { useDocumentation } from '../../contexts/DocumentationContext';
 
 import Drawer from '@mui/material/Drawer';
 import Card from '@mui/material/Card';
@@ -15,15 +15,10 @@ import CloseIcon from '@mui/icons-material/Close';
 import MenuIcon from '@mui/icons-material/Menu';
 import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
 
-import contentStyles from '../utils/contentStyles';
-import Button from '@mui/material/Button';
+import contentStyles from '../../utils/contentStyles';
 
 export default function Documentation( {
 	page,
-	buttonText,
-	variant = 'text',
-	size = 'small',
-	color = 'primary',
 } ) {
 	const { __ } = wp.i18n || {};
 	const { open, openDoc, closeDoc, currentLocation, docs } =

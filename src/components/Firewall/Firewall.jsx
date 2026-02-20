@@ -18,6 +18,8 @@ import RestApiUser from './RestApiUser';
 import MultipleSelect from '../MultipleSelect';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 
 
 export default function Firewall({ 
@@ -31,6 +33,7 @@ export default function Firewall({
 	const [ loading, setLoading ] = useState( false );
 	const [ restApiUser, setRestApiUser ] = useState( [] );
 	const [ proActive, setProActive ] = useState( true );
+	const isDisabled = ! form.rest_collections_allowed_post_types_enabled || ! proActive;
 
 	useEffect( () => {
 		if ( Array.isArray( adminData?.users ) && form.firewall_user_id ) {
@@ -176,27 +179,31 @@ export default function Firewall({
 						</FormControl>
 
 						<Stack spacing={ 1 }>
-							<FormControl disabled={ ! proActive }>
-								<FormControlLabel
-									control={
-										<Switch
-											size="small"
-											checked={
-												!! form.rest_collections_allowed_post_types_enabled
-											}
-											name="rest_collections_allowed_post_types_enabled"
-											onChange={ setField }
-										/>
-									}
-									label={ __( 'Restrict Post Types', 'rest-api-firewall' ) }
-								/>
-								
-							</FormControl>
+							<Tooltip 
+							title={ ! proActive ? __( 'Licence required', 'rest-api-firewall' ) : '' } 
+							followCursor
+							>
+								<FormControl disabled={ ! proActive }>
+									<FormControlLabel
+										control={
+											<Switch
+												size="small"
+												checked={
+													!! form.rest_collections_allowed_post_types_enabled
+												}
+												name="rest_collections_allowed_post_types_enabled"
+												onChange={ setField }
+											/>
+										}
+										label={ __( 'Restrict Post Types', 'rest-api-firewall' ) }
+									/>
+									
+								</FormControl>
+							</Tooltip>
 
 							{ adminData?.post_types && (
 								<Stack pl={3.5}>
-									<MultipleSelect
-									disabled={ ! proActive }
+									<MultipleSelect disabled={ isDisabled }
 									name="rest_collections_allowed_post_types"
 									label={ __(
 										'Select Post Types',
@@ -205,10 +212,10 @@ export default function Firewall({
 									value={ form.rest_collections_allowed_post_types }
 									helperText={
 										<Stack>
-											<Typography variant="caption" color="textSecondary">
+											<Typography variant="caption" color="inherit">
 											{ __( 'Only the selected post types will be exposed in the REST API.', 'rest-api-firewall' ) }
 											</Typography>
-											<Typography variant="caption" color="textSecondary">
+											<Typography variant="caption" color="inherit">
 											{ __( 'If left empty, default visibility settings apply.', 'rest-api-firewall' ) }
 											</Typography>
 										</Stack>
@@ -224,21 +231,6 @@ export default function Firewall({
 
 					<Divider />
 
-					<Typography
-					variant="caption"
-					sx={{
-						display: 'block', 
-						mt: 1,
-						textTransform: 'uppercase',
-						letterSpacing: 0.5,
-						fontSize: '0.75rem',
-						color: 'text.secondary',
-					}}
-					>
-						{__( 'Per-Route Settings', 'rest-api-firewall' ) }
-					</Typography>
-					
-
 					{ loading ? (
 						<Stack
 							direction="row"
@@ -250,15 +242,28 @@ export default function Firewall({
 						</Stack>
 					) : (
 						<Stack>
-							<Stack direction="row" justifyContent="flex-end" alignItems="center">
-								<Button
-									endIcon={ <RefreshIcon /> }
+							<Stack direction="row" justifyContent="space-between" alignItems="center">
+								
+								<Typography
+								variant="caption"
+								sx={{
+									display: 'block', 
+									textTransform: 'uppercase',
+									letterSpacing: 0.5,
+									fontSize: '0.75rem',
+									color: 'text.secondary',
+								}}
 								>
-									{ __(
-										'Refresh',
-										'rest-api-firewall'
-									) }
-								</Button>
+									{__( 'Per-Route Settings', 'rest-api-firewall' ) }
+								</Typography>
+
+								<Tooltip title={ __( 'Refresh Routes', 'rest-api-firewall' ) } placement="left">
+									<IconButton
+										onClick={ loadRoutes }
+									>
+										<RefreshIcon />
+									</IconButton>
+								</Tooltip>
 							</Stack>
 							<RoutesTree
 								treeData={ restRoutes }

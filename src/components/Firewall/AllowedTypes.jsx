@@ -6,9 +6,7 @@ import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
 import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
 
-import ProBadge from '../ProBadge';
 import MultipleSelect from '../MultipleSelect';
 
 export default function AllowedTypes( { form, setField } ) {
