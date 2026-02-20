@@ -14,6 +14,7 @@ export default function RateLimit( { form, setField } ) {
 			<Stack direction={ { xs: 'column', lg: 'row' } } gap={ 2 }>
 				<TextField
 					label={ __( 'Rate Limit Requests', 'rest-api-firewall' ) }
+					name="rate_limit"
 					type="number"
 					helperText={ __(
 						'Maximum requests before limiting',
@@ -30,6 +31,7 @@ export default function RateLimit( { form, setField } ) {
 						'Rate Limit Window (seconds)',
 						'rest-api-firewall'
 					) }
+					name="rate_limit_time"
 					type="number"
 					helperText={ __(
 						'Time window for requests count',
@@ -50,6 +52,7 @@ export default function RateLimit( { form, setField } ) {
 						'Rate Limit Release (seconds)',
 						'rest-api-firewall'
 					) }
+					name="rate_limit_release"
 					type="number"
 					helperText={ __(
 						'Wait time before limitation resets',
@@ -63,6 +66,7 @@ export default function RateLimit( { form, setField } ) {
 
 				<TextField
 					label={ __( 'Rate Limit Blacklist', 'rest-api-firewall' ) }
+					name="rate_limit_blacklist"
 					type="number"
 					helperText={ __(
 						'Number of limitation periods before blacklisted',
@@ -79,6 +83,7 @@ export default function RateLimit( { form, setField } ) {
 						'Blacklist Limit Window (seconds)',
 						'rest-api-firewall'
 					) }
+					name="rate_limit_blacklist_time"
 					type="number"
 					helperText={ __(
 						'Time window for limitation periods count',

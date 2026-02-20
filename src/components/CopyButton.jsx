@@ -7,7 +7,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 export default function CopyButton( { toCopy, sx = {} } ) {
 	const [ copyFeedback, setCopyFeedback ] = useState( false );
-
+	const { __ } = wp.i18n || {};
 	const handleCopy = ( e ) => {
 		e.stopPropagation();
 		navigator.clipboard.writeText( toCopy || '' );
@@ -36,7 +36,7 @@ export default function CopyButton( { toCopy, sx = {} } ) {
 					severity="success"
 					sx={ { width: '100%' } }
 				>
-					Copied to clipboard
+					{ __( 'Copied to clipboard', 'rest-api-firewall' ) }
 				</Alert>
 			</Snackbar>
 		</>

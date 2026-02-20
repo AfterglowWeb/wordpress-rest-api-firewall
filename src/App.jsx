@@ -21,6 +21,9 @@ import IconButton from '@mui/material/IconButton';
 import Avatar from '@mui/material/Avatar';
 import AppBar from '@mui/material/AppBar';
 import Stack from '@mui/material/Stack';
+import Badge from '@mui/material/Badge';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 
 import SecurityOutlined from '@mui/icons-material/SecurityOutlined';
 import PaletteOutlined from '@mui/icons-material/PaletteOutlined';
@@ -33,8 +36,10 @@ import VpnLockOutlinedIcon from '@mui/icons-material/VpnLockOutlined';
 import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined';
 import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 import CardMembershipOutlinedIcon from '@mui/icons-material/CardMembershipOutlined';
+import RocketLaunchOutlinedIcon from '@mui/icons-material/RocketLaunchOutlined';
 
 import ConfirmDialog from './components/ConfirmDialog';
+import MigrationDialog from './components/Migration/MigrationDialog';
 
 import Firewall from './components/Firewall/Firewall';
 import Properties from './components/ApiOutput/Properties';
@@ -80,6 +85,11 @@ function AppContent() {
 	const [ panelGroup, setPanelGroup ] = useState( 1 );
 	const [ themeStatus, setThemeStatus ] = useState( null );
 
+	const migrationNeeded  = !! ( window.restApiFirewallPro?.migrationNeeded );
+	const [ migrationOpen, setMigrationOpen ]       = useState( migrationNeeded );
+	const [ migrationDone, setMigrationDone ]       = useState( false );
+	const [ snackDismissed, setSnackDismissed ]     = useState( false );
+
 	const { form, setField, setSlider, pickGroup } = useSettingsForm( {
 		adminData,
 	} );
@@ -102,6 +112,13 @@ function AppContent() {
 	{ type: 'section', label: __( '', 'rest-api-firewall') },
 	{ key: 'theme', label: __( 'Theme', 'rest-api-firewall' ), breadcrumbPrefix: 'Modules', panelGroup: 9, icon: PaletteOutlined },
 	{ key: 'license', label: __( 'License Management', 'rest-api-firewall' ), breadcrumbPrefix: '', panelGroup: 10, icon: CardMembershipOutlinedIcon },
+	...( migrationNeeded && ! migrationDone ? [ {
+		key:    'migrate-pro',
+		label:  __( 'Migrate to Pro', 'rest-api-firewall' ),
+		icon:   RocketLaunchOutlinedIcon,
+		badge:  true,
+		action: () => setMigrationOpen( true ),
+	} ] : [] ),
 ];
 
 	useEffect( () => {
@@ -197,6 +214,7 @@ function AppContent() {
 	}
 
 	return (
+		<>
 		<Box sx={ { display: 'flex' } }>
 			
 			<Drawer
@@ -270,7 +288,7 @@ function AppContent() {
 									backgroundColor: isActive ? 'grey.100' : '',
 								}}
 								key={item.key}
-								onClick={ () => { handleMenuClick( item.panelGroup ); setMobileOpen( false ); } }
+								onClick={ () => { item.action ? item.action() : handleMenuClick( item.panelGroup ); setMobileOpen( false ); } }
 							>
 								{Icon && (
 									<ListItemIcon
@@ -280,10 +298,12 @@ function AppContent() {
 											color: isActive ? 'primary.main' : 'text.secondary',
 										}}
 									>
-										<Icon fontSize="small" />
+										<Badge color="error" variant="dot" invisible={ ! item.badge }>
+											<Icon fontSize="small" />
+										</Badge>
 									</ListItemIcon>
 								)}
-								
+
 								<ListItemText
 									sx={{'& .MuiTypography-root': 
 										{
@@ -501,6 +521,38 @@ function AppContent() {
 				</Box>
 			</Box>
 		</Box>
+
+		<MigrationDialog
+			open={ migrationOpen }
+			onClose={ () => setMigrationOpen( false ) }
+			onDone={ () => { setMigrationDone( true ); setMigrationOpen( false ); window.location.reload(); } }
+		/>
+
+		<Snackbar
+			open={ migrationNeeded && ! migrationDone && ! migrationOpen && ! snackDismissed }
+			anchorOrigin={ { vertical: 'bottom', horizontal: 'center' } }
+			sx={ { mb: 2 } }
+		>
+			<Alert
+				severity="warning"
+				onClose={ () => setSnackDismissed( true ) }
+				action={
+					<>
+						<Button 
+						variant="contained"
+						disableElevation
+						color="warning" 
+						size="small" 
+						onClick={ () => setMigrationOpen( true ) }>
+							{ __( 'Migrate Now', 'rest-api-firewall' ) }
+						</Button>
+					</>
+				}
+			>
+				{ __( 'Pro migration pending — your free settings have not been imported yet.', 'rest-api-firewall' ) }
+			</Alert>
+		</Snackbar>
+		</>
 	);
 }
 
