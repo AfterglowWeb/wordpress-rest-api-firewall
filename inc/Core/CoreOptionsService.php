@@ -32,6 +32,8 @@ class CoreOptionsService {
 	}
 
 	public function ajax_update_options() {
+		do_action( 'rest_api_firewall_before_update_options' );
+
 		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
 			wp_send_json_error( array( 'message' => esc_html__( 'Unauthorized', 'rest-api-firewall' ) ), 403 );
 		}
