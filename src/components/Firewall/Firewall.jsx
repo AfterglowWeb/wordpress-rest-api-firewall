@@ -154,6 +154,7 @@ export default function Firewall({
 											!! form.enforce_rate_limit
 										}
 										onChange={ setField }
+										name="enforce_rate_limit"
 										size="small"
 									/>
 								}

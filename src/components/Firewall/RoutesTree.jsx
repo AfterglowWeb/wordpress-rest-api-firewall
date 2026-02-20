@@ -15,6 +15,7 @@ import { TreeItem, TreeItemContent } from '@mui/x-tree-view/TreeItem';
 import { useTreeItem } from '@mui/x-tree-view/useTreeItem';
 
 import TestPolicy from './TestPolicy';
+import CopyButton from '../CopyButton';
 
 function normalizeTree( nodes, parentPath = '', parentSettings = null ) {
 	if ( ! nodes || ! Array.isArray( nodes ) ) {
@@ -234,105 +235,91 @@ function NodeContent( {
 
 	return (
 		<TreeItemContent { ...props }>
-			<Stack direction="column" spacing={ 0.5 } sx={ { flex: 1, py: 1 } }>
-				<Stack
-					direction="row"
-					spacing={ 1 }
-					alignItems="center"
-					sx={ {
-						cursor: isDisabled ? 'default' : 'pointer',
-						filter: isDisabled
-							? 'grayscale(1) opacity(0.6)'
-							: 'none',
-					} }
-				>
-					{ children }
-
-					{ node.isMethod && (
-						<Chip
-							label={ node.method || node.label }
-							size="small"
-							sx={ { ml: 1 } }
-							color={
-								node.method === 'GET'
-									? 'success'
-									: node.method === 'POST'
-									? 'warning'
-									: node.method === 'PUT'
-									? 'error'
-									: node.method === 'DELETE'
-									? 'error'
-									: 'default'
-							}
-						/>
-					) }
-
-					{ node.permission && (
-						<Chip
-							label={
-								getEffectivePermission(
-									node.permission.type
-								) || 'unknown'
-							}
-							size="small"
-							variant="outlined"
-							color={ getPermissionColor(
-								getEffectivePermission( node.permission.type )
-							) }
-						/>
-					) }
-
-					{ node.isMethod && node.route && (
-						<TestPolicy
-							route={ node.route }
-							method={ node.method || 'GET' }
-							hasChildren={ hasChildren }
-						/>
-					) }
-
-					{ ( node.path || node.route ) && (
-						<Stack
-							direction="row"
-							spacing={ 0.5 }
-							alignItems="center"
-						>
-							<Typography
-								variant="caption"
-								sx={ {
-									color: 'text.secondary',
-									fontFamily: 'monospace',
-									whiteSpace: 'nowrap',
-								} }
-							>
-								{ node.route || node.path }
-							</Typography>
-							<Tooltip title="Copy path">
-								<IconButton
-									size="small"
-									onClick={ handleCopyPath }
-									sx={ { p: 0.25 } }
-								>
-									<ContentCopyIcon sx={ { fontSize: 14 } } />
-								</IconButton>
-							</Tooltip>
-						</Stack>
-					) }
-				</Stack>
-
-				{ node.permission?.callback && (
-					<Typography
-						variant="caption"
+			
+			<Stack direction="row" alignItems="center" gap={ 0.5 } flex={ 1 } py={ 1 }>
+				<Stack direction="column" spacing={ 0.5 }>
+					
+					<Stack
+						direction="row"
+						spacing={ 1 }
+						alignItems="center"
 						sx={ {
-							color: 'text.secondary',
-							fontSize: '0.7rem',
-							ml: 4,
+							cursor: isDisabled ? 'default' : 'pointer',
+							filter: isDisabled
+								? 'grayscale(1) opacity(0.6)'
+								: 'none',
 						} }
 					>
-						Permission: { node.permission.callback }
-					</Typography>
+						{ children }
+						
+
+						{ node.isMethod && (
+							<Chip
+								label={ node.method || node.label }
+								size="small"
+								sx={ { ml: 1 } }
+								color={
+									node.method === 'GET'
+										? 'success'
+										: node.method === 'POST'
+										? 'warning'
+										: node.method === 'PUT'
+										? 'error'
+										: node.method === 'DELETE'
+										? 'error'
+										: 'default'
+								}
+							/>
+						) }
+
+						{ node.permission && (
+							<Chip
+								label={
+									getEffectivePermission(
+										node.permission.type
+									) || 'unknown'
+								}
+								size="small"
+								variant="outlined"
+								color={ getPermissionColor(
+									getEffectivePermission( node.permission.type )
+								) }
+							/>
+						) }
+
+						{ node.isMethod && node.route && (
+							<TestPolicy
+								route={ node.route }
+								method={ node.method || 'GET' }
+								hasChildren={ hasChildren }
+							/>
+						) }
+
+						
+					</Stack>
+
+					{ node.permission?.callback && (
+						<Typography
+							variant="caption"
+							sx={ {
+								color: 'text.secondary',
+								fontSize: '0.7rem',
+								ml: 4,
+							} }
+						>
+							Permission: { node.permission.callback }
+						</Typography>
+					) }
+				</Stack>
+				{ ! node.isMethod && ( node.path || node.route ) && (
+				<Tooltip title="Copy path">
+					<CopyButton
+						toCopy={ node.path || node.route }
+					/>
+				</Tooltip>
 				) }
 			</Stack>
-
+			
 			<Stack
 				direction="row"
 				spacing={ 1 }
@@ -533,6 +520,7 @@ function NodeContent( {
 					</Tooltip>
 				) }
 			</Stack>
+
 		</TreeItemContent>
 	);
 }

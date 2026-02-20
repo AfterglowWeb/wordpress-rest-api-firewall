@@ -23,9 +23,14 @@ class CoreOptionsService {
 	}
 
 	public function ajax_read_options() {
+		do_action( 'rest_api_firewall_before_read_options' );
+
 		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
+
+		// Pro plugin can hook here and call wp_send_json_* to short-circuit.
+		do_action( 'rest_api_firewall_pro_read_options' );
 
 		$options = CoreOptions::read_options();
 		wp_send_json_success( $options );
@@ -46,6 +51,9 @@ class CoreOptionsService {
 				wp_send_json_error( array( 'error' => esc_html__( 'Invalid options data', 'rest-api-firewall' ) ), 400 );
 			}
 
+			// Pro plugin can hook here and call wp_send_json_* to short-circuit.
+			do_action( 'rest_api_firewall_pro_update_options', $options );
+
 			$options = CoreOptions::update_options( $options );
 
 			wp_send_json_success(
@@ -61,6 +69,8 @@ class CoreOptionsService {
 	}
 
 	public function ajax_update_option() {
+		do_action( 'rest_api_firewall_before_update_option' );
+
 		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
@@ -80,6 +90,9 @@ class CoreOptionsService {
 			if ( empty( $key ) || empty( $value ) ) {
 				wp_send_json_error( array( 'error' => esc_html__( 'Invalid option data', 'rest-api-firewall' ) ), 422 );
 			}
+
+			// Pro plugin can hook here and call wp_send_json_* to short-circuit.
+			do_action( 'rest_api_firewall_pro_update_option', $key, $value );
 
 			$option = CoreOptions::update_option( $key, $value );
 
