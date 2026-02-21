@@ -40,7 +40,7 @@ export default function Footer() {
 					href="https://creativecommons.org/licenses/by-sa/4.0/"
 					target="_blank"
 					rel="nofollow noreferer noopener"
-					sx={{ textTransform: "none" }}
+					sx={ { textTransform: 'none' } }
 				>
 					GPL-V2 License
 				</Button>

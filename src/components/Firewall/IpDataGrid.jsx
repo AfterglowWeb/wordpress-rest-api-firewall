@@ -24,11 +24,10 @@ const CIDR_REGEX =
 const IPV6_REGEX =
 	/^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::$|^([0-9a-fA-F]{1,4}:){1,7}:$|^:(:([0-9a-fA-F]{1,4})){1,7}$|^([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}$/;
 
-function isValidIpOrCidr( value ) {
+function isValidIpOrCidr( value, hasValidLicense ) {
 	if ( ! value ) {
 		return false;
 	}
-	const { hasValidLicense } = useLicense();
 	const trimmed = value.trim();
 	return (
 		IP_REGEX.test( trimmed ) ||
@@ -37,9 +36,7 @@ function isValidIpOrCidr( value ) {
 	);
 }
 
-export default function IpDataGrid( {
-	listType = 'blacklist',
-} ) {
+export default function IpDataGrid( { listType = 'blacklist' } ) {
 	const { adminData } = useAdminData();
 	const { hasValidLicense, proNonce } = useLicense();
 	const nonce = proNonce || adminData.nonce;
@@ -75,9 +72,7 @@ export default function IpDataGrid( {
 					<IconButton
 						size="small"
 						color="default"
-						onClick={ () =>
-							handleDeleteOne( params.row.id )
-						}
+						onClick={ () => handleDeleteOne( params.row.id ) }
 					>
 						<DeleteOutlineIcon fontSize="small" />
 					</IconButton>
@@ -193,7 +188,9 @@ export default function IpDataGrid( {
 				setRows( result.data.entries || [] );
 			}
 		} catch ( error ) {
-			console.error( 'Error fetching IP entries:', error );
+			setIpError(
+				'Error fetching IP entries:' + JSON.stringify( error )
+			);
 		} finally {
 			setLoading( false );
 		}
@@ -208,14 +205,27 @@ export default function IpDataGrid( {
 
 		if ( ! trimmed ) {
 			setIpError(
-				hasValidLicense ? __( 'Please enter an IP address or CIDR range', 'rest-api-firewall' ) : __( 'Please enter a valid IP address', 'rest-api-firewall' )
+				hasValidLicense
+					? __(
+							'Please enter an IP address or CIDR range',
+							'rest-api-firewall'
+					  )
+					: __(
+							'Please enter a valid IP address',
+							'rest-api-firewall'
+					  )
 			);
 			return;
 		}
 
-		if ( ! isValidIpOrCidr( trimmed ) ) {
+		if ( ! isValidIpOrCidr( trimmed, hasValidLicense ) ) {
 			setIpError(
-				hasValidLicense ? __( 'Invalid IP address or CIDR range', 'rest-api-firewall' ) : __( 'Invalid IP address', 'rest-api-firewall' )
+				hasValidLicense
+					? __(
+							'Invalid IP address or CIDR range',
+							'rest-api-firewall'
+					  )
+					: __( 'Invalid IP address', 'rest-api-firewall' )
 			);
 			return;
 		}
@@ -281,7 +291,7 @@ export default function IpDataGrid( {
 				fetchEntries();
 			}
 		} catch ( error ) {
-			console.error( 'Error deleting IP entry:', error );
+			setIpError( 'Error deleting IP entry:' + JSON.stringify( error ) );
 			fetchEntries();
 		}
 	};
@@ -294,7 +304,9 @@ export default function IpDataGrid( {
 		const selectedIds = [ ...rowSelectionModel.ids ];
 		const selectedSet = new Set( selectedIds );
 
-		setRows( ( prev ) => prev.filter( ( row ) => ! selectedSet.has( row.id ) ) );
+		setRows( ( prev ) =>
+			prev.filter( ( row ) => ! selectedSet.has( row.id ) )
+		);
 		setRowSelectionModel( { type: 'include', ids: new Set() } );
 
 		try {
@@ -318,7 +330,9 @@ export default function IpDataGrid( {
 				fetchEntries();
 			}
 		} catch ( error ) {
-			console.error( 'Error deleting IP entries:', error );
+			setIpError(
+				'Error deleting IP entries:' + JSON.stringify( error )
+			);
 			fetchEntries();
 		}
 	};
@@ -333,7 +347,6 @@ export default function IpDataGrid( {
 	return (
 		<Box>
 			<Toolbar disableGutters sx={ { gap: 2, mb: 2, flexWrap: 'wrap' } }>
-				
 				<TextField
 					value={ newIp }
 					onChange={ ( e ) => {
@@ -341,7 +354,14 @@ export default function IpDataGrid( {
 						setIpError( '' );
 					} }
 					onKeyDown={ handleKeyDown }
-					placeholder={ hasValidLicense ? __( '192.168.1.1 or 10.0.0.0/24', 'rest-api-firewall' ) : __( '192.168.1.1', 'rest-api-firewall' ) }
+					placeholder={
+						hasValidLicense
+							? __(
+									'192.168.1.1 or 10.0.0.0/24',
+									'rest-api-firewall'
+							  )
+							: __( '192.168.1.1', 'rest-api-firewall' )
+					}
 					size="small"
 					error={ !! ipError }
 					helperText={ ipError }
@@ -354,16 +374,16 @@ export default function IpDataGrid( {
 					disabled={ adding || ! newIp.trim() }
 					startIcon={ <AddIcon /> }
 				>
-					{ hasValidLicense ? __( 'Add IP or CIDR', 'rest-api-firewall' ) : __( 'Add IP', 'rest-api-firewall' ) }
+					{ hasValidLicense
+						? __( 'Add IP or CIDR', 'rest-api-firewall' )
+						: __( 'Add IP', 'rest-api-firewall' ) }
 				</Button>
-		
+
 				<Box sx={ { flexGrow: 1 } } />
 
-
-					<IconButton onClick={ fetchEntries } disabled={ loading }>
-						<RefreshIcon />
-					</IconButton>
-		
+				<IconButton onClick={ fetchEntries } disabled={ loading }>
+					<RefreshIcon />
+				</IconButton>
 
 				{ hasValidLicense && rowSelectionModel.ids.size > 0 && (
 					<Button
@@ -380,7 +400,7 @@ export default function IpDataGrid( {
 			</Toolbar>
 
 			<DataGrid
-				showToolbar={ !! hasValidLicense}
+				showToolbar={ !! hasValidLicense }
 				rows={ rows }
 				columns={ columns }
 				loading={ loading }

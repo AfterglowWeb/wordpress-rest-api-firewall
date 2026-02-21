@@ -17,9 +17,7 @@ document.addEventListener( 'DOMContentLoaded', function () {
 		const root = createRoot( container );
 		root.render(
 			<AdminDataProvider adminData={ adminData }>
-				<LicenseProvider
-					hasValidLicense={ !! proData.isValid }
-				>
+				<LicenseProvider hasValidLicense={ !! proData.isValid }>
 					<DocumentationProvider>
 						<AppTheme>
 							<Suspense fallback={ <ContentSkeleton /> }>
@@ -38,77 +36,77 @@ document.addEventListener( 'DOMContentLoaded', function () {
 
 const ContentSkeleton = () => (
 	<>
-	<HeaderSkeleton />
-	<Box
-		maxWidth="xl"
-		sx={ {
-			display: 'flex',
-			flexDirection: 'column',
-			minHeight: 'calc(100vh - 340px)',
-			gap: 0,
-			width: '100%',
-			px: 3,
-			pb: 3,
-		} }
-	>
+		<HeaderSkeleton />
 		<Box
+			maxWidth="xl"
 			sx={ {
 				display: 'flex',
-				gap: 2,
-				borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-				mb: 0,
-				pb: 2,
-				pt: 2,
+				flexDirection: 'column',
+				minHeight: 'calc(100vh - 340px)',
+				gap: 0,
+				width: '100%',
+				px: 3,
+				pb: 3,
 			} }
 		>
-			<Skeleton variant="text" width={ 80 } height={ 32 } />
-			<Skeleton variant="text" width={ 80 } height={ 32 } />
-			<Skeleton variant="text" width={ 80 } height={ 32 } />
-			<Skeleton variant="text" width={ 80 } height={ 32 } />
-		</Box>
+			<Box
+				sx={ {
+					display: 'flex',
+					gap: 2,
+					borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+					mb: 0,
+					pb: 2,
+					pt: 2,
+				} }
+			>
+				<Skeleton variant="text" width={ 80 } height={ 32 } />
+				<Skeleton variant="text" width={ 80 } height={ 32 } />
+				<Skeleton variant="text" width={ 80 } height={ 32 } />
+				<Skeleton variant="text" width={ 80 } height={ 32 } />
+			</Box>
 
-		<Box
-			sx={ {
-				py: 4,
-				display: 'flex',
-				flexDirection: { xs: 'column', md: 'row' },
-				justifyContent: 'space-around',
-				gap: 3,
-			} }
-		>
-			<Skeleton
-				variant="rounded"
-				width={ 'calc(60% - 20px)' }
-				height={ 160 }
-			/>
-			<Skeleton
-				variant="rounded"
-				width={ 'calc(40% - 20px)' }
-				height={ 160 }
-			/>
+			<Box
+				sx={ {
+					py: 4,
+					display: 'flex',
+					flexDirection: { xs: 'column', md: 'row' },
+					justifyContent: 'space-around',
+					gap: 3,
+				} }
+			>
+				<Skeleton
+					variant="rounded"
+					width={ 'calc(60% - 20px)' }
+					height={ 160 }
+				/>
+				<Skeleton
+					variant="rounded"
+					width={ 'calc(40% - 20px)' }
+					height={ 160 }
+				/>
+			</Box>
+			<Box
+				sx={ {
+					py: 4,
+					display: 'flex',
+					flexDirection: { xs: 'column', md: 'row' },
+					justifyContent: 'space-around',
+					gap: 3,
+				} }
+			>
+				<Skeleton
+					variant="rounded"
+					width={ 'calc(60% - 20px)' }
+					height={ 200 }
+				/>
+				<Skeleton
+					variant="rounded"
+					width={ 'calc(40% - 20px)' }
+					height={ 200 }
+				/>
+			</Box>
+			<Skeleton variant="rounded" height={ 60 } />
 		</Box>
-		<Box
-			sx={ {
-				py: 4,
-				display: 'flex',
-				flexDirection: { xs: 'column', md: 'row' },
-				justifyContent: 'space-around',
-				gap: 3,
-			} }
-		>
-			<Skeleton
-				variant="rounded"
-				width={ 'calc(60% - 20px)' }
-				height={ 200 }
-			/>
-			<Skeleton
-				variant="rounded"
-				width={ 'calc(40% - 20px)' }
-				height={ 200 }
-			/>
-		</Box>
-		<Skeleton variant="rounded" height={ 60 } />
-	</Box>
 	</>
 );
 

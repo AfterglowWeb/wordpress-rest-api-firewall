@@ -41,16 +41,11 @@ export default function Properties( { setField, postTypes, form } ) {
 
 	return (
 		<Stack spacing={ 3 }>
-			
-			
 			<Tooltip
 				followCursor
 				title={
 					! hasValidLicense
-						? __(
-								'Licence required',
-								'rest-api-firewall'
-						  )
+						? __( 'Licence required', 'rest-api-firewall' )
 						: ''
 				}
 			>
@@ -64,27 +59,29 @@ export default function Properties( { setField, postTypes, form } ) {
 								onChange={ setField }
 							/>
 						}
-						label={ __( 'Enable Properties Filtering', 'rest-api-firewall' ) }
+						label={ __(
+							'Enable Properties Filtering',
+							'rest-api-firewall'
+						) }
 					/>
 				</FormControl>
 			</Tooltip>
 
-			<Stack
-				spacing={ 3 }
-				pl={3.5}
-			>	
+			<Stack spacing={ 3 } pl={ 3.5 }>
 				<Typography
-				variant="caption"
-				sx={{
-					display: 'block', 
-					mt: 1,
-					textTransform: 'uppercase',
-					letterSpacing: 0.5,
-					fontSize: '0.75rem',
-					color: ! hasValidLicense ? 'text.disabled' : 'text.secondary',
-				}}
+					variant="caption"
+					sx={ {
+						display: 'block',
+						mt: 1,
+						textTransform: 'uppercase',
+						letterSpacing: 0.5,
+						fontSize: '0.75rem',
+						color: ! hasValidLicense
+							? 'text.disabled'
+							: 'text.secondary',
+					} }
 				>
-					{__( 'Global Settings', 'rest-api-firewall' ) }
+					{ __( 'Global Settings', 'rest-api-firewall' ) }
 				</Typography>
 
 				<FormControl disabled={ ! hasValidLicense }>
@@ -159,7 +156,7 @@ export default function Properties( { setField, postTypes, form } ) {
 							'rest-api-firewall'
 						) }
 					</FormHelperText>
-				</FormControl>		
+				</FormControl>
 
 				<FormControl disabled={ ! hasValidLicense }>
 					<FormControlLabel
@@ -191,7 +188,9 @@ export default function Properties( { setField, postTypes, form } ) {
 						control={
 							<Switch
 								size="small"
-								checked={ !! form.rest_models_embed_terms_enabled }
+								checked={
+									!! form.rest_models_embed_terms_enabled
+								}
 								name="rest_models_embed_terms_enabled"
 								onChange={ setField }
 							/>
@@ -211,7 +210,9 @@ export default function Properties( { setField, postTypes, form } ) {
 						control={
 							<Switch
 								size="small"
-								checked={ !! form.rest_models_embed_author_enabled }
+								checked={
+									!! form.rest_models_embed_author_enabled
+								}
 								name="rest_models_embed_author_enabled"
 								onChange={ setField }
 							/>
@@ -231,7 +232,9 @@ export default function Properties( { setField, postTypes, form } ) {
 						control={
 							<Switch
 								size="small"
-								checked={ !! form.rest_models_remove_links_prop }
+								checked={
+									!! form.rest_models_remove_links_prop
+								}
 								name="rest_models_remove_links_prop"
 								onChange={ setField }
 							/>
@@ -248,13 +251,15 @@ export default function Properties( { setField, postTypes, form } ) {
 						) }
 					</FormHelperText>
 				</FormControl>
-				
+
 				<FormControl disabled={ ! hasValidLicense }>
 					<FormControlLabel
 						control={
 							<Switch
 								size="small"
-								checked={ !! form.rest_models_remove_embed_prop }
+								checked={
+									!! form.rest_models_remove_embed_prop
+								}
 								name="rest_models_remove_embed_prop"
 								onChange={ setField }
 							/>
@@ -319,14 +324,14 @@ export default function Properties( { setField, postTypes, form } ) {
 						label={ __( 'Embed ACF Fields', 'rest-api-firewall' ) }
 					/>
 					<FormHelperText>
-						{ __( 'Enable the `acf` property on REST responses.', 'rest-api-firewall' ) }
+						{ __(
+							'Enable the `acf` property on REST responses.',
+							'rest-api-firewall'
+						) }
 					</FormHelperText>
 				</FormControl>
-			
-			
-				<Stack
-					spacing={ 0 }
-				>
+
+				<Stack spacing={ 0 }>
 					<FormControl disabled={ ! hasValidLicense }>
 						<FormControlLabel
 							control={
@@ -346,7 +351,10 @@ export default function Properties( { setField, postTypes, form } ) {
 						/>
 					</FormControl>
 
-					<FormControl sx={{pl:2}} disabled={ ! hasValidLicense }>
+					<FormControl
+						sx={ { pl: 2 } }
+						disabled={ ! hasValidLicense }
+					>
 						<FormControlLabel
 							control={
 								<Checkbox
@@ -364,25 +372,27 @@ export default function Properties( { setField, postTypes, form } ) {
 							) }
 						/>
 					</FormControl>
-				</Stack>	
-				
+				</Stack>
+
 				<Divider />
 
 				<Typography
-				variant="caption"
-				sx={{
-					display: 'block', 
-					mt: 1,
-					textTransform: 'uppercase',
-					letterSpacing: 0.5,
-					fontSize: '0.75rem',
-					color: ! hasValidLicense ? 'text.disabled' : 'text.secondary',
-				}}
+					variant="caption"
+					sx={ {
+						display: 'block',
+						mt: 1,
+						textTransform: 'uppercase',
+						letterSpacing: 0.5,
+						fontSize: '0.75rem',
+						color: ! hasValidLicense
+							? 'text.disabled'
+							: 'text.secondary',
+					} }
 				>
-					{__( 'Per Property Settings', 'rest-api-firewall' ) }
+					{ __( 'Per Property Settings', 'rest-api-firewall' ) }
 				</Typography>
 
-				<FormControl fullWidth sx={{maxWidth: 270}}>
+				<FormControl fullWidth sx={ { maxWidth: 270 } }>
 					<InputLabel>
 						{ __( 'Select Post Type', 'rest-api-firewall' ) }
 					</InputLabel>
@@ -390,7 +400,9 @@ export default function Properties( { setField, postTypes, form } ) {
 						value={ selectedPostType }
 						defaultValue={ postTypes[ 0 ].value || '' }
 						label={ __( 'Select Post Type', 'rest-api-firewall' ) }
-						onChange={ ( e ) => setSelectedPostType( e.target.value ) }
+						onChange={ ( e ) =>
+							setSelectedPostType( e.target.value )
+						}
 					>
 						{ postTypes &&
 							postTypes.map( ( postType ) => (
@@ -408,7 +420,6 @@ export default function Properties( { setField, postTypes, form } ) {
 					selectedPostType={ selectedPostType }
 					setField={ setField }
 				/>
-
 			</Stack>
 		</Stack>
 	);
@@ -432,8 +443,7 @@ function PropertyRow( {
 	const propType = propConfig.type || '';
 	const subProperties = propConfig.properties || {};
 	const isDisabled =
-		! propContext.includes( 'view' ) &&
-		! propContext.includes( 'embed' );
+		! propContext.includes( 'view' ) && ! propContext.includes( 'embed' );
 	const settings = propConfig.settings || {};
 	const hasFilters =
 		Array.isArray( settings.filters ) && settings.filters.length > 0;
@@ -447,9 +457,8 @@ function PropertyRow( {
 		? propType.join( '|' )
 		: propType;
 	const typeColor =
-		TYPE_COLORS[
-			Array.isArray( propType ) ? propType[ 0 ] : propType
-		] || 'default';
+		TYPE_COLORS[ Array.isArray( propType ) ? propType[ 0 ] : propType ] ||
+		'default';
 
 	const hasDetails =
 		propContext.length > 0 || readOnly || argsOptions.length > 0;
@@ -506,10 +515,14 @@ function PropertyRow( {
 						<Box sx={ { width: 26, flexShrink: 0 } } />
 					) }
 
-						<Stack direction={"row"} alignItems={"center"} gap={1}>
+					<Stack
+						direction={ 'row' }
+						alignItems={ 'center' }
+						gap={ 1 }
+					>
 						<Typography
 							sx={ {
-								flex:1,
+								flex: 1,
 								textOverflow: 'ellipsis',
 								overflow: 'hidden',
 								whiteSpace: 'nowrap',
@@ -519,10 +532,8 @@ function PropertyRow( {
 						>
 							{ propName }
 						</Typography>
-						<CopyButton sx={{flex:0}} toCopy={ propName } />
-						</Stack>
-
-
+						<CopyButton sx={ { flex: 0 } } toCopy={ propName } />
+					</Stack>
 
 					{ typeLabel && (
 						<Chip
@@ -544,9 +555,7 @@ function PropertyRow( {
 							variant="caption"
 							underline="always"
 							color="text.secondary"
-							onClick={ () =>
-								setDetailsOpen( ! detailsOpen )
-							}
+							onClick={ () => setDetailsOpen( ! detailsOpen ) }
 							sx={ { fontSize: '0.7rem' } }
 						>
 							{ __( 'details', 'rest-api-firewall' ) }
@@ -559,84 +568,88 @@ function PropertyRow( {
 						followCursor
 						title={
 							! hasValidLicense
-								? __(
-										'Licence required',
-										'rest-api-firewall'
-								  )
+								? __( 'Licence required', 'rest-api-firewall' )
 								: ''
 						}
 					>
-					
-					<Stack
-						direction="row"
-						gap={ 1 }
-						alignItems="center"
-						justifyContent="flex-end"
-						sx={ { flexShrink: 0 } }
-					>
-						{ hasFilters &&
-							settings.filters.map( ( filter ) => (
-								<FormControlLabel
-									key={ filter.key }
-									sx={ { flex: 0 } }
-									disabled={ ! hasValidLicense }
-									control={
-										<Checkbox
-											size="small"
-											checked={ !! filter.value }
-										/>
-									}
-									label={
-										<Typography
-											sx={ {
-												width: 55,
-												whiteSpace: 'nowrap',
-											} }
-											fontSize="0.75rem"
-											color={ ! hasValidLicense ? 'text.disabled' : 'text.primary' }
-										>
-											{ filter.label }
-										</Typography>
-									}
-								/>
-							) ) }
+						<Stack
+							direction="row"
+							gap={ 1 }
+							alignItems="center"
+							justifyContent="flex-end"
+							sx={ { flexShrink: 0 } }
+						>
+							{ hasFilters &&
+								settings.filters.map( ( filter ) => (
+									<FormControlLabel
+										key={ filter.key }
+										sx={ { flex: 0 } }
+										disabled={ ! hasValidLicense }
+										control={
+											<Checkbox
+												size="small"
+												checked={ !! filter.value }
+											/>
+										}
+										label={
+											<Typography
+												sx={ {
+													width: 55,
+													whiteSpace: 'nowrap',
+												} }
+												fontSize="0.75rem"
+												color={
+													! hasValidLicense
+														? 'text.disabled'
+														: 'text.primary'
+												}
+											>
+												{ filter.label }
+											</Typography>
+										}
+									/>
+								) ) }
 
-						<FormControlLabel
-							disabled={ ! hasValidLicense }
-							control={
-								<Switch
-									size="small"
-									checked={ settings.disable }
-									onChange={ ( e ) => {
-										setField( {
-											target: {
-												name: `postProperties.${ selectedPostType }.props.${ propName }.settings.disable`,
-												value: ! e.target.checked,
-											},
-										} );
-									} }
-								/>
-							}
-							label={ <Typography
-								sx={ {
-									width: 55,
-									whiteSpace: 'nowrap',
-								} }
-								fontSize="0.75rem"
-								color={ ! hasValidLicense ? 'text.disabled' : 'text.primary' }
-							>
-								{ __('Disable', 'rest-api-firewall') }
-							</Typography> }
-						/>
-					</Stack>
+							<FormControlLabel
+								disabled={ ! hasValidLicense }
+								control={
+									<Switch
+										size="small"
+										checked={ settings.disable }
+										onChange={ ( e ) => {
+											setField( {
+												target: {
+													name: `postProperties.${ selectedPostType }.props.${ propName }.settings.disable`,
+													value: ! e.target.checked,
+												},
+											} );
+										} }
+									/>
+								}
+								label={
+									<Typography
+										sx={ {
+											width: 55,
+											whiteSpace: 'nowrap',
+										} }
+										fontSize="0.75rem"
+										color={
+											! hasValidLicense
+												? 'text.disabled'
+												: 'text.primary'
+										}
+									>
+										{ __( 'Disable', 'rest-api-firewall' ) }
+									</Typography>
+								}
+							/>
+						</Stack>
 					</Tooltip>
 				) }
 			</Box>
-			
 
 			<Collapse in={ detailsOpen }>
-			{ propConfig.description && depth === 0 && (
-				
+				{ propConfig.description && depth === 0 && (
 					<Typography
 						variant="caption"
 						color="text.secondary"
@@ -647,8 +660,7 @@ function PropertyRow( {
 					>
 						{ propConfig.description }
 					</Typography>
-		
-			) }
+				) }
 				<Box
 					sx={ {
 						pl: 4.25,
@@ -660,10 +672,7 @@ function PropertyRow( {
 					} }
 				>
 					{ propContext.length > 0 && (
-						<Typography
-							variant="caption"
-							color="text.secondary"
-						>
+						<Typography variant="caption" color="text.secondary">
 							{ __( 'context:', 'rest-api-firewall' ) }{ ' ' }
 							{ propContext.join( ', ' ) }
 						</Typography>

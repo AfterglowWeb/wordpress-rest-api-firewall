@@ -7,8 +7,6 @@ import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import Chip from '@mui/material/Chip';
 import Tooltip from '@mui/material/Tooltip';
-import IconButton from '@mui/material/IconButton';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 import { RichTreeView } from '@mui/x-tree-view/RichTreeView';
 import { TreeItem, TreeItemContent } from '@mui/x-tree-view/TreeItem';
@@ -194,11 +192,6 @@ function NodeContent( {
 		applyToAllChildren( node.id, shouldApply );
 	};
 
-	const handleCopyPath = ( e ) => {
-		e.stopPropagation();
-		navigator.clipboard.writeText( node.path || node.route || '' );
-	};
-
 	const getPermissionColor = ( type ) => {
 		switch ( type ) {
 			case 'public':
@@ -235,10 +228,14 @@ function NodeContent( {
 
 	return (
 		<TreeItemContent { ...props }>
-			
-			<Stack direction="row" alignItems="center" gap={ 0.5 } flex={ 1 } py={ 1 }>
+			<Stack
+				direction="row"
+				alignItems="center"
+				gap={ 0.5 }
+				flex={ 1 }
+				py={ 1 }
+			>
 				<Stack direction="column" spacing={ 0.5 }>
-					
 					<Stack
 						direction="row"
 						spacing={ 1 }
@@ -251,7 +248,6 @@ function NodeContent( {
 						} }
 					>
 						{ children }
-						
 
 						{ node.isMethod && (
 							<Chip
@@ -282,7 +278,9 @@ function NodeContent( {
 								size="small"
 								variant="outlined"
 								color={ getPermissionColor(
-									getEffectivePermission( node.permission.type )
+									getEffectivePermission(
+										node.permission.type
+									)
 								) }
 							/>
 						) }
@@ -294,8 +292,6 @@ function NodeContent( {
 								hasChildren={ hasChildren }
 							/>
 						) }
-
-						
 					</Stack>
 
 					{ node.permission?.callback && (
@@ -312,14 +308,12 @@ function NodeContent( {
 					) }
 				</Stack>
 				{ ! node.isMethod && ( node.path || node.route ) && (
-				<Tooltip title="Copy path">
-					<CopyButton
-						toCopy={ node.path || node.route }
-					/>
-				</Tooltip>
+					<Tooltip title="Copy path">
+						<CopyButton toCopy={ node.path || node.route } />
+					</Tooltip>
 				) }
 			</Stack>
-			
+
 			<Stack
 				direction="row"
 				spacing={ 1 }
@@ -520,7 +514,6 @@ function NodeContent( {
 					</Tooltip>
 				) }
 			</Stack>
-
 		</TreeItemContent>
 	);
 }

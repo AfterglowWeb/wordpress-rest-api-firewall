@@ -1,45 +1,204 @@
-# WordPress REST API Firewall
+# REST API Tools — A WordPress Application Layer for Headless Architectures
 
-A WordPress plugin focused exclusively on REST API security and filtering.
+A WordPress plugin focused on REST API security, filtering, and headless architecture.
 
-REST API Firewall acts as a secure layer for the WordPress REST API by enforcing application password authentication and rate limiting on all routes. Rate-limited IPs are automatically blacklisted.
+REST API Tools is a comprehensive suite designed to secure, filter, and extend the WordPress REST API while enabling seamless communication with front-end applications. It integrates with external apps built with Next.js, React, Vue, or any technology capable of consuming a REST API.
 
-It integrates seamlessly with external applications built with Next.js, React, Vue, or any framework capable of consuming a REST API. Configure webhooks to notify your application of content changes.
+## REST API Tools — FREE
 
-> **Alpha Version**: This plugin is currently under extensive testing and significant changes may still occur in the code architecture. It is made public to gather feedback and contributions. You are free to test it, but we cannot guarantee its stability and cannot be held responsible for any data loss.
+- Enforce authentication, rate limiting, and IP blacklisting.
+- Add ACF options pages to the wp/v2/settings route.
+- Explore REST API routes and schemas to understand how and where data is exposed.
+- Trigger webhooks to your front-end application on WordPress events.
+- Configure an SMTP server.
+- Send email notifications on REST API security and traffic events. *(Under development)*
+- Configure plugin bypass rules. (Under development)
+- Compatible with WordPress multisite installations.
+- Running fully headless? Deploy the bundled blank theme for additional control:
 
-## Screenshots
+### Headless Mode
+
+Running fully headless? Deploy the bundled blank theme for additional control:
+- Redirect all front-end templates
+- Disable comments
+- Disable pingbacks
+- Disable XML-RPC
+- Disable the theme editor
+- Limit image file size, and more
+
+Each admin option exposes a WordPress filter for advanced customization.
+
+## REST API Tools — PRO
+
+REST API Tools PRO introduces a multi-application architecture: serve multiple front-end applications with distinct REST API data views from a single WordPress installation. Configure multiple application environments and run them simultaneously.
+- Each application has its own security and content policy.
+- Request origin or IP determines which application configuration is loaded.
+- The same data source can be exposed through multiple REST API “views.”
+- Each application can replace the default wp/v2 namespace with a custom namespace.
+
+You may also configure a single application and benefit from all Pro features.
+
+Additionally, you can run applications entirely through webhooks. Data is sent using the same schema as the REST API.
+
+## PRO — Per-Application Features:
+
+### Settings
+
+- Name your application and define allowed IPs and origins.
+- Export and import application configurations.
+
+### Security
+
+- Create multiple REST API users.
+- Assign authentication methods: WordPress Auth, Bearer Token, JWT, OAuth, or SSO.
+- Define allowed HTTP methods per user (GET, POST, PUT, PATCH, DELETE).
+- Add HTTP headers for security, caching, or compression.
+- Enforce per-route and per-method policies:
+    - Restrict access to specific users
+    - Rate-limit routes
+    - Modify HTTP headers
+    - Disable methods
+    - Disable entire routes
+    - Disable routes by post type or taxonomy.
+- Enable whitelist mode or advanced blacklist mode with:
+    - Country blocking
+    - CIDR blocking
+    - IP/CIDR import & export
+
+### REST API Output
+
+- Selectively disable or filter properties per post type and taxonomy.
+- Flatten rendered, media, taxonomy, author, date, and meta fields.
+- Rename properties dynamically.
+- Hide _embed and _links properties.
+- Create a custom endpoint for ACF options page data.
+- Remove the WordPress domain from URLs.
+- Remove the uploads directory from attachment URLs.
+
+### Webhooks
+- Create multiple secured webhooks.
+- Trigger webhooks on:
+    - WordPress core events
+    - Supported plugin events
+    - Custom plugin events
+    - Custom CRON events
+    - REST API events
+- Send email notifications for webhook executions.
+
+### Emails
+
+- Create multiple notification email templates.
+
+#### Monitoring *(under development)*
+
+- Monitor and export network and user activity.
+
+## Modules
+
+### Headless Forms — Endpoints & Entry Management
+
+Create secure endpoints to submit form data using REST API Tools’ security framework.
+
+The Entries Manager provides full CRUD operations for form submissions and is compatible with WPForms and Contact Form 7 out of the box.
+
+Focused on security and privacy, it includes:
+- Configurable data retention periods
+- Advanced GDPR options
+- AES-256 entry encryption
+- Webhooks and notifications
+
+This module can be installed independently from REST API Tools.
+
+### (Planned) WooCommerce Headless Applications
+
+A bridge module providing headless access to Woocommerce.
+Its role is to:
+- Validate application
+- Validate auth
+- Resolve cart token
+- Forward to Woo route
+- Filter response
+- Return
+
+#### Supported Features (MVP Scope)
+
+- Products (read-only, via existing routes)
+- Cart operations
+- Checkout
+- Stripe payments
+- PayPal payments
+- Logged-in and guest users
+- Shipping rate retrieval
+
+#### Not Supported
+
+- Subscriptions
+- Complex coupon logic
+- Multi-currency
+- Payment gateways other than Stripe and PayPal
+- Blocks-specific checkout flows
+
+## REST API Tools — Free & Pro
+
+### How does it work?
+
+REST API Tools operates exclusively within REST API and embedded contexts. It does not interfere with core WordPress or plugin functionality in the admin interface.
+
+If certain plugins require public REST API access, you can configure bypass rules.
+
+> **Alpha version** 
+> This plugin is under active development. Architectural changes may still occur.
+> It is publicly available for testing and feedback. Stability is not yet guaranteed.
+
+## REST API Tools — Free - Screenshots
 
 <table>
   <tr>
     <td align="center" width="50%">
-      <img src="docs/wordpress-rest-api-firewall-tab.webp" alt="Firewall Tab" />
-      <br /><strong>Firewall</strong><br />
-      <sub>Authentication, rate limiting, IP filtering</sub>
+      <img src="docs/wordpress-rest-api-tools-auth-rate-limit-tab.webp" alt="Authentication and Rate Limit Tab" />
+      <br /><strong>Authentication and Rate Limiting</strong><br />
     </td>
-    <td align="center" width="50%">
-      <img src="docs/wordpress-rest-api-firewall-schemas-tab.webp" alt="Schemas Tab" />
-      <br /><strong>Schemas</strong><br />
-      <sub>Response filtering and data embedding</sub>
+     <td align="center" width="50%">
+      <img src="docs/wordpress-rest-api-tools-routes-tab.webp" alt="Routes Management" />
+      <br /><strong>Routes Tab</strong><br />
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="docs/wordpress-rest-api-firewall-webhook-tab.webp" alt="Webhook Tab" />
-      <br /><strong>Webhook</strong><br />
-      <sub>Notify external apps on content changes</sub>
+      <img src="docs/wordpress-rest-api-tools-ip-filters-tab.webp" alt="IPs Blacklist Tab" />
+      <br /><strong>IPs Blacklist</strong><br />
     </td>
     <td align="center" width="50%">
-      <img src="docs/wordpress-rest-api-firewall-theme-tab.webp" alt="Theme Tab" />
-      <br /><strong>Theme</strong><br />
-      <sub>Headless theme deployment and options</sub>
+      <img src="docs/wordpress-rest-api-tools-properties-tab.webp" alt="Properties Tab" />
+      <br /><strong>Properties Tab</strong><br />
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="docs/wordpress-rest-api-firewall-ip-filter-management-tab.webp" alt="IP Filter Management" />
-      <br /><strong>IPs Data</strong><br />
-      <sub>Manage blocked IPs, block IPs by CIDR and Country (pro version)</sub>
+      <img src="docs/wordpress-rest-api-tools-routes-tab.webp" alt="Routes Management" />
+      <br /><strong>Routes Tab</strong><br />
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/wordpress-rest-api-tools-settings-route-tab.webp" alt="Settings Route" />
+      <br /><strong>Settings Route Tab</strong><br />
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/wordpress-rest-api-tools-webook-tab.webp" alt="Webhook Tab" />
+      <br /><strong>Webhook Tab</strong><br />
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/wordpress-rest-api-tools-smtp-tab.webp" alt="Emails Tab" />
+      <br /><strong>Emails Tab (under development)</strong><br />
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/wordpress-rest-api-tools-theme-tab.webp" alt="Theme Tab" />
+      <br /><strong>Theme Tab</strong><br />
     </td>
   </tr>
 </table>
@@ -51,14 +210,16 @@ It integrates seamlessly with external applications built with Next.js, React, V
 
 ## Installation
 
-### 1. Download or clone this repository into your `wp-content/plugins/` directory:
+### 1. Download or clone this repository into your `wp-content/plugins/` directory
+
 ```bash
 cd wp-content/plugins/
 git clone https://github.com/AfterglowWeb/wordpress-rest-api-firewall.git rest-api-firewall
 ```
+
 ### 2. Install the dependencies and build
 
-Navigate to `wp-content/plugins/rest-api-firewall` directory:
+Navigate to the `wp-content/plugins/rest-api-firewall` directory:
 
 ```bash
 cd wp-content/plugins/rest-api-firewall
@@ -71,13 +232,15 @@ composer install
 composer build
 ```
 
-Install the Javascript dependencies and build:
+Install the JavaScript dependencies and build:
 
 ```bash
 npm install
 npm run build
 ```
+
 or
+
 ```bash
 yarn
 yarn build
@@ -85,69 +248,39 @@ yarn build
 
 ### 3. Activate the plugin through the WordPress admin
 
-### 4. Optional, install the headless theme  bundled with the plugin. 
-Navigate to the `Theme Options` tab in the **REST API Firewall** admin page and hit the Deploy button.
+### 4. Optional: install the headless theme bundled with the plugin
 
-## Free Features
+Navigate to the **REST API Tools** admin page, open the `Theme Options` tab, and click **Deploy**.
 
-- **Global Authentication** - Enforce WordPress application password authentication on all REST routes
-- **Disable users endpoints** - Hide your users details
-- **Global Rate Limiting** - Protect against abuse with configurable request limits
-- **Auto-Blacklist IPs** - Automatically block IPs that exceed rate limits *(under development)*
-- **Routes Explorer** - Visualize all REST API routes and understand what WordPress each plugin exposes
-- **Headless Theme** - Deploy a theme to disable frontend rendering entirely with additional options:
-  - Redirect all templates to a page or custom URL
-  - Disable Gutenberg site-wide
-  - Disable comments site-wide
-  - Enable WebP and SVG support
-  - Limit upload file sizes
+## Roadmap — Free Features
 
-## REST API Firewall Pro
-
-### Security & Access Control
-- **IP Filtering** - Whitelist and blacklist with CIDR support
-- **Domain Stripping** - Remove all WordPress domain references from API output
-- **Uploads Dir Stripping** - Make your media relative. Remove upload dir part from media urls
-- **Geo IP Blocking** - Automatically block or allow requests by country *(under development)*
-- **Per-Route Control** - Fine-grained authentication, rate limiting, and disabling per endpoint
-- **Cascade Rules** - Apply settings to child routes automatically
-- **Post Type Control** - Expose only selected post types via REST API
-
-### Multi-Site & Multi-App
-- **Multiple Applications** - Manage separate API users and webhooks for different frontends *(under development)*
-- **WordPress Multisite** - Native support for network installations
-- **Team Dashboards** - Separate admin interfaces for large teams *(under development)*
-
-### Monitoring *(under development)*
-- **Activity Logs** - Monitor and export network activity
-- **Server Metrics** - Track capacity and performance
-- **Notifications** - Alerts via email and webhooks
-
-### Advanced Options *(under development)*
-- **Field Mapping** - Remap post fields to custom keys for cleaner API responses
-- **Domain Stripping** - Remove all WordPress domain references from API output
-
-## Roadmap Free Features
+Current; 0.1.0-alpha.17
 
 | Version | Milestone |
 |---------|-----------|
 | 1.0.0 | Stable release |
-| 0.1.0-beta.1 | Documentation |
-| 0.1.0-alpha.3 | Linting and testing (PHPUnit, Jest) |
-| 0.1.0-alpha.2 | Progressive migration from JavaScript to TypeScript |
+| 0.1.0-beta.1x | Documentation |
+| 0.1.0-alpha.3x | Linting and testing (PHPUnit, Jest) |
+| 0.1.0-alpha.2x | Migration from JavaScript to TypeScript |
 
-### Upcoming in 0.1.0-alpha.1
-- UI: Wording and layout improvements
-- Auto-blacklist IPs on rate limit
-- Automation on Webhook
-- UI: Schemas filtering result preview, submit buttons rationalization
+### Upcoming in 0.1.0-alpha.18
+- Email notification editor
 
 ## Changelog
 
+### 0.1.0-alpha.17
+- UI: layout refactorization
+- Single source of truth for options
+- Free / Pro procedure articulation
+- Auto‑blacklist IPs on rate limit
+- IPs table management
+- Webhook automation on WordPress Events
+
 ### 0.1.0-alpha.1
+
 - Initial release
-- Fork from Blank, Wordpress Headless Theme repo: 
-- Major refactoring to plugin architecture
+- Fork from the Blank WordPress Headless Theme repo
+- Major refactoring to a plugin architecture
 
 ## Contributing
 

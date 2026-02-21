@@ -28,6 +28,7 @@ export default function IpBlackList() {
 	const { adminData } = useAdminData();
 	const { __ } = wp.i18n || {};
 	const [ loading, setLoading ] = useState( true );
+	const [ errorMessage, setErrorMessage ] = useState( '' );
 	const [ settings, setSettings ] = useState( {
 		enabled: false,
 		mode: 'blacklist',
@@ -71,7 +72,9 @@ export default function IpBlackList() {
 				} );
 			}
 		} catch ( error ) {
-			console.error( 'Error loading IP filter settings:', error );
+			setErrorMessage(
+				'Error loading IP filter settings:' + JSON.stringify( error )
+			);
 		} finally {
 			setLoading( false );
 		}
@@ -97,7 +100,9 @@ export default function IpBlackList() {
 					} ),
 				} );
 			} catch ( error ) {
-				console.error( 'Error saving IP filter:', error );
+				setErrorMessage(
+					'Error saving IP filter:' + JSON.stringify( error )
+				);
 			}
 		},
 		[ adminData ]
@@ -173,12 +178,16 @@ export default function IpBlackList() {
 					sx={ { mb: 2 } }
 				>
 					{ __(
-						'Buy a licence for advanced IP management: White List, Block by CIDR, Block by Country, Bulk Delete, Set Retention Time, Export and More...',
+						'Buy a licence for advanced IP management: White List, Block by CIDR, Block by Country, Bulk Delete, Set Retention Time, Export and More…',
 						'rest-api-firewall'
 					) }
 				</Alert>
 			) }
-			<Stack direction={ { xs: 'column', sm: 'row' } } justifyContent="space-between" spacing={ 3 }>
+			<Stack
+				direction={ { xs: 'column', sm: 'row' } }
+				justifyContent="space-between"
+				spacing={ 3 }
+			>
 				<FormControl sx={ { flex: 1 } }>
 					<FormControlLabel
 						control={
@@ -255,11 +264,7 @@ export default function IpBlackList() {
 					label={ __( 'By Country', 'rest-api-firewall' ) }
 				/>
 			</Tabs>
-			{ currentTab === 0 && (
-				<IpDataGrid
-					listType={ activeListKey }
-				/>
-			) }
+			{ currentTab === 0 && <IpDataGrid listType={ activeListKey } /> }
 
 			{ currentTab === 1 && (
 				<CountryBlockList
@@ -267,7 +272,6 @@ export default function IpBlackList() {
 					freeEntries={ activeList }
 				/>
 			) }
-
 		</Stack>
 	);
 }

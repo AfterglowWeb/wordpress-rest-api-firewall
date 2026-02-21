@@ -231,9 +231,6 @@ export default function CountryBlockList( {
 					const isBlocked = selectedCountries.includes(
 						country.country_code
 					);
-					const wasBlocked = blockedCountries.includes(
-						country.country_code
-					);
 
 					return (
 						<Grid

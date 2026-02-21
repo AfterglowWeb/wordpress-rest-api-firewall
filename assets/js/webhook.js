@@ -15,11 +15,13 @@ window.restApiFirewallTriggerWebhook = function () {
 		function ( response ) {
 			if ( response.success && response.data ) {
 				const data = JSON.parse( response.data );
-				const d = data.timestamp ? new Date(data.timestamp).toLocaleDateString() : '';
-				const t = data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : '';
-				alert(
-					`Success\n${ data.message }\n${ d } @ ${t}`
-				);
+				const d = data.timestamp
+					? new Date( data.timestamp ).toLocaleDateString()
+					: '';
+				const t = data.timestamp
+					? new Date( data.timestamp ).toLocaleTimeString()
+					: '';
+				alert( `Success\n${ data.message }\n${ d } @ ${ t }` );
 			} else {
 				alert(
 					'Error: ' +
