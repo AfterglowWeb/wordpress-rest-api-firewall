@@ -10,12 +10,7 @@ import Typography from '@mui/material/Typography';
 
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
-export default function RestApiUser( {
-	form,
-	setField,
-	users,
-	restApiUser,
-} ) {
+export default function RestApiUser( { form, setField, users, restApiUser } ) {
 	const { __, sprintf } = wp.i18n || {};
 	const { adminData } = useAdminData();
 

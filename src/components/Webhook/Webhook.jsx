@@ -1,6 +1,5 @@
 import { useState } from '@wordpress/element';
 import Stack from '@mui/material/Stack';
-import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import WordpressEvents from './WordpressEvents';
 import WebhookAuth from './WebhookAuth';

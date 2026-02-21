@@ -15,13 +15,12 @@ export default function AllowedTypes( { form, setField } ) {
 	const { adminData } = useAdminData();
 
 	return (
-		<Stack spacing={ 3 } >
-
+		<Stack spacing={ 3 }>
 			<Stack
 				sx={ { position: 'relative' } }
 				spacing={ 3 }
 				direction={ 'row' }
-				maxWidth={600}
+				maxWidth={ 600 }
 				justifyContent={ 'space-between' }
 				alignItems={ 'flex-start' }
 			>
@@ -35,9 +34,10 @@ export default function AllowedTypes( { form, setField } ) {
 								'rest-api-firewall'
 							) }
 							value={ form.rest_collections_allowed_post_types }
-							helperText={
-								__( 'Only the selected post types will be exposed via the REST API. Leave empty to use default visibility settings.', 'rest-api-firewall' )
-							}
+							helperText={ __(
+								'Only the selected post types will be exposed via the REST API. Leave empty to use default visibility settings.',
+								'rest-api-firewall'
+							) }
 							options={ adminData.post_types }
 							onChange={ setField }
 						/>
@@ -60,8 +60,6 @@ export default function AllowedTypes( { form, setField } ) {
 					/>
 				</FormControl>
 			</Stack>
-
-
 		</Stack>
 	);
 }

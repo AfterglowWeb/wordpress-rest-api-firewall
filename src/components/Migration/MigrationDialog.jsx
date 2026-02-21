@@ -14,15 +14,14 @@ import Stack from '@mui/material/Stack';
 
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import RocketLaunchOutlinedIcon from '@mui/icons-material/RocketLaunchOutlined';
 
 export default function MigrationDialog( { open, onClose, onDone } ) {
 	const { adminData } = useAdminData();
 	const { __ } = wp.i18n || {};
 
-	const [ title, setTitle ]         = useState( '' );
+	const [ title, setTitle ] = useState( '' );
 	const [ migrating, setMigrating ] = useState( false );
-	const [ result, setResult ]       = useState( null ); // null | { success: bool, message: string }
+	const [ result, setResult ] = useState( null ); // null | { success: bool, message: string }
 
 	// Reset form state each time the dialog opens.
 	useEffect( () => {
@@ -50,12 +49,13 @@ export default function MigrationDialog( { open, onClose, onDone } ) {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+					'Content-Type':
+						'application/x-www-form-urlencoded; charset=UTF-8',
 				},
 				body: new URLSearchParams( {
 					action: 'rest_api_firewall_pro_migrate',
-					nonce:  adminData.nonce,
-					title:  title.trim(),
+					nonce: adminData.nonce,
+					title: title.trim(),
 				} ),
 			} );
 
@@ -63,16 +63,18 @@ export default function MigrationDialog( { open, onClose, onDone } ) {
 
 			setResult( {
 				success: !! data.success,
-				message: data.data?.message
-					|| ( data.success
+				message:
+					data.data?.message ||
+					( data.success
 						? __( 'Migration completed!', 'rest-api-firewall' )
-						: __( 'Migration failed.', 'rest-api-firewall' )
-					),
+						: __( 'Migration failed.', 'rest-api-firewall' ) ),
 			} );
 		} catch ( err ) {
 			setResult( {
 				success: false,
-				message: err.message || __( 'An unexpected error occurred.', 'rest-api-firewall' ),
+				message:
+					err.message ||
+					__( 'An unexpected error occurred.', 'rest-api-firewall' ),
 			} );
 		} finally {
 			setMigrating( false );
@@ -98,37 +100,51 @@ export default function MigrationDialog( { open, onClose, onDone } ) {
 			fullWidth
 			disableEscapeKeyDown={ migrating }
 		>
-			<DialogTitle sx={ { display: 'flex', alignItems: 'center', gap: 1.5 } }>
-				{ __( 'REST API Toolkit Pro, Import Existing Settings', 'rest-api-firewall' ) }
+			<DialogTitle
+				sx={ { display: 'flex', alignItems: 'center', gap: 1.5 } }
+			>
+				{ __(
+					'REST API Toolkit Pro, Import Existing Settings',
+					'rest-api-firewall'
+				) }
 			</DialogTitle>
 
 			<DialogContent>
 				<Stack spacing={ 3 } pt={ 1 }>
-
 					{ /* Step 1 – no result yet */ }
 					{ ! result && (
 						<Stack spacing={ 3 }>
-							<Typography component="p" variant="body2" color="text.secondary">
+							<Typography
+								component="p"
+								variant="body2"
+								color="text.secondary"
+							>
 								{ __(
 									'Your existing free plugin settings will be imported into a new Pro application.',
 									'rest-api-firewall'
-								) }<br />
-                                { __(
+								) }
+								<br />
+								{ __(
 									'Give it a name so you can identify it later.',
 									'rest-api-firewall'
 								) }
 							</Typography>
 
-
 							<TextField
-								label={ __( 'Application Title', 'rest-api-firewall' ) }
+								label={ __(
+									'Application Title',
+									'rest-api-firewall'
+								) }
 								value={ title }
 								onChange={ ( e ) => setTitle( e.target.value ) }
 								onKeyDown={ handleKeyDown }
 								disabled={ migrating }
 								fullWidth
 								autoFocus
-								placeholder={ __( 'e.g. My Website', 'rest-api-firewall' ) }
+								placeholder={ __(
+									'e.g. My Website',
+									'rest-api-firewall'
+								) }
 								size="small"
 							/>
 						</Stack>
@@ -138,7 +154,10 @@ export default function MigrationDialog( { open, onClose, onDone } ) {
 					{ migrating && (
 						<Stack spacing={ 1 }>
 							<Typography variant="body2" color="text.secondary">
-								{ __( 'Migrating your settings…', 'rest-api-firewall' ) }
+								{ __(
+									'Migrating your settings…',
+									'rest-api-firewall'
+								) }
 							</Typography>
 							<LinearProgress />
 						</Stack>
@@ -149,15 +168,16 @@ export default function MigrationDialog( { open, onClose, onDone } ) {
 						<Alert
 							severity={ result.success ? 'success' : 'error' }
 							icon={
-								result.success
-									? <CheckCircleOutlineIcon fontSize="inherit" />
-									: <ErrorOutlineIcon fontSize="inherit" />
+								result.success ? (
+									<CheckCircleOutlineIcon fontSize="inherit" />
+								) : (
+									<ErrorOutlineIcon fontSize="inherit" />
+								)
 							}
 						>
 							{ result.message }
 						</Alert>
 					) }
-
 				</Stack>
 			</DialogContent>
 
@@ -193,10 +213,7 @@ export default function MigrationDialog( { open, onClose, onDone } ) {
 				) }
 
 				{ result && ! result.success && (
-					<Button
-						variant="outlined"
-						onClick={ handleRetry }
-					>
+					<Button variant="outlined" onClick={ handleRetry }>
 						{ __( 'Try Again', 'rest-api-firewall' ) }
 					</Button>
 				) }

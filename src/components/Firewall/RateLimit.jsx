@@ -42,8 +42,6 @@ export default function RateLimit( { form, setField } ) {
 					fullWidth
 					sx={ { flex: 1, maxWidth: 270 } }
 				/>
-
-				
 			</Stack>
 
 			<Stack direction={ { xs: 'column', lg: 'row' } } gap={ 2 }>
