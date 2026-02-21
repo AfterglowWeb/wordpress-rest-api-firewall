@@ -29,10 +29,8 @@ export default function MultipleSelect( {
 	const safeValue = Array.isArray( value ) ? value : [];
 
 	return (
-		<FormControl  sx={{sx}} disabled={ disabled }>
-			<InputLabel id={ `${ name }-label` }>
-				{ label }
-			</InputLabel>
+		<FormControl sx={ { sx } } disabled={ disabled }>
+			<InputLabel id={ `${ name }-label` }>{ label }</InputLabel>
 			<Select
 				labelId={ `${ name }-label` }
 				id={ name }
@@ -70,11 +68,7 @@ export default function MultipleSelect( {
 					) : null
 				) }
 			</Select>
-			{ helperText && (
-				<FormHelperText>
-					{ helperText }
-				</FormHelperText>
-			) }
+			{ helperText && <FormHelperText>{ helperText }</FormHelperText> }
 		</FormControl>
 	);
 }

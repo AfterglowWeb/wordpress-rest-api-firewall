@@ -25,12 +25,17 @@ export default function WebhookAuthCustom( {
 					},
 				} }
 				onChange={ ( e ) => setCustomSecret( e.target.value ) }
-				helperText={ __(
+				helperText={
 					hasSecret
-						? 'Webhook secret set. To change it, hit the revoke button first.'
-						: 'Provide your own secret for webhook requests.',
-					'rest-api-firewall'
-				) }
+						? __(
+								'Webhook secret set. To change it, hit the revoke button first.',
+								'rest-api-firewall'
+						  )
+						: __(
+								'Provide your own secret for webhook requests.',
+								'rest-api-firewall'
+						  )
+				}
 				fullWidth
 			/>
 		</Stack>

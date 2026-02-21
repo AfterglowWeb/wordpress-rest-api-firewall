@@ -1,0 +1,2325 @@
+# Copyright (C) 2026 Cédric Moris Kelly
+# This file is distributed under the GNU General Public License v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Headless Toolkit 0.1.0-alpha.7\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/rest-api-firewall\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-02-21T19:54:03+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.10.0\n"
+"X-Domain: rest-api-firewall\n"
+
+#. Plugin Name of the plugin
+#: rest-api-firewall.php
+#: inc/Admin/AdminPage.php:37
+#: inc/Admin/AdminPage.php:38
+msgid "Headless Toolkit"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: rest-api-firewall.php
+msgid "https://www.abc-plugins.com/wordpress-rest-api-firewall"
+msgstr ""
+
+#. Description of the plugin
+#: rest-api-firewall.php
+msgid "Secure REST API endpoints through authentication, rate limiting and much more. Set application Webhook with authentication to trigger external front-end application routines."
+msgstr ""
+
+#. Author of the plugin
+#: rest-api-firewall.php
+msgid "Cédric Moris Kelly"
+msgstr ""
+
+#. Author URI of the plugin
+#: rest-api-firewall.php
+msgid "https://www.moriskelly.com"
+msgstr ""
+
+#: inc/Admin/Documentation.php:48
+msgid "Presentation"
+msgstr ""
+
+#: inc/Admin/Documentation.php:53
+msgid "Getting Started"
+msgstr ""
+
+#: inc/Admin/Documentation.php:58
+msgid "Hooks"
+msgstr ""
+
+#: inc/Core/CoreOptionsService.php:43
+#: inc/Core/DeployTheme.php:223
+#: inc/Webhook/WebhookService.php:316
+#: inc/Webhook/WebhookService.php:360
+#: inc/Webhook/WebhookService.php:466
+#: inc/Webhook/WebhookService.php:482
+#: inc/Webhook/WebhookService.php:505
+#: inc/Webhook/WebhookService.php:546
+msgid "Unauthorized"
+msgstr ""
+
+#: inc/Core/CoreOptionsService.php:51
+msgid "Invalid options data"
+msgstr ""
+
+#: inc/Core/CoreOptionsService.php:61
+msgid "Options saved"
+msgstr ""
+
+#: inc/Core/CoreOptionsService.php:84
+#: inc/Core/CoreOptionsService.php:91
+msgid "Invalid option data"
+msgstr ""
+
+#: inc/Core/CoreOptionsService.php:101
+msgid "Option saved"
+msgstr ""
+
+#: inc/Core/DeployTheme.php:110
+msgid "Validating source files"
+msgstr ""
+
+#: inc/Core/DeployTheme.php:117
+msgid "Source theme directory not found in plugin."
+msgstr ""
+
+#: inc/Core/DeployTheme.php:125
+msgid "Creating theme directory"
+msgstr ""
+
+#: inc/Core/DeployTheme.php:133
+msgid "Failed to create theme directory."
+msgstr ""
+
+#: inc/Core/DeployTheme.php:142
+msgid "Copying theme files"
+msgstr ""
+
+#. translators: %d is the number of files
+#: inc/Core/DeployTheme.php:160
+msgid "Copied %d files successfully."
+msgstr ""
+
+#: inc/Core/DeployTheme.php:166
+msgid "Verifying deployment"
+msgstr ""
+
+#: inc/Core/DeployTheme.php:173
+msgid "Deployment verification failed."
+msgstr ""
+
+#: inc/Core/DeployTheme.php:178
+msgid "Theme deployed successfully."
+msgstr ""
+
+#: inc/Core/DeployTheme.php:190
+msgid "Theme is not deployed. Please deploy first."
+msgstr ""
+
+#: inc/Core/DeployTheme.php:197
+msgid "Theme is already active."
+msgstr ""
+
+#: inc/Core/DeployTheme.php:208
+msgid "Failed to activate theme."
+msgstr ""
+
+#: inc/Core/DeployTheme.php:214
+msgid "Theme activated successfully."
+msgstr ""
+
+#: inc/Core/DeployTheme.php:287
+msgid "Invalid action"
+msgstr ""
+
+#: inc/Core/FileUtils.php:173
+msgid "WordPress filesystem not available."
+msgstr ""
+
+#: inc/Core/FileUtils.php:181
+msgid "Could not read source directory."
+msgstr ""
+
+#. translators: %s is the directory target path
+#: inc/Core/FileUtils.php:195
+msgid "Failed to create directory: %s"
+msgstr ""
+
+#. translators: %s is the file path
+#: inc/Core/FileUtils.php:219
+msgid "Failed to read file: %s"
+msgstr ""
+
+#. translators: %s is the file path
+#: inc/Core/FileUtils.php:230
+msgid "Failed to write file: %s"
+msgstr ""
+
+#: inc/Firewall/Firewall.php:74
+msgid "Authentication required."
+msgstr ""
+
+#: inc/Firewall/Firewall.php:98
+#: inc/Firewall/Firewall.php:131
+msgid "Your IP has been temporarily blocked due to repeated violations."
+msgstr ""
+
+#: inc/Firewall/Firewall.php:115
+#: inc/Firewall/Firewall.php:140
+msgid "Too many requests. Please wait before trying again."
+msgstr ""
+
+#: inc/Firewall/IpBlackList.php:263
+msgid "Your IP address has been temporarily blocked due to excessive requests."
+msgstr ""
+
+#: inc/Firewall/IpBlackList.php:283
+msgid "Your IP address has been blocked."
+msgstr ""
+
+#: inc/Firewall/IpBlackList.php:479
+#: src/components/Firewall/IpDataGrid.jsx:228
+msgid "Invalid IP address"
+msgstr ""
+
+#: inc/Firewall/IpBlackList.php:488
+msgid "IP already in list"
+msgstr ""
+
+#: inc/Firewall/IpBlackList.php:517
+msgid "Entry ID required"
+msgstr ""
+
+#: inc/Firewall/IpBlackList.php:537
+msgid "Entry not found"
+msgstr ""
+
+#: inc/Firewall/UsersRouteHider.php:40
+msgid "User routes are not available."
+msgstr ""
+
+#: inc/Policy/PolicyRepository.php:61
+#: inc/Policy/PolicyRepository.php:73
+msgid "Bad request error"
+msgstr ""
+
+#: inc/Policy/PolicyRepository.php:85
+msgid "Failed to save policy"
+msgstr ""
+
+#: inc/Policy/PolicyRepository.php:93
+msgid "Policy saved successfully"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:30
+msgid "Post saved"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:31
+msgid "Triggered when a post is created or updated"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:37
+msgid "Post deleted"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:38
+msgid "Triggered before a post is permanently deleted"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:44
+msgid "Post trashed"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:45
+msgid "Triggered when a post is moved to trash"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:51
+msgid "Post restored"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:52
+msgid "Triggered when a post is restored from trash"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:59
+msgid "Attachment added"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:60
+msgid "Triggered when a new attachment is uploaded"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:66
+msgid "Attachment edited"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:67
+msgid "Triggered when an attachment is modified"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:73
+msgid "Attachment deleted"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:74
+msgid "Triggered when an attachment is deleted"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:81
+msgid "Term created"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:82
+msgid "Triggered when a new term is created"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:88
+msgid "Term edited"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:89
+msgid "Triggered when a term is modified"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:95
+msgid "Term deleted"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:96
+msgid "Triggered when a term is deleted"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:108
+msgid "Posts"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:109
+msgid "Attachments"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:110
+msgid "Terms"
+msgstr ""
+
+#: inc/Webhook/WebhookAutoTrigger.php:303
+#: inc/Webhook/WebhookService.php:337
+#: inc/Webhook/WebhookService.php:402
+msgid "No webhook endpoint configured."
+msgstr ""
+
+#: inc/Webhook/WebhookClient.php:29
+#: inc/Webhook/WebhookClient.php:106
+msgid "Webhook not configured"
+msgstr ""
+
+#: inc/Webhook/WebhookClient.php:36
+msgid "Webhook endpoint not configured"
+msgstr ""
+
+#: inc/Webhook/WebhookService.php:205
+msgid "Primary Webhook"
+msgstr ""
+
+#: inc/Webhook/WebhookService.php:372
+msgid "No event selected."
+msgstr ""
+
+#: inc/Webhook/WebhookService.php:383
+msgid "Invalid event."
+msgstr ""
+
+#: inc/Webhook/WebhookService.php:493
+msgid "Copy this secret now. You will not be able to view it again."
+msgstr ""
+
+#: inc/Webhook/WebhookService.php:512
+msgid "Missing data."
+msgstr ""
+
+#: inc/Webhook/WebhookService.php:522
+msgid "Missing value."
+msgstr ""
+
+#: inc/Webhook/WebhookService.php:534
+msgid "Your secret has been saved."
+msgstr ""
+
+#: inc/Webhook/WebhookService.php:558
+msgid "Webhook secret deleted."
+msgstr ""
+
+#: inc/Webhook/WebhookService.php:565
+msgid "Webhook secret does not exists."
+msgstr ""
+
+#: inc/Webhook/WebhookService.php:573
+msgid "An error occured while deleting Webhook secret."
+msgstr ""
+
+#: inc/Webhook/WebhookService.php:599
+msgid "Trigger Webhook?"
+msgstr ""
+
+#: inc/Webhook/WebhookService.php:608
+#: inc/Webhook/WebhookService.php:611
+msgid "Trigger Webhook"
+msgstr ""
+
+#: rest-api-firewall.php:41
+msgid "Headless Toolkit encountered an error and could not be activated."
+msgstr ""
+
+#. translators: %s is the WordPress version
+#: rest-api-firewall.php:75
+msgid "Headless Toolkit requires WordPress version %s."
+msgstr ""
+
+#. translators: %s is the PHP version
+#: rest-api-firewall.php:82
+msgid "Headless Toolkit requires PHP version %s."
+msgstr ""
+
+#: rest-api-firewall.php:109
+msgid "Settings"
+msgstr ""
+
+#. translators: %s is the plugin name
+#: theme/functions.php:34
+msgid "<strong>REST API Firewall Theme</strong> requires the <strong>%s</strong> plugin to be installed and activated."
+msgstr ""
+
+#. translators: %s is a singular name
+#: theme/inc/CustomPosts.php:127
+msgid "Add %s"
+msgstr ""
+
+#. translators: %s is a singular name
+#: theme/inc/CustomPosts.php:129
+#: theme/inc/CustomPosts.php:205
+#: theme/inc/CustomPosts.php:207
+msgid "Add New %s"
+msgstr ""
+
+#. translators: %s is a singular name
+#: theme/inc/CustomPosts.php:131
+#: theme/inc/CustomPosts.php:211
+msgid "Edit %s"
+msgstr ""
+
+#. translators: %s is a singular name
+#: theme/inc/CustomPosts.php:133
+#: theme/inc/CustomPosts.php:209
+msgid "New %s"
+msgstr ""
+
+#. translators: %s is a singular name
+#: theme/inc/CustomPosts.php:135
+#: theme/inc/CustomPosts.php:213
+msgid "View %s"
+msgstr ""
+
+#. translators: %s is a plural name
+#: theme/inc/CustomPosts.php:137
+#: theme/inc/CustomPosts.php:217
+msgid "Search %s"
+msgstr ""
+
+#. translators: %s is a singular name
+#: theme/inc/CustomPosts.php:139
+msgid "No %s found"
+msgstr ""
+
+#. translators: %s is a singular name
+#: theme/inc/CustomPosts.php:141
+msgid "No %s found in trash"
+msgstr ""
+
+#. translators: %s is a singular name
+#: theme/inc/CustomPosts.php:199
+msgid "Parent %s"
+msgstr ""
+
+#. translators: %s is a singular name
+#: theme/inc/CustomPosts.php:201
+msgid "Parent %s:"
+msgstr ""
+
+#. translators: %s is a singular name
+#: theme/inc/CustomPosts.php:203
+msgid "Update %s"
+msgstr ""
+
+#. translators: %s is a plural name
+#: theme/inc/CustomPosts.php:215
+msgid "%s list"
+msgstr ""
+
+#. translators: %d is the image weight in ko
+#: theme/inc/ImageFiles.php:57
+msgid "The maximum allowed images weight is %d Ko. Try converting to .webp format to reduce it."
+msgstr ""
+
+#: theme/inc/RedirectTemplates.php:24
+msgid "Front Page"
+msgstr ""
+
+#: theme/inc/RedirectTemplates.php:25
+msgid "Blog Page"
+msgstr ""
+
+#: theme/inc/RedirectTemplates.php:26
+msgid "Login Page"
+msgstr ""
+
+#: theme/inc/SortablePosts.php:154
+msgid "Drag to reorder"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ConfirmDialog.jsx:90
+#: src/components/Webhook/WebhookTest.jsx:141
+msgid "Success"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ConfirmDialog.jsx:92
+#: src/components/Webhook/WebhookTest.jsx:142
+#: src/hooks/useSaveOptions.js:83
+#: src/hooks/useSaveOptions.js:94
+msgid "Error"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ConfirmDialog.jsx:94
+msgid "Information"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ConfirmDialog.jsx:96
+msgid "Please wait…"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ConfirmDialog.jsx:98
+#: src/components/ConfirmDialog.jsx:169
+#: src/components/Webhook/WebhookAuth.jsx:468
+msgid "Confirm"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ConfirmDialog.jsx:149
+#: src/components/Theme/DeployTheme.jsx:717
+#: src/components/Theme/DeployTheme.jsx:793
+msgid "OK"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ConfirmDialog.jsx:162
+#: src/components/License/License.jsx:471
+#: src/components/Migration/MigrationDialog.jsx:191
+#: src/components/Theme/DeployTheme.jsx:743
+#: src/components/Webhook/WebhookAuth.jsx:464
+msgid "Cancel"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Migration/MigrationDialog.jsx:69
+msgid "Migration completed!"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Migration/MigrationDialog.jsx:70
+msgid "Migration failed."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Migration/MigrationDialog.jsx:77
+msgid "An unexpected error occurred."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Migration/MigrationDialog.jsx:106
+msgid "REST API Toolkit Pro, Import Existing Settings"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Migration/MigrationDialog.jsx:122
+msgid "Your existing free plugin settings will be imported into a new Pro application."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Migration/MigrationDialog.jsx:127
+msgid "Give it a name so you can identify it later."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Migration/MigrationDialog.jsx:134
+msgid "Application Title"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Migration/MigrationDialog.jsx:144
+msgid "e.g. My Website"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Migration/MigrationDialog.jsx:157
+msgid "Migrating your settings…"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Migration/MigrationDialog.jsx:201
+msgid "Start Migration"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Migration/MigrationDialog.jsx:211
+msgid "Done"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Migration/MigrationDialog.jsx:217
+msgid "Try Again"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/TestPolicy.jsx:117
+msgid "Authentication"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpDataGrid.jsx:114
+#: src/components/Firewall/TestPolicy.jsx:119
+msgid "Rate Limit"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/TestPolicy.jsx:121
+#: src/components/Firewall/TestPolicy.jsx:162
+msgid "Disabled"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/TestPolicy.jsx:274
+#: src/components/Webhook/WebhookTest.jsx:122
+msgid "Test"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/TestPolicy.jsx:285
+msgid "Test Policy"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/TestPolicy.jsx:295
+msgid "Route"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/TestPolicy.jsx:328
+msgid "Test Options"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/TestPolicy.jsx:345
+msgid "Include sub-routes"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/TestPolicy.jsx:362
+msgid "Test authentication"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/TestPolicy.jsx:378
+msgid "Test rate limiting"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/TestPolicy.jsx:394
+msgid "Test disabled state"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/TestPolicy.jsx:198
+msgid "Results"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/TestPolicy.jsx:240
+msgid "Policy:"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/TestPolicy.jsx:161
+msgid "Enabled"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/TestPolicy.jsx:171
+msgid "Protected"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/TestPolicy.jsx:172
+msgid "Public"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/TestPolicy.jsx:250
+msgid "Tests:"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/TestPolicy.jsx:410
+msgid "Close"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/TestPolicy.jsx:92
+msgid "Test failed"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/TestPolicy.jsx:97
+msgid "Network error"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/CopyButton.jsx:39
+msgid "Copied to clipboard"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RoutesTree.jsx:328
+msgid "Authentication enforced globally"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RoutesTree.jsx:334
+msgid "Enable authentication for this route"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RoutesTree.jsx:326
+#: src/components/Firewall/RoutesTree.jsx:374
+#: src/components/Firewall/RoutesTree.jsx:422
+#: src/components/Firewall/RoutesTree.jsx:463
+msgid "Pro version required"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RoutesTree.jsx:376
+msgid "Rate limiting enforced globally"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RoutesTree.jsx:382
+msgid "Enable rate limiting for this route"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RoutesTree.jsx:507
+msgid "Apply to children"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpDataGrid.jsx:67
+msgid "Actions"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpDataGrid.jsx:83
+msgid "IP Address"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpDataGrid.jsx:107
+msgid "Type"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpDataGrid.jsx:113
+msgid "Manual"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpDataGrid.jsx:126
+msgid "Country"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpDataGrid.jsx:132
+msgid "Blocked At"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpDataGrid.jsx:143
+msgid "Expires At"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpDataGrid.jsx:147
+msgid "Never"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpDataGrid.jsx:154
+msgid "Agent"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpDataGrid.jsx:260
+msgid "Failed to add IP"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpDataGrid.jsx:396
+msgid "Delete"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/CountryBlockList.jsx:167
+msgid "No country data available yet. IPs will be tagged with country info when blocked."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/CountryBlockList.jsx:185
+msgid "Blocked IPs by Country"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/CountryBlockList.jsx:220
+msgid "Upgrade to Pro to block entire countries"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpBlackList.jsx:166
+msgid "Loading…"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpBlackList.jsx:180
+msgid "Buy a licence for advanced IP management: White List, Block by CIDR, Block by Country, Bulk Delete, Set Retention Time, Export and More…"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpBlackList.jsx:200
+msgid "Enable IP Filtering"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpBlackList.jsx:206
+msgid "Block or allow REST API requests based on IP address"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpBlackList.jsx:218
+#: src/components/Firewall/IpBlackList.jsx:224
+msgid "Filter Mode"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpBlackList.jsx:122
+msgid "Change Filter Mode"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpBlackList.jsx:136
+#: src/hooks/useSaveOptions.js:32
+msgid "Saving"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpBlackList.jsx:137
+msgid "Updating filter mode…"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpBlackList.jsx:145
+msgid "Mode Updated"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpBlackList.jsx:228
+msgid "Blacklist"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpBlackList.jsx:232
+msgid "Whitelist"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpBlackList.jsx:238
+msgid "Block listed IPs"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpBlackList.jsx:239
+msgid "Allow only listed IPs"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpBlackList.jsx:259
+msgid "All IPs"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/IpBlackList.jsx:264
+msgid "By Country"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RateLimit.jsx:16
+msgid "Rate Limit Requests"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RateLimit.jsx:19
+msgid "Maximum requests before limiting"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RateLimit.jsx:30
+msgid "Rate Limit Window (seconds)"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RateLimit.jsx:36
+msgid "Time window for requests count"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RateLimit.jsx:49
+msgid "Rate Limit Release (seconds)"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RateLimit.jsx:55
+msgid "Wait time before limitation resets"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RateLimit.jsx:66
+msgid "Rate Limit Blacklist"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RateLimit.jsx:69
+msgid "Number of limitation periods before blacklisted"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RateLimit.jsx:80
+msgid "Blacklist Limit Window (seconds)"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RateLimit.jsx:86
+msgid "Time window for limitation periods count"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RestApiUser.jsx:28
+#: src/components/Firewall/RestApiUser.jsx:35
+msgid "REST API User"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RestApiUser.jsx:39
+msgid "Select User"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RestApiUser.jsx:57
+msgid "Restrict authentication to %s,"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RestApiUser.jsx:77
+msgid "user profile"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RestApiUser.jsx:84
+msgid "Restrict authentication to one user. Create an application password first in"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/RestApiUser.jsx:102
+msgid "users list"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:84
+#: src/components/Firewall/Firewall.jsx:120
+msgid "Global Settings"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/Firewall.jsx:133
+msgid "Enforce Authentication on All Routes"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/Firewall.jsx:150
+msgid "Enforce Rate Limiting on All Routes"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/Firewall.jsx:167
+msgid "Disable /wp/v2/users/* Routes"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:48
+#: src/components/ApiOutput/Properties.jsx:571
+#: src/components/Firewall/Firewall.jsx:178
+msgid "Licence required"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/Firewall.jsx:198
+msgid "Restrict Post Types"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/Firewall.jsx:211
+msgid "Select Post Types"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/Firewall.jsx:224
+msgid "Only the selected post types will be exposed in the REST API."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/Firewall.jsx:233
+msgid "If left empty, default visibility settings apply."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/Firewall.jsx:276
+msgid "Per-Route Settings"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Firewall/Firewall.jsx:283
+msgid "Refresh Routes"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:62
+msgid "Enable Properties Filtering"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:99
+msgid "Relative URLs"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:102
+msgid "Remove the host from post and term URLs."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:121
+msgid "Relative Attachment URLs"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:128
+msgid "Remove the host and upload path from attachment URLs."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:148
+msgid "Resolve `rendered`"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:154
+msgid "Move `rendered` value up in its parent if not protected."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:173
+msgid "Embed Featured Attachments"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:179
+msgid "Replace featured attachment IDs with your model."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:198
+msgid "Embed Terms"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:201
+msgid "Replace term IDs with your model."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:220
+msgid "Embed Author"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:223
+msgid "Replace the author ID with your model."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:242
+msgid "Remove _links property"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:248
+msgid "Remove the `_links` property from REST responses."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:267
+msgid "Remove _embed property"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:273
+msgid "Remove the `_embed` property from REST responses."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:292
+msgid "Embed Post Attachments"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:299
+msgid "Add an array of the attachments related to the post with your model."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:306
+msgid "Includes featured attachment, post content attachments and ACF fields according to their type."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:324
+msgid "Embed ACF Fields"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:327
+msgid "Enable the `acf` property on REST responses."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:347
+msgid "Remove Empty Properties"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:369
+msgid "Apply Recursively"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:392
+msgid "Per Property Settings"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:397
+#: src/components/ApiOutput/Properties.jsx:402
+msgid "Select Post Type"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:561
+msgid "details"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:642
+msgid "Disable"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:676
+msgid "context:"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Properties.jsx:682
+msgid "read-only"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/SettingsRoute.jsx:28
+msgid "Remove Site URL in wp/v2/settings"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/SettingsRoute.jsx:45
+msgid "Remove Site Email in wp/v2/settings"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/SettingsRoute.jsx:64
+msgid "Add ACF Options Pages fields to wp/v2/settings"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/SettingsRoute.jsx:73
+msgid "Custom ACF Options Pages Route"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/SettingsRoute.jsx:77
+msgid "Serve ACF options pages fields through a custom route instead of wp/v2/settings."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Collections.jsx:33
+msgid "Currently allowed post types:"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Collections.jsx:69
+msgid "Enforce Per Page Parameter"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Collections.jsx:84
+msgid "Posts Per Page"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Collections.jsx:96
+msgid "Attachments Per Page"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Collections.jsx:135
+msgid "Enable Drag-And-Drop Sorting"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Collections.jsx:141
+msgid "Add a drag-and-drop sorting column to post admin screens. Sorted posts can be queried via REST using the orderby parameter set to \"menu_order\"."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Collections.jsx:152
+msgid "Choose Post Types"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Collections.jsx:159
+msgid "Enable sorting on the selected post types."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Collections.jsx:184
+msgid "Apply Sort Order in REST Requests"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Collections.jsx:190
+msgid "Fall back to manual sort order when no orderby parameter is specified."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Collections.jsx:209
+msgid "Apply Sort Order in WordPress Queries"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/ApiOutput/Collections.jsx:215
+msgid "Fall back to manual sort order when no orderby argument is specified."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WordpressEvents.jsx:29
+msgid "Auto-trigger Events"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WordpressEvents.jsx:30
+msgid "Select WordPress events that will automatically trigger the webhook."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuthGenerated.jsx:17
+msgid "Application Webhook Secret"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuthGenerated.jsx:23
+msgid "Checking…"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuthGenerated.jsx:25
+msgid "Not generated"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuthGenerated.jsx:66
+msgid "This secret is shown only once. Copy it now and store it securely."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuthCustom.jsx:14
+msgid "Custom Webhook Secret"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:89
+msgid "Revoke Webhook Secret"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:90
+msgid "Any applications using this webhook secret will stop working. Continue?"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:127
+msgid "Regenerate Webhook Secret"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:128
+msgid "Regenerating the webhook secret will invalidate the current one. Any applications using the old secret will stop working. Continue?"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:159
+msgid "Application webhook secret generated successfully."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:247
+msgid "Webhook access"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:251
+msgid "Application URL"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:253
+msgid "Full application URL with protocol and port (e.g., https://example.local:5001)."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:263
+msgid "Application Webhook Endpoint"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:268
+msgid "The application endpoint used to trigger a webhook."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:322
+msgid "I will use my own secret"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:338
+msgid "Revoke"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:355
+msgid "Regenerate"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:356
+msgid "Generate"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:213
+msgid "Custom webhook secret saved successfully."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:224
+msgid "Failed to save custom secret."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:175
+msgid "Please provide a custom secret."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:369
+msgid "Save Custom Secret"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:388
+msgid "How to validate the secret in my application?"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:405
+msgid "The secret is used to sign webhook requests using HMAC-SHA256. Your application must validate the"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:410
+msgid "header by computing:"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:432
+msgid "The timestamp is sent in the"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookAuth.jsx:437
+msgid "header."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookTest.jsx:67
+msgid "Test Webhook"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookTest.jsx:70
+msgid "Send a test webhook request to verify your configuration."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookTest.jsx:84
+#: src/components/Webhook/WebhookTest.jsx:90
+msgid "Event"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookTest.jsx:94
+msgid "Select an event"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookTest.jsx:136
+msgid "Result"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookTest.jsx:185
+msgid "Endpoint:"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookTest.jsx:223
+msgid "Headers sent:"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookTest.jsx:269
+msgid "Payload sent:"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookTest.jsx:315
+msgid "Response:"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Webhook/WebhookTest.jsx:352
+msgid "You can edit the webhook payload by using the filter: \"rest_api_firewall_webhook_payload\""
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Emails/Smtp.jsx:20
+msgid "SMTP"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Emails/Smtp.jsx:32
+msgid "Enable SMTP"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Emails/Smtp.jsx:37
+msgid "SMTP Host"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Emails/Smtp.jsx:42
+msgid "Enter the SMTP host"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Emails/Smtp.jsx:46
+msgid "SMTP Port"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Emails/Smtp.jsx:52
+msgid "Enter the SMTP Port"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Emails/Smtp.jsx:56
+msgid "Username"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Emails/Smtp.jsx:61
+msgid "Enter the SMTP username"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Emails/Smtp.jsx:68
+msgid "Password"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Emails/Smtp.jsx:74
+msgid "Enter the SMTP password"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Emails/Smtp.jsx:81
+msgid "From Email"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Emails/Smtp.jsx:87
+msgid "Enter the default from email"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Emails/Smtp.jsx:94
+msgid "From Name"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Emails/Smtp.jsx:99
+msgid "Enter the default from name"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:288
+msgid "REST API Firewall Theme is bundled with the plugin."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:293
+msgid "You need to deploy and activate it to access theme options."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:308
+msgid "Checking theme status…"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:334
+#: src/components/Theme/DeployTheme.jsx:460
+msgid "Deployed"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:351
+#: src/components/Theme/DeployTheme.jsx:491
+msgid "Active"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:355
+#: src/components/Theme/DeployTheme.jsx:495
+msgid "Inactive"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:401
+msgid "Bundled Theme"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:431
+msgid "Manage in Themes"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:464
+msgid "Not Deployed"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:524
+msgid "Update available: Deployed version"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:541
+msgid "Current Active Theme"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:561
+msgid "Deployment Progress"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:663
+msgid "Theme Deployed Successfully"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:667
+msgid "The theme has been deployed. Would you like to activate it now?"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:678
+msgid "Later"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:688
+msgid "Activate Now"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:702
+msgid "Theme Activated"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:706
+msgid "The theme has been activated successfully. You can now configure theme options below."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:728
+msgid "Redeploy Theme"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:732
+msgid "This will overwrite the current theme files with the bundled version. Are you sure you want to continue?"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:624
+#: src/components/Theme/DeployTheme.jsx:651
+#: src/components/Theme/DeployTheme.jsx:750
+msgid "Redeploy"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:766
+msgid "Redeploy Successful"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/DeployTheme.jsx:771
+msgid "Redeploy Failed"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:53
+msgid "Redirect Templates"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:69
+msgid "Enable Redirect Templates"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:75
+msgid "Redirect theme templates to front page, blog page, login page or a custom URL"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:98
+#: src/components/Theme/ThemeSettings.jsx:149
+msgid "Custom URL"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:101
+msgid "Redirect theme templates to a custom url"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:110
+msgid "WordPress Pages"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:117
+msgid "Redirect Page"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:127
+msgid "Select a Page"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:151
+msgid "Full url with protocol and domain (https://www.example.com)"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:175
+msgid "Security"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:190
+msgid "Disable XML-RPC endpoint"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:208
+msgid "Disable theme file editor"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:223
+msgid "Content"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:236
+msgid "Disable Gutenberg"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:242
+msgid "Use WordPress legacy editor as post editor"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:262
+msgid "Remove empty p tags"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:268
+msgid "Remove empty paragraphs added by content filtering"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:288
+msgid "Remove emoji scripts"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:294
+msgid "Remove emoji scripts from front and backend"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:310
+msgid "ACF"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:325
+msgid "Sync ACF Fields to JSON"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:331
+msgid "Write JSON files in theme config directory"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:347
+msgid "Comments & Pingbacks"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:360
+msgid "Disable Comments"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:366
+msgid "Deactivate comments site wide"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:383
+msgid "Disable Pingbacks"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:389
+msgid "Deactivate pingbacks site wide"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:405
+msgid "Image Files"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:422
+msgid "Enable SVG and Webp Support"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:428
+msgid "Enable .svg and .webp image files format support"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:449
+msgid "Limit Images Weight"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:469
+msgid "Max Images Upload Weight"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Theme/ThemeSettings.jsx:502
+msgid "Limit the images weight users can upload"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/Documentation/Documentation.jsx:73
+msgid "Documentation"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:41
+msgid "License activated successfully."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:45
+msgid "License deactivated successfully."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:82
+msgid "Failed to check license status"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:90
+msgid "Error checking license status"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:124
+msgid "Failed to activate license"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:128
+msgid "Error activating license"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:99
+msgid "Please enter a license key"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:176
+#: src/components/License/License.jsx:203
+msgid "License Management"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:223
+msgid "Your license is active and valid"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:245
+msgid "License Details"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:263
+msgid "Key:"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:296
+msgid "Email:"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:326
+msgid "Expires:"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:348
+msgid "Sites:"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:367
+msgid "Features:"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:395
+#: src/components/License/License.jsx:459
+msgid "Deactivate License"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:407
+msgid "Enter your license key to activate Pro features."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:415
+msgid "License Key"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:427
+msgid "Enter your license key"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:446
+msgid "Activate"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:463
+msgid "Are you sure you want to deactivate this license? Pro features will be disabled."
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:160
+msgid "Failed to deactivate license"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:168
+msgid "Error deactivating license"
+msgstr ""
+
+#: build/544.js:1
+#: src/components/License/License.jsx:478
+msgid "Deactivate"
+msgstr ""
+
+#: build/544.js:1
+#: src/hooks/useSaveOptions.js:15
+msgid "Settings Saved"
+msgstr ""
+
+#: build/544.js:1
+#: src/hooks/useSaveOptions.js:16
+msgid "Settings saved successfully."
+msgstr ""
+
+#: build/544.js:1
+#: src/hooks/useSaveOptions.js:20
+msgid "Confirm Save"
+msgstr ""
+
+#: build/544.js:1
+#: src/hooks/useSaveOptions.js:21
+msgid "Are you sure you want to save these settings?"
+msgstr ""
+
+#: build/544.js:1
+#: src/hooks/useSaveOptions.js:33
+msgid "Saving settings…"
+msgstr ""
+
+#: build/544.js:1
+#: src/hooks/useSaveOptions.js:80
+msgid "Unknown error"
+msgstr ""
+
+#: build/544.js:1
+#: src/hooks/useSaveOptions.js:85
+msgid "Failed to save settings:"
+msgstr ""
+
+#: build/544.js:1
+#: src/hooks/useSaveOptions.js:96
+msgid "Error saving settings:"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:99
+msgid "REST API Firewall"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:103
+msgid "Auth. & Rate Limit"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:110
+msgid "Routes"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:117
+msgid "IP Filtering"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:125
+msgid "REST API Output"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:129
+msgid "Collections"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:136
+msgid "Properties"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:143
+msgid "Settings Route"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:150
+msgid "Integrations"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:153
+msgid "Webhook"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:160
+msgid "Emails"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:169
+msgid "Theme"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:185
+msgid "Migrate to Pro"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:230
+msgid "Firewall Saved"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:231
+msgid "Firewall settings saved successfully."
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:235
+msgid "Save firewall settings?"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:525
+#: src/App.jsx:537
+#: src/App.jsx:549
+#: src/App.jsx:561
+#: src/App.jsx:573
+msgid "Save"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:244
+msgid "API Output Saved"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:245
+msgid "Schemas settings saved successfully."
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:249
+msgid "Save API output settings?"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:258
+msgid "Webhook Saved"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:259
+msgid "Webhook settings saved successfully."
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:263
+msgid "Save webhook settings?"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:269
+msgid "Emails Saved"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:270
+msgid "Email settings saved successfully."
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:274
+msgid "Save email settings?"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:280
+msgid "Theme Saved"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:281
+msgid "Theme settings saved successfully."
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:285
+msgid "Save theme settings?"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:693
+msgid "Migrate Now"
+msgstr ""
+
+#: build/544.js:1
+#: src/App.jsx:698
+msgid "Pro migration pending — your free settings have not been imported yet."
+msgstr ""
+
+#: src/components/ConfigurationDialog.jsx:43
+#: src/components/ConfigurationDialog.jsx:111
+msgid "Configuration"
+msgstr ""
+
+#: src/components/ConfigurationDialog.jsx:58
+msgid "Delete data on uninstall"
+msgstr ""
+
+#: src/components/ConfigurationDialog.jsx:71
+msgid "Delete Options"
+msgstr ""
+
+#: src/components/ConfigurationDialog.jsx:74
+msgid "Delete plugin options in wp_options table."
+msgstr ""
+
+#: src/components/ConfigurationDialog.jsx:94
+msgid "Delete Tables"
+msgstr ""
+
+#: src/components/ConfigurationDialog.jsx:97
+msgid "Delete plugin tables from the database."
+msgstr ""
+
+#: src/components/Firewall/AllowedTypes.jsx:32
+msgid "Restrict to Post Types"
+msgstr ""
+
+#: src/components/Firewall/AllowedTypes.jsx:37
+msgid "Only the selected post types will be exposed via the REST API. Leave empty to use default visibility settings."
+msgstr ""
+
+#: src/components/Firewall/AllowedTypes.jsx:59
+msgid "Enable"
+msgstr ""
+
+#: src/components/Firewall/CountryBlockList.jsx:202
+msgid "Saving…"
+msgstr ""
+
+#: src/components/Firewall/CountryBlockList.jsx:203
+msgid "Save Country Blocks"
+msgstr ""
+
+#: src/components/Firewall/IpBlackList.jsx:125
+msgid "Switching to whitelist mode will only allow listed IPs to access the REST API. All other IPs will be blocked."
+msgstr ""
+
+#: src/components/Firewall/IpBlackList.jsx:129
+msgid "Switching to blacklist mode will block listed IPs from accessing the REST API. All other IPs will be allowed."
+msgstr ""
+
+#: src/components/Firewall/IpBlackList.jsx:148
+msgid "Whitelist mode is now active."
+msgstr ""
+
+#: src/components/Firewall/IpBlackList.jsx:152
+msgid "Blacklist mode is now active."
+msgstr ""
+
+#: src/components/Firewall/IpDataGrid.jsx:209
+msgid "Please enter an IP address or CIDR range"
+msgstr ""
+
+#: src/components/Firewall/IpDataGrid.jsx:213
+msgid "Please enter a valid IP address"
+msgstr ""
+
+#: src/components/Firewall/IpDataGrid.jsx:224
+msgid "Invalid IP address or CIDR range"
+msgstr ""
+
+#: src/components/Firewall/IpDataGrid.jsx:359
+msgid "192.168.1.1 or 10.0.0.0/24"
+msgstr ""
+
+#: src/components/Firewall/IpDataGrid.jsx:363
+msgid "192.168.1.1"
+msgstr ""
+
+#: src/components/Firewall/IpDataGrid.jsx:378
+msgid "Add IP or CIDR"
+msgstr ""
+
+#: src/components/Firewall/IpDataGrid.jsx:379
+msgid "Add IP"
+msgstr ""
+
+#: src/components/Firewall/RoutesTree.jsx:424
+msgid "This route is disabled"
+msgstr ""
+
+#: src/components/Firewall/RoutesTree.jsx:428
+msgid "Disable this route"
+msgstr ""
+
+#: src/components/Firewall/RoutesTree.jsx:468
+msgid "Settings applied to all descendants. Click to unlink."
+msgstr ""
+
+#: src/components/Firewall/RoutesTree.jsx:473
+msgid "All descendants have same settings"
+msgstr ""
+
+#: src/components/Firewall/RoutesTree.jsx:478
+msgid "Some descendants have different settings. Click to apply to all."
+msgstr ""
+
+#: src/components/Firewall/RoutesTree.jsx:482
+msgid "Descendants have different settings. Click to apply to all."
+msgstr ""
+
+#: src/components/Firewall/RoutesTree.jsx:721
+msgid "Loading routes…"
+msgstr ""
+
+#: src/components/Firewall/RoutesTree.jsx:722
+msgid "No routes found"
+msgstr ""
+
+#: src/components/Firewall/TestPolicy.jsx:425
+msgid "Running…"
+msgstr ""
+
+#: src/components/Firewall/TestPolicy.jsx:426
+msgid "Run Test"
+msgstr ""
+
+#: src/components/Theme/DeployTheme.jsx:282
+#: src/components/Theme/DeployTheme.jsx:610
+msgid "Deploy Theme"
+msgstr ""
+
+#: src/components/Theme/DeployTheme.jsx:283
+msgid "Theme Status"
+msgstr ""
+
+#: src/components/Theme/DeployTheme.jsx:374
+msgid "Collapse"
+msgstr ""
+
+#: src/components/Theme/DeployTheme.jsx:378
+msgid "Expand"
+msgstr ""
+
+#: src/components/Theme/DeployTheme.jsx:609
+#: src/components/Theme/DeployTheme.jsx:623
+#: src/components/Theme/DeployTheme.jsx:650
+msgid "Deploying…"
+msgstr ""
+
+#: src/components/Theme/DeployTheme.jsx:633
+msgid "Activating…"
+msgstr ""
+
+#: src/components/Theme/DeployTheme.jsx:634
+msgid "Activate Theme"
+msgstr ""
+
+#: src/components/Theme/DeployTheme.jsx:778
+msgid "The theme has been redeployed successfully."
+msgstr ""
+
+#: src/components/Theme/DeployTheme.jsx:782
+msgid "There was an error redeploying the theme. Please check the error message and try again."
+msgstr ""
+
+#: src/components/Webhook/WebhookAuthCustom.jsx:30
+msgid "Webhook secret set. To change it, hit the revoke button first."
+msgstr ""
+
+#: src/components/Webhook/WebhookAuthCustom.jsx:34
+msgid "Provide your own secret for webhook requests."
+msgstr ""
+
+#: src/components/Webhook/WebhookAuthGenerated.jsx:52
+msgid "No webhook secret generated yet."
+msgstr ""
+
+#: src/components/Webhook/WebhookAuthGenerated.jsx:56
+msgid "Used to sign webhook requests."
+msgstr ""
+
+#: src/components/Webhook/WebhookTest.jsx:121
+msgid "Testing…"
+msgstr ""

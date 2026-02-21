@@ -1,5 +1,4 @@
-import { useState, useEffect } from '@wordpress/element';
-import { useAdminData } from '../contexts/AdminDataContext';
+import { useState } from '@wordpress/element';
 import { useLicense } from '../contexts/LicenseContext';
 
 import Button from '@mui/material/Button';
@@ -15,15 +14,14 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import FormHelperText from '@mui/material/FormHelperText';
 
-
-export default function ConfigurationDialog() {
+export default function ConfigurationDialog( { form, setField } ) {
 	const [ error, setError ] = useState( '' );
 	const [ successMessage, setSuccessMessage ] = useState( '' );
 	const [ drawerOpen, setDrawerOpen ] = useState( false );
 	const { __ } = wp.i18n || {};
 	const { hasValidLicense } = useLicense();
 
-	const toggleDrawer = ( open ) => ( event ) => {
+	const toggleDrawer = ( open ) => () => {
 		setDrawerOpen( open );
 		if ( ! open ) {
 			setSuccessMessage( '' );
@@ -33,29 +31,24 @@ export default function ConfigurationDialog() {
 
 	const drawerContent = (
 		<Box sx={ { width: 320, p: 2 } } role="presentation">
-			<IconButton sx={{position:'absolute', top: 5, right: 5}} onClick={() => setDrawerOpen(false) }>
+			<IconButton
+				sx={ { position: 'absolute', top: 5, right: 5 } }
+				onClick={ () => setDrawerOpen( false ) }
+			>
 				<ArrowForwardIosIcon />
 			</IconButton>
 			<Stack spacing={ 3 }>
 				<Stack direction="row" alignItems="center" gap={ 1 }>
-
 					<Typography variant="h6" sx={ { fontWeight: 600 } }>
 						{ __( 'Configuration', 'rest-api-firewall' ) }
 					</Typography>
-
 				</Stack>
 
 				{ successMessage && (
-					<Alert severity="success">
-						{ successMessage }
-					</Alert>
+					<Alert severity="success">{ successMessage }</Alert>
 				) }
 
-				{ error && (
-					<Alert severity="error">
-						{ error }
-					</Alert>
-				) }
+				{ error && <Alert severity="error">{ error }</Alert> }
 
 				<Typography
 					variant="subtitle1"
@@ -70,17 +63,12 @@ export default function ConfigurationDialog() {
 						control={
 							<Switch
 								size="small"
-								checked={
-									!! form.delete_options_on_uninstall
-								}
+								checked={ !! form.delete_options_on_uninstall }
 								name="delete_options_on_uninstall"
 								onChange={ setField }
 							/>
 						}
-						label={ __(
-							'Delete Options',
-							'rest-api-firewall'
-						) }
+						label={ __( 'Delete Options', 'rest-api-firewall' ) }
 					/>
 					<FormHelperText>
 						{ __(
@@ -90,32 +78,29 @@ export default function ConfigurationDialog() {
 					</FormHelperText>
 				</FormControl>
 
-				{ hasValidLicense && <FormControl>
-					<FormControlLabel
-						control={
-							<Switch
-								size="small"
-								checked={
-									!! form.delete_tables_on_uninstall
-								}
-								name="delete_tables_on_uninstall"
-								onChange={ setField }
-							/>
-						}
-						label={ __(
-							'Delete Tables',
-							'rest-api-firewall'
-						) }
-					/>
-					<FormHelperText>
-						{ __(
-							'Delete plugin tables from the database.',
-							'rest-api-firewall'
-						) }
-					</FormHelperText>
-				</FormControl>}
-
-				
+				{ hasValidLicense && (
+					<FormControl>
+						<FormControlLabel
+							control={
+								<Switch
+									size="small"
+									checked={
+										!! form.delete_tables_on_uninstall
+									}
+									name="delete_tables_on_uninstall"
+									onChange={ setField }
+								/>
+							}
+							label={ __( 'Delete Tables', 'rest-api-firewall' ) }
+						/>
+						<FormHelperText>
+							{ __(
+								'Delete plugin tables from the database.',
+								'rest-api-firewall'
+							) }
+						</FormHelperText>
+					</FormControl>
+				) }
 			</Stack>
 		</Box>
 	);

@@ -38,10 +38,7 @@ export default function License() {
 			localStorage.removeItem( STORAGE_KEY );
 			if ( stored === 'activate' ) {
 				setSuccessMessage(
-					__(
-						'License activated successfully.',
-						'rest-api-firewall'
-					)
+					__( 'License activated successfully.', 'rest-api-firewall' )
 				);
 			} else if ( stored === 'deactivate' ) {
 				setSuccessMessage(
@@ -53,7 +50,6 @@ export default function License() {
 			}
 		}
 	}, [] );
-
 
 	useEffect( () => {
 		if ( null === status ) {
@@ -100,12 +96,7 @@ export default function License() {
 
 	const handleActivate = async () => {
 		if ( ! licenseKey.trim() ) {
-			setError(
-				__(
-					'Please enter a license key',
-					'rest-api-firewall'
-				)
-			);
+			setError( __( 'Please enter a license key', 'rest-api-firewall' ) );
 			return;
 		}
 
@@ -127,7 +118,6 @@ export default function License() {
 			if ( result.success ) {
 				localStorage.setItem( STORAGE_KEY, 'activate' );
 				window.location.reload();
-				return;
 			} else {
 				setError(
 					result.data?.message ||
@@ -135,9 +125,7 @@ export default function License() {
 				);
 			}
 		} catch ( err ) {
-			setError(
-				__( 'Error activating license', 'rest-api-firewall' )
-			);
+			setError( __( 'Error activating license', 'rest-api-firewall' ) );
 		} finally {
 			setLoading( false );
 		}
@@ -166,18 +154,18 @@ export default function License() {
 			if ( result.success ) {
 				localStorage.setItem( STORAGE_KEY, 'deactivate' );
 				window.location.reload();
-				return;
 			} else {
 				setError(
 					result.data?.message ||
-						__( 'Failed to deactivate license', 'rest-api-firewall' )
+						__(
+							'Failed to deactivate license',
+							'rest-api-firewall'
+						)
 				);
 			}
 		} catch ( err ) {
 			console.error( 'Error deactivating license:', err );
-			setError(
-				__( 'Error deactivating license', 'rest-api-firewall' )
-			);
+			setError( __( 'Error deactivating license', 'rest-api-firewall' ) );
 		} finally {
 			setLoading( false );
 		}
@@ -202,9 +190,9 @@ export default function License() {
 		} );
 	};
 
-	return (<>
-		<Stack gap={ 2 } p={2} width={320}>
-				
+	return (
+		<>
+			<Stack gap={ 2 } p={ 2 } width={ 320 }>
 				<Stack direction="row" alignItems="center" gap={ 1 }>
 					{ isLicenseActive ? (
 						<CheckCircleIcon sx={ { color: 'success.main' } } />
@@ -217,16 +205,10 @@ export default function License() {
 				</Stack>
 
 				{ successMessage && (
-					<Alert severity="success">
-						{ successMessage }
-					</Alert>
+					<Alert severity="success">{ successMessage }</Alert>
 				) }
 
-				{ error && (
-					<Alert severity="error">
-						{ error }
-					</Alert>
-				) }
+				{ error && <Alert severity="error">{ error }</Alert> }
 
 				{ checkingStatus ? (
 					<Box display="flex" justifyContent="center" py={ 3 }>
@@ -288,8 +270,7 @@ export default function License() {
 													display: 'block',
 													flex: 1,
 													overflow: 'hidden',
-													textOverflow:
-														'ellipsis',
+													textOverflow: 'ellipsis',
 													whiteSpace: 'nowrap',
 												} }
 												variant="body2"
@@ -353,9 +334,7 @@ export default function License() {
 													color: 'info.main',
 												} }
 											>
-												{ formatDate(
-													status.expires
-												) }
+												{ formatDate( status.expires ) }
 											</Typography>
 										</Box>
 										<Box
@@ -379,9 +358,7 @@ export default function License() {
 										{ status.features &&
 											status.features.length > 0 && (
 												<>
-													<Divider
-														sx={ { my: 1 } }
-													/>
+													<Divider sx={ { my: 1 } } />
 													<Typography
 														variant="body2"
 														color="textSecondary"
@@ -466,45 +443,42 @@ export default function License() {
 											sx={ { mr: 1 } }
 										/>
 									) : null }
-									{ __(
-										'Activate',
-										'rest-api-firewall'
-									) }
+									{ __( 'Activate', 'rest-api-firewall' ) }
 								</Button>
 							</>
 						) }
 					</>
 				) }
+			</Stack>
 
-		</Stack>
-
-		<Dialog
-		open={ confirmOpen }
-		onClose={ () => setConfirmOpen( false ) }
-		>
-			<DialogTitle>
-				{ __( 'Deactivate License', 'rest-api-firewall' ) }
-			</DialogTitle>
-			<DialogContent>
-				<DialogContentText>
-					{ __(
-						'Are you sure you want to deactivate this license? Pro features will be disabled.',
-						'rest-api-firewall'
-					) }
-				</DialogContentText>
-			</DialogContent>
-			<DialogActions>
-				<Button onClick={ () => setConfirmOpen( false ) }>
-					{ __( 'Cancel', 'rest-api-firewall' ) }
-				</Button>
-				<Button
-					onClick={ confirmDeactivate }
-					variant="contained"
-					disableElevation
-				>
-					{ __( 'Deactivate', 'rest-api-firewall' ) }
-				</Button>
-			</DialogActions>
-		</Dialog>
-	</>);
+			<Dialog
+				open={ confirmOpen }
+				onClose={ () => setConfirmOpen( false ) }
+			>
+				<DialogTitle>
+					{ __( 'Deactivate License', 'rest-api-firewall' ) }
+				</DialogTitle>
+				<DialogContent>
+					<DialogContentText>
+						{ __(
+							'Are you sure you want to deactivate this license? Pro features will be disabled.',
+							'rest-api-firewall'
+						) }
+					</DialogContentText>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={ () => setConfirmOpen( false ) }>
+						{ __( 'Cancel', 'rest-api-firewall' ) }
+					</Button>
+					<Button
+						onClick={ confirmDeactivate }
+						variant="contained"
+						disableElevation
+					>
+						{ __( 'Deactivate', 'rest-api-firewall' ) }
+					</Button>
+				</DialogActions>
+			</Dialog>
+		</>
+	);
 }

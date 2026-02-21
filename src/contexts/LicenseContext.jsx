@@ -12,7 +12,10 @@ const LicenseContext = createContext( {
 	updateLicenseStatus: () => {},
 } );
 
-export function LicenseProvider( { children, hasValidLicense: initialValid = false } ) {
+export function LicenseProvider( {
+	children,
+	hasValidLicense: initialValid = false,
+} ) {
 	const [ hasValidLicense, setHasValidLicense ] = useState( initialValid );
 	const [ status, setStatus ] = useState( null );
 	const proNonce = window.restApiFirewallPro?.nonce || null;

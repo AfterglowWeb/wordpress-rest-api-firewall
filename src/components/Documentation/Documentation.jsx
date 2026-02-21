@@ -17,9 +17,7 @@ import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
 
 import contentStyles from '../../utils/contentStyles';
 
-export default function Documentation( {
-	page,
-} ) {
+export default function Documentation( { page } ) {
 	const { __ } = wp.i18n || {};
 	const { open, openDoc, closeDoc, currentLocation, docs } =
 		useDocumentation();
@@ -43,9 +41,7 @@ export default function Documentation( {
 
 	return (
 		<>
-			<IconButton
-			onClick={ () => openDoc( { page } ) }
-			>
+			<IconButton onClick={ () => openDoc( { page } ) }>
 				<HelpOutlineOutlinedIcon />
 			</IconButton>
 			<Drawer

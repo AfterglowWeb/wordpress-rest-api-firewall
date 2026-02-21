@@ -5,7 +5,6 @@ import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
 import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import FormHelperText from '@mui/material/FormHelperText';
 import Alert from '@mui/material/Alert';
@@ -16,11 +15,11 @@ import Divider from '@mui/material/Divider';
 export default function Collections( { form, setField, postTypes } ) {
 	const { __ } = wp.i18n || {};
 	const { hasValidLicense } = useLicense();
-	const isProActive = hasValidLicense && form.rest_collections_sortable_enabled;	
+	const isProActive =
+		hasValidLicense && form.rest_collections_sortable_enabled;
 
 	return (
 		<Stack spacing={ 3 } maxWidth={ 600 }>
-			
 			<Stack
 				sx={ { position: 'relative' } }
 				spacing={ 3 }
@@ -28,16 +27,27 @@ export default function Collections( { form, setField, postTypes } ) {
 				justifyContent={ 'space-between' }
 				alignItems={ 'flex-start' }
 			>
-				{ form.rest_collections_allowed_post_types && form.rest_collections_allowed_post_types.length > 0 && (
-				<Alert severity='info'>
-					{ __( 'Currently allowed post types: ', 'rest-api-firewall' ) }
-					{ form.rest_collections_allowed_post_types.map( ( postType ) => {
-						const postTypeData = postTypes.find( ( pt ) => pt.value === postType );
-						return postTypeData ? postTypeData.label : postType;
-					} ).join(', ') }
-				</Alert>)}
+				{ form.rest_collections_allowed_post_types &&
+					form.rest_collections_allowed_post_types.length > 0 && (
+						<Alert severity="info">
+							{ __(
+								'Currently allowed post types:',
+								'rest-api-firewall'
+							) }
+							{ form.rest_collections_allowed_post_types
+								.map( ( postType ) => {
+									const postTypeData = postTypes.find(
+										( pt ) => pt.value === postType
+									);
+									return postTypeData
+										? postTypeData.label
+										: postType;
+								} )
+								.join( ', ' ) }
+						</Alert>
+					) }
 			</Stack>
-			
+
 			<Stack
 				spacing={ 3 }
 				direction={ 'row' }
@@ -56,7 +66,10 @@ export default function Collections( { form, setField, postTypes } ) {
 								name="rest_collections_per_page_enabled"
 							/>
 						}
-						label={ __( 'Enforce Per Page Parameter', 'rest-api-firewall' ) }
+						label={ __(
+							'Enforce Per Page Parameter',
+							'rest-api-firewall'
+						) }
 					/>
 				</FormControl>
 				<Stack
@@ -93,21 +106,21 @@ export default function Collections( { form, setField, postTypes } ) {
 						fullWidth
 					/>
 				</Stack>
-
-				
 			</Stack>
 
-			<Divider  />
+			<Divider />
 
-			<Stack spacing={ 3 }>									
+			<Stack spacing={ 3 }>
 				<Stack
-				spacing={ 3 }
-				direction={ 'row' }
-				justifyContent={ 'flex-start' }
-				alignItems={ 'flex-start' }
+					spacing={ 3 }
+					direction={ 'row' }
+					justifyContent={ 'flex-start' }
+					alignItems={ 'flex-start' }
 				>
-
-					<FormControl  sx={ { flex: 1 } } disabled={!hasValidLicense}>
+					<FormControl
+						sx={ { flex: 1 } }
+						disabled={ ! hasValidLicense }
+					>
 						<FormControlLabel
 							control={
 								<Switch
@@ -119,7 +132,10 @@ export default function Collections( { form, setField, postTypes } ) {
 									name="rest_collections_sortable_enabled"
 								/>
 							}
-							label={ __( 'Enable Drag-And-Drop Sorting', 'rest-api-firewall' ) }
+							label={ __(
+								'Enable Drag-And-Drop Sorting',
+								'rest-api-firewall'
+							) }
 						/>
 						<FormHelperText>
 							{ __(
@@ -137,23 +153,23 @@ export default function Collections( { form, setField, postTypes } ) {
 									'Choose Post Types',
 									'rest-api-firewall'
 								) }
-								value={ form.rest_collections_sortable_post_types }
-								helperText={
-									__( 'Enable sorting on the selected post types.', 'rest-api-firewall' )
+								value={
+									form.rest_collections_sortable_post_types
 								}
+								helperText={ __(
+									'Enable sorting on the selected post types.',
+									'rest-api-firewall'
+								) }
 								disabled={ ! isProActive }
 								options={ postTypes }
 								onChange={ setField }
 							/>
 						) }
 					</Box>
-					
 				</Stack>
 
-
 				<Stack spacing={ 3 }>
-
-					<FormControl disabled={!isProActive}>
+					<FormControl disabled={ ! isProActive }>
 						<FormControlLabel
 							control={
 								<Switch
@@ -165,17 +181,20 @@ export default function Collections( { form, setField, postTypes } ) {
 									name="rest_collections_sortable_rest_enforce"
 								/>
 							}
-							label={ __( 'Apply Sort Order in REST Requests', 'rest-api-firewall' ) }
+							label={ __(
+								'Apply Sort Order in REST Requests',
+								'rest-api-firewall'
+							) }
 						/>
 						<FormHelperText>
 							{ __(
-								"Fall back to manual sort order when no orderby parameter is specified.",
+								'Fall back to manual sort order when no orderby parameter is specified.',
 								'rest-api-firewall'
 							) }
 						</FormHelperText>
 					</FormControl>
 
-					<FormControl disabled={!isProActive}>
+					<FormControl disabled={ ! isProActive }>
 						<FormControlLabel
 							control={
 								<Switch
@@ -187,21 +206,20 @@ export default function Collections( { form, setField, postTypes } ) {
 									name="rest_collections_sortable_wp_query_enforce"
 								/>
 							}
-							label={ __( 'Apply Sort Order in WordPress Queries', 'rest-api-firewall' ) }
+							label={ __(
+								'Apply Sort Order in WordPress Queries',
+								'rest-api-firewall'
+							) }
 						/>
 						<FormHelperText>
 							{ __(
-								"Fall back to manual sort order when no orderby argument is specified.",
+								'Fall back to manual sort order when no orderby argument is specified.',
 								'rest-api-firewall'
 							) }
 						</FormHelperText>
 					</FormControl>
-
-					
 				</Stack>
-
 			</Stack>
-
 		</Stack>
 	);
 }
