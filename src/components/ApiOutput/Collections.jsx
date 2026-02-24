@@ -31,7 +31,7 @@ export default function Collections( { form, setField, postTypes } ) {
 					form.rest_collections_allowed_post_types.length > 0 && (
 						<Alert severity="info">
 							{ __(
-								'Currently allowed post types:',
+								'Currently allowed post types: ',
 								'rest-api-firewall'
 							) }
 							{ form.rest_collections_allowed_post_types

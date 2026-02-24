@@ -44,11 +44,12 @@ class Utils {
 	public static function list_post_types(): array {
 		$post_types = get_post_types(
 			array(
-				'public'       => true,
 				'show_in_rest' => true,
 			),
 			'objects'
 		);
+
+		error_log( 'Utils::list_post_types - Retrieved post types: ' . print_r( $post_types, true ) );
 
 		if ( empty( $post_types ) ) {
 			return array();
@@ -60,6 +61,8 @@ class Utils {
 				'label' => property_exists( $post_type->labels, 'singular_name' )
 					? sanitize_text_field( $post_type->labels->singular_name )
 					: sanitize_key( $post_type->name ),
+				'public' => $post_type->public,
+				'_builtin' => $post_type->_builtin,
 			),
 			$post_types
 		);
@@ -70,7 +73,6 @@ class Utils {
 	public static function list_taxonomies(): array {
 		$taxonomies = get_taxonomies(
 			array(
-				'public'       => true,
 				'show_in_rest' => true,
 			),
 			'objects'
@@ -86,6 +88,8 @@ class Utils {
 				'label' => property_exists( $taxonomy->labels, 'singular_name' )
 					? sanitize_text_field( $taxonomy->labels->singular_name )
 					: sanitize_key( $taxonomy->name ),
+				'public' => $taxonomy->public,
+				'_builtin' => $taxonomy->_builtin,
 			),
 			$taxonomies
 		);
