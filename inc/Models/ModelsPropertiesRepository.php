@@ -1,4 +1,4 @@
-<?php namespace cmk\RestApiFirewall\Controllers;
+<?php namespace cmk\RestApiFirewall\Models;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -10,7 +10,7 @@ use WP_Post_Type;
 use WP_REST_Attachments_Controller;
 use WP_REST_Request;
 
-class ModelsPropertiesController {
+class ModelsPropertiesRepository {
 
 	public static function models_properties(): array {
 

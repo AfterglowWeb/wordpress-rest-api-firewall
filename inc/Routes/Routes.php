@@ -5,7 +5,6 @@ defined( 'ABSPATH' ) || exit;
 use cmk\RestApiFirewall\Core\CoreOptions;
 use cmk\RestApiFirewall\Firewall\Firewall;
 use cmk\RestApiFirewall\Firewall\UsersRouteHider;
-use cmk\RestApiFirewall\Controllers\ModelsController;
 
 use WP_REST_Request;
 use WP_REST_Response;
@@ -50,7 +49,6 @@ class Routes {
 			10
 		);
 
-		add_filter( 'rest_post_dispatch', array( new ModelsController(), 'resolve_rest_controller' ), 10, 3 );
 	}
 
 	private static function set_posts_per_page(): void {
