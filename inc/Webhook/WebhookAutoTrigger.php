@@ -193,7 +193,6 @@ class WebhookAutoTrigger {
 			return;
 		}
 
-		// Trigger all linked webhooks.
 		$webhook_ids = $automation['webhook_ids'] ?? array();
 		foreach ( $webhook_ids as $webhook_id ) {
 			$webhook = $this->find_webhook_by_id( $webhooks, $webhook_id );

@@ -1,4 +1,4 @@
-import { useState } from '@wordpress/element';
+import { useState, useEffect } from '@wordpress/element';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useAdminData } from '../../contexts/AdminDataContext';
 
@@ -433,6 +433,7 @@ function PropertyRow( {
 	hasValidLicense,
 	__,
 	depth = 0,
+	basePath = '',
 } ) {
 	const [ expanded, setExpanded ] = useState( false );
 	const [ detailsOpen, setDetailsOpen ] = useState( false );
@@ -443,8 +444,19 @@ function PropertyRow( {
 	const propType = propConfig.type || '';
 	const subProperties = propConfig.properties || {};
 	const isDisabled =
-		! propContext.includes( 'view' ) && ! propContext.includes( 'embed' );
+		propContext.length > 0 &&
+		! propContext.includes( 'view' ) &&
+		! propContext.includes( 'embed' );
 	const settings = propConfig.settings || {};
+
+	const [ localDisable, setLocalDisable ] = useState(
+		settings.disable ?? false
+	);
+
+	useEffect( () => {
+		setLocalDisable( settings.disable ?? false );
+	}, [ settings.disable ] );
+
 	const hasFilters =
 		Array.isArray( settings.filters ) && settings.filters.length > 0;
 	const hasSubProperties =
@@ -563,7 +575,7 @@ function PropertyRow( {
 					) }
 				</Stack>
 
-				{ depth === 0 && (
+				{ ( depth === 0 || 'disable' in settings ) && (
 					<Tooltip
 						followCursor
 						title={
@@ -579,7 +591,8 @@ function PropertyRow( {
 							justifyContent="flex-end"
 							sx={ { flexShrink: 0 } }
 						>
-							{ hasFilters &&
+							{ depth === 0 &&
+								hasFilters &&
 								settings.filters.map( ( filter ) => (
 									<FormControlLabel
 										key={ filter.key }
@@ -615,12 +628,14 @@ function PropertyRow( {
 								control={
 									<Switch
 										size="small"
-										checked={ settings.disable }
+										checked={ localDisable }
 										onChange={ ( e ) => {
+											const next = ! e.target.checked;
+											setLocalDisable( next );
 											setField( {
 												target: {
-													name: `postProperties.${ selectedPostType }.props.${ propName }.settings.disable`,
-													value: ! e.target.checked,
+													name: `${ basePath }.settings.disable`,
+													value: next,
 												},
 											} );
 										} }
@@ -724,6 +739,7 @@ function PropertyRow( {
 									hasValidLicense={ hasValidLicense }
 									__={ __ }
 									depth={ depth + 1 }
+									basePath={ `${ basePath }.properties.${ subName }` }
 								/>
 							)
 						) }
@@ -756,6 +772,7 @@ function ModelProperties( { selectedPostType, setField } ) {
 								setField={ setField }
 								hasValidLicense={ hasValidLicense }
 								__={ __ }
+								basePath={ `postProperties.${ selectedPostType }.props.${ propName }` }
 							/>
 						) ) }
 					</Stack>

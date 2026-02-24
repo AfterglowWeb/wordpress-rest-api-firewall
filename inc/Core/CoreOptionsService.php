@@ -29,7 +29,6 @@ class CoreOptionsService {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
-		// Pro plugin can hook here and call wp_send_json_* to short-circuit.
 		do_action( 'rest_api_firewall_pro_read_options' );
 
 		$options = CoreOptions::read_options();
@@ -51,7 +50,6 @@ class CoreOptionsService {
 				wp_send_json_error( array( 'error' => esc_html__( 'Invalid options data', 'rest-api-firewall' ) ), 400 );
 			}
 
-			// Pro plugin can hook here and call wp_send_json_* to short-circuit.
 			do_action( 'rest_api_firewall_pro_update_options', $options );
 
 			$options = CoreOptions::update_options( $options );

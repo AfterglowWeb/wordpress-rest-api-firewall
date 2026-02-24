@@ -17,6 +17,10 @@ class Firewall {
 			return $result;
 		}
 
+		if ( is_user_logged_in() && current_user_can( 'manage_options' ) ) {
+			return $result;
+		}
+
 		$ip_check = self::ip_blacklist( $result );
 		if ( is_wp_error( $ip_check ) ) {
 			return $ip_check;
@@ -31,6 +35,10 @@ class Firewall {
 	}
 
 	public static function request( WP_REST_Request $request ) {
+
+		if ( is_user_logged_in() && current_user_can( 'manage_options' ) ) {
+			return $request;
+		}
 
 		$rate_check = self::rate_limit( $request );
 		if ( is_wp_error( $rate_check ) ) {
