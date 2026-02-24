@@ -43,7 +43,8 @@ import RocketLaunchOutlinedIcon from '@mui/icons-material/RocketLaunchOutlined';
 import ConfirmDialog from './components/ConfirmDialog';
 import MigrationDialog from './components/Migration/MigrationDialog';
 
-import RoutesPolicy from './components/Firewall/RoutesPolicy';
+import RoutesPolicyTree from './components/Firewall/RoutesPolicyTree';
+import GlobalRoutesPolicy from './components/Firewall/GlobalRoutesPolicy';
 import IpBlackList from './components/Firewall/IpBlackList';
 import RateLimit from './components/Firewall/RateLimit';
 import RestApiUser from './components/Firewall/RestApiUser';
@@ -117,14 +118,14 @@ function AppContent() {
 			key: 'per-route-settings',
 			label: __( 'Routes', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'REST API Firewall',
-			panelGroup: 3,
+			panelGroup: 2,
 			icon: AccountTreeIcon,
 		},
 		{
 			key: 'ip-filtering',
 			label: __( 'IP Filtering', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'REST API Firewall',
-			panelGroup: 2,
+			panelGroup: 3,
 			icon: VpnLockOutlinedIcon,
 		},
 
@@ -233,93 +234,18 @@ function AppContent() {
 	const activeMenuItem =
 		menuItems.find( ( m ) => m.panelGroup === panelGroup ) || null;
 
-	const handleSaveFirewall = () => {
-		save( pickGroup( 'firewall' ), {
-			successTitle: __( 'Firewall Saved', 'rest-api-firewall' ),
-			successMessage: __(
-				'Firewall settings saved successfully.',
-				'rest-api-firewall'
-			),
-			confirmMessage: __(
-				'Save firewall settings?',
-				'rest-api-firewall'
-			),
-		} );
+	const SAVE_CONFIG = {
+		firewall:          { successTitle: __( 'Firewall Saved', 'rest-api-firewall' ),          successMessage: __( 'Firewall settings saved successfully.',          'rest-api-firewall' ), confirmMessage: __( 'Save firewall settings?',          'rest-api-firewall' ) },
+		collections:       { successTitle: __( 'Collections Saved', 'rest-api-firewall' ),       successMessage: __( 'Collections settings saved successfully.',       'rest-api-firewall' ), confirmMessage: __( 'Save collections settings?',       'rest-api-firewall' ) },
+		models_properties: { successTitle: __( 'Properties Output Saved', 'rest-api-firewall' ), successMessage: __( 'Properties settings saved successfully.',         'rest-api-firewall' ), confirmMessage: __( 'Save properties output settings?', 'rest-api-firewall' ) },
+		settings_route:    { successTitle: __( 'Settings Route Saved', 'rest-api-firewall' ),    successMessage: __( 'Settings route settings saved successfully.',    'rest-api-firewall' ), confirmMessage: __( 'Save settings route settings?',    'rest-api-firewall' ) },
+		webhook:           { successTitle: __( 'Webhook Saved', 'rest-api-firewall' ),           successMessage: __( 'Webhook settings saved successfully.',           'rest-api-firewall' ), confirmMessage: __( 'Save webhook settings?',           'rest-api-firewall' ) },
+		email:             { successTitle: __( 'Emails Saved', 'rest-api-firewall' ),            successMessage: __( 'Email settings saved successfully.',             'rest-api-firewall' ), confirmMessage: __( 'Save email settings?',             'rest-api-firewall' ) },
+		theme:             { successTitle: __( 'Theme Saved', 'rest-api-firewall' ),             successMessage: __( 'Theme settings saved successfully.',             'rest-api-firewall' ), confirmMessage: __( 'Save theme settings?',             'rest-api-firewall' ) },
 	};
 
-	const handleSaveCollections = () => {
-		save( pickGroup( 'collections' ), {
-			successTitle: __( 'Collections Saved', 'rest-api-firewall' ),
-			successMessage: __(
-				'Collections settings saved successfully.',
-				'rest-api-firewall'
-			),
-			confirmMessage: __(
-				'Save collections settings?',
-				'rest-api-firewall'
-			),
-		} );
-	}
-
-	const handleSaveModelsProperties = () => {
-		save( pickGroup( 'models_properties' ), {
-			successTitle: __( 'Properties Output Saved', 'rest-api-firewall' ),
-			successMessage: __(
-				'Properties settings saved successfully.',
-				'rest-api-firewall'
-			),
-			confirmMessage: __(
-				'Save properties output settings?',
-				'rest-api-firewall'
-			),
-		} );
-	};
-
-	const handleSaveSettingsProperties = () => {
-		save( pickGroup( 'settings_route' ), {
-			successTitle: __( 'Settings Route Saved', 'rest-api-firewall' ),
-			successMessage: __(
-				'Settings route settings saved successfully.',
-				'rest-api-firewall'
-			),
-			confirmMessage: __(
-				'Save settings route settings?',
-				'rest-api-firewall'
-			),
-		} );
-	}
-
-	const handleSaveWebhook = () => {
-		save( pickGroup( 'webhook' ), {
-			successTitle: __( 'Webhook Saved', 'rest-api-firewall' ),
-			successMessage: __(
-				'Webhook settings saved successfully.',
-				'rest-api-firewall'
-			),
-			confirmMessage: __( 'Save webhook settings?', 'rest-api-firewall' ),
-		} );
-	};
-
-	const handleSaveEmails = () => {
-		save( pickGroup( 'email' ), {
-			successTitle: __( 'Emails Saved', 'rest-api-firewall' ),
-			successMessage: __(
-				'Email settings saved successfully.',
-				'rest-api-firewall'
-			),
-			confirmMessage: __( 'Save email settings?', 'rest-api-firewall' ),
-		} );
-	};
-
-	const handleSaveTheme = () => {
-		save( pickGroup( 'theme' ), {
-			successTitle: __( 'Theme Saved', 'rest-api-firewall' ),
-			successMessage: __(
-				'Theme settings saved successfully.',
-				'rest-api-firewall'
-			),
-			confirmMessage: __( 'Save theme settings?', 'rest-api-firewall' ),
-		} );
+	const handleSave = ( group ) => {
+		save( pickGroup( group ), SAVE_CONFIG[ group ] );
 	};
 
 	if ( ! adminData ) {
@@ -550,12 +476,24 @@ function AppContent() {
 								buttonText="Doc."
 							/>
 
-							{ panelGroup >= 1 && panelGroup <= 3 && (
+							{ panelGroup === 1 && (
 								<Button
 									variant="contained"
 									disableElevation
 									size="small"
-									onClick={ handleSaveFirewall }
+									onClick={ () => handleSave( 'firewall_auth_rate' ) }
+									disabled={ saving }
+								>
+									{ __( 'Save', 'rest-api-firewall' ) }
+								</Button>
+							) }
+
+							{ panelGroup === 2 && (
+								<Button
+									variant="contained"
+									disableElevation
+									size="small"
+									onClick={ () => handleSave( 'firewall_routes_policy' ) }
 									disabled={ saving }
 								>
 									{ __( 'Save', 'rest-api-firewall' ) }
@@ -563,15 +501,15 @@ function AppContent() {
 							) }
 
 							{ panelGroup === 4 && (
-									<Button
-										variant="contained"
-										disableElevation
-										size="small"
-										onClick={ handleSaveCollections }
-										disabled={ saving }
-									>
-										{ __( 'Save', 'rest-api-firewall' ) }
-									</Button>
+								<Button
+									variant="contained"
+									disableElevation
+									size="small"
+									onClick={ () => handleSave( 'collections' ) }
+									disabled={ saving }
+								>
+									{ __( 'Save', 'rest-api-firewall' ) }
+								</Button>
 							) }
 
 							{ panelGroup === 5 && (
@@ -583,15 +521,17 @@ function AppContent() {
 											: ''
 									}
 								>
-									<Button
-										variant="contained"
-										disableElevation
-										size="small"
-										onClick={ handleSaveModelsProperties }
-										disabled={ ! hasValidLicense || saving }
-									>
-										{ __( 'Save', 'rest-api-firewall' ) }
-									</Button>
+									<Box>
+										<Button
+											variant="contained"
+											disableElevation
+											size="small"
+											onClick={ () => handleSave( 'models_properties' ) }
+											disabled={ ! hasValidLicense || saving }
+										>
+											{ __( 'Save', 'rest-api-firewall' ) }
+										</Button>
+									</Box>
 								</Tooltip>
 							) }
 
@@ -600,7 +540,7 @@ function AppContent() {
 										variant="contained"
 										disableElevation
 										size="small"
-										onClick={ handleSaveSettingsProperties }
+										onClick={ () => handleSave( 'settings_route' ) }
 										disabled={ saving }
 									>
 										{ __( 'Save', 'rest-api-firewall' ) }
@@ -612,7 +552,7 @@ function AppContent() {
 									variant="contained"
 									disableElevation
 									size="small"
-									onClick={ handleSaveWebhook }
+									onClick={ () => handleSave( 'webhook' ) }
 									disabled={ saving }
 								>
 									{ __( 'Save', 'rest-api-firewall' ) }
@@ -624,7 +564,7 @@ function AppContent() {
 									variant="contained"
 									disableElevation
 									size="small"
-									onClick={ handleSaveEmails }
+									onClick={ () => handleSave( 'email' ) }
 									disabled={ saving }
 								>
 									{ __( 'Save', 'rest-api-firewall' ) }
@@ -636,7 +576,7 @@ function AppContent() {
 									variant="contained"
 									disableElevation
 									size="small"
-									onClick={ handleSaveTheme }
+									onClick={ () => handleSave( 'theme' ) }
 									disabled={ saving }
 								>
 									{ __( 'Save', 'rest-api-firewall' ) }
@@ -647,53 +587,56 @@ function AppContent() {
 				</AppBar>
 
 				<Box
-					sx={ {
-						flexGrow: 1,
-						minWidth: 0,
-						pl: { xs: 0, md: DRAWER_WIDTH + 'px' },
-						pt: APP_BAR_HEIGHT + 'px',
-						minHeight: {
-							xs: `calc(100svh - ${
-								APP_FOOTER_HEIGHT +
-								APP_BAR_HEIGHT +
-								WP_ADMIN_BAR_HEIGHT_MOBILE
-							}px)`,
-							md: `calc(100svh - ${
-								APP_FOOTER_HEIGHT +
-								APP_BAR_HEIGHT +
-								WP_ADMIN_BAR_HEIGHT_DESKTOP
-							}px)`,
-						},
-						bgcolor: theme.palette.background.paper,
-					} }
+				sx={ {
+					flexGrow: 1,
+					minWidth: 0,
+					pl: { xs: 0, md: DRAWER_WIDTH + 'px' },
+					pt: APP_BAR_HEIGHT + 'px',
+					minHeight: {
+						xs: `calc(100svh - ${
+							APP_FOOTER_HEIGHT +
+							APP_BAR_HEIGHT +
+							WP_ADMIN_BAR_HEIGHT_MOBILE
+						}px)`,
+						md: `calc(100svh - ${
+							APP_FOOTER_HEIGHT +
+							APP_BAR_HEIGHT +
+							WP_ADMIN_BAR_HEIGHT_DESKTOP
+						}px)`,
+					},
+					bgcolor: theme.palette.background.paper,
+				} }
 				>
 					<Box sx={ { p: 3 } }>
 
 						{ panelGroup === 1 && (
-							<Stack sx={ { maxWidth: 800 } } id="section-user-rate-limiting">
+							<Stack pacing={3} sx={ { maxWidth: 800 } } id="section-auth-rate-limiting">
 								<RestApiUser
 									form={ form }
 									setField={ setField }
 								/>
-								<Divider sx={ { my: 3 } } />
+								<Divider />
 								<RateLimit form={ form } setField={ setField } />
 							</Stack>
 						) }
 
 						{ panelGroup === 2 && (
+							<Stack spacing={3} id="section-routes-policy-settings">
+								<GlobalRoutesPolicy form={ form } setField={ setField } />
+								<Divider />
+								<RoutesPolicyTree
+									form={ form }
+									setField={ setField }
+								/>
+							</Stack>
+						) }
+
+						{ panelGroup === 3 && (
 							<Stack id="section-ip-filtering">
 								<IpBlackList />
 							</Stack>
 						) }
 
-						{ panelGroup === 3 && (
-							<Stack id="section-per-route-settings">
-							<RoutesPolicy
-								form={ form }
-								setField={ setField }
-							/>
-							</Stack>
-						) }
 
 						{ panelGroup === 4 && (
 							<Stack id="section-collections-per-page">
