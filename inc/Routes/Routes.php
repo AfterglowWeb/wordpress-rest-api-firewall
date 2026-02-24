@@ -61,7 +61,6 @@ class Routes {
 
 		$post_types = get_post_types(
 			array(
-				'public'       => true,
 				'show_in_rest' => true,
 			)
 		);
@@ -74,9 +73,8 @@ class Routes {
 
 			add_filter(
 				'rest_' . $post_type . '_collection_params',
-				function ( $query_params ) {
+				function ( $query_params ) use ( $post_type ) {
 
-					$post_type            = $query_params['type'];
 					$posts_per_page       = CoreOptions::read_option( 'rest_collections_posts_per_page' );
 					$attachments_per_page = CoreOptions::read_option( 'rest_collections_attachments_per_page' );
 					$per_page             = 'attachment' !== $post_type ? $posts_per_page : $attachments_per_page;

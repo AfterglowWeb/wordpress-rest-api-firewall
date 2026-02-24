@@ -8,6 +8,7 @@ use WP_REST_Settings_Controller;
 use WP_REST_Terms_Controller;
 use WP_Post_Type;
 use WP_REST_Attachments_Controller;
+use WP_REST_Request;
 
 class ModelsPropertiesController {
 
@@ -32,8 +33,51 @@ class ModelsPropertiesController {
 
 	public static function model_properties( string $post_type ): array {
 
+		$filters = self::properties_filters();
+		$data    = self::get_sample_rest_response_data( $post_type );
+
+		if ( ! empty( $data ) ) {
+			$props = self::build_props_from_data( $data, $filters );
+
+			// If the sample item had no embeddable resources, _embedded won't be in the response.
+			// Derive it from _links relations that declare embeddable: true.
+			if ( ! isset( $props['_embedded'] ) && ! empty( $data['_links'] ) && is_array( $data['_links'] ) ) {
+				$embed_sub = array();
+				foreach ( $data['_links'] as $rel => $link_set ) {
+					if ( ! is_array( $link_set ) ) {
+						continue;
+					}
+					foreach ( $link_set as $link ) {
+						if ( ! empty( $link['embeddable'] ) ) {
+							$embed_sub[ $rel ] = array(
+								'type'     => 'array',
+								'settings' => array( 'disable' => false, 'filters' => array() ),
+							);
+							break;
+						}
+					}
+				}
+				if ( ! empty( $embed_sub ) ) {
+					$props['_embedded'] = array(
+						'type'       => 'object',
+						'settings'   => array(
+							'disable' => false,
+							'filters' => self::get_filters_per_property( '_embedded', $filters ),
+						),
+						'properties' => $embed_sub,
+					);
+				}
+			}
+
+			if ( function_exists( 'acf_get_field_groups' ) && ! isset( $props['acf'] ) ) {
+				error_log( 'RAF - ACF is active but "acf" key not found in REST response for "' . $post_type . '". Ensure ACF REST API fields are enabled for this post type.' );
+			}
+
+			return $props;
+		}
+
+		// Fallback: schema approach when no real items exist for this type.
 		$controller = self::get_rest_controller( $post_type );
-		$filters    = self::properties_filters();
 
 		if ( ! $controller || ! method_exists( $controller, 'get_item_schema' ) ) {
 			return array();
@@ -48,26 +92,7 @@ class ModelsPropertiesController {
 		$properties = array();
 
 		foreach ( $schema['properties'] as $property_key => $property ) {
-
-			$property_filters = self::get_filters_per_property( $property_key, $filters );
-
-			$properties[ $property_key ] = array_merge(
-				$property,
-				array(
-					'settings' => array(
-						'disable' => false,
-						'filters' => $property_filters,
-					),
-				)
-			);
-		}
-
-		foreach ( self::get_additional_properties( $post_type ) as $property_key => $property ) {
-			if ( isset( $properties[ $property_key ] ) ) {
-				continue;
-			}
-
-			$property_filters             = self::get_filters_per_property( $property_key, $filters );
+			$property_filters            = self::get_filters_per_property( $property_key, $filters );
 			$properties[ $property_key ] = array_merge(
 				$property,
 				array(
@@ -82,124 +107,122 @@ class ModelsPropertiesController {
 		return $properties;
 	}
 
-	private static function get_additional_properties( string $object_type ): array {
-		$extra        = array();
-		$sub_settings = array( 'disable' => false, 'filters' => array() );
+	/**
+	 * Fetch a real REST response for the given object type and return its serialized data.
+	 * Returns an empty array if no items exist or the request fails.
+	 */
+	private static function get_sample_rest_response_data( string $object_type ): array {
 
-		$extra['_links'] = array(
-			'type'        => 'object',
-			'description' => 'Links to related resources.',
-			'properties'  => array(
-				'self'                => array( 'type' => 'array', 'description' => 'Link to the item itself.', 'settings' => $sub_settings ),
-				'collection'          => array( 'type' => 'array', 'description' => 'Link to the collection.', 'settings' => $sub_settings ),
-				'about'               => array( 'type' => 'array', 'description' => 'Link to the post type definition.', 'settings' => $sub_settings ),
-				'author'              => array( 'type' => 'array', 'description' => 'Link to the author.', 'settings' => $sub_settings ),
-				'replies'             => array( 'type' => 'array', 'description' => 'Link to replies.', 'settings' => $sub_settings ),
-				'version-history'     => array( 'type' => 'array', 'description' => 'Link to the version history.', 'settings' => $sub_settings ),
-				'predecessor-version' => array( 'type' => 'array', 'description' => 'Link to the predecessor version.', 'settings' => $sub_settings ),
-				'wp:featuredmedia'    => array( 'type' => 'array', 'description' => 'Link to the featured media.', 'settings' => $sub_settings ),
-				'wp:attachment'       => array( 'type' => 'array', 'description' => 'Link to attachments.', 'settings' => $sub_settings ),
-				'wp:term'             => array( 'type' => 'array', 'description' => 'Links to terms.', 'settings' => $sub_settings ),
-				'curies'              => array( 'type' => 'array', 'description' => 'Curies.', 'settings' => $sub_settings ),
-			),
-		);
+		$rest_base = '';
+		$id        = 0;
 
-		$extra['_embed'] = array(
-			'type'        => 'object',
-			'description' => 'Embedded related resources.',
-			'properties'  => array(
-				'author'           => array( 'type' => 'array', 'description' => 'Embedded author data.', 'settings' => $sub_settings ),
-				'replies'          => array( 'type' => 'array', 'description' => 'Embedded replies.', 'settings' => $sub_settings ),
-				'wp:featuredmedia' => array( 'type' => 'array', 'description' => 'Embedded featured media.', 'settings' => $sub_settings ),
-				'wp:term'          => array( 'type' => 'array', 'description' => 'Embedded taxonomy terms.', 'settings' => $sub_settings ),
-				'wp:attachment'    => array( 'type' => 'array', 'description' => 'Embedded attachments.', 'settings' => $sub_settings ),
-			),
-		);
-
-		if ( function_exists( 'acf_get_field_groups' ) ) {
-			$all_fields   = array();
-			$field_groups = acf_get_field_groups( array( 'post_type' => $object_type ) );
-
-			foreach ( $field_groups as $group ) {
-				$fields = acf_get_fields( $group['key'] ) ?: array();
-				foreach ( $fields as $field ) {
-					$all_fields[] = $field;
-				}
+		if ( taxonomy_exists( $object_type ) ) {
+			$tax_obj   = get_taxonomy( $object_type );
+			$rest_base = $tax_obj ? ( $tax_obj->rest_base ?: $object_type ) : $object_type;
+			$terms     = get_terms(
+				array(
+					'taxonomy'   => $object_type,
+					'number'     => 1,
+					'hide_empty' => false,
+					'fields'     => 'ids',
+				)
+			);
+			if ( is_wp_error( $terms ) || empty( $terms ) ) {
+				return array();
 			}
-
-			$extra['acf'] = array(
-				'type'        => 'object',
-				'description' => 'Advanced Custom Fields.',
-				'properties'  => self::build_acf_subprops( $all_fields, $sub_settings ),
+			$id = (int) $terms[0];
+		} else {
+			$pt_obj = get_post_type_object( $object_type );
+			if ( ! $pt_obj ) {
+				return array();
+			}
+			$rest_base = $pt_obj->rest_base ?: $object_type;
+			$posts     = get_posts(
+				array(
+					'post_type'      => $object_type,
+					'posts_per_page' => 1,
+					'fields'         => 'ids',
+					'post_status'    => array( 'publish', 'draft', 'private' ),
+				)
 			);
-		} elseif ( function_exists( 'get_fields' ) ) {
-			$extra['acf'] = array(
-				'type'        => 'object',
-				'description' => 'Advanced Custom Fields.',
-			);
+			if ( empty( $posts ) ) {
+				return array();
+			}
+			$id = (int) $posts[0];
 		}
 
-		global $wp_rest_additional_fields;
+		$request = new WP_REST_Request( 'GET', "/wp/v2/{$rest_base}/{$id}" );
+		$request->set_param( '_embed', '1' );
+		$response = rest_do_request( $request );
 
-		if ( ! empty( $wp_rest_additional_fields[ $object_type ] ) ) {
-			foreach ( $wp_rest_additional_fields[ $object_type ] as $field_name => $field_options ) {
-				if ( isset( $extra[ $field_name ] ) ) {
-					continue;
-				}
-				$schema               = $field_options['schema'] ?? array();
-				$extra[ $field_name ] = array(
-					'type'        => $schema['type'] ?? 'object',
-					'description' => $schema['description'] ?? '',
-				);
-			}
+		if ( is_wp_error( $response ) ) {
+			error_log( 'RAF - REST request error for "' . $object_type . '" (/wp/v2/' . $rest_base . '/' . $id . '): ' . $response->get_error_message() );
+			return array();
 		}
 
-		return $extra;
+		if ( 200 !== $response->get_status() ) {
+			error_log( 'RAF - REST request non-200 for "' . $object_type . '" (/wp/v2/' . $rest_base . '/' . $id . '): status=' . $response->get_status() );
+			return array();
+		}
+
+		// response_to_data( $response, true ) serializes data, appends _links, and embeds linked resources as _embed.
+		$data = rest_get_server()->response_to_data( $response, true );
+		error_log( 'RAF - REST data keys for "' . $object_type . '": ' . implode( ', ', array_keys( $data ) ) );
+		return $data;
 	}
 
-
-	private static function build_acf_subprops( array $fields, array $sub_settings ): array {
+	/**
+	 * Recursively build a property tree from actual REST response data.
+	 * Type is inferred from the real value; sub-properties are discovered from nested objects.
+	 */
+	private static function build_props_from_data( array $data, array $filters = array(), int $depth = 0 ): array {
 		$props = array();
 
-		foreach ( $fields as $field ) {
-			if ( ! isset( $field['name'], $field['type'] ) ) {
-				continue;
-			}
+		foreach ( $data as $key => $value ) {
+			$str_key          = (string) $key;
+			$type             = self::infer_json_type( $value );
+			$property_filters = 0 === $depth ? self::get_filters_per_property( $str_key, $filters ) : array();
 
-			$key        = sanitize_key( $field['name'] );
-			$field_data = array(
-				'type'        => sanitize_text_field( $field['type'] ),
-				'description' => sanitize_text_field( $field['label'] ?? '' ),
-				'settings'    => $sub_settings,
+			$prop = array(
+				'type'     => $type,
+				'settings' => array(
+					'disable' => false,
+					'filters' => $property_filters,
+				),
 			);
 
-			// Repeater / Group: recurse into sub_fields.
-			if ( ! empty( $field['sub_fields'] ) && is_array( $field['sub_fields'] ) ) {
-				$field_data['properties'] = self::build_acf_subprops( $field['sub_fields'], $sub_settings );
-			}
-
-			// Flexible Content: each layout has its own sub_fields.
-			if ( 'flexible_content' === $field['type'] && ! empty( $field['layouts'] ) && is_array( $field['layouts'] ) ) {
-				$layout_props = array();
-				foreach ( $field['layouts'] as $layout ) {
-					$layout_key = sanitize_key( $layout['name'] ?? '' );
-					if ( '' === $layout_key ) {
-						continue;
-					}
-					$layout_props[ $layout_key ] = array(
-						'type'        => 'object',
-						'description' => sanitize_text_field( $layout['label'] ?? '' ),
-						'settings'    => $sub_settings,
-						'properties'  => self::build_acf_subprops( $layout['sub_fields'] ?? array(), $sub_settings ),
-					);
+			// Recurse into JSON objects (associative arrays), up to 2 levels deep.
+			if ( 'object' === $type && $depth < 2 ) {
+				$sub = self::build_props_from_data( (array) $value, array(), $depth + 1 );
+				if ( ! empty( $sub ) ) {
+					$prop['properties'] = $sub;
 				}
-				$field_data['properties'] = $layout_props;
 			}
 
-			$props[ $key ] = $field_data;
+			$props[ $str_key ] = $prop;
 		}
 
 		return $props;
+	}
+
+	/**
+	 * Infer a JSON type string from a PHP value.
+	 */
+	private static function infer_json_type( $value ): string {
+		if ( is_null( $value ) )   return 'null';
+		if ( is_bool( $value ) )   return 'boolean';
+		if ( is_int( $value ) )    return 'integer';
+		if ( is_float( $value ) )  return 'number';
+		if ( is_string( $value ) ) return 'string';
+		if ( is_array( $value ) ) {
+			foreach ( array_keys( $value ) as $k ) {
+				if ( ! is_int( $k ) ) {
+					return 'object';
+				}
+			}
+			return 'array';
+		}
+		return 'object';
 	}
 
 	private static function get_filters_per_property( $property_key, $filters ): array {
@@ -298,7 +321,7 @@ class ModelsPropertiesController {
 					'guid',
 					'source_url',
 					'media_details',
-					'_embed',
+					'_embedded',
 					'_links',
 				),
 			),
