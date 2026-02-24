@@ -6,87 +6,16 @@ import FormControl from '@mui/material/FormControl';
 import FormHelperText from '@mui/material/FormHelperText';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 
 export default function SettingsRoute( { form, setField } ) {
 	const { __ } = wp.i18n || {};
 	const { hasValidLicense } = useLicense();
 
-	const isProDisabled =
-		! hasValidLicense || ! form.rest_models_acf_options_page_enabled;
-
 	return (
 		<Stack spacing={ 3 }>
-			<FormControl disabled={ ! hasValidLicense }>
-				<FormControlLabel
-					control={
-						<Switch
-							checked={ !! form.rest_models_remove_site_url }
-							onChange={ setField }
-							size="small"
-							name="rest_models_remove_site_url"
-						/>
-					}
-					label={ __(
-						'Remove Site URL in wp/v2/settings',
-						'rest-api-firewall'
-					) }
-				/>
-			</FormControl>
 
-			<FormControl disabled={ ! hasValidLicense }>
-				<FormControlLabel
-					control={
-						<Switch
-							checked={ !! form.rest_models_remove_site_email }
-							onChange={ setField }
-							size="small"
-							name="rest_models_remove_site_email"
-						/>
-					}
-					label={ __(
-						'Remove Site Email in wp/v2/settings',
-						'rest-api-firewall'
-					) }
-				/>
-			</FormControl>
-
-			<FormControl disabled={ ! hasValidLicense }>
-				<FormControlLabel
-					control={
-						<Switch
-							checked={
-								!! form.rest_models_acf_options_page_enabled
-							}
-							onChange={ setField }
-							size="small"
-							name="rest_models_acf_options_page_enabled"
-						/>
-					}
-					label={ __(
-						'Add ACF Options Pages fields to wp/v2/settings',
-						'rest-api-firewall'
-					) }
-				/>
-			</FormControl>
-
-			<Stack maxWidth={ 320 } pl={ 3.5 }>
-				<TextField
-					label={ __(
-						'Custom ACF Options Pages Route',
-						'rest-api-firewall'
-					) }
-					helperText={ __(
-						'Serve ACF options pages fields through a custom route instead of wp/v2/settings.',
-						'rest-api-firewall'
-					) }
-					name="rest_models_acf_options_page_endpoint"
-					value={ form.rest_models_acf_options_page_endpoint }
-					onChange={ setField }
-					disabled={ isProDisabled }
-				/>
-			</Stack>
-
-			<FormControl disabled={ ! hasValidLicense }>
+			<FormControl>
 				<FormControlLabel
 					control={
 						<Switch
@@ -99,19 +28,131 @@ export default function SettingsRoute( { form, setField } ) {
 						/>
 					}
 					label={ __(
-						'Embed Menus',
+						'Embed Flattened Menus',
 						'rest-api-firewall'
 					) }
 				/>
 				<FormHelperText>
 					{ __(
-						'Embed menus and menu items in wp/v2/settings',
+						'Resolve and embed navigation menus in a `menus` property.',
 						'rest-api-firewall'
 					) }
 				</FormHelperText>
 			</FormControl>
 
-			
+			<FormControl>
+				<FormControlLabel
+					control={
+						<Switch
+							checked={
+								!! form.rest_models_acf_options_page_enabled
+							}
+							onChange={ setField }
+							size="small"
+							name="rest_models_acf_options_page_enabled"
+						/>
+					}
+					label={ __(
+						'Add ACF Options Pages',
+						'rest-api-firewall'
+					) }
+				/>
+				<FormHelperText>
+					{ __(
+						'Embed ACF options pages fields in a `acf_options_page` property.',
+						'rest-api-firewall'
+					) }
+				</FormHelperText>
+			</FormControl>
+		
+			<Tooltip
+			followCursor
+			title={ ! hasValidLicense ? __( 'Licence required', 'rest-api-firewall' ) : '' }
+									>
+				<Stack spacing={ 3 }>
+					<Stack maxWidth={ 320 } pl={ 3.5 }>
+						<TextField
+							label={ __(
+								'Custom ACF Options Pages Route',
+								'rest-api-firewall'
+							) }
+							helperText={ __(
+								'Register a custom ACF options pages route.',
+								'rest-api-firewall'
+							) }
+							name="rest_models_acf_options_page_endpoint"
+							value={ form.rest_models_acf_options_page_endpoint }
+							onChange={ setField }
+							disabled={ ! hasValidLicense || ! form.rest_models_acf_options_page_enabled }
+						/>
+					</Stack>
+
+					<FormControl disabled={ ! hasValidLicense }>
+						<FormControlLabel
+							control={
+								<Switch
+									checked={ !! form.rest_models_remove_site_url }
+									onChange={ setField }
+									size="small"
+									name="rest_models_remove_site_url"
+								/>
+							}
+							label={ __(
+								'Remove Site URL',
+								'rest-api-firewall'
+							) }
+						/>
+					</FormControl>
+
+					<FormControl disabled={ ! hasValidLicense }>
+						<FormControlLabel
+							control={
+								<Switch
+									checked={ !! form.rest_models_remove_site_email }
+									onChange={ setField }
+									size="small"
+									name="rest_models_remove_site_email"
+								/>
+							}
+							label={ __(
+								'Remove Site Email',
+								'rest-api-firewall'
+							) }
+						/>
+					</FormControl>
+				</Stack>
+			</Tooltip>
+		</Stack>
+	);
+}
+
+function RouteProperties( { route } ) {
+	const { __ } = wp.i18n || {};
+	const { hasValidLicense } = useLicense();
+	const { adminData } = useAdminData();
+	const postProperties = adminData?.models_properties || {};
+
+	return (
+		<Stack spacing={ 1 }>
+			{ selectedPostType &&
+				postProperties?.[ selectedPostType ]?.props && (
+					<Stack spacing={ 0 }>
+						{ Object.entries(
+							postProperties[ selectedPostType ].props
+						).map( ( [ propName, propConfig ] ) => (
+							<PropertyRow
+								key={ propName }
+								propName={ propName }
+								propConfig={ propConfig }
+								selectedPostType={ selectedPostType }
+								setField={ setField }
+								hasValidLicense={ hasValidLicense }
+								__={ __ }
+								basePath={ `postProperties.${ selectedPostType }.props.${ propName }` }
+							/>
+						) ) }
+					</Stack>
+				) }
 		</Stack>
 	);
 }

@@ -35,6 +35,101 @@ class CoreOptions {
 
 		$options = array(
 
+			// Firewall - Authentication & Rate Limiting.
+			'firewall_user_id'                          => array(
+				'default_value'     => 0,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_auth_rate',
+			),
+
+			'rate_limit'                                => array(
+				'default_value'     => 30,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_auth_rate',
+			),
+
+			'rate_limit_time'                           => array(
+				'default_value'     => 60,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_auth_rate',
+			),
+
+			'rate_limit_release'                        => array(
+				'default_value'     => 300,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_auth_rate',
+			),
+
+			'rate_limit_blacklist'                      => array(
+				'default_value'     => 5,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_auth_rate',
+			),
+
+			'rate_limit_blacklist_time'                 => array(
+				'default_value'     => 3600,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_auth_rate',
+			),
+
+			// Firewall - Routes & Policies.
+			'enforce_auth'                              => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_routes_policy',
+			),
+
+			'enforce_rate_limit'                        => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_routes_policy',
+			),
+
+			'hide_user_routes'                          => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_routes_policy',
+			),
+
+			'firewall_policy'                           => array(
+				'default_value'     => array(
+					'nodes'  => array(),
+					'routes' => array(),
+				),
+				'type'              => 'array',
+				'sanitize_callback' => '',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_routes_policy',
+			),
+
 			// Collections.
 			'rest_collections_per_page_enabled'         => array(
 				'default_value'     => false,
@@ -218,101 +313,6 @@ class CoreOptions {
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
 				'group'             => 'theme',
-			),
-
-			// Firewall - Authentication & Rate Limiting.
-			'firewall_user_id'                          => array(
-				'default_value'     => 0,
-				'type'              => 'integer',
-				'sanitize_callback' => 'absint',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'firewall_auth_rate',
-			),
-
-			'rate_limit'                                => array(
-				'default_value'     => 30,
-				'type'              => 'integer',
-				'sanitize_callback' => 'absint',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'firewall_auth_rate',
-			),
-
-			'rate_limit_time'                           => array(
-				'default_value'     => 60,
-				'type'              => 'integer',
-				'sanitize_callback' => 'absint',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'firewall_auth_rate',
-			),
-
-			'rate_limit_release'                        => array(
-				'default_value'     => 300,
-				'type'              => 'integer',
-				'sanitize_callback' => 'absint',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'firewall_auth_rate',
-			),
-
-			'rate_limit_blacklist'                      => array(
-				'default_value'     => 5,
-				'type'              => 'integer',
-				'sanitize_callback' => 'absint',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'firewall_auth_rate',
-			),
-
-			'rate_limit_blacklist_time'                 => array(
-				'default_value'     => 3600,
-				'type'              => 'integer',
-				'sanitize_callback' => 'absint',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'firewall_auth_rate',
-			),
-
-			// Firewall - Routes & Policies.
-			'enforce_auth'                              => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'firewall_routes_policy',
-			),
-
-			'enforce_rate_limit'                        => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'firewall_routes_policy',
-			),
-
-			'hide_user_routes'                          => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'firewall_routes_policy',
-			),
-
-			'firewall_policy'                           => array(
-				'default_value'     => array(
-					'nodes'  => array(),
-					'routes' => array(),
-				),
-				'type'              => 'array',
-				'sanitize_callback' => '',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'firewall_routes_policy',
 			),
 
 		);
