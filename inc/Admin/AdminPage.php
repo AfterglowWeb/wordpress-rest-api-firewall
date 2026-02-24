@@ -6,7 +6,7 @@ defined( 'ABSPATH' ) || exit;
 use cmk\RestApiFirewall\Core\CoreOptions;
 use cmk\RestApiFirewall\Core\FileUtils;
 use cmk\RestApiFirewall\Core\Utils;
-use cmk\RestApiFirewall\Controllers\ModelsPropertiesController;
+use cmk\RestApiFirewall\Models\ModelsPropertiesRepository;
 use cmk\RestApiFirewall\Webhook\WebhookAutoTrigger;
 
 class AdminPage {
@@ -86,7 +86,7 @@ class AdminPage {
 			'ajaxurl'              => admin_url( 'admin-ajax.php' ),
 			'users'                => Utils::list_users(),
 			'post_types'           => Utils::list_post_types(),
-			'models_properties'    => ModelsPropertiesController::models_properties(),
+			'models_properties'    => ModelsPropertiesRepository::models_properties(),
 			'admin_options'        => CoreOptions::read_options(),
 			'options_config'       => CoreOptions::options_config_for_js(),
 			'plugin_name'          => sanitize_text_field( $plugin_data['Name'] ),
