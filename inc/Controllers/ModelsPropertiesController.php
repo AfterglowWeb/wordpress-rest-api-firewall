@@ -39,38 +39,18 @@ class ModelsPropertiesController {
 		if ( ! empty( $data ) ) {
 			$props = self::build_props_from_data( $data, $filters );
 
-			// If the sample item had no embeddable resources, _embedded won't be in the response.
-			// Derive it from _links relations that declare embeddable: true.
-			if ( ! isset( $props['_embedded'] ) && ! empty( $data['_links'] ) && is_array( $data['_links'] ) ) {
-				$embed_sub = array();
-				foreach ( $data['_links'] as $rel => $link_set ) {
-					if ( ! is_array( $link_set ) ) {
-						continue;
-					}
-					foreach ( $link_set as $link ) {
-						if ( ! empty( $link['embeddable'] ) ) {
-							$embed_sub[ $rel ] = array(
-								'type'     => 'array',
-								'settings' => array( 'disable' => false, 'filters' => array() ),
-							);
-							break;
-						}
+			if ( isset( $props['acf'] ) && function_exists( 'acf_get_field_groups' ) ) {
+				$all_fields   = array();
+				$field_groups = acf_get_field_groups( array( 'post_type' => $post_type ) );
+				foreach ( $field_groups as $group ) {
+					$fields = isset( $group['key'] ) && acf_get_fields( $group['key'] ) ? acf_get_fields( $group['key'] ) : array();
+					foreach ( $fields as $field ) {
+						$all_fields[] = $field;
 					}
 				}
-				if ( ! empty( $embed_sub ) ) {
-					$props['_embedded'] = array(
-						'type'       => 'object',
-						'settings'   => array(
-							'disable' => false,
-							'filters' => self::get_filters_per_property( '_embedded', $filters ),
-						),
-						'properties' => $embed_sub,
-					);
+				if ( ! empty( $all_fields ) ) {
+					$props['acf']['properties'] = self::build_acf_subprops( $all_fields );
 				}
-			}
-
-			if ( function_exists( 'acf_get_field_groups' ) && ! isset( $props['acf'] ) ) {
-				error_log( 'RAF - ACF is active but "acf" key not found in REST response for "' . $post_type . '". Ensure ACF REST API fields are enabled for this post type.' );
 			}
 
 			return $props;
@@ -107,10 +87,6 @@ class ModelsPropertiesController {
 		return $properties;
 	}
 
-	/**
-	 * Fetch a real REST response for the given object type and return its serialized data.
-	 * Returns an empty array if no items exist or the request fails.
-	 */
 	private static function get_sample_rest_response_data( string $object_type ): array {
 
 		$rest_base = '';
@@ -118,7 +94,9 @@ class ModelsPropertiesController {
 
 		if ( taxonomy_exists( $object_type ) ) {
 			$tax_obj   = get_taxonomy( $object_type );
-			$rest_base = $tax_obj ? ( $tax_obj->rest_base ?: $object_type ) : $object_type;
+			$rest_base = $tax_obj ?
+			( property_exists( $tax_obj, 'rest_base' ) && $tax_obj->rest_base ? $tax_obj->rest_base : $object_type )
+			: $object_type;
 			$terms     = get_terms(
 				array(
 					'taxonomy'   => $object_type,
@@ -136,7 +114,7 @@ class ModelsPropertiesController {
 			if ( ! $pt_obj ) {
 				return array();
 			}
-			$rest_base = $pt_obj->rest_base ?: $object_type;
+			$rest_base = property_exists( $pt_obj, 'rest_base' ) && $pt_obj->rest_base ? $pt_obj->rest_base : $object_type;
 			$posts     = get_posts(
 				array(
 					'post_type'      => $object_type,
@@ -156,25 +134,17 @@ class ModelsPropertiesController {
 		$response = rest_do_request( $request );
 
 		if ( is_wp_error( $response ) ) {
-			error_log( 'RAF - REST request error for "' . $object_type . '" (/wp/v2/' . $rest_base . '/' . $id . '): ' . $response->get_error_message() );
 			return array();
 		}
 
 		if ( 200 !== $response->get_status() ) {
-			error_log( 'RAF - REST request non-200 for "' . $object_type . '" (/wp/v2/' . $rest_base . '/' . $id . '): status=' . $response->get_status() );
 			return array();
 		}
 
-		// response_to_data( $response, true ) serializes data, appends _links, and embeds linked resources as _embed.
 		$data = rest_get_server()->response_to_data( $response, true );
-		error_log( 'RAF - REST data keys for "' . $object_type . '": ' . implode( ', ', array_keys( $data ) ) );
 		return $data;
 	}
 
-	/**
-	 * Recursively build a property tree from actual REST response data.
-	 * Type is inferred from the real value; sub-properties are discovered from nested objects.
-	 */
 	private static function build_props_from_data( array $data, array $filters = array(), int $depth = 0 ): array {
 		$props = array();
 
@@ -191,7 +161,6 @@ class ModelsPropertiesController {
 				),
 			);
 
-			// Recurse into JSON objects (associative arrays), up to 2 levels deep.
 			if ( 'object' === $type && $depth < 2 ) {
 				$sub = self::build_props_from_data( (array) $value, array(), $depth + 1 );
 				if ( ! empty( $sub ) ) {
@@ -205,15 +174,22 @@ class ModelsPropertiesController {
 		return $props;
 	}
 
-	/**
-	 * Infer a JSON type string from a PHP value.
-	 */
 	private static function infer_json_type( $value ): string {
-		if ( is_null( $value ) )   return 'null';
-		if ( is_bool( $value ) )   return 'boolean';
-		if ( is_int( $value ) )    return 'integer';
-		if ( is_float( $value ) )  return 'number';
-		if ( is_string( $value ) ) return 'string';
+		if ( is_null( $value ) ) {
+			return 'null';
+		}
+		if ( is_bool( $value ) ) {
+			return 'boolean';
+		}
+		if ( is_int( $value ) ) {
+			return 'integer';
+		}
+		if ( is_float( $value ) ) {
+			return 'number';
+		}
+		if ( is_string( $value ) ) {
+			return 'string';
+		}
 		if ( is_array( $value ) ) {
 			foreach ( array_keys( $value ) as $k ) {
 				if ( ! is_int( $k ) ) {
@@ -223,6 +199,52 @@ class ModelsPropertiesController {
 			return 'array';
 		}
 		return 'object';
+	}
+
+	private static function build_acf_subprops( array $fields ): array {
+		$props        = array();
+		$sub_settings = array(
+			'disable' => false,
+			'filters' => array(),
+		);
+
+		foreach ( $fields as $field ) {
+			if ( ! isset( $field['name'], $field['type'] ) ) {
+				continue;
+			}
+
+			$key        = sanitize_key( $field['name'] );
+			$field_data = array(
+				'type'        => sanitize_text_field( $field['type'] ),
+				'description' => sanitize_text_field( $field['label'] ?? '' ),
+				'settings'    => $sub_settings,
+			);
+
+			if ( ! empty( $field['sub_fields'] ) && is_array( $field['sub_fields'] ) ) {
+				$field_data['properties'] = self::build_acf_subprops( $field['sub_fields'] );
+			}
+
+			if ( 'flexible_content' === $field['type'] && ! empty( $field['layouts'] ) && is_array( $field['layouts'] ) ) {
+				$layout_props = array();
+				foreach ( $field['layouts'] as $layout ) {
+					$layout_key = sanitize_key( $layout['name'] ?? '' );
+					if ( '' === $layout_key ) {
+						continue;
+					}
+					$layout_props[ $layout_key ] = array(
+						'type'        => 'object',
+						'description' => sanitize_text_field( $layout['label'] ?? '' ),
+						'settings'    => $sub_settings,
+						'properties'  => self::build_acf_subprops( $layout['sub_fields'] ?? array() ),
+					);
+				}
+				$field_data['properties'] = $layout_props;
+			}
+
+			$props[ $key ] = $field_data;
+		}
+
+		return $props;
 	}
 
 	private static function get_filters_per_property( $property_key, $filters ): array {

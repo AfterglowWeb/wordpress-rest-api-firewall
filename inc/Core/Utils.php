@@ -49,19 +49,17 @@ class Utils {
 			'objects'
 		);
 
-		error_log( 'Utils::list_post_types - Retrieved post types: ' . print_r( $post_types, true ) );
-
 		if ( empty( $post_types ) ) {
 			return array();
 		}
 
 		$list = array_map(
 			static fn ( object $post_type ) => array(
-				'value' => sanitize_key( $post_type->name ),
-				'label' => property_exists( $post_type->labels, 'singular_name' )
+				'value'    => sanitize_key( $post_type->name ),
+				'label'    => property_exists( $post_type->labels, 'singular_name' )
 					? sanitize_text_field( $post_type->labels->singular_name )
 					: sanitize_key( $post_type->name ),
-				'public' => $post_type->public,
+				'public'   => $post_type->public,
 				'_builtin' => $post_type->_builtin,
 			),
 			$post_types
@@ -84,11 +82,11 @@ class Utils {
 
 		$list = array_map(
 			static fn ( object $taxonomy ) => array(
-				'value' => sanitize_key( $taxonomy->name ),
-				'label' => property_exists( $taxonomy->labels, 'singular_name' )
+				'value'    => sanitize_key( $taxonomy->name ),
+				'label'    => property_exists( $taxonomy->labels, 'singular_name' )
 					? sanitize_text_field( $taxonomy->labels->singular_name )
 					: sanitize_key( $taxonomy->name ),
-				'public' => $taxonomy->public,
+				'public'   => $taxonomy->public,
 				'_builtin' => $taxonomy->_builtin,
 			),
 			$taxonomies
