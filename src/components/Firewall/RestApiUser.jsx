@@ -1,3 +1,4 @@
+import { useState, useEffect } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 
 import Stack from '@mui/material/Stack';
@@ -10,12 +11,24 @@ import Typography from '@mui/material/Typography';
 
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
-export default function RestApiUser( { form, setField, users, restApiUser } ) {
+export default function RestApiUser( { form, setField } ) {
 	const { __, sprintf } = wp.i18n || {};
 	const { adminData } = useAdminData();
-
+	const [ restApiUser, setRestApiUser ] = useState( [] );
+	
 	const adminUrl = adminData?.ajaxurl?.split( 'admin-ajax.php' )[ 0 ] || '';
 	const usersPageUrl = `${ adminUrl }users.php`;
+
+	useEffect( () => {
+		if ( Array.isArray( adminData?.users ) && form.firewall_user_id ) {
+			const currentUser = adminData.users.filter(
+				( user ) => form.firewall_user_id === user.value
+			);
+			if ( currentUser && currentUser.length > 0 ) {
+				setRestApiUser( currentUser[ 0 ] );
+			}
+		}
+	}, [ adminData?.users, form.firewall_user_id ] );
 
 	return (
 		<Stack
@@ -38,7 +51,7 @@ export default function RestApiUser( { form, setField, users, restApiUser } ) {
 					<MenuItem value={ 0 }>
 						<em>{ __( 'Select User', 'rest-api-firewall' ) }</em>
 					</MenuItem>
-					{ users.map( ( user ) =>
+					{ adminData?.users && adminData.users.length > 0 && adminData.users.map( ( user ) =>
 						user.value && user.label ? (
 							<MenuItem key={ user.value } value={ user.value }>
 								{ user.label }

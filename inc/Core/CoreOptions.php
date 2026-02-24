@@ -42,7 +42,7 @@ class CoreOptions {
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
-				'group'             => 'schema',
+				'group'             => 'collections',
 			),
 
 			'rest_collections_posts_per_page'           => array(
@@ -51,7 +51,7 @@ class CoreOptions {
 				'sanitize_callback' => 'absint',
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
-				'group'             => 'schema',
+				'group'             => 'collections',
 			),
 
 			'rest_collections_attachments_per_page'     => array(
@@ -60,7 +60,7 @@ class CoreOptions {
 				'sanitize_callback' => 'absint',
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
-				'group'             => 'schema',
+				'group'             => 'collections',
 			),
 
 			// Application.

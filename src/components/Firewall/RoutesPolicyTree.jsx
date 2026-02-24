@@ -666,7 +666,7 @@ function findNodeById( items, id ) {
 	return null;
 }
 
-export default function RoutesTree( {
+export default function RoutesPolicyTree( {
 	treeData = [],
 	onSettingsChange,
 	enforceAuth = false,

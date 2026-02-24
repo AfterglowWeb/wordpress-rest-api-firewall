@@ -10,7 +10,7 @@ final class WebhookClient {
 	/**
 	 * Send a webhook request using a webhook entry object.
 	 *
-	 * @param array $webhook  The webhook entry (from new schema).
+	 * @param array $webhook  The webhook entry.
 	 * @param array $payload  The payload data.
 	 * @param bool  $is_test  Whether this is a test request.
 	 * @return array|WP_Error The response or error.
