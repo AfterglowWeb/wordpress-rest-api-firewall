@@ -208,7 +208,6 @@ class FileUtils {
 				$copied_files = array_merge( $copied_files, $sub_result );
 
 			} else {
-				// File: copy.
 				$content = $wp_filesystem->get_contents( $source_path );
 
 				if ( false === $content ) {

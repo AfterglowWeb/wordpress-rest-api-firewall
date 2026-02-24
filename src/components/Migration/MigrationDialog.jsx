@@ -23,7 +23,6 @@ export default function MigrationDialog( { open, onClose, onDone } ) {
 	const [ migrating, setMigrating ] = useState( false );
 	const [ result, setResult ] = useState( null ); // null | { success: bool, message: string }
 
-	// Reset form state each time the dialog opens.
 	useEffect( () => {
 		if ( open ) {
 			setTitle( '' );

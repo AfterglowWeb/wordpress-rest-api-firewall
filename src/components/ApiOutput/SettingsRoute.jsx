@@ -3,6 +3,7 @@ import { useLicense } from '../../contexts/LicenseContext';
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
+import FormHelperText from '@mui/material/FormHelperText';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 
@@ -84,6 +85,33 @@ export default function SettingsRoute( { form, setField } ) {
 					disabled={ isProDisabled }
 				/>
 			</Stack>
+
+			<FormControl disabled={ ! hasValidLicense }>
+				<FormControlLabel
+					control={
+						<Switch
+							checked={
+								!! form.rest_models_embed_menus_enabled
+							}
+							onChange={ setField }
+							size="small"
+							name="rest_models_embed_menus_enabled"
+						/>
+					}
+					label={ __(
+						'Embed Menus',
+						'rest-api-firewall'
+					) }
+				/>
+				<FormHelperText>
+					{ __(
+						'Embed menus and menu items in wp/v2/settings',
+						'rest-api-firewall'
+					) }
+				</FormHelperText>
+			</FormControl>
+
+			
 		</Stack>
 	);
 }
