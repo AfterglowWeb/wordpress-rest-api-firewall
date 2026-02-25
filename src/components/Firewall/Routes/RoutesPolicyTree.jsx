@@ -13,6 +13,7 @@ import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 import LinearProgress from '@mui/material/LinearProgress';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import ReplayIcon from '@mui/icons-material/Replay';
 
 import { RichTreeView } from '@mui/x-tree-view/RichTreeView';
 import { TreeItem, TreeItemContent } from '@mui/x-tree-view/TreeItem';
@@ -32,15 +33,16 @@ const CustomTreeItem = forwardRef( function CustomTreeItem( props, ref ) {
 			slotProps={ {
 				content: {
 					toggleNodeSetting: props.toggleNodeSetting,
+					overrideNodeSetting: props.overrideNodeSetting,
+					clearNodeOverride: props.clearNodeOverride,
 					applyToAllChildren: props.applyToAllChildren,
 					getNodeById: props.getNodeById,
 					node,
-					enforceAuth: props.enforceAuth,
-					enforceRateLimit: props.enforceRateLimit,
-					enforceDisabled: props.disabled,
-					globalRateLimit: props.globalRateLimit,
-					globalRateLimitTime: props.globalRateLimitTime,
-					hasValidLicense: props.proActive,
+					enforce_auth: props.enforce_auth,
+					enforce_rate_limit: props.enforce_rate_limit,
+					rate_limit: props.rate_limit,
+					rate_limit_time: props.rate_limit_time,
+					expandedItems: props.expandedItems,
 				},
 			} }
 		/>
@@ -50,11 +52,10 @@ const CustomTreeItem = forwardRef( function CustomTreeItem( props, ref ) {
 export default function RoutesPolicyTree( { form, setField } ) {
 
 	const {
-		enforceAuth,
-		enforceRateLimit,
-		enforceDisabled,
-		globalRateLimit,
-		globalRateLimitTime,
+		enforce_auth,
+		enforce_rate_limit,
+		rate_limit,
+		rate_limit_time,
 	} = form;
 
 	const { adminData } = useAdminData();
@@ -63,7 +64,8 @@ export default function RoutesPolicyTree( { form, setField } ) {
 	const [ treeData, setTreeData ] = useState( null );
 	const [ loading, setLoading ] = useState( false );
 	const [ errorMessage, setErrorMessage ] = useState( '' );
-	
+	const [ expandedItems, setExpandedItems ] = useState( [] );
+
 	const loadRoutes = useCallback( async () => {
 		setLoading( true );
 		try {
@@ -109,17 +111,30 @@ export default function RoutesPolicyTree( { form, setField } ) {
 		}
 	}, [ treeData ] );
 
-	const handleToggle = ( id, key ) => {
+	const handleToggle = ( id, key ) =>
 		dispatch( { type: 'TOGGLE_NODE', id, key } );
-	};
 
-	const handleApplyToAll = ( id, shouldApply ) => {
+	const handleApplyToAll = ( id, shouldApply ) =>
 		dispatch( { type: 'APPLY_TO_ALL_DESCENDANTS', id, shouldApply } );
-	};
+
+	const handleOverrideNode = ( id, key, value ) =>
+		dispatch( { type: 'OVERRIDE_NODE', id, key, value } );
+
+	const handleClearOverride = ( id ) =>
+		dispatch( { type: 'CLEAR_OVERRIDE', id } );
 
 	const getNodeById = ( id ) => findNodeById( nodes, id );
 
-	if ( loading || (! loading && ! treeData ) ) {
+	const anyOverrideExists = nodes.some( ( n ) => {
+		const s = n.settings || {};
+		return (
+			[ 'protect', 'rate_limit', 'disabled' ].some(
+				( k ) => s[ k ]?.overridden
+			) || countModifiedDescendants( n ) > 0
+		);
+	} );
+
+	if ( loading || ( ! loading && ! treeData ) ) {
 		return (
 			<Box
 				sx={ {
@@ -137,7 +152,7 @@ export default function RoutesPolicyTree( { form, setField } ) {
 						? __( 'Loading routes…', 'rest-api-firewall' )
 						: __( 'No routes found', 'rest-api-firewall' ) }
 				</Typography>
-				{ loading && <LinearProgress sx={{width:'100%', maxWidth: 250}} color="info" /> }
+				{ loading && <LinearProgress sx={ { width: '100%', maxWidth: 250 } } color="info" /> }
 			</Box>
 		);
 	}
@@ -145,54 +160,77 @@ export default function RoutesPolicyTree( { form, setField } ) {
 	return (
 		<Box sx={ { minHeight: 352, minWidth: '100%' } }>
 			<Stack
-						direction="row"
-						justifyContent="space-between"
-						alignItems="center"
-					>
-						<Typography
-							variant="caption"
-							sx={ {
-								display: 'block',
-								textTransform: 'uppercase',
-								letterSpacing: 0.5,
-								fontSize: '0.75rem',
-								color: 'text.secondary',
-							} }
-						>
-							{ __(
-								'Per-Route Settings',
-								'rest-api-firewall'
-							) }
-						</Typography>
+				direction="row"
+				justifyContent="space-between"
+				alignItems="center"
+			>
+				<Typography
+					variant="caption"
+					sx={ {
+						display: 'block',
+						textTransform: 'uppercase',
+						letterSpacing: 0.5,
+						fontSize: '0.75rem',
+						color: 'text.secondary',
+					} }
+				>
+					{ __(
+						'Per-Route Settings',
+						'rest-api-firewall'
+					) }
+				</Typography>
 
+				<Stack direction="row" alignItems="center">
+					{ anyOverrideExists && (
 						<Tooltip
 							title={ __(
-								'Refresh Routes',
+								'Reset all custom settings',
 								'rest-api-firewall'
 							) }
 							placement="left"
 						>
-							<IconButton onClick={ loadRoutes }>
-								<RefreshIcon />
+							<IconButton
+								onClick={ () =>
+									dispatch( { type: 'RESET_ALL_OVERRIDES' } )
+								}
+							>
+								<ReplayIcon />
 							</IconButton>
 						</Tooltip>
-					</Stack>
+					) }
+					<Tooltip
+						title={ __(
+							'Refresh Routes',
+							'rest-api-firewall'
+						) }
+						placement="left"
+					>
+						<IconButton onClick={ loadRoutes }>
+							<RefreshIcon />
+						</IconButton>
+					</Tooltip>
+				</Stack>
+			</Stack>
 			<RichTreeView
 				items={ nodes }
 				slots={ { item: CustomTreeItem } }
 				slotProps={ {
 					item: {
 						toggleNodeSetting: handleToggle,
+						overrideNodeSetting: handleOverrideNode,
+						clearNodeOverride: handleClearOverride,
 						applyToAllChildren: handleApplyToAll,
 						getNodeById,
-						enforceAuth,
-						enforceRateLimit,
-						enforceDisabled,
-						globalRateLimit,
-						globalRateLimitTime,
+						enforce_auth,
+						enforce_rate_limit,
+						rate_limit,
+						rate_limit_time,
+						expandedItems,
 						hasValidLicense,
 					},
 				} }
+				expandedItems={ expandedItems }
+				onExpandedItemsChange={ ( _e, ids ) => setExpandedItems( ids ) }
 			/>
 		</Box>
 	);
@@ -202,14 +240,16 @@ export default function RoutesPolicyTree( { form, setField } ) {
 function NodeContent( {
 	children,
 	toggleNodeSetting,
+	overrideNodeSetting,
+	clearNodeOverride,
 	applyToAllChildren,
 	getNodeById,
 	node,
-	enforceAuth,
-	enforceRateLimit,
-	enforceDisabled,
-	globalRateLimit,
-	globalRateLimitTime,
+	enforce_auth,
+	enforce_rate_limit,
+	rate_limit,
+	rate_limit_time,
+	expandedItems,
 	...props
 } ) {
 	useTreeItem( props );
@@ -221,13 +261,34 @@ function NodeContent( {
 	}
 
 	const nodeSettings = node.settings ?? {
-		protect: { value: false, inherited: false },
-		disabled: { value: false, inherited: false },
-		rate_limit: { value: false, inherited: false },
-		rate_limit_time: { value: false, inherited: false },
+		protect: { value: false, inherited: false, overridden: false },
+		disabled: { value: false, inherited: false, overridden: false },
+		rate_limit: { value: false, inherited: false, overridden: false },
+		rate_limit_time: { value: false, inherited: false, overridden: false },
 	};
 
 	const hasChildren = node.children && node.children.length > 0;
+	const isExpanded = expandedItems?.includes( node.id );
+	const modifiedCount = countModifiedDescendants( node );
+
+	// Override model: effective values
+	const authIsGlobal =
+		!! enforce_auth && ! nodeSettings.protect.overridden;
+	const isAuthEnforced = authIsGlobal || nodeSettings.protect.value;
+
+	const rateIsGlobal =
+		!! enforce_rate_limit && ! nodeSettings.rate_limit.overridden;
+	const isRateLimitEnforced = rateIsGlobal || nodeSettings.rate_limit.value;
+
+	const isDisabled = nodeSettings.disabled.value;
+
+	const effectiveRateLimit = rate_limit;
+	const effectiveRateLimitTime = rate_limit_time;
+
+	// Custom indicator: any setting has overridden: true
+	const isCustomized = [ 'protect', 'rate_limit', 'disabled' ].some(
+		( k ) => nodeSettings[ k ]?.overridden
+	);
 
 	const getDescendantsMatchState = () => {
 		if ( ! hasChildren ) {
@@ -283,9 +344,28 @@ function NodeContent( {
 		e.stopPropagation();
 	};
 
-	const handleToggle = ( key ) => ( e ) => {
+	// Override-aware toggle handlers
+	const handleAuthToggle = ( e ) => {
 		e.stopPropagation();
-		toggleNodeSetting( node.id, key );
+		if ( enforce_auth && ! nodeSettings.protect.overridden ) {
+			overrideNodeSetting( node.id, 'protect', false );
+		} else {
+			toggleNodeSetting( node.id, 'protect' );
+		}
+	};
+
+	const handleRateToggle = ( e ) => {
+		e.stopPropagation();
+		if ( enforce_rate_limit && ! nodeSettings.rate_limit.overridden ) {
+			overrideNodeSetting( node.id, 'rate_limit', false );
+		} else {
+			toggleNodeSetting( node.id, 'rate_limit' );
+		}
+	};
+
+	const handleDisableToggle = ( e ) => {
+		e.stopPropagation();
+		toggleNodeSetting( node.id, 'disabled' );
 	};
 
 	const handleApplyToAll = ( e ) => {
@@ -311,14 +391,6 @@ function NodeContent( {
 				return 'default';
 		}
 	};
-
-	const isAuthEnforced = enforceAuth || nodeSettings.protect.value;
-	const isRateLimitEnforced =
-		enforceRateLimit || nodeSettings.rate_limit.value;
-	const isDisabled = enforceDisabled || nodeSettings.disabled.value;
-	const effectiveRateLimit = nodeSettings.rate_limit.value || globalRateLimit;
-	const effectiveRateLimitTime =
-		nodeSettings.rate_limit_time.value || globalRateLimitTime;
 
 	const getEffectivePermission = ( type ) => {
 		return isDisabled
@@ -387,6 +459,23 @@ function NodeContent( {
 							/>
 						) }
 
+						{ isCustomized && (
+							<Chip
+								label={ __( 'custom', 'rest-api-firewall' ) }
+								size="small"
+								color="warning"
+							/>
+						) }
+
+						{ ! isExpanded && modifiedCount > 0 && (
+							<Chip
+								label={ `${ modifiedCount } custom` }
+								size="small"
+								color="warning"
+								variant="outlined"
+							/>
+						) }
+
 						{ node.isMethod && node.route && (
 							<TestPolicy
 								route={ node.route }
@@ -422,17 +511,33 @@ function NodeContent( {
 				alignItems="center"
 				onClick={ handleSwitchClick }
 			>
+				{ isCustomized && hasValidLicense && (
+					<Tooltip
+						title={ __( 'Reset this row', 'rest-api-firewall' ) }
+					>
+						<IconButton
+							size="small"
+							onClick={ ( e ) => {
+								e.stopPropagation();
+								clearNodeOverride( node.id );
+							} }
+						>
+							<ReplayIcon fontSize="small" />
+						</IconButton>
+					</Tooltip>
+				) }
+
 				<Tooltip
 					title={
 						! hasValidLicense
 							? __( 'Pro version required', 'rest-api-firewall' )
-							: enforceRateLimit
+							: authIsGlobal
 							? __(
-									'Authentication enforced globally',
+									'Authentication enforced globally. Click to override for this route.',
 									'rest-api-firewall'
 							  )
 							: isAuthEnforced
-							? `Authentication enforced`
+							? __( 'Authentication enforced', 'rest-api-firewall' )
 							: __(
 									'Enable authentication for this route',
 									'rest-api-firewall'
@@ -444,11 +549,11 @@ function NodeContent( {
 							<Switch
 								size="small"
 								checked={ isAuthEnforced }
-								onChange={ handleToggle( 'protect' ) }
-								disabled={ enforceAuth || ! hasValidLicense }
+								onChange={ handleAuthToggle }
+								disabled={ ! hasValidLicense }
 								sx={ {
 									opacity:
-										enforceAuth ||
+										authIsGlobal ||
 										nodeSettings.protect.inherited ||
 										! hasValidLicense
 											? 0.6
@@ -462,7 +567,7 @@ function NodeContent( {
 								sx={ { fontSize: '0.875rem' } }
 							>
 								Auth{ ' ' }
-								{ ( enforceAuth ||
+								{ ( authIsGlobal ||
 									nodeSettings.protect.inherited ) &&
 									'↓' }
 							</Typography>
@@ -474,9 +579,9 @@ function NodeContent( {
 					title={
 						! hasValidLicense
 							? __( 'Pro version required', 'rest-api-firewall' )
-							: enforceRateLimit
+							: rateIsGlobal
 							? __(
-									'Rate limiting enforced globally',
+									'Rate limiting enforced globally. Click to override for this route.',
 									'rest-api-firewall'
 							  )
 							: isRateLimitEnforced
@@ -492,11 +597,11 @@ function NodeContent( {
 							<Switch
 								size="small"
 								checked={ isRateLimitEnforced }
-								onChange={ handleToggle( 'rate_limit' ) }
-								disabled={ enforceRateLimit || ! hasValidLicense }
+								onChange={ handleRateToggle }
+								disabled={ ! hasValidLicense }
 								sx={ {
 									opacity:
-										enforceRateLimit ||
+										rateIsGlobal ||
 										nodeSettings.rate_limit.inherited ||
 										! hasValidLicense
 											? 0.6
@@ -510,7 +615,7 @@ function NodeContent( {
 								sx={ { fontSize: '0.875rem' } }
 							>
 								Rate{ ' ' }
-								{ ( enforceRateLimit ||
+								{ ( rateIsGlobal ||
 									nodeSettings.rate_limit.inherited ) &&
 									'↓' }
 							</Typography>
@@ -535,7 +640,7 @@ function NodeContent( {
 							<Switch
 								size="small"
 								checked={ nodeSettings.disabled.value }
-								onChange={ handleToggle( 'disabled' ) }
+								onChange={ handleDisableToggle }
 								disabled={ ! hasValidLicense }
 								sx={ {
 									opacity:
@@ -631,18 +736,22 @@ function normalizeTree( nodes, parentPath = '', parentSettings = null ) {
 			protect: {
 				value: false,
 				inherited: parentSettings?.protect?.value ?? false,
+				overridden: false,
 			},
 			disabled: {
 				value: false,
 				inherited: parentSettings?.disabled?.value ?? false,
+				overridden: false,
 			},
 			rate_limit: {
 				value: false,
 				inherited: parentSettings?.rate_limit?.value ?? false,
+				overridden: false,
 			},
 			rate_limit_time: {
 				value: false,
 				inherited: parentSettings?.rate_limit_time?.value ?? false,
+				overridden: false,
 			},
 			applyToChildren: false,
 		};
@@ -650,26 +759,30 @@ function normalizeTree( nodes, parentPath = '', parentSettings = null ) {
 		if ( node.settings ) {
 			if ( node.settings.protect !== undefined ) {
 				nodeSettings.protect = {
-					value: node.settings.protect,
+					value: !! node.settings.protect,
 					inherited: false,
+					overridden: node.settings.protect?.overridden ?? false,
 				};
 			}
 			if ( node.settings.disabled !== undefined ) {
 				nodeSettings.disabled = {
-					value: node.settings.disabled,
+					value: !! node.settings.disabled,
 					inherited: false,
+					overridden: node.settings.disabled?.overridden ?? false,
 				};
 			}
 			if ( node.settings.rate_limit !== undefined ) {
 				nodeSettings.rate_limit = {
-					value: node.settings.rate_limit,
+					value: !! node.settings.rate_limit,
 					inherited: false,
+					overridden: node.settings.rate_limit?.overridden ?? false,
 				};
 			}
 			if ( node.settings.rate_limit_time !== undefined ) {
 				nodeSettings.rate_limit_time = {
-					value: node.settings.rate_limit_time,
+					value: !! node.settings.rate_limit_time,
 					inherited: false,
+					overridden: node.settings.rate_limit_time?.overridden ?? false,
 				};
 			}
 			if ( node.settings.applyToChildren !== undefined ) {
@@ -706,6 +819,12 @@ function treeReducer( state, action ) {
 	switch ( action.type ) {
 		case 'TOGGLE_NODE':
 			return toggleNode( state, action.id, action.key );
+		case 'OVERRIDE_NODE':
+			return overrideNode( state, action.id, action.key, action.value );
+		case 'CLEAR_OVERRIDE':
+			return clearOverride( state, action.id );
+		case 'RESET_ALL_OVERRIDES':
+			return resetAllOverrides( state );
 		case 'APPLY_TO_ALL_DESCENDANTS':
 			return applyToAllDescendants(
 				state,
@@ -729,6 +848,7 @@ function toggleNode( items, id, key ) {
 					[ key ]: {
 						value: ! item.settings[ key ].value,
 						inherited: false,
+						overridden: true,
 					},
 				},
 			};
@@ -737,6 +857,74 @@ function toggleNode( items, id, key ) {
 			return { ...item, children: toggleNode( item.children, id, key ) };
 		}
 		return item;
+	} );
+}
+
+function overrideNode( items, id, key, value ) {
+	return items.map( ( item ) => {
+		if ( item.id === id ) {
+			return {
+				...item,
+				settings: {
+					...item.settings,
+					[ key ]: {
+						value,
+						inherited: false,
+						overridden: true,
+					},
+				},
+			};
+		}
+		if ( item.children ) {
+			return {
+				...item,
+				children: overrideNode( item.children, id, key, value ),
+			};
+		}
+		return item;
+	} );
+}
+
+function clearOverride( items, id ) {
+	return items.map( ( item ) => {
+		if ( item.id === id ) {
+			const newSettings = { ...item.settings };
+			for ( const key of [ 'protect', 'rate_limit', 'disabled' ] ) {
+				if ( newSettings[ key ] ) {
+					newSettings[ key ] = {
+						...newSettings[ key ],
+						overridden: false,
+					};
+				}
+			}
+			return { ...item, settings: newSettings };
+		}
+		if ( item.children ) {
+			return {
+				...item,
+				children: clearOverride( item.children, id ),
+			};
+		}
+		return item;
+	} );
+}
+
+function resetAllOverrides( items ) {
+	return items.map( ( item ) => {
+		const newSettings = { ...item.settings };
+		for ( const key of [ 'protect', 'rate_limit', 'disabled' ] ) {
+			if ( newSettings[ key ] ) {
+				newSettings[ key ] = {
+					...newSettings[ key ],
+					overridden: false,
+				};
+			}
+		}
+		return {
+			...item,
+			settings: newSettings,
+			children: item.children ? resetAllOverrides( item.children ) : [],
+		};
 	} );
 }
 
@@ -757,18 +945,22 @@ function applyToAllDescendants( items, parentId, shouldApply ) {
 								protect: {
 									value: parentSettings.protect.value,
 									inherited: false,
+									overridden: true,
 								},
 								disabled: {
 									value: parentSettings.disabled.value,
 									inherited: false,
+									overridden: true,
 								},
 								rate_limit: {
 									value: parentSettings.rate_limit.value,
 									inherited: false,
+									overridden: true,
 								},
 								rate_limit_time: {
 									value: parentSettings.rate_limit_time.value,
 									inherited: false,
+									overridden: true,
 								},
 								applyToChildren: hasGrandchildren,
 							},
@@ -807,6 +999,22 @@ function applyToAllDescendants( items, parentId, shouldApply ) {
 		}
 		return item;
 	} );
+}
+
+function countModifiedDescendants( node ) {
+	let count = 0;
+	for ( const child of node.children || [] ) {
+		const s = child.settings || {};
+		if (
+			[ 'protect', 'rate_limit', 'disabled' ].some(
+				( k ) => s[ k ]?.overridden
+			)
+		) {
+			count++;
+		}
+		count += countModifiedDescendants( child );
+	}
+	return count;
 }
 
 function findNodeById( items, id ) {
