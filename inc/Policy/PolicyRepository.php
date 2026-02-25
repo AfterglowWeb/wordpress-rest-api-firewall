@@ -154,15 +154,16 @@ class PolicyRepository {
 
 	private static function apply_node_diff( array &$node, array $diff ): void {
 
-		$is_method = isset( $node['isMethod'] ) && $node['isMethod'];
+		$is_method   = isset( $node['isMethod'] ) && $node['isMethod'];
+		$storage_key = $is_method ? 'routes' : 'nodes';
 
-		if ( isset( $node['id'], $diff['routes'][ $node['id'] ] ) ) {
+		if ( isset( $node['id'], $diff[ $storage_key ][ $node['id'] ] ) ) {
 
 			if ( ! isset( $node['settings'] ) ) {
 				$node['settings'] = array();
 			}
 
-			$saved_settings = $is_method ? $diff['routes'][ $node['id'] ] : $diff['nodes'][ $node['id'] ];
+			$saved_settings = $diff[ $storage_key ][ $node['id'] ];
 
 			foreach ( $saved_settings as $key => $value ) {
 				$node['settings'][ $key ] = $value;
@@ -199,6 +200,9 @@ class PolicyRepository {
 				if ( is_array( $protect ) && isset( $protect['value'] ) ) {
 					if ( ! ( $protect['inherited'] ?? false ) ) {
 						$settings['protect'] = (bool) $protect['value'];
+						if ( $protect['overridden'] ?? false ) {
+							$settings['protect_overridden'] = true;
+						}
 					}
 				}
 			}
@@ -208,12 +212,32 @@ class PolicyRepository {
 				if ( is_array( $disabled ) && isset( $disabled['value'] ) ) {
 					if ( ! ( $disabled['inherited'] ?? false ) ) {
 						$settings['disabled'] = (bool) $disabled['value'];
+						if ( $disabled['overridden'] ?? false ) {
+							$settings['disabled_overridden'] = true;
+						}
 					}
 				}
 			}
 
+			if ( isset( $node['settings']['rate_limit'] ) ) {
+				$rate_limit = $node['settings']['rate_limit'];
+				if ( is_array( $rate_limit ) && isset( $rate_limit['value'] ) ) {
+					if ( ! ( $rate_limit['inherited'] ?? false ) ) {
+						$settings['rate_limit'] = (bool) $rate_limit['value'];
+						if ( $rate_limit['overridden'] ?? false ) {
+							$settings['rate_limit_overridden'] = true;
+						}
+					}
+				}
+			}
+
+			$is_method = isset( $node['isMethod'] ) && $node['isMethod'];
+
+			if ( ! $is_method && ! empty( $node['settings']['applyToChildren'] ) ) {
+				$settings['applyToChildren'] = true;
+			}
+
 			if ( ! empty( $settings ) ) {
-				$is_method = isset( $node['isMethod'] ) && $node['isMethod'];
 				if ( $is_method ) {
 					$diff['routes'][ $node['id'] ] = $settings;
 				} else {

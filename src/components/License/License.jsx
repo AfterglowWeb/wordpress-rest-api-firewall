@@ -204,7 +204,9 @@ export default function License() {
 					</Typography>
 				</Stack>
 
-				{ successMessage && <Alert severity="success">{ successMessage }</Alert> }
+				{ successMessage && (
+					<Alert severity="success">{ successMessage }</Alert>
+				) }
 
 				{ error && <Alert severity="error">{ error }</Alert> }
 

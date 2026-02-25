@@ -1,21 +1,7 @@
 # Getting Started
 
-## Installation
-
-1. Download or clone this repository into your `wp-content/themes/` directory:
-```bash
-cd wp-content/themes/
-git clone https://github.com/AfterglowWeb/wordpress-headless-theme.git blank
-```
-
-2. Activate the theme from WordPress admin panel
-
-3. Setup a WordPress application password in an administrator user profile
-
-4. Go through the setup options in the theme admin page located at the bottom of the admin menu.
 
 ### Optional 
-
 5. Create a child theme
 
 6. Configure custom post types, taxonomies, and menus using JSON files in ``blank-child/config` directory (see Configuration section)
