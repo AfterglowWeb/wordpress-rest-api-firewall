@@ -10,17 +10,6 @@ export function isTrulyCustomized( settings, enforceAuth, enforceRateLimit ) {
 	return isProtectCustomized || isRateCustomized || isDisabledCustomized;
 }
 
-export function countNodeRules( settings, enforceAuth, enforceRateLimit, ownUserCount ) {
-	return [
-		settings.protect?.overridden &&
-			settings.protect.value !== !! enforceAuth,
-		settings.rate_limit?.overridden &&
-			settings.rate_limit.value !== !! enforceRateLimit,
-		settings.disabled?.overridden && settings.disabled.value !== false,
-		ownUserCount > 0,
-	].filter( Boolean ).length;
-}
-
 export function countModifiedDescendants( node, enforceAuth, enforceRateLimit ) {
 	let count = 0;
 	for ( const child of node.children || [] ) {

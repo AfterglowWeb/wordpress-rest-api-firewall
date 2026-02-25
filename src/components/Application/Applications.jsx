@@ -299,8 +299,8 @@ export default function Applications() {
 				<Button
 					variant="contained"
 					size="small"
-					onClick={ handleAddIp }
-					disabled={ adding || ! newIp.trim() }
+					onClick={ handleAddApplication }
+					disabled={ adding || ! newApplication }
 					startIcon={ <AddIcon /> }
 				>
 					{ __( 'Create Application', 'rest-api-firewall' ) }

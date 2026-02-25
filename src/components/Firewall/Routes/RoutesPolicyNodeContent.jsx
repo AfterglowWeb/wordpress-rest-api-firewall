@@ -1,6 +1,7 @@
 import { forwardRef } from '@wordpress/element';
 import { useLicense } from '../../../contexts/LicenseContext';
 
+import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
@@ -21,7 +22,6 @@ import {
 	isTrulyCustomized,
 	countModifiedDescendants,
 	getAllDescendantMethodIds,
-	countNodeRules,
 } from './routesPolicyUtils';
 
 export const CustomTreeItem = forwardRef( function CustomTreeItem( props, ref ) {
@@ -117,13 +117,6 @@ export function NodeContent( {
 	const isCustomized =
 		isTrulyCustomized( nodeSettings, enforce_auth, enforce_rate_limit ) ||
 		ownUserCount > 0;
-
-	const nodeRuleCount = countNodeRules(
-		nodeSettings,
-		enforce_auth,
-		enforce_rate_limit,
-		ownUserCount
-	);
 
 	const getDescendantsMatchState = () => {
 		if ( ! hasChildren ) {
@@ -245,30 +238,27 @@ export function NodeContent( {
 							/>
 						) }
 
-						{ isCustomized && (
-							<Chip
-								label={
-									nodeRuleCount === 1
-										? __( 'rule', 'rest-api-firewall' )
-										: __( 'rules', 'rest-api-firewall' )
-								}
-								size="small"
-								variant="outlined"
-								sx={ {
-									color: 'success.main',
-									borderColor: 'success.main',
-								} }
-							/>
-						) }
-
-						{ modifiedCount > 0 && (
-							<Chip
-								label={ `${ modifiedCount }\u00a0${ modifiedCount === 1
-									? __( 'rule', 'rest-api-firewall' )
-									: __( 'rules', 'rest-api-firewall' ) }` }
-								size="small"
-								variant="outlined"
-							/>
+{ modifiedCount > 0 && (
+						<Box
+							component="span"
+							sx={ {
+								bgcolor: 'success.main',
+								color: '#fff',
+								borderRadius: '50%',
+								minWidth: 18,
+								height: 18,
+								display: 'inline-flex',
+								alignItems: 'center',
+								justifyContent: 'center',
+								fontSize: '0.65rem',
+								fontWeight: 700,
+								lineHeight: 1,
+								px: 0.3,
+								flexShrink: 0,
+							} }
+						>
+							{ modifiedCount }
+						</Box>
 						) }
 
 						{ node.isMethod && node.route && (
