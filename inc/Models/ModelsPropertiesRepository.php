@@ -28,6 +28,12 @@ class ModelsPropertiesRepository {
 			);
 		}
 
+		$result['settings_route'] = array(
+			'label'    => 'Settings Route',
+			'settings' => array(),
+			'props'    => self::settings_route_properties(),
+		);
+
 		return $result;
 	}
 
@@ -143,6 +149,41 @@ class ModelsPropertiesRepository {
 
 		$data = rest_get_server()->response_to_data( $response, true );
 		return $data;
+	}
+
+	private static function settings_route_properties(): array {
+		$request  = new WP_REST_Request( 'GET', '/wp/v2/settings' );
+		$response = rest_do_request( $request );
+
+		if ( ! is_wp_error( $response ) && 200 === $response->get_status() ) {
+			$data = rest_get_server()->response_to_data( $response, false );
+			if ( ! empty( $data ) ) {
+				return self::build_props_from_data( $data );
+			}
+		}
+
+		// Fallback: derive from schema.
+		$controller = new WP_REST_Settings_Controller();
+		$schema     = $controller->get_item_schema();
+
+		if ( empty( $schema['properties'] ) ) {
+			return array();
+		}
+
+		$properties = array();
+		foreach ( $schema['properties'] as $property_key => $property ) {
+			$properties[ $property_key ] = array_merge(
+				$property,
+				array(
+					'settings' => array(
+						'disable' => false,
+						'filters' => array(),
+					),
+				)
+			);
+		}
+
+		return $properties;
 	}
 
 	private static function build_props_from_data( array $data, array $filters = array(), int $depth = 0 ): array {

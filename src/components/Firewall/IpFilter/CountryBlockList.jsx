@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
-import { useAdminData } from '../../contexts/AdminDataContext';
-import { useLicense } from '../../contexts/LicenseContext';
+import { useAdminData } from '../../../contexts/AdminDataContext';
+import { useLicense } from '../../../contexts/LicenseContext';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
