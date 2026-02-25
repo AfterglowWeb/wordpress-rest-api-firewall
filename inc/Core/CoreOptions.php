@@ -159,21 +159,21 @@ class CoreOptions {
 			),
 
 			// Settings Route.
-			'rest_models_embed_menus_enabled'            => array(
+			'rest_models_embed_menus_enabled'           => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
-				'context'           => ['pro'],
+				'context'           => array( 'pro' ),
 				'group'             => 'settings_route',
 			),
 
-			'rest_models_acf_options_page_enabled'       => array(
+			'rest_models_acf_options_page_enabled'      => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
-				'context'           => ['pro'],
+				'context'           => array( 'pro' ),
 				'group'             => 'settings_route',
 			),
 

@@ -350,11 +350,18 @@ class ModelsPropertiesRepository {
 			$taxonomy_options
 		);
 
+		$taxonomy_values = array_map(
+			function ( $taxonomy ) {
+				return 'category' === $taxonomy ? 'categories' : ( 'post_tag' === $taxonomy ? 'tags' : $taxonomy );
+			},
+			$taxonomy_values
+		);
+
 		return array(
 			array(
 				'key'        => 'embed',
-				'tooltip'    => 'Embed Object',
-				'label'      => 'Embed',
+				'tooltip'    => 'Resolve Object',
+				'label'      => 'Resolve',
 				'properties' => array_merge(
 					array(
 						'featured_media',
@@ -365,8 +372,8 @@ class ModelsPropertiesRepository {
 			),
 			array(
 				'key'        => 'rendered',
-				'tooltip'    => 'Resolve Rendered',
-				'label'      => 'Rendered',
+				'tooltip'    => 'Flatten Rendered',
+				'label'      => 'Flatten',
 				'properties' => array(
 					'guid',
 					'title',
@@ -378,14 +385,17 @@ class ModelsPropertiesRepository {
 				'key'        => 'relative_url',
 				'tooltip'    => 'Relative URL',
 				'label'      => 'URL',
-				'properties' => array(
-					'featured_media',
-					'link',
-					'guid',
-					'source_url',
-					'media_details',
-					'_embedded',
-					'_links',
+				'properties' => array_merge(
+					array(
+						'featured_media',
+						'link',
+						'guid',
+						'source_url',
+						'media_details',
+						'_embedded',
+						'_links',
+					),
+					$taxonomy_values
 				),
 			),
 			array(

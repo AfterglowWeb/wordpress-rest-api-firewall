@@ -4,6 +4,59 @@ A WordPress plugin focused on REST API security, filtering, and headless archite
 
 REST API Tools is a comprehensive suite designed to secure, filter, and extend the WordPress REST API while enabling seamless communication with front-end applications. It integrates with external apps built with Next.js, React, Vue, or any technology capable of consuming a REST API.
 
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/wordpress-application-layer-auth-rate-limit-tab.webp" alt="Authentication and Rate Limit Tab" />
+      <br /><strong>Auth. and Rate Limit. Tab</strong><br />
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/wordpress-application-layer-ip-filters-tab.webp" alt="IPs Filter Tab" />
+      <br /><strong>IPs Filter Tab</strong><br />
+    </td>
+    
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/wordpress-application-layer-collections-tab.webp" alt="Routes Management" />
+      <br /><strong>Collections Tab</strong><br />
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/wordpress-application-layer-webhook-tab.webp" alt="Webhook Tab" />
+      <br /><strong>Webhook Tab</strong><br />
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/wordpress-application-layer-smtp-tab.webp" alt="Emails Tab" />
+      <br /><strong>Emails Tab (under development)</strong><br />
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/wordpress-application-layer-theme-tab.webp" alt="Theme Tab" />
+      <br /><strong>Theme Tab</strong><br />
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%" height="300px">
+      <img src="docs/wordpress-application-layer-properties-tab.webp" alt="Properties Tab" />
+      <br /><strong>Properties Tab</strong><br />
+    </td>
+    <td align="center" width="50%" height="300px">
+      <img src="docs/wordpress-application-layer-settings-route-tab.webp" alt="Settings Route" />
+      <br /><strong>Settings Route Tab</strong><br />
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%" height="300px">
+      <img src="docs/wordpress-application-layer-routes-tab.webp" alt="Routes Management" />
+      <br /><strong>Routes Tab</strong><br />
+    </td>
+  </tr>
+
+</table>
+
 ## REST API Tools — FREE
 
 - Enforce authentication, rate limiting, and IP blacklisting.
@@ -14,9 +67,13 @@ REST API Tools is a comprehensive suite designed to secure, filter, and extend t
 - Send email notifications on REST API security and traffic events. *(Under development)*
 - Configure plugin bypass rules. (Under development)
 - Compatible with WordPress multisite installations.
-- Running fully headless? Deploy the bundled blank theme for additional control:
+
+> Each admin option exposes a WordPress filter for advanced customization.
 
 ### Headless Mode
+
+<details>
+<summary>Full features list</summary>
 
 Running fully headless? Deploy the bundled blank theme for additional control:
 - Redirect all front-end templates
@@ -25,8 +82,7 @@ Running fully headless? Deploy the bundled blank theme for additional control:
 - Disable XML-RPC
 - Disable the theme editor
 - Limit image file size, and more
-
-Each admin option exposes a WordPress filter for advanced customization.
+</details>
 
 ## REST API Tools — PRO
 
@@ -40,7 +96,10 @@ You may also configure a single application and benefit from all Pro features.
 
 Additionally, you can run applications entirely through webhooks. Data is sent using the same schema as the REST API.
 
-## PRO — Per-Application Features:
+### Pro Per Application Features
+
+<details>
+<summary>Full features list</summary>
 
 ### Settings
 
@@ -93,7 +152,22 @@ Additionally, you can run applications entirely through webhooks. Data is sent u
 
 - Monitor and export network and user activity.
 
-## Modules
+</details>
+
+## How does it work?
+
+REST API Tools operates exclusively within REST API and embedded contexts. It does not interfere with core WordPress or plugin functionality in the admin interface.
+
+If certain plugins require public REST API access, you can configure bypass rules.
+
+> **Alpha version** 
+> This plugin is under active development. Architectural changes may still occur.
+> It is publicly available for testing and feedback. Stability is not yet guaranteed.
+
+## Extra Modules
+
+<details>
+<summary>Headless Forms — Endpoints & Entry Management</summary>
 
 ### Headless Forms — Endpoints & Entry Management
 
@@ -108,6 +182,10 @@ Focused on security and privacy, it includes:
 - Webhooks and notifications
 
 This module can be installed independently from REST API Tools.
+</details>
+
+<details>
+<summary>(Planned) WooCommerce Headless Applications</summary>
 
 ### (Planned) WooCommerce Headless Applications
 
@@ -137,71 +215,7 @@ Its role is to:
 - Multi-currency
 - Payment gateways other than Stripe and PayPal
 - Blocks-specific checkout flows
-
-## REST API Tools — Free & Pro
-
-### How does it work?
-
-REST API Tools operates exclusively within REST API and embedded contexts. It does not interfere with core WordPress or plugin functionality in the admin interface.
-
-If certain plugins require public REST API access, you can configure bypass rules.
-
-> **Alpha version** 
-> This plugin is under active development. Architectural changes may still occur.
-> It is publicly available for testing and feedback. Stability is not yet guaranteed.
-
-## REST API Tools — Free - Screenshots
-
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <img src="docs/wordpress-rest-api-tools-auth-rate-limit-tab.webp" alt="Authentication and Rate Limit Tab" />
-      <br /><strong>Authentication and Rate Limiting</strong><br />
-    </td>
-     <td align="center" width="50%">
-      <img src="docs/wordpress-rest-api-tools-routes-tab.webp" alt="Routes Management" />
-      <br /><strong>Routes Tab</strong><br />
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
-      <img src="docs/wordpress-rest-api-tools-ip-filters-tab.webp" alt="IPs Blacklist Tab" />
-      <br /><strong>IPs Blacklist</strong><br />
-    </td>
-    <td align="center" width="50%">
-      <img src="docs/wordpress-rest-api-tools-properties-tab.webp" alt="Properties Tab" />
-      <br /><strong>Properties Tab</strong><br />
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
-      <img src="docs/wordpress-rest-api-tools-routes-tab.webp" alt="Routes Management" />
-      <br /><strong>Routes Tab</strong><br />
-    </td>
-  </tr>
-
-  <tr>
-    <td align="center" width="50%">
-      <img src="docs/wordpress-rest-api-tools-settings-route-tab.webp" alt="Settings Route" />
-      <br /><strong>Settings Route Tab</strong><br />
-    </td>
-    <td align="center" width="50%">
-      <img src="docs/wordpress-rest-api-tools-webook-tab.webp" alt="Webhook Tab" />
-      <br /><strong>Webhook Tab</strong><br />
-    </td>
-  </tr>
-
-  <tr>
-    <td align="center" width="50%">
-      <img src="docs/wordpress-rest-api-tools-smtp-tab.webp" alt="Emails Tab" />
-      <br /><strong>Emails Tab (under development)</strong><br />
-    </td>
-    <td align="center" width="50%">
-      <img src="docs/wordpress-rest-api-tools-theme-tab.webp" alt="Theme Tab" />
-      <br /><strong>Theme Tab</strong><br />
-    </td>
-  </tr>
-</table>
+</details>
 
 ## Requirements
 

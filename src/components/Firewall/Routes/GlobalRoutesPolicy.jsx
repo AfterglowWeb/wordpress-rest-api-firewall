@@ -86,46 +86,46 @@ export default function GlobalRoutesPolicy( { form, setField } ) {
 				<Tooltip
 					title={
 						! hasValidLicense
-							? __(
-									'Licence required',
-									'rest-api-firewall'
-								)
+							? __( 'Licence required', 'rest-api-firewall' )
 							: ''
 					}
 					followCursor
 				>
-					<FormControl disabled={ ! hasValidLicense }>
-						<FormControlLabel
-							control={
-								<Switch
-									size="small"
-									checked={
-										!! form.rest_collections_allowed_post_types_enabled
-									}
-									name="rest_collections_allowed_post_types_enabled"
-									onChange={ setField }
-								/>
-							}
-							label={ __(
-								'Restrict Post Types',
-								'rest-api-firewall'
-							) }
-						/>
-					</FormControl>
+					<Stack>
+						<FormControl disabled={ ! hasValidLicense }>
+							<FormControlLabel
+								control={
+									<Switch
+										size="small"
+										checked={
+											!! form.rest_collections_allowed_post_types_enabled
+										}
+										name="rest_collections_allowed_post_types_enabled"
+										onChange={ setField }
+									/>
+								}
+								label={ __(
+									'Restrict Post Types',
+									'rest-api-firewall'
+								) }
+							/>
+						</FormControl>
+					</Stack>
 				</Tooltip>
 
 				{ adminData?.post_types && (
 					<Stack pl={ 3.5 }>
 						<MultipleSelect
-							disabled={ ! form.rest_collections_allowed_post_types_enabled || ! hasValidLicense }
+							disabled={
+								! form.rest_collections_allowed_post_types_enabled ||
+								! hasValidLicense
+							}
 							name="rest_collections_allowed_post_types"
 							label={ __(
 								'Select Post Types',
 								'rest-api-firewall'
 							) }
-							value={
-								form.rest_collections_allowed_post_types
-							}
+							value={ form.rest_collections_allowed_post_types }
 							helperText={
 								<Stack>
 									<Typography
@@ -153,6 +153,61 @@ export default function GlobalRoutesPolicy( { form, setField } ) {
 						/>
 					</Stack>
 				) }
+			</Stack>
+
+			<Stack spacing={ 1 }>
+				<Tooltip
+					title={
+						! hasValidLicense
+							? __( 'Licence required', 'rest-api-firewall' )
+							: ''
+					}
+					followCursor
+				>
+					<Stack>
+						<FormControl disabled={ ! hasValidLicense }>
+							<FormControlLabel
+								control={
+									<Switch
+										size="small"
+										checked={
+											!! form.rest_collections_allowed_methods_enabled
+										}
+										name="rest_collections_allowed_methods_enabled"
+										onChange={ setField }
+									/>
+								}
+								label={ __(
+									'Restrict HTTP Methods',
+									'rest-api-firewall'
+								) }
+							/>
+						</FormControl>
+					</Stack>
+				</Tooltip>
+
+				<Stack pl={ 3.5 }>
+					<MultipleSelect
+						disabled={
+							! form.rest_collections_allowed_methods_enabled ||
+							! hasValidLicense
+						}
+						name="rest_collections_allowed_methods"
+						label={ __(
+							'Select HTTP Methods',
+							'rest-api-firewall'
+						) }
+						value={ form.rest_collections_allowed_methods }
+						onChange={ setField }
+						options={ [
+							{ label: 'GET', value: 'get' },
+							{ label: 'POST', value: 'post' },
+							{ label: 'PUT', value: 'put' },
+							{ label: 'DELETE', value: 'delete' },
+							{ label: 'PATCH', value: 'patch' },
+						] }
+					/>
+				</Stack>
 			</Stack>
 		</Stack>
 	);

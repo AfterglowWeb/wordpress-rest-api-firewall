@@ -85,7 +85,7 @@ function AppContent() {
 	const { save, saving } = useSaveOptions();
 	const theme = useTheme();
 	const { hasValidLicense } = useLicense();
-	
+
 	const isMobile = useMediaQuery( theme.breakpoints.down( 'md' ) );
 
 	const [ postTypes, setPostTypes ] = useState( [] );
@@ -235,14 +235,79 @@ function AppContent() {
 		menuItems.find( ( m ) => m.panelGroup === panelGroup ) || null;
 
 	const SAVE_CONFIG = {
-		firewall_auth_rate:    { successTitle: __( 'Settings Saved', 'rest-api-firewall' ),         successMessage: __( 'Auth & rate limit settings saved successfully.', 'rest-api-firewall' ), confirmMessage: __( 'Save auth & rate limit settings?', 'rest-api-firewall' ) },
-		firewall_routes_policy:{ successTitle: __( 'Routes Saved', 'rest-api-firewall' ),           successMessage: __( 'Routes policy saved successfully.',              'rest-api-firewall' ), confirmMessage: __( 'Save routes policy?',               'rest-api-firewall' ) },
-		collections:           { successTitle: __( 'Collections Saved', 'rest-api-firewall' ),      successMessage: __( 'Collections settings saved successfully.',        'rest-api-firewall' ), confirmMessage: __( 'Save collections settings?',        'rest-api-firewall' ) },
-		models_properties:     { successTitle: __( 'Properties Saved', 'rest-api-firewall' ),       successMessage: __( 'Properties settings saved successfully.',         'rest-api-firewall' ), confirmMessage: __( 'Save properties settings?',         'rest-api-firewall' ) },
-		settings_route:        { successTitle: __( 'Settings Route Saved', 'rest-api-firewall' ),   successMessage: __( 'Settings route saved successfully.',              'rest-api-firewall' ), confirmMessage: __( 'Save settings route?',              'rest-api-firewall' ) },
-		webhook:               { successTitle: __( 'Webhook Saved', 'rest-api-firewall' ),          successMessage: __( 'Webhook settings saved successfully.',            'rest-api-firewall' ), confirmMessage: __( 'Save webhook settings?',            'rest-api-firewall' ) },
-		email:                 { successTitle: __( 'Emails Saved', 'rest-api-firewall' ),           successMessage: __( 'Email settings saved successfully.',              'rest-api-firewall' ), confirmMessage: __( 'Save email settings?',              'rest-api-firewall' ) },
-		theme:                 { successTitle: __( 'Theme Saved', 'rest-api-firewall' ),            successMessage: __( 'Theme settings saved successfully.',              'rest-api-firewall' ), confirmMessage: __( 'Save theme settings?',              'rest-api-firewall' ) },
+		firewall_auth_rate: {
+			successTitle: __( 'Settings Saved', 'rest-api-firewall' ),
+			successMessage: __(
+				'Auth & rate limit settings saved successfully.',
+				'rest-api-firewall'
+			),
+			confirmMessage: __(
+				'Save auth & rate limit settings?',
+				'rest-api-firewall'
+			),
+		},
+		firewall_routes_policy: {
+			successTitle: __( 'Routes Saved', 'rest-api-firewall' ),
+			successMessage: __(
+				'Routes policy saved successfully.',
+				'rest-api-firewall'
+			),
+			confirmMessage: __( 'Save routes policy?', 'rest-api-firewall' ),
+		},
+		collections: {
+			successTitle: __( 'Collections Saved', 'rest-api-firewall' ),
+			successMessage: __(
+				'Collections settings saved successfully.',
+				'rest-api-firewall'
+			),
+			confirmMessage: __(
+				'Save collections settings?',
+				'rest-api-firewall'
+			),
+		},
+		models_properties: {
+			successTitle: __( 'Properties Saved', 'rest-api-firewall' ),
+			successMessage: __(
+				'Properties settings saved successfully.',
+				'rest-api-firewall'
+			),
+			confirmMessage: __(
+				'Save properties settings?',
+				'rest-api-firewall'
+			),
+		},
+		settings_route: {
+			successTitle: __( 'Settings Route Saved', 'rest-api-firewall' ),
+			successMessage: __(
+				'Settings route saved successfully.',
+				'rest-api-firewall'
+			),
+			confirmMessage: __( 'Save settings route?', 'rest-api-firewall' ),
+		},
+		webhook: {
+			successTitle: __( 'Webhook Saved', 'rest-api-firewall' ),
+			successMessage: __(
+				'Webhook settings saved successfully.',
+				'rest-api-firewall'
+			),
+			confirmMessage: __( 'Save webhook settings?', 'rest-api-firewall' ),
+		},
+		email: {
+			successTitle: __( 'Emails Saved', 'rest-api-firewall' ),
+			successMessage: __(
+				'Email settings saved successfully.',
+				'rest-api-firewall'
+			),
+			confirmMessage: __( 'Save email settings?', 'rest-api-firewall' ),
+		},
+		theme: {
+			successTitle: __( 'Theme Saved', 'rest-api-firewall' ),
+			successMessage: __(
+				'Theme settings saved successfully.',
+				'rest-api-firewall'
+			),
+			confirmMessage: __( 'Save theme settings?', 'rest-api-firewall' ),
+		},
 	};
 
 	const PANEL_SAVE_GROUP = {
@@ -261,8 +326,9 @@ function AppContent() {
 	};
 
 	const activeSaveGroup = PANEL_SAVE_GROUP[ panelGroup ] ?? null;
-	const showSaveButton  = activeSaveGroup !== null && ( panelGroup !== 9 || themeStatus?.active );
-	const needsLicense    = panelGroup === 5 && ! hasValidLicense;
+	const showSaveButton =
+		activeSaveGroup !== null && ( panelGroup !== 9 || themeStatus?.active );
+	const needsLicense = panelGroup === 5 && ! hasValidLicense;
 
 	if ( ! adminData ) {
 		return null;
@@ -409,13 +475,14 @@ function AppContent() {
 											},
 										} }
 										primary={ item.label }
-										secondary={ 
-										<Typography
-											variant="caption"
-											color="text.secondary"
-										>
-											{ item.secondary }
-										</Typography> }
+										secondary={
+											<Typography
+												variant="caption"
+												color="text.secondary"
+											>
+												{ item.secondary }
+											</Typography>
+										}
 									/>
 								</ListItemButton>
 							);
@@ -508,64 +575,88 @@ function AppContent() {
 							/>
 
 							{ showSaveButton && (
-							<Tooltip
-								followCursor
-								title={ needsLicense ? __( 'Licence required', 'rest-api-firewall' ) : '' }
-							>
-								<Box>
-									<Button
-										variant="contained"
-										disableElevation
-										size="small"
-										onClick={ () => handleSave( activeSaveGroup ) }
-										disabled={ needsLicense || saving }
-									>
-										{ __( 'Save', 'rest-api-firewall' ) }
-									</Button>
-								</Box>
-							</Tooltip>
-						) }
+								<Tooltip
+									followCursor
+									title={
+										needsLicense
+											? __(
+													'Licence required',
+													'rest-api-firewall'
+											  )
+											: ''
+									}
+								>
+									<Box>
+										<Button
+											variant="contained"
+											disableElevation
+											size="small"
+											onClick={ () =>
+												handleSave( activeSaveGroup )
+											}
+											disabled={ needsLicense || saving }
+										>
+											{ __(
+												'Save',
+												'rest-api-firewall'
+											) }
+										</Button>
+									</Box>
+								</Tooltip>
+							) }
 						</Stack>
 					</Toolbar>
 				</AppBar>
 
 				<Box
-				sx={ {
-					flexGrow: 1,
-					minWidth: 0,
-					pl: { xs: 0, md: DRAWER_WIDTH + 'px' },
-					pt: APP_BAR_HEIGHT + 'px',
-					minHeight: {
-						xs: `calc(100svh - ${
-							APP_FOOTER_HEIGHT +
-							APP_BAR_HEIGHT +
-							WP_ADMIN_BAR_HEIGHT_MOBILE
-						}px)`,
-						md: `calc(100svh - ${
-							APP_FOOTER_HEIGHT +
-							APP_BAR_HEIGHT +
-							WP_ADMIN_BAR_HEIGHT_DESKTOP
-						}px)`,
-					},
-					bgcolor: theme.palette.background.paper,
-				} }
+					sx={ {
+						flexGrow: 1,
+						minWidth: 0,
+						pl: { xs: 0, md: DRAWER_WIDTH + 'px' },
+						pt: APP_BAR_HEIGHT + 'px',
+						minHeight: {
+							xs: `calc(100svh - ${
+								APP_FOOTER_HEIGHT +
+								APP_BAR_HEIGHT +
+								WP_ADMIN_BAR_HEIGHT_MOBILE
+							}px)`,
+							md: `calc(100svh - ${
+								APP_FOOTER_HEIGHT +
+								APP_BAR_HEIGHT +
+								WP_ADMIN_BAR_HEIGHT_DESKTOP
+							}px)`,
+						},
+						bgcolor: theme.palette.background.paper,
+					} }
 				>
 					<Box sx={ { p: 4 } }>
-
 						{ panelGroup === 1 && (
-							<Stack spacing={3} sx={ { maxWidth: 800 } } id="section-auth-rate-limiting">
+							<Stack
+								spacing={ 3 }
+								sx={ { maxWidth: 800 } }
+								id="section-auth-rate-limiting"
+							>
 								<RestApiUser
 									form={ form }
 									setField={ setField }
 								/>
 								<Divider />
-								<RateLimit form={ form } setField={ setField } />
+								<RateLimit
+									form={ form }
+									setField={ setField }
+								/>
 							</Stack>
 						) }
 
 						{ panelGroup === 2 && (
-							<Stack spacing={3} id="section-routes-policy-settings">
-								<GlobalRoutesPolicy form={ form } setField={ setField } />
+							<Stack
+								spacing={ 3 }
+								id="section-routes-policy-settings"
+							>
+								<GlobalRoutesPolicy
+									form={ form }
+									setField={ setField }
+								/>
 								<Divider />
 								<RoutesPolicyTree
 									form={ form }
@@ -579,7 +670,6 @@ function AppContent() {
 								<IpBlackList />
 							</Stack>
 						) }
-
 
 						{ panelGroup === 4 && (
 							<Stack id="section-collections-per-page">
