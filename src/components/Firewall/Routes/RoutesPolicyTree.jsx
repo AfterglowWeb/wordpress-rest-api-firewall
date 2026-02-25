@@ -1,6 +1,6 @@
 import { useState, useCallback, useReducer, forwardRef, useEffect } from '@wordpress/element';
-import { useAdminData } from '../../contexts/AdminDataContext';
-import { useLicense } from '../../contexts/LicenseContext';
+import { useAdminData } from '../../../contexts/AdminDataContext';
+import { useLicense } from '../../../contexts/LicenseContext';
 
 import Box from '@mui/material/Box';
 import Switch from '@mui/material/Switch';
@@ -19,7 +19,7 @@ import { TreeItem, TreeItemContent } from '@mui/x-tree-view/TreeItem';
 import { useTreeItem } from '@mui/x-tree-view/useTreeItem';
 
 import TestPolicy from './TestPolicy';
-import CopyButton from '../CopyButton';
+import CopyButton from '../../CopyButton';
 
 const CustomTreeItem = forwardRef( function CustomTreeItem( props, ref ) {
 	const node = props.getNodeById ? props.getNodeById( props.itemId ) : null;

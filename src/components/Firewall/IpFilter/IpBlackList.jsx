@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from '@wordpress/element';
-import { useAdminData } from '../../contexts/AdminDataContext';
-import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
-import { useLicense } from '../../contexts/LicenseContext';
+import { useAdminData } from '../../../contexts/AdminDataContext';
+import { useDialog, DIALOG_TYPES } from '../../../contexts/DialogContext';
+import { useLicense } from '../../../contexts/LicenseContext';
 
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';

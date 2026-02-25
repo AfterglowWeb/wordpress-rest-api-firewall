@@ -413,7 +413,7 @@ export default function Properties( { setField, postTypes, form } ) {
 	);
 }
 
-function PropertyRow( {
+export function PropertyRow( {
 	propName,
 	propConfig,
 	selectedPostType,

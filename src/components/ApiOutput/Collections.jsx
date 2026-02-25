@@ -20,34 +20,27 @@ export default function Collections( { form, setField, postTypes } ) {
 
 	return (
 		<Stack spacing={ 3 } maxWidth={ 600 }>
-			<Stack
-				sx={ { position: 'relative' } }
-				spacing={ 3 }
-				direction={ 'row' }
-				justifyContent={ 'space-between' }
-				alignItems={ 'flex-start' }
-			>
-				{ form.rest_collections_allowed_post_types &&
-					form.rest_collections_allowed_post_types.length > 0 && (
-						<Alert severity="info">
-							{ __(
-								'Currently allowed post types: ',
-								'rest-api-firewall'
-							) }
-							{ form.rest_collections_allowed_post_types
-								.map( ( postType ) => {
-									const postTypeData = postTypes.find(
-										( pt ) => pt.value === postType
-									);
-									return postTypeData
-										? postTypeData.label
-										: postType;
-								} )
-								.join( ', ' ) }
-						</Alert>
+			
+			{ form.rest_collections_allowed_post_types &&
+				form.rest_collections_allowed_post_types.length > 0 && (
+				<Alert severity="info">
+					{ __(
+						'Currently allowed post types: ',
+						'rest-api-firewall'
 					) }
-			</Stack>
-
+					{ form.rest_collections_allowed_post_types
+						.map( ( postType ) => {
+							const postTypeData = postTypes.find(
+								( pt ) => pt.value === postType
+							);
+							return postTypeData
+								? postTypeData.label
+								: postType;
+						} )
+						.join( ', ' ) }
+				</Alert>
+			) }
+		
 			<Stack
 				spacing={ 3 }
 				direction={ 'row' }

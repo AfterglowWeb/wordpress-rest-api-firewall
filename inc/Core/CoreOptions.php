@@ -158,6 +158,25 @@ class CoreOptions {
 				'group'             => 'collections',
 			),
 
+			// Settings Route.
+			'rest_models_embed_menus_enabled'            => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => ['pro'],
+				'group'             => 'settings_route',
+			),
+
+			'rest_models_acf_options_page_enabled'       => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => ['pro'],
+				'group'             => 'settings_route',
+			),
+
 			// Application.
 
 			'application_host'                          => array(

@@ -43,9 +43,9 @@ import RocketLaunchOutlinedIcon from '@mui/icons-material/RocketLaunchOutlined';
 import ConfirmDialog from './components/ConfirmDialog';
 import MigrationDialog from './components/Migration/MigrationDialog';
 
-import RoutesPolicyTree from './components/Firewall/RoutesPolicyTree';
-import GlobalRoutesPolicy from './components/Firewall/GlobalRoutesPolicy';
-import IpBlackList from './components/Firewall/IpBlackList';
+import RoutesPolicyTree from './components/Firewall/Routes/RoutesPolicyTree';
+import GlobalRoutesPolicy from './components/Firewall/Routes/GlobalRoutesPolicy';
+import IpBlackList from './components/Firewall/IpFilter/IpBlackList';
 import RateLimit from './components/Firewall/RateLimit';
 import RestApiUser from './components/Firewall/RestApiUser';
 import Properties from './components/ApiOutput/Properties';
@@ -550,7 +550,7 @@ function AppContent() {
 					bgcolor: theme.palette.background.paper,
 				} }
 				>
-					<Box sx={ { p: 3 } }>
+					<Box sx={ { p: 4 } }>
 
 						{ panelGroup === 1 && (
 							<Stack spacing={3} sx={ { maxWidth: 800 } } id="section-auth-rate-limiting">

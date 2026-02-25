@@ -1,5 +1,5 @@
-import { useAdminData } from '../../contexts/AdminDataContext';
-import { useLicense } from '../../contexts/LicenseContext';
+import { useAdminData } from '../../../contexts/AdminDataContext';
+import { useLicense } from '../../../contexts/LicenseContext';
 
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
@@ -8,7 +8,7 @@ import FormControl from '@mui/material/FormControl';
 import Typography from '@mui/material/Typography';
 import Tooltip from '@mui/material/Tooltip';
 
-import MultipleSelect from '../MultipleSelect';
+import MultipleSelect from '../../MultipleSelect';
 
 export default function GlobalRoutesPolicy( { form, setField } ) {
 	const { adminData } = useAdminData();

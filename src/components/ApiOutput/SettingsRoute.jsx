@@ -1,4 +1,6 @@
 import { useLicense } from '../../contexts/LicenseContext';
+import { useAdminData } from '../../contexts/AdminDataContext';
+import { PropertyRow } from './Properties';
 
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -7,6 +9,8 @@ import FormHelperText from '@mui/material/FormHelperText';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
+import Divider from '@mui/material/Divider';
+import Typography from '@mui/material/Typography';
 
 export default function SettingsRoute( { form, setField } ) {
 	const { __ } = wp.i18n || {};
@@ -64,11 +68,11 @@ export default function SettingsRoute( { form, setField } ) {
 					) }
 				</FormHelperText>
 			</FormControl>
-		
+
 			<Tooltip
-			followCursor
-			title={ ! hasValidLicense ? __( 'Licence required', 'rest-api-firewall' ) : '' }
-									>
+				followCursor
+				title={ ! hasValidLicense ? __( 'Licence required', 'rest-api-firewall' ) : '' }
+			>
 				<Stack spacing={ 3 }>
 					<Stack maxWidth={ 320 } pl={ 3.5 }>
 						<TextField
@@ -86,73 +90,56 @@ export default function SettingsRoute( { form, setField } ) {
 							disabled={ ! hasValidLicense || ! form.rest_models_acf_options_page_enabled }
 						/>
 					</Stack>
-
-					<FormControl disabled={ ! hasValidLicense }>
-						<FormControlLabel
-							control={
-								<Switch
-									checked={ !! form.rest_models_remove_site_url }
-									onChange={ setField }
-									size="small"
-									name="rest_models_remove_site_url"
-								/>
-							}
-							label={ __(
-								'Remove Site URL',
-								'rest-api-firewall'
-							) }
-						/>
-					</FormControl>
-
-					<FormControl disabled={ ! hasValidLicense }>
-						<FormControlLabel
-							control={
-								<Switch
-									checked={ !! form.rest_models_remove_site_email }
-									onChange={ setField }
-									size="small"
-									name="rest_models_remove_site_email"
-								/>
-							}
-							label={ __(
-								'Remove Site Email',
-								'rest-api-firewall'
-							) }
-						/>
-					</FormControl>
 				</Stack>
 			</Tooltip>
+
+			<Divider />
+
+			<Typography
+				variant="caption"
+				sx={ {
+					display: 'block',
+					textTransform: 'uppercase',
+					letterSpacing: 0.5,
+					fontSize: '0.75rem',
+					color: 'text.secondary',
+				} }
+			>
+				{ __( 'Per-Property Settings', 'rest-api-firewall' ) }
+			</Typography>
+
+			<SettingsRouteProperties setField={ setField } />
+
 		</Stack>
 	);
 }
 
-function RouteProperties( { route } ) {
+function SettingsRouteProperties( { setField } ) {
 	const { __ } = wp.i18n || {};
 	const { hasValidLicense } = useLicense();
 	const { adminData } = useAdminData();
-	const postProperties = adminData?.models_properties || {};
+
+	const routeProps = adminData?.models_properties?.settings_route?.props || {};
+	const entries = Object.entries( routeProps );
+
+	if ( entries.length === 0 ) {
+		return null;
+	}
 
 	return (
-		<Stack spacing={ 1 }>
-			{ selectedPostType &&
-				postProperties?.[ selectedPostType ]?.props && (
-					<Stack spacing={ 0 }>
-						{ Object.entries(
-							postProperties[ selectedPostType ].props
-						).map( ( [ propName, propConfig ] ) => (
-							<PropertyRow
-								key={ propName }
-								propName={ propName }
-								propConfig={ propConfig }
-								selectedPostType={ selectedPostType }
-								setField={ setField }
-								hasValidLicense={ hasValidLicense }
-								__={ __ }
-								basePath={ `postProperties.${ selectedPostType }.props.${ propName }` }
-							/>
-						) ) }
-					</Stack>
-				) }
+		<Stack spacing={ 0 }>
+			{ entries.map( ( [ propName, propConfig ] ) => (
+				<PropertyRow
+					key={ propName }
+					propName={ propName }
+					propConfig={ propConfig }
+					selectedPostType="settings_route"
+					setField={ setField }
+					hasValidLicense={ hasValidLicense }
+					__={ __ }
+					basePath={ `postProperties.settings_route.props.${ propName }` }
+				/>
+			) ) }
 		</Stack>
 	);
 }
