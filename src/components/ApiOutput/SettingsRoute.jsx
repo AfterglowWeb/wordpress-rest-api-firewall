@@ -18,23 +18,17 @@ export default function SettingsRoute( { form, setField } ) {
 
 	return (
 		<Stack spacing={ 3 }>
-
 			<FormControl>
 				<FormControlLabel
 					control={
 						<Switch
-							checked={
-								!! form.rest_models_embed_menus_enabled
-							}
+							checked={ !! form.rest_models_embed_menus_enabled }
 							onChange={ setField }
 							size="small"
 							name="rest_models_embed_menus_enabled"
 						/>
 					}
-					label={ __(
-						'Embed Flattened Menus',
-						'rest-api-firewall'
-					) }
+					label={ __( 'Embed Flattened Menus', 'rest-api-firewall' ) }
 				/>
 				<FormHelperText>
 					{ __(
@@ -56,10 +50,7 @@ export default function SettingsRoute( { form, setField } ) {
 							name="rest_models_acf_options_page_enabled"
 						/>
 					}
-					label={ __(
-						'Add ACF Options Pages',
-						'rest-api-firewall'
-					) }
+					label={ __( 'Add ACF Options Pages', 'rest-api-firewall' ) }
 				/>
 				<FormHelperText>
 					{ __(
@@ -71,7 +62,11 @@ export default function SettingsRoute( { form, setField } ) {
 
 			<Tooltip
 				followCursor
-				title={ ! hasValidLicense ? __( 'Licence required', 'rest-api-firewall' ) : '' }
+				title={
+					! hasValidLicense
+						? __( 'Licence required', 'rest-api-firewall' )
+						: ''
+				}
 			>
 				<Stack spacing={ 3 }>
 					<Stack maxWidth={ 320 } pl={ 3.5 }>
@@ -87,7 +82,10 @@ export default function SettingsRoute( { form, setField } ) {
 							name="rest_models_acf_options_page_endpoint"
 							value={ form.rest_models_acf_options_page_endpoint }
 							onChange={ setField }
-							disabled={ ! hasValidLicense || ! form.rest_models_acf_options_page_enabled }
+							disabled={
+								! hasValidLicense ||
+								! form.rest_models_acf_options_page_enabled
+							}
 						/>
 					</Stack>
 				</Stack>
@@ -109,7 +107,6 @@ export default function SettingsRoute( { form, setField } ) {
 			</Typography>
 
 			<SettingsRouteProperties setField={ setField } />
-
 		</Stack>
 	);
 }
@@ -119,7 +116,8 @@ function SettingsRouteProperties( { setField } ) {
 	const { hasValidLicense } = useLicense();
 	const { adminData } = useAdminData();
 
-	const routeProps = adminData?.models_properties?.settings_route?.props || {};
+	const routeProps =
+		adminData?.models_properties?.settings_route?.props || {};
 	const entries = Object.entries( routeProps );
 
 	if ( entries.length === 0 ) {

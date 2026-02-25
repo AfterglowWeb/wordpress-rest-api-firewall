@@ -1,4 +1,11 @@
-import { useState, useCallback, useReducer, forwardRef, useEffect } from '@wordpress/element';
+import {
+	useState,
+	useCallback,
+	useReducer,
+	forwardRef,
+	useEffect,
+	useRef,
+} from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useLicense } from '../../../contexts/LicenseContext';
 
@@ -12,6 +19,9 @@ import Chip from '@mui/material/Chip';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 import LinearProgress from '@mui/material/LinearProgress';
+import CircularProgress from '@mui/material/CircularProgress';
+import Popover from '@mui/material/Popover';
+import Button from '@mui/material/Button';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ReplayIcon from '@mui/icons-material/Replay';
 
@@ -37,12 +47,14 @@ const CustomTreeItem = forwardRef( function CustomTreeItem( props, ref ) {
 					clearNodeOverride: props.clearNodeOverride,
 					applyToAllChildren: props.applyToAllChildren,
 					getNodeById: props.getNodeById,
+					openUsersPopover: props.openUsersPopover,
 					node,
 					enforce_auth: props.enforce_auth,
 					enforce_rate_limit: props.enforce_rate_limit,
 					rate_limit: props.rate_limit,
 					rate_limit_time: props.rate_limit_time,
 					expandedItems: props.expandedItems,
+					usersData: props.usersData,
 				},
 			} }
 		/>
@@ -50,13 +62,8 @@ const CustomTreeItem = forwardRef( function CustomTreeItem( props, ref ) {
 } );
 
 export default function RoutesPolicyTree( { form, setField } ) {
-
-	const {
-		enforce_auth,
-		enforce_rate_limit,
-		rate_limit,
-		rate_limit_time,
-	} = form;
+	const { enforce_auth, enforce_rate_limit, rate_limit, rate_limit_time } =
+		form;
 
 	const { adminData } = useAdminData();
 	const { hasValidLicense } = useLicense();
@@ -65,6 +72,14 @@ export default function RoutesPolicyTree( { form, setField } ) {
 	const [ loading, setLoading ] = useState( false );
 	const [ errorMessage, setErrorMessage ] = useState( '' );
 	const [ expandedItems, setExpandedItems ] = useState( [] );
+
+	const [ usersData, setUsersData ] = useState( null );
+	const [ usersLoading, setUsersLoading ] = useState( false );
+	const [ popoverAnchor, setPopoverAnchor ] = useState( null );
+	const [ popoverRouteId, setPopoverRouteId ] = useState( null );
+	const usersLoadedRef = useRef( false );
+	const treeLoadingRef = useRef( true );
+	const saveTimerRef = useRef( null );
 
 	const loadRoutes = useCallback( async () => {
 		setLoading( true );
@@ -107,6 +122,7 @@ export default function RoutesPolicyTree( { form, setField } ) {
 
 	useEffect( () => {
 		if ( treeData && Array.isArray( treeData ) ) {
+			treeLoadingRef.current = true;
 			dispatch( { type: 'RESET', payload: normalizeTree( treeData ) } );
 		}
 	}, [ treeData ] );
@@ -128,11 +144,121 @@ export default function RoutesPolicyTree( { form, setField } ) {
 	const anyOverrideExists = nodes.some( ( n ) => {
 		const s = n.settings || {};
 		return (
-			[ 'protect', 'rate_limit', 'disabled' ].some(
-				( k ) => s[ k ]?.overridden
-			) || countModifiedDescendants( n ) > 0
+			isTrulyCustomized( s, enforce_auth, enforce_rate_limit ) ||
+			countModifiedDescendants( n, enforce_auth, enforce_rate_limit ) > 0
 		);
 	} );
+
+	const loadUsers = useCallback( async () => {
+		if ( usersLoadedRef.current ) {
+			return;
+		}
+		usersLoadedRef.current = true;
+		setUsersLoading( true );
+		try {
+			const response = await fetch( adminData.ajaxurl, {
+				method: 'POST',
+				headers: {
+					'Content-Type':
+						'application/x-www-form-urlencoded; charset=UTF-8',
+				},
+				body: new URLSearchParams( {
+					action: 'get_route_policy_users',
+					nonce: adminData.nonce,
+				} ),
+			} );
+			const result = await response.json();
+			setUsersData( result?.success ? result.data.users : [] );
+		} catch {
+			usersLoadedRef.current = false;
+			setUsersData( [] );
+		} finally {
+			setUsersLoading( false );
+		}
+	}, [ adminData ] );
+
+	const handleOpenUsersPopover = useCallback(
+		( routeId, anchorEl ) => {
+			loadUsers();
+			setPopoverAnchor( anchorEl );
+			setPopoverRouteId( routeId );
+		},
+		[ loadUsers ]
+	);
+
+	const handleCloseUsersPopover = () => {
+		setPopoverAnchor( null );
+		setPopoverRouteId( null );
+	};
+
+	const handleUserAccessChange = async ( userId, routeId, grant ) => {
+		setUsersData( ( prev ) =>
+			( prev || [] ).map( ( u ) => {
+				if ( u.id !== userId ) {
+					return u;
+				}
+				const routes = grant
+					? [ ...new Set( [ ...u.related_routes_uuid, routeId ] ) ]
+					: u.related_routes_uuid.filter( ( r ) => r !== routeId );
+				return { ...u, related_routes_uuid: routes };
+			} )
+		);
+
+		await fetch( adminData.ajaxurl, {
+			method: 'POST',
+			headers: {
+				'Content-Type':
+					'application/x-www-form-urlencoded; charset=UTF-8',
+			},
+			body: new URLSearchParams( {
+				action: 'update_route_user_access',
+				nonce: adminData.nonce,
+				user_id: userId,
+				route_id: routeId,
+				grant: grant ? '1' : '0',
+			} ),
+		} );
+	};
+
+	const saveTree = useCallback(
+		async ( tree ) => {
+			try {
+				await fetch( adminData.ajaxurl, {
+					method: 'POST',
+					headers: {
+						'Content-Type':
+							'application/x-www-form-urlencoded; charset=UTF-8',
+					},
+					body: new URLSearchParams( {
+						action: 'save_routes_policy_tree',
+						nonce: adminData.nonce,
+						tree: JSON.stringify( tree ),
+					} ),
+				} );
+			} catch {
+				// Silent fail.
+			}
+		},
+		[ adminData ]
+	);
+
+	useEffect( () => {
+		if ( treeLoadingRef.current ) {
+			treeLoadingRef.current = false;
+			return;
+		}
+		if ( saveTimerRef.current ) {
+			clearTimeout( saveTimerRef.current );
+		}
+		saveTimerRef.current = setTimeout( () => {
+			saveTree( nodes );
+		}, 800 );
+		return () => {
+			if ( saveTimerRef.current ) {
+				clearTimeout( saveTimerRef.current );
+			}
+		};
+	}, [ nodes, saveTree ] );
 
 	if ( loading || ( ! loading && ! treeData ) ) {
 		return (
@@ -152,7 +278,12 @@ export default function RoutesPolicyTree( { form, setField } ) {
 						? __( 'Loading routes…', 'rest-api-firewall' )
 						: __( 'No routes found', 'rest-api-firewall' ) }
 				</Typography>
-				{ loading && <LinearProgress sx={ { width: '100%', maxWidth: 250 } } color="info" /> }
+				{ loading && (
+					<LinearProgress
+						sx={ { width: '100%', maxWidth: 250 } }
+						color="info"
+					/>
+				) }
 			</Box>
 		);
 	}
@@ -174,10 +305,7 @@ export default function RoutesPolicyTree( { form, setField } ) {
 						color: 'text.secondary',
 					} }
 				>
-					{ __(
-						'Per-Route Settings',
-						'rest-api-firewall'
-					) }
+					{ __( 'Per-Route Settings', 'rest-api-firewall' ) }
 				</Typography>
 
 				<Stack direction="row" alignItems="center">
@@ -199,10 +327,7 @@ export default function RoutesPolicyTree( { form, setField } ) {
 						</Tooltip>
 					) }
 					<Tooltip
-						title={ __(
-							'Refresh Routes',
-							'rest-api-firewall'
-						) }
+						title={ __( 'Refresh Routes', 'rest-api-firewall' ) }
 						placement="left"
 					>
 						<IconButton onClick={ loadRoutes }>
@@ -211,6 +336,7 @@ export default function RoutesPolicyTree( { form, setField } ) {
 					</Tooltip>
 				</Stack>
 			</Stack>
+
 			<RichTreeView
 				items={ nodes }
 				slots={ { item: CustomTreeItem } }
@@ -221,21 +347,109 @@ export default function RoutesPolicyTree( { form, setField } ) {
 						clearNodeOverride: handleClearOverride,
 						applyToAllChildren: handleApplyToAll,
 						getNodeById,
+						openUsersPopover: hasValidLicense
+							? handleOpenUsersPopover
+							: null,
 						enforce_auth,
 						enforce_rate_limit,
 						rate_limit,
 						rate_limit_time,
 						expandedItems,
 						hasValidLicense,
+						usersData,
 					},
 				} }
 				expandedItems={ expandedItems }
 				onExpandedItemsChange={ ( _e, ids ) => setExpandedItems( ids ) }
 			/>
+
+			<Popover
+				open={ Boolean( popoverAnchor ) }
+				anchorEl={ popoverAnchor }
+				onClose={ handleCloseUsersPopover }
+				anchorOrigin={ { vertical: 'bottom', horizontal: 'left' } }
+				transformOrigin={ { vertical: 'top', horizontal: 'left' } }
+			>
+				<Box sx={ { p: 2, minWidth: 220, maxWidth: 340 } }>
+					<Typography
+						variant="subtitle2"
+						sx={ { mb: 1, fontWeight: 600 } }
+					>
+						{ __( 'User Access', 'rest-api-firewall' ) }
+					</Typography>
+
+					{ usersLoading && (
+						<Box
+							sx={ {
+								display: 'flex',
+								justifyContent: 'center',
+								py: 1,
+							} }
+						>
+							<CircularProgress size={ 20 } />
+						</Box>
+					) }
+
+					{ ! usersLoading &&
+						usersData !== null &&
+						usersData.length === 0 && (
+							<Typography variant="body2" color="text.secondary">
+								{ __(
+									'No users configured for this application.',
+									'rest-api-firewall'
+								) }
+							</Typography>
+						) }
+
+					{ ! usersLoading && usersData && usersData.length > 0 && (
+						<Stack spacing={ 0 }>
+							<Typography
+								variant="caption"
+								color="text.secondary"
+								sx={ { mb: 0.5, fontSize: '0.7rem' } }
+							>
+								{ __(
+									'Check to restrict user access to this route only.',
+									'rest-api-firewall'
+								) }
+							</Typography>
+							{ usersData.map( ( user ) => {
+								const isChecked =
+									user.related_routes_uuid.includes(
+										popoverRouteId
+									);
+								return (
+									<FormControlLabel
+										key={ user.id }
+										control={
+											<Checkbox
+												size="small"
+												checked={ isChecked }
+												onChange={ ( e ) =>
+													handleUserAccessChange(
+														user.id,
+														popoverRouteId,
+														e.target.checked
+													)
+												}
+												sx={ { py: 0.5 } }
+											/>
+										}
+										label={
+											<Typography variant="body2">
+												{ user.display_name }
+											</Typography>
+										}
+									/>
+								);
+							} ) }
+						</Stack>
+					) }
+				</Box>
+			</Popover>
 		</Box>
 	);
 }
-
 
 function NodeContent( {
 	children,
@@ -244,12 +458,14 @@ function NodeContent( {
 	clearNodeOverride,
 	applyToAllChildren,
 	getNodeById,
+	openUsersPopover,
 	node,
 	enforce_auth,
 	enforce_rate_limit,
 	rate_limit,
 	rate_limit_time,
 	expandedItems,
+	usersData,
 	...props
 } ) {
 	useTreeItem( props );
@@ -268,12 +484,13 @@ function NodeContent( {
 	};
 
 	const hasChildren = node.children && node.children.length > 0;
-	const isExpanded = expandedItems?.includes( node.id );
-	const modifiedCount = countModifiedDescendants( node );
+	const modifiedCount = countModifiedDescendants(
+		node,
+		enforce_auth,
+		enforce_rate_limit
+	);
 
-	// Override model: effective values
-	const authIsGlobal =
-		!! enforce_auth && ! nodeSettings.protect.overridden;
+	const authIsGlobal = !! enforce_auth && ! nodeSettings.protect.overridden;
 	const isAuthEnforced = authIsGlobal || nodeSettings.protect.value;
 
 	const rateIsGlobal =
@@ -285,10 +502,15 @@ function NodeContent( {
 	const effectiveRateLimit = rate_limit;
 	const effectiveRateLimitTime = rate_limit_time;
 
-	// Custom indicator: any setting has overridden: true
-	const isCustomized = [ 'protect', 'rate_limit', 'disabled' ].some(
-		( k ) => nodeSettings[ k ]?.overridden
-	);
+	const userCount = node.isMethod
+		? ( usersData || [] ).filter( ( u ) =>
+				u.related_routes_uuid.includes( node.id )
+		  ).length
+		: 0;
+
+	const isCustomized =
+		isTrulyCustomized( nodeSettings, enforce_auth, enforce_rate_limit ) ||
+		userCount > 0;
 
 	const getDescendantsMatchState = () => {
 		if ( ! hasChildren ) {
@@ -344,7 +566,6 @@ function NodeContent( {
 		e.stopPropagation();
 	};
 
-	// Override-aware toggle handlers
 	const handleAuthToggle = ( e ) => {
 		e.stopPropagation();
 		if ( enforce_auth && ! nodeSettings.protect.overridden ) {
@@ -423,25 +644,6 @@ function NodeContent( {
 					>
 						{ children }
 
-						{ node.isMethod && (
-							<Chip
-								label={ node.method || node.label }
-								size="small"
-								sx={ { ml: 1 } }
-								color={
-									node.method === 'GET'
-										? 'success'
-										: node.method === 'POST'
-										? 'warning'
-										: node.method === 'PUT'
-										? 'error'
-										: node.method === 'DELETE'
-										? 'error'
-										: 'default'
-								}
-							/>
-						) }
-
 						{ node.permission && (
 							<Chip
 								label={
@@ -463,15 +665,14 @@ function NodeContent( {
 							<Chip
 								label={ __( 'custom', 'rest-api-firewall' ) }
 								size="small"
-								color="warning"
+								variant="outlined"
 							/>
 						) }
 
-						{ ! isExpanded && modifiedCount > 0 && (
+						{ modifiedCount > 0 && (
 							<Chip
 								label={ `${ modifiedCount } custom` }
 								size="small"
-								color="warning"
 								variant="outlined"
 							/>
 						) }
@@ -527,17 +728,41 @@ function NodeContent( {
 					</Tooltip>
 				) }
 
+				{ node.isMethod && openUsersPopover && isAuthEnforced && (
+					<Button
+						size="small"
+						variant="text"
+						disabled={ isDisabled }
+						onClick={ ( e ) => {
+							e.stopPropagation();
+							openUsersPopover( node.id, e.currentTarget );
+						} }
+						sx={ { fontSize: '0.75rem', minWidth: 0, px: 1 } }
+					>
+						{ userCount > 0
+							? `${ userCount } user${
+									userCount > 1 ? 's' : ''
+							  } set`
+							: __( 'Set users', 'rest-api-firewall' ) }
+					</Button>
+				) }
+
 				<Tooltip
 					title={
 						! hasValidLicense
 							? __( 'Pro version required', 'rest-api-firewall' )
+							: isDisabled
+							? __( 'Route is disabled', 'rest-api-firewall' )
 							: authIsGlobal
 							? __(
 									'Authentication enforced globally. Click to override for this route.',
 									'rest-api-firewall'
 							  )
 							: isAuthEnforced
-							? __( 'Authentication enforced', 'rest-api-firewall' )
+							? __(
+									'Authentication enforced',
+									'rest-api-firewall'
+							  )
 							: __(
 									'Enable authentication for this route',
 									'rest-api-firewall'
@@ -550,9 +775,10 @@ function NodeContent( {
 								size="small"
 								checked={ isAuthEnforced }
 								onChange={ handleAuthToggle }
-								disabled={ ! hasValidLicense }
+								disabled={ ! hasValidLicense || isDisabled }
 								sx={ {
 									opacity:
+										isDisabled ||
 										authIsGlobal ||
 										nodeSettings.protect.inherited ||
 										! hasValidLicense
@@ -579,6 +805,8 @@ function NodeContent( {
 					title={
 						! hasValidLicense
 							? __( 'Pro version required', 'rest-api-firewall' )
+							: isDisabled
+							? __( 'Route is disabled', 'rest-api-firewall' )
 							: rateIsGlobal
 							? __(
 									'Rate limiting enforced globally. Click to override for this route.',
@@ -598,9 +826,10 @@ function NodeContent( {
 								size="small"
 								checked={ isRateLimitEnforced }
 								onChange={ handleRateToggle }
-								disabled={ ! hasValidLicense }
+								disabled={ ! hasValidLicense || isDisabled }
 								sx={ {
 									opacity:
+										isDisabled ||
 										rateIsGlobal ||
 										nodeSettings.rate_limit.inherited ||
 										! hasValidLicense
@@ -730,7 +959,7 @@ function normalizeTree( nodes, parentPath = '', parentSettings = null ) {
 		return [];
 	}
 
-	return nodes.map( ( node ) => {
+	const normalized = nodes.map( ( node ) => {
 		const nodePath = node.path || `${ parentPath }/${ node.label }`;
 		const nodeSettings = {
 			protect: {
@@ -761,28 +990,34 @@ function normalizeTree( nodes, parentPath = '', parentSettings = null ) {
 				nodeSettings.protect = {
 					value: !! node.settings.protect,
 					inherited: false,
-					overridden: node.settings.protect?.overridden ?? false,
+					overridden: !! (
+						node.settings.protect_overridden ?? false
+					),
 				};
 			}
 			if ( node.settings.disabled !== undefined ) {
 				nodeSettings.disabled = {
 					value: !! node.settings.disabled,
 					inherited: false,
-					overridden: node.settings.disabled?.overridden ?? false,
+					overridden: !! (
+						node.settings.disabled_overridden ?? false
+					),
 				};
 			}
 			if ( node.settings.rate_limit !== undefined ) {
 				nodeSettings.rate_limit = {
 					value: !! node.settings.rate_limit,
 					inherited: false,
-					overridden: node.settings.rate_limit?.overridden ?? false,
+					overridden: !! (
+						node.settings.rate_limit_overridden ?? false
+					),
 				};
 			}
 			if ( node.settings.rate_limit_time !== undefined ) {
 				nodeSettings.rate_limit_time = {
 					value: !! node.settings.rate_limit_time,
 					inherited: false,
-					overridden: node.settings.rate_limit_time?.overridden ?? false,
+					overridden: false,
 				};
 			}
 			if ( node.settings.applyToChildren !== undefined ) {
@@ -813,6 +1048,30 @@ function normalizeTree( nodes, parentPath = '', parentSettings = null ) {
 
 		return normalizedNode;
 	} );
+
+	if ( parentSettings === null ) {
+		return rehydrateApplyToChildren( normalized );
+	}
+	return normalized;
+}
+
+function rehydrateApplyToChildren( nodes ) {
+	return nodes.map( ( node ) => {
+		const updated = { ...node };
+		if ( updated.settings?.applyToChildren && updated.children?.length ) {
+			for ( const key of [ 'protect', 'rate_limit', 'disabled' ] ) {
+				updated.children = propagateToDescendants(
+					updated.children,
+					key,
+					updated.settings[ key ].value
+				);
+			}
+		}
+		if ( updated.children?.length ) {
+			updated.children = rehydrateApplyToChildren( updated.children );
+		}
+		return updated;
+	} );
 }
 
 function treeReducer( state, action ) {
@@ -841,17 +1100,29 @@ function treeReducer( state, action ) {
 function toggleNode( items, id, key ) {
 	return items.map( ( item ) => {
 		if ( item.id === id ) {
-			return {
+			const newValue = ! item.settings[ key ].value;
+			const updated = {
 				...item,
 				settings: {
 					...item.settings,
 					[ key ]: {
-						value: ! item.settings[ key ].value,
+						value: newValue,
 						inherited: false,
 						overridden: true,
 					},
 				},
 			};
+			if (
+				updated.settings.applyToChildren &&
+				updated.children?.length
+			) {
+				updated.children = propagateToDescendants(
+					updated.children,
+					key,
+					newValue
+				);
+			}
+			return updated;
 		}
 		if ( item.children ) {
 			return { ...item, children: toggleNode( item.children, id, key ) };
@@ -863,7 +1134,7 @@ function toggleNode( items, id, key ) {
 function overrideNode( items, id, key, value ) {
 	return items.map( ( item ) => {
 		if ( item.id === id ) {
-			return {
+			const updated = {
 				...item,
 				settings: {
 					...item.settings,
@@ -874,6 +1145,17 @@ function overrideNode( items, id, key, value ) {
 					},
 				},
 			};
+			if (
+				updated.settings.applyToChildren &&
+				updated.children?.length
+			) {
+				updated.children = propagateToDescendants(
+					updated.children,
+					key,
+					value
+				);
+			}
+			return updated;
 		}
 		if ( item.children ) {
 			return {
@@ -931,61 +1213,23 @@ function resetAllOverrides( items ) {
 function applyToAllDescendants( items, parentId, shouldApply ) {
 	return items.map( ( item ) => {
 		if ( item.id === parentId ) {
-			const parentSettings = item.settings;
-
-			const updateDescendants = ( children, applySettings ) => {
-				return ( children || [] ).map( ( child ) => {
-					const hasGrandchildren =
-						child.children && child.children.length > 0;
-
-					if ( applySettings ) {
-						return {
-							...child,
-							settings: {
-								protect: {
-									value: parentSettings.protect.value,
-									inherited: false,
-									overridden: true,
-								},
-								disabled: {
-									value: parentSettings.disabled.value,
-									inherited: false,
-									overridden: true,
-								},
-								rate_limit: {
-									value: parentSettings.rate_limit.value,
-									inherited: false,
-									overridden: true,
-								},
-								rate_limit_time: {
-									value: parentSettings.rate_limit_time.value,
-									inherited: false,
-									overridden: true,
-								},
-								applyToChildren: hasGrandchildren,
-							},
-							children: updateDescendants( child.children, true ),
-						};
-					}
-					return {
-						...child,
-						settings: {
-							...child.settings,
-							applyToChildren: false,
-						},
-						children: updateDescendants( child.children, false ),
-					};
-				} );
-			};
-
-			return {
+			const updated = {
 				...item,
 				settings: {
 					...item.settings,
 					applyToChildren: shouldApply,
 				},
-				children: updateDescendants( item.children, shouldApply ),
 			};
+			if ( shouldApply && updated.children?.length ) {
+				for ( const key of [ 'protect', 'rate_limit', 'disabled' ] ) {
+					updated.children = propagateToDescendants(
+						updated.children,
+						key,
+						updated.settings[ key ].value
+					);
+				}
+			}
+			return updated;
 		}
 		if ( item.children ) {
 			return {
@@ -1001,18 +1245,59 @@ function applyToAllDescendants( items, parentId, shouldApply ) {
 	} );
 }
 
-function countModifiedDescendants( node ) {
+function propagateToDescendants( children, key, value ) {
+	return ( children || [] ).map( ( child ) => {
+		const updated = {
+			...child,
+			settings: {
+				...child.settings,
+				[ key ]: {
+					value,
+					inherited: true,
+					overridden: child.settings?.[ key ]?.overridden ?? false,
+				},
+			},
+		};
+		if ( updated.children?.length ) {
+			updated.children = propagateToDescendants(
+				updated.children,
+				key,
+				value
+			);
+		}
+		return updated;
+	} );
+}
+
+function isTrulyCustomized( settings, enforceAuth, enforceRateLimit ) {
+	const isProtectCustomized =
+		settings.protect?.overridden &&
+		settings.protect.value !== !! enforceAuth;
+	const isRateCustomized =
+		settings.rate_limit?.overridden &&
+		settings.rate_limit.value !== !! enforceRateLimit;
+	const isDisabledCustomized =
+		settings.disabled?.overridden && settings.disabled.value !== false;
+	return isProtectCustomized || isRateCustomized || isDisabledCustomized;
+}
+
+function countModifiedDescendants( node, enforceAuth, enforceRateLimit ) {
 	let count = 0;
 	for ( const child of node.children || [] ) {
-		const s = child.settings || {};
 		if (
-			[ 'protect', 'rate_limit', 'disabled' ].some(
-				( k ) => s[ k ]?.overridden
+			isTrulyCustomized(
+				child.settings || {},
+				enforceAuth,
+				enforceRateLimit
 			)
 		) {
 			count++;
 		}
-		count += countModifiedDescendants( child );
+		count += countModifiedDescendants(
+			child,
+			enforceAuth,
+			enforceRateLimit
+		);
 	}
 	return count;
 }

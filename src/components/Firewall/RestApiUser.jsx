@@ -15,7 +15,7 @@ export default function RestApiUser( { form, setField } ) {
 	const { __, sprintf } = wp.i18n || {};
 	const { adminData } = useAdminData();
 	const [ restApiUser, setRestApiUser ] = useState( [] );
-	
+
 	const adminUrl = adminData?.ajaxurl?.split( 'admin-ajax.php' )[ 0 ] || '';
 	const usersPageUrl = `${ adminUrl }users.php`;
 
@@ -51,13 +51,18 @@ export default function RestApiUser( { form, setField } ) {
 					<MenuItem value={ 0 }>
 						<em>{ __( 'Select User', 'rest-api-firewall' ) }</em>
 					</MenuItem>
-					{ adminData?.users && adminData.users.length > 0 && adminData.users.map( ( user ) =>
-						user.value && user.label ? (
-							<MenuItem key={ user.value } value={ user.value }>
-								{ user.label }
-							</MenuItem>
-						) : null
-					) }
+					{ adminData?.users &&
+						adminData.users.length > 0 &&
+						adminData.users.map( ( user ) =>
+							user.value && user.label ? (
+								<MenuItem
+									key={ user.value }
+									value={ user.value }
+								>
+									{ user.label }
+								</MenuItem>
+							) : null
+						) }
 				</Select>
 				<FormHelperText>
 					{ form.firewall_user_id &&
