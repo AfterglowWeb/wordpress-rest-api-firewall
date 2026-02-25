@@ -192,7 +192,7 @@ export default function License() {
 
 	return (
 		<>
-			<Stack gap={ 2 } p={ 2 } width={ 320 }>
+			<Stack spacing={ 3 } width={ 320 }>
 				<Stack direction="row" alignItems="center" gap={ 1 }>
 					{ isLicenseActive ? (
 						<CheckCircleIcon sx={ { color: 'success.main' } } />
@@ -204,9 +204,7 @@ export default function License() {
 					</Typography>
 				</Stack>
 
-				{ successMessage && (
-					<Alert severity="success">{ successMessage }</Alert>
-				) }
+				{ successMessage && <Alert severity="success">{ successMessage }</Alert> }
 
 				{ error && <Alert severity="error">{ error }</Alert> }
 
@@ -215,7 +213,7 @@ export default function License() {
 						<CircularProgress />
 					</Box>
 				) : (
-					<>
+					<Stack spacing={ 3 }>
 						{ isLicenseActive && status && (
 							<>
 								{ ! successMessage && (
@@ -447,7 +445,7 @@ export default function License() {
 								</Button>
 							</>
 						) }
-					</>
+					</Stack>
 				) }
 			</Stack>
 
