@@ -13,53 +13,6 @@ const HTTP_METHODS = [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ];
 
 const HTTP_METHODS = [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ];
 
-function buildGroupedPostTypeOptions( items, __ ) {
-	const groups = [
-		{ key: 'post_type', label: __( 'Posts', 'rest-api-firewall' ) },
-		{ key: 'taxonomy', label: __( 'Taxonomies', 'rest-api-firewall' ) },
-	];
-
-	const result = [];
-
-	for ( const { key, label } of groups ) {
-		const typeItems = items.filter( ( item ) => item.type === key );
-		if ( ! typeItems.length ) continue;
-
-		const publicItems = typeItems.filter( ( item ) => item.public );
-		const privateItems = typeItems.filter( ( item ) => ! item.public );
-
-		result.push( { groupLabel: label } );
-
-		if ( publicItems.length ) {
-			result.push( { subGroupLabel: __( 'Public', 'rest-api-firewall' ) } );
-			publicItems.forEach( ( item ) =>
-				result.push( {
-					value: item.value,
-					label: item.label,
-					secondary: item._builtin
-						? __( 'builtin', 'rest-api-firewall' )
-						: __( 'custom', 'rest-api-firewall' ),
-				} )
-			);
-		}
-
-		if ( privateItems.length ) {
-			result.push( { subGroupLabel: __( 'Private', 'rest-api-firewall' ) } );
-			privateItems.forEach( ( item ) =>
-				result.push( {
-					value: item.value,
-					label: item.label,
-					secondary: item._builtin
-						? __( 'builtin', 'rest-api-firewall' )
-						: __( 'custom', 'rest-api-firewall' ),
-				} )
-			);
-		}
-	}
-
-	return result;
-}
-
 export default function GlobalRoutesPolicy( { form, setField } ) {
 	const { hasValidLicense } = useLicense();
 	const { __ } = wp.i18n || {};
