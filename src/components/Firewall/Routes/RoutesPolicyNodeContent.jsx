@@ -23,36 +23,41 @@ import {
 	getAllDescendantMethodIds,
 } from './routesPolicyUtils';
 
-export const CustomTreeItem = forwardRef( function CustomTreeItem( props, ref ) {
-	const node = props.getNodeById ? props.getNodeById( props.itemId ) : null;
+export const CustomTreeItem = forwardRef(
+	function CustomTreeItem( props, ref ) {
+		const node = props.getNodeById
+			? props.getNodeById( props.itemId )
+			: null;
 
-	return (
-		<TreeItem
-			{ ...props }
-			ref={ ref }
-			slots={ { content: NodeContent } }
-			slotProps={ {
-				content: {
-					toggleNodeSetting: props.toggleNodeSetting,
-					overrideNodeSetting: props.overrideNodeSetting,
-					getNodeById: props.getNodeById,
-					openUsersPopover: props.openUsersPopover,
-					toggleNodeCustom: props.toggleNodeCustom,
-					node,
-					enforce_auth: props.enforce_auth,
-					enforce_rate_limit: props.enforce_rate_limit,
-					rate_limit: props.rate_limit,
-					rate_limit_time: props.rate_limit_time,
-					hide_user_routes: props.hide_user_routes,
-					disabled_methods: props.disabled_methods,
-					disabled_post_type_routes: props.disabled_post_type_routes,
-					expandedItems: props.expandedItems,
-					usersData: props.usersData,
-				},
-			} }
-		/>
-	);
-} );
+		return (
+			<TreeItem
+				{ ...props }
+				ref={ ref }
+				slots={ { content: NodeContent } }
+				slotProps={ {
+					content: {
+						toggleNodeSetting: props.toggleNodeSetting,
+						overrideNodeSetting: props.overrideNodeSetting,
+						getNodeById: props.getNodeById,
+						openUsersPopover: props.openUsersPopover,
+						toggleNodeCustom: props.toggleNodeCustom,
+						node,
+						enforce_auth: props.enforce_auth,
+						enforce_rate_limit: props.enforce_rate_limit,
+						rate_limit: props.rate_limit,
+						rate_limit_time: props.rate_limit_time,
+						hide_user_routes: props.hide_user_routes,
+						disabled_methods: props.disabled_methods,
+						disabled_post_type_routes:
+							props.disabled_post_type_routes,
+						expandedItems: props.expandedItems,
+						usersData: props.usersData,
+					},
+				} }
+			/>
+		);
+	}
+);
 
 export function NodeContent( {
 	children,
@@ -189,15 +194,27 @@ export function NodeContent( {
 				...( props.sx || {} ),
 			} }
 		>
-			<Stack direction="row" alignItems="center" gap={ 0.5 } flex={ 1 } py={ 1 }>
+			<Stack
+				direction="row"
+				alignItems="center"
+				gap={ 0.5 }
+				flex={ 1 }
+				py={ 1 }
+			>
 				<Stack direction="column" spacing={ 0.5 }>
 					<Stack
 						direction="row"
 						spacing={ 1 }
 						alignItems="center"
 						sx={ {
-							cursor: isDisabled && node.isMethod ? 'default' : 'pointer',
-							filter: isDisabled && node.isMethod ? 'grayscale(1) opacity(0.6)' : 'none',
+							cursor:
+								isDisabled && node.isMethod
+									? 'default'
+									: 'pointer',
+							filter:
+								isDisabled && node.isMethod
+									? 'grayscale(1) opacity(0.6)'
+									: 'none',
 						} }
 					>
 						{ children }
@@ -205,13 +222,16 @@ export function NodeContent( {
 						{ node.permission && (
 							<Chip
 								label={
-									getEffectivePermission( node.permission.type ) ||
-									__('unknown', 'rest-api-firewall')
+									getEffectivePermission(
+										node.permission.type
+									) || __( 'unknown', 'rest-api-firewall' )
 								}
 								size="small"
 								variant="outlined"
 								color={ getPermissionColor(
-									getEffectivePermission( node.permission.type )
+									getEffectivePermission(
+										node.permission.type
+									)
 								) }
 							/>
 						) }
@@ -256,13 +276,16 @@ export function NodeContent( {
 								ml: 4,
 							} }
 						>
-							{ sprintf( __('Permission: %s', 'rest-api-firewall'), node.permission.callback ) }
+							{ sprintf(
+								__( 'Permission: %s', 'rest-api-firewall' ),
+								node.permission.callback
+							) }
 						</Typography>
 					) }
 				</Stack>
 
 				{ ! node.isMethod && ( node.path || node.route ) && (
-					<Tooltip title={ __('Copy path', 'rest-api-firewall') }>
+					<Tooltip title={ __( 'Copy path', 'rest-api-firewall' ) }>
 						<CopyButton toCopy={ node.path || node.route } />
 					</Tooltip>
 				) }
@@ -278,8 +301,14 @@ export function NodeContent( {
 					<Tooltip
 						title={
 							! hasValidLicense
-								? __( 'Pro version required', 'rest-api-firewall' )
-								: __( 'Custom settings active — click to remove and inherit from parent', 'rest-api-firewall' )
+								? __(
+										'Pro version required',
+										'rest-api-firewall'
+								  )
+								: __(
+										'Custom settings active — click to remove and inherit from parent',
+										'rest-api-firewall'
+								  )
 						}
 					>
 						<span>
@@ -288,7 +317,10 @@ export function NodeContent( {
 								disabled={ ! hasValidLicense }
 								onClick={ ( e ) => {
 									e.stopPropagation();
-									toggleNodeCustom( node.id, effectiveValues );
+									toggleNodeCustom(
+										node.id,
+										effectiveValues
+									);
 								} }
 								sx={ { color: 'error.main' } }
 							>
@@ -300,8 +332,14 @@ export function NodeContent( {
 					<Tooltip
 						title={
 							! hasValidLicense
-								? __( 'Pro version required', 'rest-api-firewall' )
-								: __( 'Pin custom settings for this row', 'rest-api-firewall' )
+								? __(
+										'Pro version required',
+										'rest-api-firewall'
+								  )
+								: __(
+										'Pin custom settings for this row',
+										'rest-api-firewall'
+								  )
 						}
 					>
 						<span>
@@ -310,7 +348,10 @@ export function NodeContent( {
 								disabled={ ! hasValidLicense }
 								onClick={ ( e ) => {
 									e.stopPropagation();
-									toggleNodeCustom( node.id, effectiveValues );
+									toggleNodeCustom(
+										node.id,
+										effectiveValues
+									);
 								} }
 								sx={ { opacity: hasValidLicense ? 0.35 : 0.2 } }
 							>
@@ -346,10 +387,19 @@ export function NodeContent( {
 							: isDisabled && node.isMethod
 							? __( 'Route is disabled', 'rest-api-firewall' )
 							: authIsGlobal
-							? __( 'Authentication enforced globally — click to override for this route', 'rest-api-firewall' )
+							? __(
+									'Authentication enforced globally — click to override for this route',
+									'rest-api-firewall'
+							  )
 							: isAuthEnforced
-							? __( 'Authentication enforced', 'rest-api-firewall' )
-							: __( 'Enable authentication for this route', 'rest-api-firewall' )
+							? __(
+									'Authentication enforced',
+									'rest-api-firewall'
+							  )
+							: __(
+									'Enable authentication for this route',
+									'rest-api-firewall'
+							  )
 					}
 				>
 					<FormControlLabel
@@ -358,7 +408,10 @@ export function NodeContent( {
 								size="small"
 								checked={ isAuthEnforced }
 								onChange={ handleAuthToggle }
-								disabled={ ! hasValidLicense || ( isDisabled && node.isMethod ) }
+								disabled={
+									! hasValidLicense ||
+									( isDisabled && node.isMethod )
+								}
 								sx={ {
 									opacity:
 										( isDisabled && node.isMethod ) ||
@@ -371,7 +424,10 @@ export function NodeContent( {
 							/>
 						}
 						label={
-							<Typography variant="body2" sx={ { fontSize: '0.875rem' } }>
+							<Typography
+								variant="body2"
+								sx={ { fontSize: '0.875rem' } }
+							>
 								{ __( 'Auth', 'rest-api-firewall' ) }
 							</Typography>
 						}
@@ -385,10 +441,16 @@ export function NodeContent( {
 							: isDisabled && node.isMethod
 							? __( 'Route is disabled', 'rest-api-firewall' )
 							: rateIsGlobal
-							? __( 'Rate limiting enforced globally — click to override for this route', 'rest-api-firewall' )
+							? __(
+									'Rate limiting enforced globally — click to override for this route',
+									'rest-api-firewall'
+							  )
 							: isRateLimitEnforced
 							? `${ effectiveRateLimit } requests / ${ effectiveRateLimitTime }s`
-							: __( 'Enable rate limiting for this route', 'rest-api-firewall' )
+							: __(
+									'Enable rate limiting for this route',
+									'rest-api-firewall'
+							  )
 					}
 				>
 					<FormControlLabel
@@ -397,7 +459,10 @@ export function NodeContent( {
 								size="small"
 								checked={ isRateLimitEnforced }
 								onChange={ handleRateToggle }
-								disabled={ ! hasValidLicense || ( isDisabled && node.isMethod ) }
+								disabled={
+									! hasValidLicense ||
+									( isDisabled && node.isMethod )
+								}
 								sx={ {
 									opacity:
 										( isDisabled && node.isMethod ) ||
@@ -410,7 +475,10 @@ export function NodeContent( {
 							/>
 						}
 						label={
-							<Typography variant="body2" sx={ { fontSize: '0.875rem' } }>
+							<Typography
+								variant="body2"
+								sx={ { fontSize: '0.875rem' } }
+							>
 								{ __( 'Rate', 'rest-api-firewall' ) }
 							</Typography>
 						}
@@ -422,13 +490,25 @@ export function NodeContent( {
 						! hasValidLicense
 							? __( 'Pro version required', 'rest-api-firewall' )
 							: disabledIsGlobal
-							? ( hide_user_routes && isUserRoute
-								? __( 'Users routes disabled globally — pin custom settings to override', 'rest-api-firewall' )
+							? hide_user_routes && isUserRoute
+								? __(
+										'Users routes disabled globally — pin custom settings to override',
+										'rest-api-firewall'
+								  )
 								: isPostTypeGloballyDisabled
-								? __( 'Post type disabled globally — pin custom settings to override', 'rest-api-firewall' )
-								: __( 'Method disabled globally — pin custom settings to override', 'rest-api-firewall' ) )
+								? __(
+										'Post type disabled globally — pin custom settings to override',
+										'rest-api-firewall'
+								  )
+								: __(
+										'Method disabled globally — pin custom settings to override',
+										'rest-api-firewall'
+								  )
 							: isDisabled
-							? __( 'This route is disabled', 'rest-api-firewall' )
+							? __(
+									'This route is disabled',
+									'rest-api-firewall'
+							  )
 							: __( 'Disable this route', 'rest-api-firewall' )
 					}
 				>
@@ -441,14 +521,19 @@ export function NodeContent( {
 								disabled={ ! hasValidLicense }
 								sx={ {
 									opacity:
-										isInherited || disabledIsGlobal || ! hasValidLicense
+										isInherited ||
+										disabledIsGlobal ||
+										! hasValidLicense
 											? 0.6
 											: 1,
 								} }
 							/>
 						}
 						label={
-							<Typography variant="body2" sx={ { fontSize: '0.875rem' } }>
+							<Typography
+								variant="body2"
+								sx={ { fontSize: '0.875rem' } }
+							>
 								{ __( 'Disable', 'rest-api-firewall' ) }
 							</Typography>
 						}

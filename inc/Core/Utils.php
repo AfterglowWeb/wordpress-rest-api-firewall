@@ -47,12 +47,12 @@ class Utils {
 	}
 
 	public static function list_post_types(): array {
-		
+
 		$post_types = get_post_types(
-			 array(
+			array(
 				'show_in_rest' => true,
 			),
-			'objects' 
+			'objects'
 		);
 
 		if ( empty( $post_types ) ) {
@@ -68,7 +68,7 @@ class Utils {
 				'public'    => $post_type->public,
 				'_builtin'  => $post_type->_builtin,
 				'type'      => 'post_type',
-				'rest_base' => sanitize_key( $post_type->rest_base ?: $post_type->name ),
+				'rest_base' => sanitize_key( property_exists( $post_type, 'rest_base' ) ? $post_type->rest_base : $post_type->name ),
 			),
 			$post_types
 		);
@@ -107,8 +107,8 @@ class Utils {
 	public static function format_user_type(): array {
 		return array(
 			array(
-				'value' => 'author',
-				'label' => __( 'Author', 'rest-api-firewall' ),
+				'value'    => 'author',
+				'label'    => __( 'Author', 'rest-api-firewall' ),
 				'public'   => true,
 				'_builtin' => false,
 				'type'     => 'author',

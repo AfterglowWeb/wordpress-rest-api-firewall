@@ -30,7 +30,6 @@ import {
 import { CustomTreeItem } from './RoutesPolicyNodeContent';
 import RoutesPolicyUsersPopover from './RoutesPolicyUsersPopover';
 
-
 export default function RoutesPolicyTree( { form, setField } ) {
 	const {
 		enforce_auth,
@@ -122,13 +121,14 @@ export default function RoutesPolicyTree( { form, setField } ) {
 
 	const customCount = countAllCustomNodes( nodes );
 
-	const disabledPostTypeRoutes = ( disabled_post_types || [] )
-		.map( ( slug ) => {
+	const disabledPostTypeRoutes = ( disabled_post_types || [] ).map(
+		( slug ) => {
 			const pt = ( adminData?.post_types || [] ).find(
 				( p ) => p.value === slug
 			);
 			return `/wp/v2/${ pt?.rest_base || slug }`;
-		} );
+		}
+	);
 
 	const loadUsers = useCallback( async () => {
 		if ( usersLoadedRef.current ) {
@@ -184,11 +184,15 @@ export default function RoutesPolicyTree( { form, setField } ) {
 	const handleUserAccessChange = ( userId, routeIds, grant ) => {
 		setUsersData( ( prev ) =>
 			( prev || [] ).map( ( u ) => {
-				if ( u.id !== userId ) return u;
+				if ( u.id !== userId ) {
+					return u;
+				}
 				let routes = [ ...u.related_routes_uuid ];
 				for ( const routeId of routeIds ) {
 					if ( grant ) {
-						if ( ! routes.includes( routeId ) ) routes.push( routeId );
+						if ( ! routes.includes( routeId ) ) {
+							routes.push( routeId );
+						}
 					} else {
 						routes = routes.filter( ( r ) => r !== routeId );
 					}

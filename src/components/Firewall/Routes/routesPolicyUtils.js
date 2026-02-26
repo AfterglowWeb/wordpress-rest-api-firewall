@@ -64,7 +64,7 @@ export function getAllDescendantMethodIds( node ) {
 export function rehydrateCascade( nodes, parentValues = null ) {
 	return ( nodes || [] ).map( ( node ) => {
 		const settings = node.settings ?? {};
-		let updatedSettings = { ...settings };
+		const updatedSettings = { ...settings };
 
 		if ( ! settings.custom && parentValues ) {
 			for ( const key of [ 'protect', 'rate_limit', 'disabled' ] ) {
@@ -87,7 +87,7 @@ export function rehydrateCascade( nodes, parentValues = null ) {
 			settings: updatedSettings,
 			children: node.children?.length
 				? rehydrateCascade( node.children, childValues )
-				: ( node.children || [] ),
+				: node.children || [],
 		};
 	} );
 }
@@ -107,7 +107,11 @@ export function propagateToDescendants( children, key, value ) {
 			},
 		};
 		if ( updated.children?.length ) {
-			updated.children = propagateToDescendants( updated.children, key, value );
+			updated.children = propagateToDescendants(
+				updated.children,
+				key,
+				value
+			);
 		}
 		return updated;
 	} );
@@ -149,21 +153,27 @@ export function normalizeTree( nodes, parentPath = '', parentSettings = null ) {
 				nodeSettings.protect = {
 					value: !! node.settings.protect,
 					inherited: false,
-					overridden: !! ( node.settings.protect_overridden ?? false ),
+					overridden: !! (
+						node.settings.protect_overridden ?? false
+					),
 				};
 			}
 			if ( node.settings.disabled !== undefined ) {
 				nodeSettings.disabled = {
 					value: !! node.settings.disabled,
 					inherited: false,
-					overridden: !! ( node.settings.disabled_overridden ?? false ),
+					overridden: !! (
+						node.settings.disabled_overridden ?? false
+					),
 				};
 			}
 			if ( node.settings.rate_limit !== undefined ) {
 				nodeSettings.rate_limit = {
 					value: !! node.settings.rate_limit,
 					inherited: false,
-					overridden: !! ( node.settings.rate_limit_overridden ?? false ),
+					overridden: !! (
+						node.settings.rate_limit_overridden ?? false
+					),
 				};
 			}
 			if ( node.settings.rate_limit_time !== undefined ) {

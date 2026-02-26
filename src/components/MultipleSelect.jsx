@@ -67,7 +67,8 @@ export default function MultipleSelect( {
 				{ options.map( ( option, index ) => {
 					if ( option.groupLabel ) {
 						return (
-							<ListSubheader disableSticky
+							<ListSubheader
+								disableSticky
 								key={ `group-${ option.groupLabel }` }
 								sx={ {
 									fontWeight: 700,
@@ -86,7 +87,8 @@ export default function MultipleSelect( {
 
 					if ( option.subGroupLabel ) {
 						return (
-							<ListSubheader disableSticky
+							<ListSubheader
+								disableSticky
 								key={ `subgroup-${ option.subGroupLabel }-${ index }` }
 								sx={ {
 									pl: 3,
@@ -103,12 +105,18 @@ export default function MultipleSelect( {
 					}
 
 					return option?.value !== null && option?.label ? (
-						<MenuItem key={ option.value } value={ option.value } sx={ { pl: 4 } }>
+						<MenuItem
+							key={ option.value }
+							value={ option.value }
+							sx={ { pl: 4 } }
+						>
 							<ListItemText
 								primary={ option.label }
 								secondary={ option.secondary ?? null }
 								primaryTypographyProps={ { variant: 'body2' } }
-								secondaryTypographyProps={ { variant: 'caption' } }
+								secondaryTypographyProps={ {
+									variant: 'caption',
+								} }
 							/>
 						</MenuItem>
 					) : null;

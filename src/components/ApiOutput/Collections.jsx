@@ -19,7 +19,6 @@ export default function Collections( { form, setField, postTypes } ) {
 
 	return (
 		<Stack spacing={ 3 } maxWidth={ 600 }>
-
 			<Stack
 				spacing={ 3 }
 				direction={ 'row' }

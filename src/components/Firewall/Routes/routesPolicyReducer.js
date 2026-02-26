@@ -8,11 +8,22 @@ export function treeReducer( state, action ) {
 			);
 		case 'TOGGLE_NODE':
 			return rehydrateCascade(
-				toggleNode( state, action.id, action.key, action.effectiveValues )
+				toggleNode(
+					state,
+					action.id,
+					action.key,
+					action.effectiveValues
+				)
 			);
 		case 'OVERRIDE_NODE':
 			return rehydrateCascade(
-				overrideNode( state, action.id, action.key, action.value, action.effectiveValues )
+				overrideNode(
+					state,
+					action.id,
+					action.key,
+					action.value,
+					action.effectiveValues
+				)
 			);
 		case 'RESET_ALL_OVERRIDES':
 			return rehydrateCascade( resetAllOverrides( state ) );
@@ -25,6 +36,8 @@ export function treeReducer( state, action ) {
 
 /**
  * Snapshot helper — builds the custom-mode settings object from effective values.
+ * @param existing
+ * @param effectiveValues
  */
 function snapshotSettings( existing, effectiveValues ) {
 	return {
@@ -57,9 +70,21 @@ function toggleCustom( items, id, effectiveValues ) {
 					settings: {
 						...item.settings,
 						custom: false,
-						protect: { value: false, inherited: true, overridden: false },
-						rate_limit: { value: false, inherited: true, overridden: false },
-						disabled: { value: false, inherited: true, overridden: false },
+						protect: {
+							value: false,
+							inherited: true,
+							overridden: false,
+						},
+						rate_limit: {
+							value: false,
+							inherited: true,
+							overridden: false,
+						},
+						disabled: {
+							value: false,
+							inherited: true,
+							overridden: false,
+						},
 					},
 				};
 			}
@@ -118,7 +143,13 @@ function overrideNode( items, id, key, value, effectiveValues ) {
 		if ( item.children?.length ) {
 			return {
 				...item,
-				children: overrideNode( item.children, id, key, value, effectiveValues ),
+				children: overrideNode(
+					item.children,
+					id,
+					key,
+					value,
+					effectiveValues
+				),
 			};
 		}
 		return item;

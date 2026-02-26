@@ -27,26 +27,40 @@ export default function RoutesPolicyUsersPopover( {
 			transformOrigin={ { vertical: 'top', horizontal: 'left' } }
 		>
 			<Box sx={ { p: 2, minWidth: 220, maxWidth: 340 } }>
-				<Typography variant="subtitle2" sx={ { mb: 1, fontWeight: 600 } }>
+				<Typography
+					variant="subtitle2"
+					sx={ { mb: 1, fontWeight: 600 } }
+				>
 					{ isBulk
-						? __( 'User Access — all children', 'rest-api-firewall' )
+						? __(
+								'User Access — all children',
+								'rest-api-firewall'
+						  )
 						: __( 'User Access', 'rest-api-firewall' ) }
 				</Typography>
 
 				{ usersLoading && (
-					<Box sx={ { display: 'flex', justifyContent: 'center', py: 1 } }>
+					<Box
+						sx={ {
+							display: 'flex',
+							justifyContent: 'center',
+							py: 1,
+						} }
+					>
 						<CircularProgress size={ 20 } />
 					</Box>
 				) }
 
-				{ ! usersLoading && usersData !== null && usersData.length === 0 && (
-					<Typography variant="body2" color="text.secondary">
-						{ __(
-							'No users configured for this application.',
-							'rest-api-firewall'
-						) }
-					</Typography>
-				) }
+				{ ! usersLoading &&
+					usersData !== null &&
+					usersData.length === 0 && (
+						<Typography variant="body2" color="text.secondary">
+							{ __(
+								'No users configured for this application.',
+								'rest-api-firewall'
+							) }
+						</Typography>
+					) }
 
 				{ ! usersLoading && usersData && usersData.length > 0 && (
 					<Stack spacing={ 0 }>
@@ -67,8 +81,9 @@ export default function RoutesPolicyUsersPopover( {
 						</Typography>
 
 						{ usersData.map( ( user ) => {
-							const matchCount = ( routeIds || [] ).filter( ( id ) =>
-								user.related_routes_uuid.includes( id )
+							const matchCount = ( routeIds || [] ).filter(
+								( id ) =>
+									user.related_routes_uuid.includes( id )
 							).length;
 							const total = ( routeIds || [] ).length;
 							const isChecked = total > 0 && matchCount === total;
