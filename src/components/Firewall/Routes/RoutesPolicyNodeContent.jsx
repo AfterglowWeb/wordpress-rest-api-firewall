@@ -3,7 +3,6 @@ import { useLicense } from '../../../contexts/LicenseContext';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
@@ -11,17 +10,15 @@ import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import ReplayIcon from '@mui/icons-material/Replay';
-import LockIcon from '@mui/icons-material/Lock';
-import LockOpenIcon from '@mui/icons-material/LockOpen';
-
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import { TreeItem, TreeItemContent } from '@mui/x-tree-view/TreeItem';
 import { useTreeItem } from '@mui/x-tree-view/useTreeItem';
 
 import TestPolicy from './TestPolicy';
 import CopyButton from '../../CopyButton';
 import {
-	isTrulyCustomized,
+	isNodeCustom,
 	countModifiedDescendants,
 	getAllDescendantMethodIds,
 } from './routesPolicyUtils';
@@ -38,11 +35,9 @@ export const CustomTreeItem = forwardRef( function CustomTreeItem( props, ref ) 
 				content: {
 					toggleNodeSetting: props.toggleNodeSetting,
 					overrideNodeSetting: props.overrideNodeSetting,
-					clearNodeOverride: props.clearNodeOverride,
-					applyToAllChildren: props.applyToAllChildren,
 					getNodeById: props.getNodeById,
 					openUsersPopover: props.openUsersPopover,
-					toggleNodeLock: props.toggleNodeLock,
+					toggleNodeCustom: props.toggleNodeCustom,
 					node,
 					enforce_auth: props.enforce_auth,
 					enforce_rate_limit: props.enforce_rate_limit,
@@ -60,11 +55,9 @@ export function NodeContent( {
 	children,
 	toggleNodeSetting,
 	overrideNodeSetting,
-	clearNodeOverride,
-	applyToAllChildren,
 	getNodeById,
 	openUsersPopover,
-	toggleNodeLock,
+	toggleNodeCustom,
 	node,
 	enforce_auth,
 	enforce_rate_limit,
@@ -90,7 +83,7 @@ export function NodeContent( {
 	};
 
 	const hasChildren = node.children && node.children.length > 0;
-	const modifiedCount = countModifiedDescendants( node, enforce_auth, enforce_rate_limit );
+	const modifiedCount = countModifiedDescendants( node );
 
 	const authIsGlobal = !! enforce_auth && ! nodeSettings.protect.overridden;
 	const isAuthEnforced = authIsGlobal || nodeSettings.protect.value;
@@ -117,45 +110,7 @@ export function NodeContent( {
 				)
 		  ).length;
 
-
-	const isCustomized =
-		isTrulyCustomized( nodeSettings, enforce_auth, enforce_rate_limit ) ||
-		ownUserCount > 0;
-
-	const isLocked = !! nodeSettings.locked;
-	const showLockToggle = isCustomized || isLocked;
-
-	const getDescendantsMatchState = () => {
-		if ( ! hasChildren ) {
-			return null;
-		}
-		let allMatch = true;
-		let noneMatch = true;
-		const checkDescendants = ( childNodes ) => {
-			for ( const child of childNodes ) {
-				const childMatches =
-					child.settings?.protect?.value === nodeSettings.protect.value &&
-					child.settings?.disabled?.value === nodeSettings.disabled.value &&
-					child.settings?.rate_limit?.value === nodeSettings.rate_limit.value;
-
-				if ( childMatches ) {
-					noneMatch = false;
-				} else {
-					allMatch = false;
-				}
-				if ( child.children?.length ) {
-					checkDescendants( child.children );
-				}
-			}
-		};
-		checkDescendants( node.children );
-		if ( allMatch ) return 'all';
-		if ( noneMatch ) return 'none';
-		return 'partial';
-	};
-
-	const descendantsMatchState = getDescendantsMatchState();
-	const isApplyToChildrenChecked = nodeSettings.applyToChildren;
+	const isCustom = isNodeCustom( nodeSettings );
 
 	const handleSwitchClick = ( e ) => e.stopPropagation();
 
@@ -180,11 +135,6 @@ export function NodeContent( {
 	const handleDisableToggle = ( e ) => {
 		e.stopPropagation();
 		toggleNodeSetting( node.id, 'disabled' );
-	};
-
-	const handleApplyToAll = ( e ) => {
-		e.stopPropagation();
-		applyToAllChildren( node.id, ! isApplyToChildrenChecked );
 	};
 
 	const getPermissionColor = ( type ) => {
@@ -299,26 +249,31 @@ export function NodeContent( {
 				alignItems="center"
 				onClick={ handleSwitchClick }
 			>
-				{ showLockToggle && (
-					<Tooltip
-						title={
-							isLocked
-								? __( 'Locked — protected from parent overrides. Click to unlock.', 'rest-api-firewall' )
-								: __( 'Unlocked — click to lock and protect from parent overrides.', 'rest-api-firewall' )
-						}
-					>
-						<IconButton
-							size="small"
-							color={ isLocked ? 'primary' : 'default' }
-							onClick={ ( e ) => {
-								e.stopPropagation();
-								toggleNodeLock( node.id );
-							} }
-						>
-							{ isLocked ? <LockIcon fontSize="small" /> : <LockOpenIcon fontSize="small" /> }
-						</IconButton>
-					</Tooltip>
-				) }
+<Tooltip
+				title={
+					isCustom
+						? __( 'Custom settings active — click to reset to inherited', 'rest-api-firewall' )
+						: __( 'Click to define custom settings for this row', 'rest-api-firewall' )
+				}
+			>
+				<IconButton
+					size="small"
+					onClick={ ( e ) => {
+						e.stopPropagation();
+						toggleNodeCustom( node.id, {
+							protect: isAuthEnforced,
+							rate_limit: isRateLimitEnforced,
+							disabled: isDisabled,
+						} );
+					} }
+					sx={ {
+						opacity: isCustom ? 1 : 0.35,
+						color: isCustom ? 'primary.main' : 'inherit',
+					} }
+				>
+					<SettingsOutlinedIcon fontSize="small" />
+				</IconButton>
+			</Tooltip>
 
 				{ openUsersPopover && isAuthEnforced && (
 					<Button
@@ -458,51 +413,7 @@ export function NodeContent( {
 					/>
 				</Tooltip>
 
-				{ hasChildren && (
-					<Tooltip
-						title={
-							! hasValidLicense
-								? __( 'Pro version required', 'rest-api-firewall' )
-								: isApplyToChildrenChecked
-								? __(
-										'Settings applied to all descendants. Click to unlink.',
-										'rest-api-firewall'
-								  )
-								: descendantsMatchState === 'all'
-								? __( 'All descendants have same settings', 'rest-api-firewall' )
-								: descendantsMatchState === 'partial'
-								? __(
-										'Some descendants have different settings. Click to apply to all.',
-										'rest-api-firewall'
-								  )
-								: __(
-										'Descendants have different settings. Click to apply to all.',
-										'rest-api-firewall'
-								  )
-						}
-					>
-						<FormControlLabel
-							control={
-								<Checkbox
-									size="small"
-									checked={ isApplyToChildrenChecked }
-									indeterminate={
-										! isApplyToChildrenChecked &&
-										descendantsMatchState === 'partial'
-									}
-									onChange={ handleApplyToAll }
-									disabled={ ! hasValidLicense }
-									sx={ { py: 0 } }
-								/>
-							}
-							label={
-								<Typography variant="body2" sx={ { fontSize: '0.75rem' } }>
-									{ __( 'Apply to children', 'rest-api-firewall' ) }
-								</Typography>
-							}
-						/>
-					</Tooltip>
-				) }
+
 			</Stack>
 		</TreeItemContent>
 	);

@@ -21,8 +21,6 @@ import { RichTreeView } from '@mui/x-tree-view/RichTreeView';
 
 import { treeReducer } from './routesPolicyReducer';
 import {
-	isTrulyCustomized,
-	countModifiedDescendants,
 	findNodeById,
 	normalizeTree,
 	getAllDescendantMethodIds,
@@ -71,6 +69,10 @@ export default function RoutesPolicyTree( { form, setField } ) {
 
 			if ( result?.success ) {
 				setTreeData( result.data.tree );
+				if ( Array.isArray( result.data.users ) ) {
+					setUsersData( result.data.users );
+					usersLoadedRef.current = true;
+				}
 			}
 		} catch ( error ) {
 			setErrorMessage(
@@ -101,27 +103,20 @@ export default function RoutesPolicyTree( { form, setField } ) {
 	const handleToggle = ( id, key ) =>
 		dispatch( { type: 'TOGGLE_NODE', id, key } );
 
-	const handleApplyToAll = ( id, shouldApply ) =>
-		dispatch( { type: 'APPLY_TO_ALL_DESCENDANTS', id, shouldApply } );
-
 	const handleOverrideNode = ( id, key, value ) =>
 		dispatch( { type: 'OVERRIDE_NODE', id, key, value } );
 
 	const handleClearOverride = ( id ) =>
 		dispatch( { type: 'CLEAR_OVERRIDE', id } );
 
-	const handleToggleLock = ( id ) =>
-		dispatch( { type: 'TOGGLE_LOCK', id } );
+	const handleToggleCustom = ( id, effectiveValues ) =>
+		dispatch( { type: 'TOGGLE_CUSTOM', id, effectiveValues } );
 
 	const getNodeById = ( id ) => findNodeById( nodes, id );
 
-	const anyOverrideExists = nodes.some( ( n ) => {
-		const s = n.settings || {};
-		return (
-			isTrulyCustomized( s, enforce_auth, enforce_rate_limit ) ||
-			countModifiedDescendants( n, enforce_auth, enforce_rate_limit ) > 0
-		);
-	} );
+	const checkHasCustom = ( n ) =>
+		!! n.settings?.custom || ( n.children || [] ).some( checkHasCustom );
+	const anyOverrideExists = nodes.some( checkHasCustom );
 
 	const loadUsers = useCallback( async () => {
 		if ( usersLoadedRef.current ) {
@@ -174,7 +169,8 @@ export default function RoutesPolicyTree( { form, setField } ) {
 		setPopoverIsBulk( false );
 	};
 
-	const handleUserAccessChange = async ( userId, routeIds, grant ) => {
+	const handleUserAccessChange = ( userId, routeIds, grant ) => {
+		// Update local state; the debounced saveTree effect persists everything.
 		setUsersData( ( prev ) =>
 			( prev || [] ).map( ( u ) => {
 				if ( u.id !== userId ) return u;
@@ -189,29 +185,10 @@ export default function RoutesPolicyTree( { form, setField } ) {
 				return { ...u, related_routes_uuid: routes };
 			} )
 		);
-
-		await Promise.all(
-			routeIds.map( ( routeId ) =>
-				fetch( adminData.ajaxurl, {
-					method: 'POST',
-					headers: {
-						'Content-Type':
-							'application/x-www-form-urlencoded; charset=UTF-8',
-					},
-					body: new URLSearchParams( {
-						action: 'update_route_user_access',
-						nonce: adminData.nonce,
-						user_id: userId,
-						route_id: routeId,
-						grant: grant ? '1' : '0',
-					} ),
-				} )
-			)
-		);
 	};
 
 	const saveTree = useCallback(
-		async ( tree ) => {
+		async ( tree, users ) => {
 			try {
 				await fetch( adminData.ajaxurl, {
 					method: 'POST',
@@ -223,6 +200,7 @@ export default function RoutesPolicyTree( { form, setField } ) {
 						action: 'save_routes_policy_tree',
 						nonce: adminData.nonce,
 						tree: JSON.stringify( tree ),
+						users: JSON.stringify( users || [] ),
 					} ),
 				} );
 			} catch {
@@ -241,14 +219,14 @@ export default function RoutesPolicyTree( { form, setField } ) {
 			clearTimeout( saveTimerRef.current );
 		}
 		saveTimerRef.current = setTimeout( () => {
-			saveTree( nodes );
+			saveTree( nodes, usersData );
 		}, 800 );
 		return () => {
 			if ( saveTimerRef.current ) {
 				clearTimeout( saveTimerRef.current );
 			}
 		};
-	}, [ nodes, saveTree ] );
+	}, [ nodes, usersData, saveTree ] );
 
 	if ( loading || ( ! loading && ! treeData ) ) {
 		return (
@@ -335,12 +313,11 @@ export default function RoutesPolicyTree( { form, setField } ) {
 						toggleNodeSetting: handleToggle,
 						overrideNodeSetting: handleOverrideNode,
 						clearNodeOverride: handleClearOverride,
-						applyToAllChildren: handleApplyToAll,
-						getNodeById,
-						openUsersPopover: hasValidLicense
-							? handleOpenUsersPopover
-							: null,
-						toggleNodeLock: handleToggleLock,
+					getNodeById,
+					openUsersPopover: hasValidLicense
+						? handleOpenUsersPopover
+						: null,
+					toggleNodeCustom: handleToggleCustom,
 						enforce_auth,
 						enforce_rate_limit,
 						rate_limit,

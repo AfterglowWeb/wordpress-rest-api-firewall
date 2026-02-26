@@ -13,7 +13,7 @@ export function treeReducer( state, action ) {
 		case 'APPLY_TO_ALL_DESCENDANTS':
 			return applyToAllDescendants( state, action.id, action.shouldApply );
 		case 'TOGGLE_LOCK':
-			return toggleLock( state, action.id );
+			return toggleLock( state, action.id, action.effectiveValues );
 		case 'RESET':
 			return action.payload;
 		default:
@@ -118,19 +118,22 @@ function resetAllOverrides( items ) {
 	} );
 }
 
-function toggleLock( items, id ) {
+function toggleLock( items, id, effectiveValues ) {
 	return items.map( ( item ) => {
 		if ( item.id === id ) {
 			const nowLocked = ! item.settings?.locked;
 			let newSettings = { ...item.settings, locked: nowLocked };
 
-			// When locking, promote any inherited settings to overridden
-			// so they get persisted in the diff and survive a reload.
-			if ( nowLocked ) {
+			// When locking, freeze the currently-visible (effective) values as
+			// overridden so they persist in the diff and survive a reload.
+			// effectiveValues carries the real on-screen state (global enforcements
+			// already folded in) as { protect, rate_limit, disabled }.
+			if ( nowLocked && effectiveValues ) {
 				for ( const key of [ 'protect', 'rate_limit', 'disabled' ] ) {
-					if ( newSettings[ key ]?.inherited ) {
+					if ( key in effectiveValues ) {
 						newSettings[ key ] = {
 							...newSettings[ key ],
+							value: effectiveValues[ key ],
 							inherited: false,
 							overridden: true,
 						};
@@ -141,7 +144,7 @@ function toggleLock( items, id ) {
 			return { ...item, settings: newSettings };
 		}
 		if ( item.children ) {
-			return { ...item, children: toggleLock( item.children, id ) };
+			return { ...item, children: toggleLock( item.children, id, effectiveValues ) };
 		}
 		return item;
 	} );
