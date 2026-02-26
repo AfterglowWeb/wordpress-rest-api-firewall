@@ -60,6 +60,10 @@ export function getAllDescendantMethodIds( node ) {
 
 export function propagateToDescendants( children, key, value ) {
 	return ( children || [] ).map( ( child ) => {
+		// Locked nodes are intentionally overridden — skip propagation.
+		if ( child.settings?.locked ) {
+			return child;
+		}
 		const updated = {
 			...child,
 			settings: {
@@ -130,6 +134,7 @@ export function normalizeTree( nodes, parentPath = '', parentSettings = null ) {
 				overridden: false,
 			},
 			applyToChildren: false,
+			locked: false,
 		};
 
 		if ( node.settings ) {
@@ -163,6 +168,9 @@ export function normalizeTree( nodes, parentPath = '', parentSettings = null ) {
 			}
 			if ( node.settings.applyToChildren !== undefined ) {
 				nodeSettings.applyToChildren = node.settings.applyToChildren;
+			}
+			if ( node.settings.locked !== undefined ) {
+				nodeSettings.locked = !! node.settings.locked;
 			}
 		}
 

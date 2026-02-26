@@ -237,6 +237,10 @@ class PolicyRepository {
 				$settings['applyToChildren'] = true;
 			}
 
+			if ( ! empty( $node['settings']['locked'] ) ) {
+				$settings['locked'] = true;
+			}
+
 			if ( ! empty( $settings ) ) {
 				if ( $is_method ) {
 					$diff['routes'][ $node['id'] ] = $settings;

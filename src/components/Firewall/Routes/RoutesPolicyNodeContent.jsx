@@ -12,6 +12,8 @@ import Switch from '@mui/material/Switch';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import ReplayIcon from '@mui/icons-material/Replay';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
 
 import { TreeItem, TreeItemContent } from '@mui/x-tree-view/TreeItem';
 import { useTreeItem } from '@mui/x-tree-view/useTreeItem';
@@ -40,6 +42,7 @@ export const CustomTreeItem = forwardRef( function CustomTreeItem( props, ref ) 
 					applyToAllChildren: props.applyToAllChildren,
 					getNodeById: props.getNodeById,
 					openUsersPopover: props.openUsersPopover,
+					toggleNodeLock: props.toggleNodeLock,
 					node,
 					enforce_auth: props.enforce_auth,
 					enforce_rate_limit: props.enforce_rate_limit,
@@ -61,6 +64,7 @@ export function NodeContent( {
 	applyToAllChildren,
 	getNodeById,
 	openUsersPopover,
+	toggleNodeLock,
 	node,
 	enforce_auth,
 	enforce_rate_limit,
@@ -117,6 +121,9 @@ export function NodeContent( {
 	const isCustomized =
 		isTrulyCustomized( nodeSettings, enforce_auth, enforce_rate_limit ) ||
 		ownUserCount > 0;
+
+	const isLocked = !! nodeSettings.locked;
+	const showLockToggle = isCustomized || isLocked;
 
 	const getDescendantsMatchState = () => {
 		if ( ! hasChildren ) {
@@ -205,10 +212,6 @@ export function NodeContent( {
 			{ ...props }
 			sx={ {
 				...( props.sx || {} ),
-				bgcolor: isCustomized
-					? 'rgba(76, 175, 80, 0.07)'
-					: 'transparent',
-				borderRadius: 1,
 			} }
 		>
 			<Stack direction="row" alignItems="center" gap={ 0.5 } flex={ 1 } py={ 1 }>
@@ -218,8 +221,8 @@ export function NodeContent( {
 						spacing={ 1 }
 						alignItems="center"
 						sx={ {
-							cursor: isDisabled ? 'default' : 'pointer',
-							filter: isDisabled ? 'grayscale(1) opacity(0.6)' : 'none',
+							cursor: isDisabled && node.isMethod ? 'default' : 'pointer',
+							filter: isDisabled && node.isMethod ? 'grayscale(1) opacity(0.6)' : 'none',
 						} }
 					>
 						{ children }
@@ -238,14 +241,14 @@ export function NodeContent( {
 							/>
 						) }
 
-{ modifiedCount > 0 && (
+                        { modifiedCount > 0 && (
 						<Box
 							component="span"
 							sx={ {
 								bgcolor: 'success.main',
 								color: '#fff',
 								borderRadius: '50%',
-								minWidth: 18,
+								width: 18,
 								height: 18,
 								display: 'inline-flex',
 								alignItems: 'center',
@@ -253,7 +256,6 @@ export function NodeContent( {
 								fontSize: '0.65rem',
 								fontWeight: 700,
 								lineHeight: 1,
-								px: 0.3,
 								flexShrink: 0,
 							} }
 						>
@@ -297,16 +299,23 @@ export function NodeContent( {
 				alignItems="center"
 				onClick={ handleSwitchClick }
 			>
-				{ isCustomized && hasValidLicense && (
-					<Tooltip title={ __( 'Reset this row', 'rest-api-firewall' ) }>
+				{ showLockToggle && (
+					<Tooltip
+						title={
+							isLocked
+								? __( 'Locked — protected from parent overrides. Click to unlock.', 'rest-api-firewall' )
+								: __( 'Unlocked — click to lock and protect from parent overrides.', 'rest-api-firewall' )
+						}
+					>
 						<IconButton
 							size="small"
+							color={ isLocked ? 'primary' : 'default' }
 							onClick={ ( e ) => {
 								e.stopPropagation();
-								clearNodeOverride( node.id );
+								toggleNodeLock( node.id );
 							} }
 						>
-							<ReplayIcon fontSize="small" />
+							{ isLocked ? <LockIcon fontSize="small" /> : <LockOpenIcon fontSize="small" /> }
 						</IconButton>
 					</Tooltip>
 				) }
@@ -315,7 +324,7 @@ export function NodeContent( {
 					<Button
 						size="small"
 						variant="text"
-						disabled={ isDisabled }
+						disabled={ isDisabled && node.isMethod }
 						onClick={ ( e ) => {
 							e.stopPropagation();
 							openUsersPopover( node.id, e.currentTarget );
@@ -334,7 +343,7 @@ export function NodeContent( {
 					title={
 						! hasValidLicense
 							? __( 'Pro version required', 'rest-api-firewall' )
-							: isDisabled
+							: isDisabled && node.isMethod
 							? __( 'Route is disabled', 'rest-api-firewall' )
 							: authIsGlobal
 							? __(
@@ -352,10 +361,10 @@ export function NodeContent( {
 								size="small"
 								checked={ isAuthEnforced }
 								onChange={ handleAuthToggle }
-								disabled={ ! hasValidLicense || isDisabled }
+								disabled={ ! hasValidLicense || ( isDisabled && node.isMethod ) }
 								sx={ {
 									opacity:
-										isDisabled ||
+										isDisabled && node.isMethod ||
 										authIsGlobal ||
 										nodeSettings.protect.inherited ||
 										! hasValidLicense
@@ -377,7 +386,7 @@ export function NodeContent( {
 					title={
 						! hasValidLicense
 							? __( 'Pro version required', 'rest-api-firewall' )
-							: isDisabled
+							: isDisabled && node.isMethod
 							? __( 'Route is disabled', 'rest-api-firewall' )
 							: rateIsGlobal
 							? __(
@@ -395,10 +404,10 @@ export function NodeContent( {
 								size="small"
 								checked={ isRateLimitEnforced }
 								onChange={ handleRateToggle }
-								disabled={ ! hasValidLicense || isDisabled }
+								disabled={ ! hasValidLicense || ( isDisabled && node.isMethod ) }
 								sx={ {
 									opacity:
-										isDisabled ||
+										isDisabled && node.isMethod ||
 										rateIsGlobal ||
 										nodeSettings.rate_limit.inherited ||
 										! hasValidLicense
@@ -420,7 +429,7 @@ export function NodeContent( {
 					title={
 						! hasValidLicense
 							? __( 'Pro version required', 'rest-api-firewall' )
-							: isDisabled
+							: isDisabled 
 							? __( 'This route is disabled', 'rest-api-firewall' )
 							: __( 'Disable this route', 'rest-api-firewall' )
 					}

@@ -110,6 +110,9 @@ export default function RoutesPolicyTree( { form, setField } ) {
 	const handleClearOverride = ( id ) =>
 		dispatch( { type: 'CLEAR_OVERRIDE', id } );
 
+	const handleToggleLock = ( id ) =>
+		dispatch( { type: 'TOGGLE_LOCK', id } );
+
 	const getNodeById = ( id ) => findNodeById( nodes, id );
 
 	const anyOverrideExists = nodes.some( ( n ) => {
@@ -337,6 +340,7 @@ export default function RoutesPolicyTree( { form, setField } ) {
 						openUsersPopover: hasValidLicense
 							? handleOpenUsersPopover
 							: null,
+						toggleNodeLock: handleToggleLock,
 						enforce_auth,
 						enforce_rate_limit,
 						rate_limit,

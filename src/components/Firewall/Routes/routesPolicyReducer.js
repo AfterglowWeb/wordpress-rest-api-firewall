@@ -12,6 +12,8 @@ export function treeReducer( state, action ) {
 			return resetAllOverrides( state );
 		case 'APPLY_TO_ALL_DESCENDANTS':
 			return applyToAllDescendants( state, action.id, action.shouldApply );
+		case 'TOGGLE_LOCK':
+			return toggleLock( state, action.id );
 		case 'RESET':
 			return action.payload;
 		default:
@@ -107,11 +109,41 @@ function resetAllOverrides( items ) {
 			}
 		}
 		newSettings.applyToChildren = false;
+		newSettings.locked = false;
 		return {
 			...item,
 			settings: newSettings,
 			children: item.children ? resetAllOverrides( item.children ) : [],
 		};
+	} );
+}
+
+function toggleLock( items, id ) {
+	return items.map( ( item ) => {
+		if ( item.id === id ) {
+			const nowLocked = ! item.settings?.locked;
+			let newSettings = { ...item.settings, locked: nowLocked };
+
+			// When locking, promote any inherited settings to overridden
+			// so they get persisted in the diff and survive a reload.
+			if ( nowLocked ) {
+				for ( const key of [ 'protect', 'rate_limit', 'disabled' ] ) {
+					if ( newSettings[ key ]?.inherited ) {
+						newSettings[ key ] = {
+							...newSettings[ key ],
+							inherited: false,
+							overridden: true,
+						};
+					}
+				}
+			}
+
+			return { ...item, settings: newSettings };
+		}
+		if ( item.children ) {
+			return { ...item, children: toggleLock( item.children, id ) };
+		}
+		return item;
 	} );
 }
 
