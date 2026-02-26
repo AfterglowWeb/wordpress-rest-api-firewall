@@ -6,6 +6,7 @@ import { DataGrid } from '@mui/x-data-grid';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
@@ -60,12 +61,22 @@ export default function Applications() {
 			{
 				field: 'active',
 				headerName: __( 'Active', 'rest-api-firewall' ),
-				width: 120,
-				renderCell: ( params ) => (
-					<Typography variant="body2">
-						{ params.value || '-' }
-					</Typography>
-				),
+				width: 100,
+				renderCell: ( params ) =>
+					params.value ? (
+						<Chip
+							label={ __( 'Active', 'rest-api-firewall' ) }
+							size="small"
+							color="success"
+							variant="outlined"
+						/>
+					) : (
+						<Chip
+							label={ __( 'Inactive', 'rest-api-firewall' ) }
+							size="small"
+							variant="outlined"
+						/>
+					),
 			},
 			{
 				field: 'title',
@@ -89,7 +100,7 @@ export default function Applications() {
 				width: 120,
 				renderCell: ( params ) => (
 					<Typography variant="body2">
-						{ params.value || '-' }
+						{ params.value ?? '-' }
 					</Typography>
 				),
 			},
@@ -99,7 +110,7 @@ export default function Applications() {
 				width: 120,
 				renderCell: ( params ) => (
 					<Typography variant="body2">
-						{ params.value || '-' }
+						{ params.value ?? '-' }
 					</Typography>
 				),
 			},
@@ -109,7 +120,9 @@ export default function Applications() {
 				width: 120,
 				renderCell: ( params ) => (
 					<Typography variant="body2">
-						{ params.value || '-' }
+						{ params.value
+							? __( 'Yes', 'rest-api-firewall' )
+							: '-' }
 					</Typography>
 				),
 			},
@@ -165,6 +178,12 @@ export default function Applications() {
 	}, [ fetchEntries ] );
 
 	const handleAddApplication = async () => {
+		if ( ! newApplication ) {
+			return;
+		}
+
+		setAdding( true );
+
 		try {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
@@ -175,7 +194,7 @@ export default function Applications() {
 				body: new URLSearchParams( {
 					action: 'add_application_entry',
 					nonce,
-					data: { data: {} },
+					title: newApplication,
 				} ),
 			} );
 
@@ -317,6 +336,12 @@ export default function Applications() {
 					</Button>
 				) }
 			</Toolbar>
+
+			{ applicationError && (
+				<Typography variant="body2" color="error">
+					{ applicationError }
+				</Typography>
+			) }
 
 			<DataGrid
 				showToolbar={ true }
