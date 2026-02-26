@@ -82,19 +82,26 @@ export function NodeContent( {
 		rate_limit_time: { value: false, inherited: false, overridden: false },
 	};
 
+	const isCustom = isNodeCustom( nodeSettings );
 	const hasChildren = node.children && node.children.length > 0;
 	const modifiedCount = countModifiedDescendants( node );
 
-	const authIsGlobal = !! enforce_auth && ! nodeSettings.protect.overridden;
-	const isAuthEnforced = authIsGlobal || nodeSettings.protect.value;
+	const authIsGlobal = !! enforce_auth && ! isCustom;
+	const isAuthEnforced = authIsGlobal || nodeSettings.protect?.value;
 
-	const rateIsGlobal = !! enforce_rate_limit && ! nodeSettings.rate_limit.overridden;
-	const isRateLimitEnforced = rateIsGlobal || nodeSettings.rate_limit.value;
+	const rateIsGlobal = !! enforce_rate_limit && ! isCustom;
+	const isRateLimitEnforced = rateIsGlobal || nodeSettings.rate_limit?.value;
 
-	const isDisabled = nodeSettings.disabled.value;
+	const isDisabled = !! nodeSettings.disabled?.value;
 
 	const effectiveRateLimit = rate_limit;
 	const effectiveRateLimitTime = rate_limit_time;
+
+	const effectiveValues = {
+		protect: isAuthEnforced,
+		rate_limit: isRateLimitEnforced,
+		disabled: isDisabled,
+	};
 
 	const ownUserCount = node.isMethod
 		? ( usersData || [] ).filter( ( u ) =>
@@ -110,31 +117,21 @@ export function NodeContent( {
 				)
 		  ).length;
 
-	const isCustom = isNodeCustom( nodeSettings );
-
 	const handleSwitchClick = ( e ) => e.stopPropagation();
 
 	const handleAuthToggle = ( e ) => {
 		e.stopPropagation();
-		if ( enforce_auth && ! nodeSettings.protect.overridden ) {
-			overrideNodeSetting( node.id, 'protect', false );
-		} else {
-			toggleNodeSetting( node.id, 'protect' );
-		}
+		toggleNodeSetting( node.id, 'protect', effectiveValues );
 	};
 
 	const handleRateToggle = ( e ) => {
 		e.stopPropagation();
-		if ( enforce_rate_limit && ! nodeSettings.rate_limit.overridden ) {
-			overrideNodeSetting( node.id, 'rate_limit', false );
-		} else {
-			toggleNodeSetting( node.id, 'rate_limit' );
-		}
+		toggleNodeSetting( node.id, 'rate_limit', effectiveValues );
 	};
 
 	const handleDisableToggle = ( e ) => {
 		e.stopPropagation();
-		toggleNodeSetting( node.id, 'disabled' );
+		toggleNodeSetting( node.id, 'disabled', effectiveValues );
 	};
 
 	const getPermissionColor = ( type ) => {
@@ -156,6 +153,8 @@ export function NodeContent( {
 
 	const getEffectivePermission = ( type ) =>
 		isDisabled ? 'forbidden' : isAuthEnforced ? 'authenticated' : type;
+
+	const isInherited = ! isCustom;
 
 	return (
 		<TreeItemContent
@@ -191,26 +190,26 @@ export function NodeContent( {
 							/>
 						) }
 
-                        { modifiedCount > 0 && (
-						<Box
-							component="span"
-							sx={ {
-								bgcolor: 'success.main',
-								color: '#fff',
-								borderRadius: '50%',
-								width: 18,
-								height: 18,
-								display: 'inline-flex',
-								alignItems: 'center',
-								justifyContent: 'center',
-								fontSize: '0.65rem',
-								fontWeight: 700,
-								lineHeight: 1,
-								flexShrink: 0,
-							} }
-						>
-							{ modifiedCount }
-						</Box>
+						{ modifiedCount > 0 && (
+							<Box
+								component="span"
+								sx={ {
+									bgcolor: 'info.main',
+									color: '#fff',
+									borderRadius: '50%',
+									width: 18,
+									height: 18,
+									display: 'inline-flex',
+									alignItems: 'center',
+									justifyContent: 'center',
+									fontSize: '0.65rem',
+									fontWeight: 700,
+									lineHeight: 1,
+									flexShrink: 0,
+								} }
+							>
+								{ modifiedCount }
+							</Box>
 						) }
 
 						{ node.isMethod && node.route && (
@@ -249,31 +248,51 @@ export function NodeContent( {
 				alignItems="center"
 				onClick={ handleSwitchClick }
 			>
-<Tooltip
-				title={
-					isCustom
-						? __( 'Custom settings active — click to reset to inherited', 'rest-api-firewall' )
-						: __( 'Click to define custom settings for this row', 'rest-api-firewall' )
-				}
-			>
-				<IconButton
-					size="small"
-					onClick={ ( e ) => {
-						e.stopPropagation();
-						toggleNodeCustom( node.id, {
-							protect: isAuthEnforced,
-							rate_limit: isRateLimitEnforced,
-							disabled: isDisabled,
-						} );
-					} }
-					sx={ {
-						opacity: isCustom ? 1 : 0.35,
-						color: isCustom ? 'primary.main' : 'inherit',
-					} }
-				>
-					<SettingsOutlinedIcon fontSize="small" />
-				</IconButton>
-			</Tooltip>
+				{ isCustom ? (
+					<Tooltip
+						title={
+							! hasValidLicense
+								? __( 'Pro version required', 'rest-api-firewall' )
+								: __( 'Custom settings active — click to remove and inherit from parent', 'rest-api-firewall' )
+						}
+					>
+						<span>
+							<IconButton
+								size="small"
+								disabled={ ! hasValidLicense }
+								onClick={ ( e ) => {
+									e.stopPropagation();
+									toggleNodeCustom( node.id, effectiveValues );
+								} }
+								sx={ { color: 'error.main' } }
+							>
+								<RemoveCircleOutlineIcon fontSize="small" />
+							</IconButton>
+						</span>
+					</Tooltip>
+				) : (
+					<Tooltip
+						title={
+							! hasValidLicense
+								? __( 'Pro version required', 'rest-api-firewall' )
+								: __( 'Pin custom settings for this row', 'rest-api-firewall' )
+						}
+					>
+						<span>
+							<IconButton
+								size="small"
+								disabled={ ! hasValidLicense }
+								onClick={ ( e ) => {
+									e.stopPropagation();
+									toggleNodeCustom( node.id, effectiveValues );
+								} }
+								sx={ { opacity: hasValidLicense ? 0.35 : 0.2 } }
+							>
+								<SettingsOutlinedIcon fontSize="small" />
+							</IconButton>
+						</span>
+					</Tooltip>
+				) }
 
 				{ openUsersPopover && isAuthEnforced && (
 					<Button
@@ -301,10 +320,7 @@ export function NodeContent( {
 							: isDisabled && node.isMethod
 							? __( 'Route is disabled', 'rest-api-firewall' )
 							: authIsGlobal
-							? __(
-									'Authentication enforced globally. Click to override for this route.',
-									'rest-api-firewall'
-							  )
+							? __( 'Authentication enforced globally — click to override for this route', 'rest-api-firewall' )
 							: isAuthEnforced
 							? __( 'Authentication enforced', 'rest-api-firewall' )
 							: __( 'Enable authentication for this route', 'rest-api-firewall' )
@@ -319,9 +335,9 @@ export function NodeContent( {
 								disabled={ ! hasValidLicense || ( isDisabled && node.isMethod ) }
 								sx={ {
 									opacity:
-										isDisabled && node.isMethod ||
+										( isDisabled && node.isMethod ) ||
 										authIsGlobal ||
-										nodeSettings.protect.inherited ||
+										isInherited ||
 										! hasValidLicense
 											? 0.6
 											: 1,
@@ -330,8 +346,7 @@ export function NodeContent( {
 						}
 						label={
 							<Typography variant="body2" sx={ { fontSize: '0.875rem' } }>
-								Auth{ ' ' }
-								{ ( authIsGlobal || nodeSettings.protect.inherited ) && '↓' }
+								Auth{ isInherited && ' ↓' }
 							</Typography>
 						}
 					/>
@@ -344,10 +359,7 @@ export function NodeContent( {
 							: isDisabled && node.isMethod
 							? __( 'Route is disabled', 'rest-api-firewall' )
 							: rateIsGlobal
-							? __(
-									'Rate limiting enforced globally. Click to override for this route.',
-									'rest-api-firewall'
-							  )
+							? __( 'Rate limiting enforced globally — click to override for this route', 'rest-api-firewall' )
 							: isRateLimitEnforced
 							? `${ effectiveRateLimit } requests / ${ effectiveRateLimitTime }s`
 							: __( 'Enable rate limiting for this route', 'rest-api-firewall' )
@@ -362,9 +374,9 @@ export function NodeContent( {
 								disabled={ ! hasValidLicense || ( isDisabled && node.isMethod ) }
 								sx={ {
 									opacity:
-										isDisabled && node.isMethod ||
+										( isDisabled && node.isMethod ) ||
 										rateIsGlobal ||
-										nodeSettings.rate_limit.inherited ||
+										isInherited ||
 										! hasValidLicense
 											? 0.6
 											: 1,
@@ -373,8 +385,7 @@ export function NodeContent( {
 						}
 						label={
 							<Typography variant="body2" sx={ { fontSize: '0.875rem' } }>
-								Rate{ ' ' }
-								{ ( rateIsGlobal || nodeSettings.rate_limit.inherited ) && '↓' }
+								Rate{ isInherited && ' ↓' }
 							</Typography>
 						}
 					/>
@@ -384,7 +395,7 @@ export function NodeContent( {
 					title={
 						! hasValidLicense
 							? __( 'Pro version required', 'rest-api-firewall' )
-							: isDisabled 
+							: isDisabled
 							? __( 'This route is disabled', 'rest-api-firewall' )
 							: __( 'Disable this route', 'rest-api-firewall' )
 					}
@@ -393,27 +404,22 @@ export function NodeContent( {
 						control={
 							<Switch
 								size="small"
-								checked={ nodeSettings.disabled.value }
+								checked={ nodeSettings.disabled?.value ?? false }
 								onChange={ handleDisableToggle }
 								disabled={ ! hasValidLicense }
 								sx={ {
 									opacity:
-										nodeSettings.disabled.inherited || ! hasValidLicense
-											? 0.6
-											: 1,
+										isInherited || ! hasValidLicense ? 0.6 : 1,
 								} }
 							/>
 						}
 						label={
 							<Typography variant="body2" sx={ { fontSize: '0.875rem' } }>
-								Disable{ ' ' }
-								{ nodeSettings.disabled.inherited && '↓' }
+								Disable{ isInherited && ' ↓' }
 							</Typography>
 						}
 					/>
 				</Tooltip>
-
-
 			</Stack>
 		</TreeItemContent>
 	);

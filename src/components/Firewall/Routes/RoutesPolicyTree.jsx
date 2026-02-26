@@ -9,6 +9,7 @@ import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useLicense } from '../../../contexts/LicenseContext';
 
 import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
@@ -24,6 +25,7 @@ import {
 	findNodeById,
 	normalizeTree,
 	getAllDescendantMethodIds,
+	countAllCustomNodes,
 } from './routesPolicyUtils';
 import { CustomTreeItem } from './RoutesPolicyNodeContent';
 import RoutesPolicyUsersPopover from './RoutesPolicyUsersPopover';
@@ -100,23 +102,18 @@ export default function RoutesPolicyTree( { form, setField } ) {
 		}
 	}, [ treeData ] );
 
-	const handleToggle = ( id, key ) =>
-		dispatch( { type: 'TOGGLE_NODE', id, key } );
+	const handleToggle = ( id, key, effectiveValues ) =>
+		dispatch( { type: 'TOGGLE_NODE', id, key, effectiveValues } );
 
-	const handleOverrideNode = ( id, key, value ) =>
-		dispatch( { type: 'OVERRIDE_NODE', id, key, value } );
-
-	const handleClearOverride = ( id ) =>
-		dispatch( { type: 'CLEAR_OVERRIDE', id } );
+	const handleOverrideNode = ( id, key, value, effectiveValues ) =>
+		dispatch( { type: 'OVERRIDE_NODE', id, key, value, effectiveValues } );
 
 	const handleToggleCustom = ( id, effectiveValues ) =>
 		dispatch( { type: 'TOGGLE_CUSTOM', id, effectiveValues } );
 
 	const getNodeById = ( id ) => findNodeById( nodes, id );
 
-	const checkHasCustom = ( n ) =>
-		!! n.settings?.custom || ( n.children || [] ).some( checkHasCustom );
-	const anyOverrideExists = nodes.some( checkHasCustom );
+	const customCount = countAllCustomNodes( nodes );
 
 	const loadUsers = useCallback( async () => {
 		if ( usersLoadedRef.current ) {
@@ -170,7 +167,6 @@ export default function RoutesPolicyTree( { form, setField } ) {
 	};
 
 	const handleUserAccessChange = ( userId, routeIds, grant ) => {
-		// Update local state; the debounced saveTree effect persists everything.
 		setUsersData( ( prev ) =>
 			( prev || [] ).map( ( u ) => {
 				if ( u.id !== userId ) return u;
@@ -263,21 +259,33 @@ export default function RoutesPolicyTree( { form, setField } ) {
 				justifyContent="space-between"
 				alignItems="center"
 			>
-				<Typography
-					variant="caption"
-					sx={ {
-						display: 'block',
-						textTransform: 'uppercase',
-						letterSpacing: 0.5,
-						fontSize: '0.75rem',
-						color: 'text.secondary',
-					} }
-				>
-					{ __( 'Per-Route Settings', 'rest-api-firewall' ) }
-				</Typography>
+				<Stack direction="row" alignItems="center" gap={ 1 }>
+					<Typography
+						variant="caption"
+						sx={ {
+							display: 'block',
+							textTransform: 'uppercase',
+							letterSpacing: 0.5,
+							fontSize: '0.75rem',
+							color: 'text.secondary',
+						} }
+					>
+						{ __( 'Per-Route Settings', 'rest-api-firewall' ) }
+					</Typography>
+
+					{ customCount > 0 && (
+						<Chip
+							label={ `${ customCount } custom` }
+							size="small"
+							color="info"
+							variant="outlined"
+							sx={ { fontSize: '0.65rem', height: 18, px: 0.5 } }
+						/>
+					) }
+				</Stack>
 
 				<Stack direction="row" alignItems="center">
-					{ anyOverrideExists && (
+					{ customCount > 0 && (
 						<Tooltip
 							title={ __(
 								'Reset all custom settings',
@@ -312,12 +320,11 @@ export default function RoutesPolicyTree( { form, setField } ) {
 					item: {
 						toggleNodeSetting: handleToggle,
 						overrideNodeSetting: handleOverrideNode,
-						clearNodeOverride: handleClearOverride,
-					getNodeById,
-					openUsersPopover: hasValidLicense
-						? handleOpenUsersPopover
-						: null,
-					toggleNodeCustom: handleToggleCustom,
+						getNodeById,
+						openUsersPopover: hasValidLicense
+							? handleOpenUsersPopover
+							: null,
+						toggleNodeCustom: handleToggleCustom,
 						enforce_auth,
 						enforce_rate_limit,
 						rate_limit,
