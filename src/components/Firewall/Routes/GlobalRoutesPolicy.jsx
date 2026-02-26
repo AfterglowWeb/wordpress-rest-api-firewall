@@ -13,6 +13,53 @@ const HTTP_METHODS = [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ];
 
 const HTTP_METHODS = [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ];
 
+function buildGroupedPostTypeOptions( items, __ ) {
+	const groups = [
+		{ key: 'post_type', label: __( 'Posts', 'rest-api-firewall' ) },
+		{ key: 'taxonomy', label: __( 'Taxonomies', 'rest-api-firewall' ) },
+	];
+
+	const result = [];
+
+	for ( const { key, label } of groups ) {
+		const typeItems = items.filter( ( item ) => item.type === key );
+		if ( ! typeItems.length ) continue;
+
+		const publicItems = typeItems.filter( ( item ) => item.public );
+		const privateItems = typeItems.filter( ( item ) => ! item.public );
+
+		result.push( { groupLabel: label } );
+
+		if ( publicItems.length ) {
+			result.push( { subGroupLabel: __( 'Public', 'rest-api-firewall' ) } );
+			publicItems.forEach( ( item ) =>
+				result.push( {
+					value: item.value,
+					label: item.label,
+					secondary: item._builtin
+						? __( 'builtin', 'rest-api-firewall' )
+						: __( 'custom', 'rest-api-firewall' ),
+				} )
+			);
+		}
+
+		if ( privateItems.length ) {
+			result.push( { subGroupLabel: __( 'Private', 'rest-api-firewall' ) } );
+			privateItems.forEach( ( item ) =>
+				result.push( {
+					value: item.value,
+					label: item.label,
+					secondary: item._builtin
+						? __( 'builtin', 'rest-api-firewall' )
+						: __( 'custom', 'rest-api-firewall' ),
+				} )
+			);
+		}
+	}
+
+	return result;
+}
+
 export default function GlobalRoutesPolicy( { form, setField } ) {
 	const { hasValidLicense } = useLicense();
 	const { __ } = wp.i18n || {};
@@ -203,33 +250,25 @@ export default function GlobalRoutesPolicy( { form, setField } ) {
 								disabled={ ! hasValidLicense }
 								name="disabled_post_types"
 								label={ __(
-									'Disable Post Types',
+									'Disable Object Types',
 									'rest-api-firewall'
 								) }
 								value={ form.disabled_post_types || [] }
 								helperText={
-									<Stack>
-										<Typography
-											variant="caption"
-											color="inherit"
-										>
-											{ __(
-												'Selected post types will be blocked in the REST API.',
-												'rest-api-firewall'
-											) }
-										</Typography>
-										<Typography
-											variant="caption"
-											color="inherit"
-										>
-											{ __(
-												'Leave empty to allow all post types.',
-												'rest-api-firewall'
-											) }
-										</Typography>
-									</Stack>
+									<Typography
+										variant="caption"
+										color="inherit"
+									>
+										{ __(
+											'Object types will be blocked in the REST API.',
+											'rest-api-firewall'
+										) }
+									</Typography>
 								}
-								options={ adminData.post_types }
+								options={ buildGroupedPostTypeOptions(
+									adminData.post_types,
+									__
+								) }
 								onChange={ setField }
 							/>
 						</Stack>

@@ -49,10 +49,10 @@ class Utils {
 	public static function list_post_types(): array {
 
 		$post_types = get_post_types(
-			array(
+			 array(
 				'show_in_rest' => true,
 			),
-			'objects'
+			'objects' 
 		);
 
 		if ( empty( $post_types ) ) {
