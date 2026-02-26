@@ -7,7 +7,6 @@ import FormControl from '@mui/material/FormControl';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import FormHelperText from '@mui/material/FormHelperText';
-import Alert from '@mui/material/Alert';
 
 import MultipleSelect from '../MultipleSelect';
 import Divider from '@mui/material/Divider';
@@ -20,26 +19,6 @@ export default function Collections( { form, setField, postTypes } ) {
 
 	return (
 		<Stack spacing={ 3 } maxWidth={ 600 }>
-			{ form.rest_collections_allowed_post_types &&
-				form.rest_collections_allowed_post_types.length > 0 && (
-					<Alert severity="info">
-						{ __(
-							'Currently allowed post types:',
-							'rest-api-firewall'
-						) }
-						{ form.rest_collections_allowed_post_types
-							.map( ( postType ) => {
-								const postTypeData = postTypes.find(
-									( pt ) => pt.value === postType
-								);
-								return postTypeData
-									? postTypeData.label
-									: postType;
-							} )
-							.join( ', ' ) }
-					</Alert>
-				) }
-
 			<Stack
 				spacing={ 3 }
 				direction={ 'row' }

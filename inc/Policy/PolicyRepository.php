@@ -40,10 +40,12 @@ class PolicyRepository {
 		}
 
 		$routes_tree = self::get_routes_policy_tree();
+		$diff        = self::get_diff();
 		wp_send_json_success(
 			array(
 				'tree'       => $routes_tree,
 				'pro_active' => self::is_pro_active(),
+				'users'      => $diff['users'] ?? array(),
 			),
 			200
 		);
@@ -76,8 +78,16 @@ class PolicyRepository {
 			);
 		}
 
-		$diff  = self::extract_diff_from_tree( $tree );
-		$saved = self::save_diff( $diff );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
+		$users_raw = isset( $_POST['users'] ) ? sanitize_text_field( wp_unslash( $_POST['users'] ) ) : '[]';
+		$users     = json_decode( $users_raw, true );
+		if ( ! is_array( $users ) ) {
+			$users = array();
+		}
+
+		$diff          = self::extract_diff_from_tree( $tree );
+		$diff['users'] = self::normalize_users( $users );
+		$saved         = self::save_diff( $diff );
 
 		if ( ! $saved ) {
 			wp_send_json_error(
@@ -100,6 +110,7 @@ class PolicyRepository {
 		$diff = array(
 			'nodes'  => $diff['nodes'] ?? array(),
 			'routes' => $diff['routes'] ?? array(),
+			'users'  => $diff['users'] ?? array(),
 		);
 
 		/**
@@ -124,6 +135,7 @@ class PolicyRepository {
 		$default = array(
 			'nodes'  => array(),
 			'routes' => array(),
+			'users'  => array(),
 		);
 
 		/**
@@ -233,8 +245,8 @@ class PolicyRepository {
 
 			$is_method = isset( $node['isMethod'] ) && $node['isMethod'];
 
-			if ( ! $is_method && ! empty( $node['settings']['applyToChildren'] ) ) {
-				$settings['applyToChildren'] = true;
+			if ( ! empty( $node['settings']['custom'] ) ) {
+				$settings['custom'] = true;
 			}
 
 			if ( ! empty( $settings ) ) {
@@ -255,6 +267,28 @@ class PolicyRepository {
 
 	public static function flush(): void {
 		RoutesRepository::flush_routes_cache();
+	}
+
+	/**
+	 * Sanitise a users array coming from the front-end.
+	 * Keeps only id (int) and related_routes_uuid (array of strings).
+	 */
+	private static function normalize_users( array $users ): array {
+		$out = array();
+		foreach ( $users as $user ) {
+			if ( empty( $user['id'] ) ) {
+				continue;
+			}
+			$out[] = array(
+				'id'                  => (int) $user['id'],
+				'wp_user_id'          => isset( $user['wp_user_id'] ) ? (int) $user['wp_user_id'] : 0,
+				'display_name'        => isset( $user['display_name'] ) ? sanitize_text_field( $user['display_name'] ) : '',
+				'related_routes_uuid' => isset( $user['related_routes_uuid'] ) && is_array( $user['related_routes_uuid'] )
+					? array_values( array_map( 'sanitize_text_field', $user['related_routes_uuid'] ) )
+					: array(),
+			);
+		}
+		return $out;
 	}
 
 	public static function build_policy_tree( array $flat_routes ): array {

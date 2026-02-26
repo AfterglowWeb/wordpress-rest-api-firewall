@@ -1,4 +1,3 @@
-import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useLicense } from '../../../contexts/LicenseContext';
 
 import Stack from '@mui/material/Stack';
@@ -8,12 +7,22 @@ import FormControl from '@mui/material/FormControl';
 import Typography from '@mui/material/Typography';
 import Tooltip from '@mui/material/Tooltip';
 
-import MultipleSelect from '../../MultipleSelect';
+import ObjectTypeSelect from '../../ObjectTypeSelect';
+
+const HTTP_METHODS = [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ];
 
 export default function GlobalRoutesPolicy( { form, setField } ) {
-	const { adminData } = useAdminData();
 	const { hasValidLicense } = useLicense();
 	const { __ } = wp.i18n || {};
+
+	const handleMethodToggle = ( method ) => ( e ) => {
+		const lower = method.toLowerCase();
+		const current = form.disabled_methods || [];
+		const next = e.target.checked
+			? [ ...new Set( [ ...current, lower ] ) ]
+			: current.filter( ( m ) => m !== lower );
+		setField( 'disabled_methods', next );
+	};
 
 	return (
 		<Stack spacing={ 3 } maxWidth={ 500 }>
@@ -91,68 +100,58 @@ export default function GlobalRoutesPolicy( { form, setField } ) {
 					}
 					followCursor
 				>
-					<Stack>
-						<FormControl disabled={ ! hasValidLicense }>
-							<FormControlLabel
-								control={
-									<Switch
-										size="small"
-										checked={
-											!! form.rest_collections_allowed_post_types_enabled
-										}
-										name="rest_collections_allowed_post_types_enabled"
-										onChange={ setField }
-									/>
-								}
-								label={ __(
-									'Restrict Post Types',
-									'rest-api-firewall'
-								) }
-							/>
-						</FormControl>
-					</Stack>
-				</Tooltip>
-
-				{ adminData?.post_types && (
-					<Stack pl={ 3.5 }>
-						<MultipleSelect
-							disabled={
-								! form.rest_collections_allowed_post_types_enabled ||
-								! hasValidLicense
-							}
-							name="rest_collections_allowed_post_types"
-							label={ __(
-								'Select Post Types',
+					<Stack spacing={ 0.5 }>
+						<Typography variant="body2">
+							{ __(
+								'Disable HTTP Methods',
 								'rest-api-firewall'
 							) }
-							value={ form.rest_collections_allowed_post_types }
-							helperText={
-								<Stack>
-									<Typography
-										variant="caption"
-										color="inherit"
-									>
-										{ __(
-											'Only the selected post types will be exposed in the REST API.',
-											'rest-api-firewall'
-										) }
-									</Typography>
-									<Typography
-										variant="caption"
-										color="inherit"
-									>
-										{ __(
-											'If left empty, default visibility settings apply.',
-											'rest-api-firewall'
-										) }
-									</Typography>
-								</Stack>
-							}
-							options={ adminData.post_types }
-							onChange={ setField }
-						/>
+						</Typography>
+						<Typography variant="caption" color="text.secondary">
+							{ __(
+								'Toggle to disable an HTTP method globally across all routes.',
+								'rest-api-firewall'
+							) }
+						</Typography>
+
+						<Stack
+							direction="row"
+							spacing={ 1 }
+							flexWrap="wrap"
+							pt={ 0.5 }
+						>
+							{ HTTP_METHODS.map( ( method ) => (
+								<FormControlLabel
+									key={ method }
+									disabled={ ! hasValidLicense }
+									control={
+										<Switch
+											size="small"
+											checked={ (
+												form.disabled_methods || []
+											).includes( method.toLowerCase() ) }
+											onChange={ handleMethodToggle(
+												method
+											) }
+										/>
+									}
+									label={
+										<Typography
+											variant="body2"
+											sx={ {
+												fontFamily: 'monospace',
+												fontWeight: 600,
+												fontSize: '0.8rem',
+											} }
+										>
+											{ method }
+										</Typography>
+									}
+								/>
+							) ) }
+						</Stack>
 					</Stack>
-				) }
+				</Tooltip>
 			</Stack>
 
 			<Stack spacing={ 1 }>
@@ -165,49 +164,26 @@ export default function GlobalRoutesPolicy( { form, setField } ) {
 					followCursor
 				>
 					<Stack>
-						<FormControl disabled={ ! hasValidLicense }>
-							<FormControlLabel
-								control={
-									<Switch
-										size="small"
-										checked={
-											!! form.rest_collections_allowed_methods_enabled
-										}
-										name="rest_collections_allowed_methods_enabled"
-										onChange={ setField }
-									/>
-								}
-								label={ __(
-									'Restrict HTTP Methods',
-									'rest-api-firewall'
-								) }
-							/>
-						</FormControl>
+						<ObjectTypeSelect
+							disabled={ ! hasValidLicense }
+							name="disabled_post_types"
+							label={ __(
+								'Disable Object Types',
+								'rest-api-firewall'
+							) }
+							value={ form.disabled_post_types || [] }
+							helperText={
+								<Typography variant="caption" color="inherit">
+									{ __(
+										'Object types will be blocked in the REST API.',
+										'rest-api-firewall'
+									) }
+								</Typography>
+							}
+							onChange={ setField }
+						/>
 					</Stack>
 				</Tooltip>
-
-				<Stack pl={ 3.5 }>
-					<MultipleSelect
-						disabled={
-							! form.rest_collections_allowed_methods_enabled ||
-							! hasValidLicense
-						}
-						name="rest_collections_allowed_methods"
-						label={ __(
-							'Select HTTP Methods',
-							'rest-api-firewall'
-						) }
-						value={ form.rest_collections_allowed_methods }
-						onChange={ setField }
-						options={ [
-							{ label: 'GET', value: 'get' },
-							{ label: 'POST', value: 'post' },
-							{ label: 'PUT', value: 'put' },
-							{ label: 'DELETE', value: 'delete' },
-							{ label: 'PATCH', value: 'patch' },
-						] }
-					/>
-				</Stack>
 			</Stack>
 		</Stack>
 	);
