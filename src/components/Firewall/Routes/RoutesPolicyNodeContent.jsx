@@ -43,6 +43,9 @@ export const CustomTreeItem = forwardRef( function CustomTreeItem( props, ref ) 
 					enforce_rate_limit: props.enforce_rate_limit,
 					rate_limit: props.rate_limit,
 					rate_limit_time: props.rate_limit_time,
+					hide_user_routes: props.hide_user_routes,
+					disabled_methods: props.disabled_methods,
+					disabled_post_type_routes: props.disabled_post_type_routes,
 					expandedItems: props.expandedItems,
 					usersData: props.usersData,
 				},
@@ -63,6 +66,9 @@ export function NodeContent( {
 	enforce_rate_limit,
 	rate_limit,
 	rate_limit_time,
+	hide_user_routes,
+	disabled_methods,
+	disabled_post_type_routes,
 	expandedItems,
 	usersData,
 	...props
@@ -92,7 +98,27 @@ export function NodeContent( {
 	const rateIsGlobal = !! enforce_rate_limit && ! isCustom;
 	const isRateLimitEnforced = rateIsGlobal || nodeSettings.rate_limit?.value;
 
-	const isDisabled = !! nodeSettings.disabled?.value;
+	const isUserRoute = !! (
+		node.path?.startsWith( '/wp/v2/users' ) ||
+		node.route?.startsWith( '/wp/v2/users' )
+	);
+
+	const isMethodGloballyDisabled =
+		!! node.isMethod &&
+		( disabled_methods || [] ).includes( node.method?.toLowerCase() );
+
+	const isPostTypeGloballyDisabled = ( disabled_post_type_routes || [] ).some(
+		( prefix ) =>
+			node.path === prefix || node.path?.startsWith( prefix + '/' )
+	);
+
+	const disabledIsGlobal =
+		! isCustom &&
+		( ( !! hide_user_routes && isUserRoute ) ||
+			isMethodGloballyDisabled ||
+			isPostTypeGloballyDisabled );
+
+	const isDisabled = disabledIsGlobal || !! nodeSettings.disabled?.value;
 
 	const effectiveRateLimit = rate_limit;
 	const effectiveRateLimitTime = rate_limit_time;
@@ -236,7 +262,7 @@ export function NodeContent( {
 				</Stack>
 
 				{ ! node.isMethod && ( node.path || node.route ) && (
-					<Tooltip title="Copy path">
+					<Tooltip title={ __('Copy path', 'rest-api-firewall') }>
 						<CopyButton toCopy={ node.path || node.route } />
 					</Tooltip>
 				) }
@@ -395,6 +421,12 @@ export function NodeContent( {
 					title={
 						! hasValidLicense
 							? __( 'Pro version required', 'rest-api-firewall' )
+							: disabledIsGlobal
+							? ( hide_user_routes && isUserRoute
+								? __( 'Users routes disabled globally — pin custom settings to override', 'rest-api-firewall' )
+								: isPostTypeGloballyDisabled
+								? __( 'Post type disabled globally — pin custom settings to override', 'rest-api-firewall' )
+								: __( 'Method disabled globally — pin custom settings to override', 'rest-api-firewall' ) )
 							: isDisabled
 							? __( 'This route is disabled', 'rest-api-firewall' )
 							: __( 'Disable this route', 'rest-api-firewall' )
@@ -404,12 +436,14 @@ export function NodeContent( {
 						control={
 							<Switch
 								size="small"
-								checked={ nodeSettings.disabled?.value ?? false }
+								checked={ isDisabled }
 								onChange={ handleDisableToggle }
 								disabled={ ! hasValidLicense }
 								sx={ {
 									opacity:
-										isInherited || ! hasValidLicense ? 0.6 : 1,
+										isInherited || disabledIsGlobal || ! hasValidLicense
+											? 0.6
+											: 1,
 								} }
 							/>
 						}

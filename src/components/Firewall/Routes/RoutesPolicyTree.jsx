@@ -32,8 +32,15 @@ import RoutesPolicyUsersPopover from './RoutesPolicyUsersPopover';
 
 
 export default function RoutesPolicyTree( { form, setField } ) {
-	const { enforce_auth, enforce_rate_limit, rate_limit, rate_limit_time } =
-		form;
+	const {
+		enforce_auth,
+		enforce_rate_limit,
+		rate_limit,
+		rate_limit_time,
+		hide_user_routes,
+		disabled_methods,
+		disabled_post_types,
+	} = form;
 
 	const { adminData } = useAdminData();
 	const { hasValidLicense } = useLicense();
@@ -114,6 +121,16 @@ export default function RoutesPolicyTree( { form, setField } ) {
 	const getNodeById = ( id ) => findNodeById( nodes, id );
 
 	const customCount = countAllCustomNodes( nodes );
+
+	// Translate disabled_post_types slugs → /wp/v2/{rest_base} path prefixes.
+	// Requires adminData.post_types to include rest_base (added in Utils.php).
+	const disabledPostTypeRoutes = ( disabled_post_types || [] )
+		.map( ( slug ) => {
+			const pt = ( adminData?.post_types || [] ).find(
+				( p ) => p.value === slug
+			);
+			return `/wp/v2/${ pt?.rest_base || slug }`;
+		} );
 
 	const loadUsers = useCallback( async () => {
 		if ( usersLoadedRef.current ) {
@@ -329,6 +346,9 @@ export default function RoutesPolicyTree( { form, setField } ) {
 						enforce_rate_limit,
 						rate_limit,
 						rate_limit_time,
+						hide_user_routes,
+						disabled_methods: disabled_methods || [],
+						disabled_post_type_routes: disabledPostTypeRoutes,
 						expandedItems,
 						hasValidLicense,
 						usersData,
