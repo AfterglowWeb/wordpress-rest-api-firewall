@@ -108,10 +108,10 @@ export function propagateToDescendants( children, key, value ) {
 		};
 		if ( updated.children?.length ) {
 			updated.children = propagateToDescendants(
-				updated.children,
-				key,
-				value
-			);
+updated.children,
+key,
+value
+);
 		}
 		return updated;
 	} );

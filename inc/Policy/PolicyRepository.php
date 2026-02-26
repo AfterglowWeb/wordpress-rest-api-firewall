@@ -108,7 +108,7 @@ class PolicyRepository {
 
 	public static function save_diff( array $diff ): bool {
 		$diff = array(
-			'nodes'  => $diff['nodes'] ?? array(),
+			'nodes'  => $diff['nodes']  ?? array(),
 			'routes' => $diff['routes'] ?? array(),
 			'users'  => $diff['users'] ?? array(),
 		);
