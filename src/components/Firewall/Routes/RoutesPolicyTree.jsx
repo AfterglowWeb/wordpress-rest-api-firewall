@@ -117,6 +117,9 @@ export default function RoutesPolicyTree( { form, setField } ) {
 	const handleToggleCustom = ( id, effectiveValues ) =>
 		dispatch( { type: 'TOGGLE_CUSTOM', id, effectiveValues } );
 
+	const handleToggleLock = ( id ) =>
+		dispatch( { type: 'TOGGLE_LOCK', id } );
+
 	const getNodeById = ( id ) => findNodeById( nodes, id );
 
 	const customCount = countAllCustomNodes( nodes );
