@@ -11,6 +11,8 @@ import ObjectTypeSelect from '../../ObjectTypeSelect';
 
 const HTTP_METHODS = [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ];
 
+const HTTP_METHODS = [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ];
+
 export default function GlobalRoutesPolicy( { form, setField } ) {
 	const { hasValidLicense } = useLicense();
 	const { __ } = wp.i18n || {};
@@ -185,6 +187,55 @@ export default function GlobalRoutesPolicy( { form, setField } ) {
 					</Stack>
 				</Tooltip>
 			</Stack>
+
+			{ adminData?.post_types && (
+				<Stack spacing={ 1 }>
+					<Tooltip
+						title={
+							! hasValidLicense
+								? __( 'Licence required', 'rest-api-firewall' )
+								: ''
+						}
+						followCursor
+					>
+						<Stack>
+							<MultipleSelect
+								disabled={ ! hasValidLicense }
+								name="disabled_post_types"
+								label={ __(
+									'Disable Post Types',
+									'rest-api-firewall'
+								) }
+								value={ form.disabled_post_types || [] }
+								helperText={
+									<Stack>
+										<Typography
+											variant="caption"
+											color="inherit"
+										>
+											{ __(
+												'Selected post types will be blocked in the REST API.',
+												'rest-api-firewall'
+											) }
+										</Typography>
+										<Typography
+											variant="caption"
+											color="inherit"
+										>
+											{ __(
+												'Leave empty to allow all post types.',
+												'rest-api-firewall'
+											) }
+										</Typography>
+									</Stack>
+								}
+								options={ adminData.post_types }
+								onChange={ setField }
+							/>
+						</Stack>
+					</Tooltip>
+				</Stack>
+			) }
 		</Stack>
 	);
 }
