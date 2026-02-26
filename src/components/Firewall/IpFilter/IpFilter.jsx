@@ -24,7 +24,7 @@ import LockOutlineIcon from '@mui/icons-material/LockOutline';
 import IpDataGrid from './IpDataGrid';
 import CountryBlockList from './CountryBlockList';
 
-export default function IpBlackList() {
+export default function IpFilter() {
 	const { adminData } = useAdminData();
 	const { __ } = wp.i18n || {};
 	const [ loading, setLoading ] = useState( true );

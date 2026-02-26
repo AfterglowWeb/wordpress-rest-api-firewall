@@ -26,6 +26,8 @@ import Badge from '@mui/material/Badge';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import Tooltip from '@mui/material/Tooltip';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 
 import SecurityOutlined from '@mui/icons-material/SecurityOutlined';
 import PaletteOutlined from '@mui/icons-material/PaletteOutlined';
@@ -39,13 +41,14 @@ import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined';
 import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 import CardMembershipOutlinedIcon from '@mui/icons-material/CardMembershipOutlined';
 import RocketLaunchOutlinedIcon from '@mui/icons-material/RocketLaunchOutlined';
+import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined';
 
 import ConfirmDialog from './components/ConfirmDialog';
 import MigrationDialog from './components/Migration/MigrationDialog';
 
 import RoutesPolicyTree from './components/Firewall/Routes/RoutesPolicyTree';
 import GlobalRoutesPolicy from './components/Firewall/Routes/GlobalRoutesPolicy';
-import IpBlackList from './components/Firewall/IpFilter/IpBlackList';
+import IpFilter from './components/Firewall/IpFilter/IpFilter';
 import RateLimit from './components/Firewall/RateLimit';
 import RestApiUser from './components/Firewall/RestApiUser';
 import Properties from './components/ApiOutput/Properties';
@@ -54,6 +57,7 @@ import Collections from './components/ApiOutput/Collections';
 import Webhook from './components/Webhook/Webhook';
 import Smtp from './components/Emails/Smtp';
 import ThemeSettings from './components/Theme/ThemeSettings';
+import Applications from './components/Application/Applications';
 
 import Documentation from './components/Documentation/Documentation';
 import License from './components/License/License';
@@ -84,7 +88,8 @@ function AppContent() {
 	const { __ } = wp.i18n || {};
 	const { save, saving } = useSaveOptions();
 	const theme = useTheme();
-	const { hasValidLicense } = useLicense();
+	const { hasValidLicense, proNonce } = useLicense();
+	const nonce = proNonce || adminData.nonce;
 
 	const isMobile = useMediaQuery( theme.breakpoints.down( 'md' ) );
 
@@ -98,11 +103,54 @@ function AppContent() {
 	const [ migrationDone, setMigrationDone ] = useState( false );
 	const [ snackDismissed, setSnackDismissed ] = useState( false );
 
+	const [ applications, setApplications ] = useState( [] );
+	const [ selectedApplicationId, setSelectedApplicationId ] = useState( '' );
+	const [ applicationsLoading, setApplicationsLoading ] = useState( false );
+
 	const { form, setField, setSlider, pickGroup } = useSettingsForm( {
 		adminData,
 	} );
 
+	useEffect( () => {
+		if ( ! hasValidLicense ) {
+			return;
+		}
+
+		setApplicationsLoading( true );
+
+		fetch( adminData.ajaxurl, {
+			method: 'POST',
+			headers: {
+				'Content-Type':
+					'application/x-www-form-urlencoded; charset=UTF-8',
+			},
+			body: new URLSearchParams( {
+				action: 'get_application_entries',
+				nonce,
+			} ),
+		} )
+			.then( ( r ) => r.json() )
+			.then( ( result ) => {
+				if ( result?.success && result?.data?.entries ) {
+					const entries = result.data.entries;
+					setApplications( entries );
+					if ( entries.length > 0 ) {
+						setSelectedApplicationId( entries[ 0 ].id );
+					}
+				}
+			} )
+			.finally( () => setApplicationsLoading( false ) );
+	}, [ hasValidLicense, adminData, nonce ] );
+
 	const menuItems = [
+		{
+			key: 'applications',
+			label: __( 'Applications', 'rest-api-firewall' ),
+			breadcrumbPrefix: 'Pro',
+			panelGroup: 0,
+			icon: AppsOutlinedIcon,
+			disabled: ! hasValidLicense,
+		},
 		{
 			type: 'section',
 			label: __( 'REST API Firewall', 'rest-api-firewall' ),
@@ -216,7 +264,7 @@ function AppContent() {
 
 	const handleMenuClick = useCallback(
 		( newIndex, anchor ) => {
-			if ( ! newIndex && ! anchor ) {
+			if ( newIndex === undefined && ! anchor ) {
 				return false;
 			}
 			const changing = panelGroup !== newIndex;
@@ -334,6 +382,10 @@ function AppContent() {
 		return null;
 	}
 
+	const selectedApp = applications.find(
+		( a ) => a.id === selectedApplicationId
+	);
+
 	return (
 		<>
 			<Box sx={ { display: 'flex' } }>
@@ -397,7 +449,7 @@ function AppContent() {
 							if ( item.type === 'section' ) {
 								return (
 									<Stack
-										sx={ { mt: 2 } }
+										sx={ { mt: 1 === index ? 0 : 2 } }
 										key={ `section-${ index }` }
 									>
 										{ 0 !== index && <Divider /> }
@@ -430,61 +482,80 @@ function AppContent() {
 							const Icon = item.icon;
 
 							return (
-								<ListItemButton
-									sx={ {
-										px: 3,
-										backgroundColor: isActive
-											? 'grey.100'
-											: '',
-									} }
+								<Tooltip
 									key={ item.key }
-									onClick={ () => {
-										item.action
-											? item.action()
-											: handleMenuClick(
-													item.panelGroup
-											  );
-										setMobileOpen( false );
-									} }
+									title={
+										item.disabled
+											? __(
+													'License required',
+													'rest-api-firewall'
+											  )
+											: ''
+									}
+									placement="right"
 								>
-									{ Icon && (
-										<ListItemIcon
+									{ /* span needed for Tooltip on a disabled element */ }
+									<span>
+										<ListItemButton
 											sx={ {
-												px: 1,
-												minWidth: 32,
-												color: isActive
-													? 'primary.main'
-													: 'text.secondary',
+												px: 3,
+												backgroundColor: isActive
+													? 'grey.100'
+													: '',
+											} }
+											disabled={ !! item.disabled }
+											onClick={ () => {
+												item.action
+													? item.action()
+													: handleMenuClick(
+															item.panelGroup
+													  );
+												setMobileOpen( false );
 											} }
 										>
-											<Badge
-												color="error"
-												variant="dot"
-												invisible={ ! item.badge }
-											>
-												<Icon fontSize="small" />
-											</Badge>
-										</ListItemIcon>
-									) }
+											{ Icon && (
+												<ListItemIcon
+													sx={ {
+														px: 1,
+														minWidth: 32,
+														color: isActive
+															? 'primary.main'
+															: 'text.secondary',
+													} }
+												>
+													<Badge
+														color="error"
+														variant="dot"
+														invisible={
+															! item.badge
+														}
+													>
+														<Icon fontSize="small" />
+													</Badge>
+												</ListItemIcon>
+											) }
 
-									<ListItemText
-										sx={ {
-											'& .MuiListItemText-primary': {
-												fontSize: '0.9rem',
-												lineHeight: 'normal',
-											},
-										} }
-										primary={ item.label }
-										secondary={
-											<Typography
-												variant="caption"
-												color="text.secondary"
-											>
-												{ item.secondary }
-											</Typography>
-										}
-									/>
-								</ListItemButton>
+											<ListItemText
+												sx={ {
+													'& .MuiListItemText-primary':
+														{
+															fontSize: '0.9rem',
+															lineHeight: 'normal',
+														},
+												} }
+												primary={ item.label }
+												secondary={
+													<Typography
+														variant="caption"
+														color="text.secondary"
+													>
+														{ item.secondary }
+													</Typography>
+												}
+											/>
+										</ListItemButton>
+									</span>
+								</Tooltip>
 							);
 						} ) }
 					</List>
@@ -536,6 +607,43 @@ function AppContent() {
 								<MenuIcon />
 							</IconButton>
 						) }
+
+						{ /* Application selector — shown when pro license is active */ }
+						{ hasValidLicense && (
+							<>
+								<Select
+									size="small"
+									value={ selectedApplicationId }
+									onChange={ ( e ) =>
+										setSelectedApplicationId( e.target.value )
+									}
+									displayEmpty
+									disabled={
+										applicationsLoading ||
+										applications.length === 0
+									}
+									sx={ { minWidth: 180, maxWidth: 260 } }
+									renderValue={ () =>
+										applicationsLoading
+											? __( 'Loading…', 'rest-api-firewall' )
+											: selectedApp?.title ||
+											  __(
+													'No application',
+													'rest-api-firewall'
+											  )
+									}
+								>
+									{ applications.map( ( app ) => (
+										<MenuItem key={ app.id } value={ app.id }>
+											{ app.title }
+										</MenuItem>
+									) ) }
+								</Select>
+
+								<Divider orientation="vertical" flexItem />
+							</>
+						) }
+
 						<Box sx={ { flex: 1, minWidth: 0 } }>
 							{ activeMenuItem?.breadcrumbPrefix && (
 								<Typography
@@ -629,7 +737,12 @@ function AppContent() {
 						bgcolor: theme.palette.background.paper,
 					} }
 				>
+				
+					{ panelGroup === 0 && <Applications /> }
+				
 					<Box sx={ { p: 4 } }>
+						
+
 						{ panelGroup === 1 && (
 							<Stack
 								spacing={ 3 }
@@ -667,7 +780,7 @@ function AppContent() {
 
 						{ panelGroup === 3 && (
 							<Stack id="section-ip-filtering">
-								<IpBlackList />
+								<IpFilter />
 							</Stack>
 						) }
 

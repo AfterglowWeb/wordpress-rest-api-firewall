@@ -17,24 +17,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
-const IP_REGEX =
-	/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-const CIDR_REGEX =
-	/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(?:[0-9]|[1-2][0-9]|3[0-2])$/;
-const IPV6_REGEX =
-	/^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::$|^([0-9a-fA-F]{1,4}:){1,7}:$|^:(:([0-9a-fA-F]{1,4})){1,7}$|^([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}$/;
-
-function isValidIpOrCidr( value, hasValidLicense ) {
-	if ( ! value ) {
-		return false;
-	}
-	const trimmed = value.trim();
-	return (
-		IP_REGEX.test( trimmed ) ||
-		( hasValidLicense && CIDR_REGEX.test( trimmed ) ) ||
-		IPV6_REGEX.test( trimmed )
-	);
-}
+import { isValidIpOrCidr } from '../../../utils/sanitizeIp';
 
 export default function IpDataGrid( { listType = 'blacklist' } ) {
 	const { adminData } = useAdminData();

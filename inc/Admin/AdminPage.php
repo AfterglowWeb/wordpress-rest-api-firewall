@@ -95,6 +95,8 @@ class AdminPage {
 			'home_url'             => get_home_url( '/' ),
 			'webhook_events'       => WebhookAutoTrigger::get_available_events(),
 			'webhook_event_groups' => WebhookAutoTrigger::get_event_groups(),
+			'date_format'          => get_option( 'date_format' ),
+			'time_format'          => get_option( 'time_format' ),
 		);
 
 		if ( class_exists( '\cmk\RestApiFirewall\Theme\RedirectTemplates' ) ) {
