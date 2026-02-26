@@ -85,7 +85,7 @@ class AdminPage {
 			'nonce'                => wp_create_nonce( 'rest_api_firewall_update_options_nonce' ),
 			'ajaxurl'              => admin_url( 'admin-ajax.php' ),
 			'users'                => Utils::list_users(),
-			'post_types'           => Utils::list_post_types(),
+			'post_types'           => Utils::list_rest_api_object_types(),
 			'models_properties'    => ModelsPropertiesRepository::models_properties(),
 			'admin_options'        => CoreOptions::read_options(),
 			'options_config'       => CoreOptions::options_config_for_js(),

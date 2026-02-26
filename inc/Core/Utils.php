@@ -38,15 +38,21 @@ class Utils {
 		);
 	}
 
-	/**
-	 * List public post types that are exposed in REST.
-	 */
+	public static function list_rest_api_object_types(): array {
+		return array_merge(
+			self::list_post_types(),
+			self::list_taxonomies(),
+			self::format_user_type()
+		);
+	}
+
 	public static function list_post_types(): array {
+		
 		$post_types = get_post_types(
-			array(
+			 array(
 				'show_in_rest' => true,
 			),
-			'objects'
+			'objects' 
 		);
 
 		if ( empty( $post_types ) ) {
@@ -61,8 +67,7 @@ class Utils {
 					: sanitize_key( $post_type->name ),
 				'public'    => $post_type->public,
 				'_builtin'  => $post_type->_builtin,
-				// rest_base is the URL segment used in /wp/v2/{rest_base}.
-				// Falls back to the post-type name when not explicitly set.
+				'type'      => 'post_type',
 				'rest_base' => sanitize_key( $post_type->rest_base ?: $post_type->name ),
 			),
 			$post_types
@@ -91,11 +96,24 @@ class Utils {
 					: sanitize_key( $taxonomy->name ),
 				'public'   => $taxonomy->public,
 				'_builtin' => $taxonomy->_builtin,
+				'type'     => 'taxonomy',
 			),
 			$taxonomies
 		);
 
 		return array_values( $list );
+	}
+
+	public static function format_user_type(): array {
+		return array(
+			array(
+				'value' => 'author',
+				'label' => __( 'Author', 'rest-api-firewall' ),
+				'public'   => true,
+				'_builtin' => false,
+				'type'     => 'author',
+			),
+		);
 	}
 
 	public static function list_posts( string $post_type ): array {

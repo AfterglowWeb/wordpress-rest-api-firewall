@@ -74,7 +74,7 @@ export function NodeContent( {
 	...props
 } ) {
 	useTreeItem( props );
-	const { __ } = wp.i18n || {};
+	const { __, sprintf } = wp.i18n || {};
 	const { hasValidLicense } = useLicense();
 
 	if ( ! node?.id ) {
@@ -206,7 +206,7 @@ export function NodeContent( {
 							<Chip
 								label={
 									getEffectivePermission( node.permission.type ) ||
-									'unknown'
+									__('unknown', 'rest-api-firewall')
 								}
 								size="small"
 								variant="outlined"
@@ -256,7 +256,7 @@ export function NodeContent( {
 								ml: 4,
 							} }
 						>
-							Permission: { node.permission.callback }
+							{ sprintf( __('Permission: %s', 'rest-api-firewall'), node.permission.callback ) }
 						</Typography>
 					) }
 				</Stack>
@@ -372,7 +372,7 @@ export function NodeContent( {
 						}
 						label={
 							<Typography variant="body2" sx={ { fontSize: '0.875rem' } }>
-								Auth{ isInherited && ' ↓' }
+								{ __( 'Auth', 'rest-api-firewall' ) }
 							</Typography>
 						}
 					/>
@@ -411,7 +411,7 @@ export function NodeContent( {
 						}
 						label={
 							<Typography variant="body2" sx={ { fontSize: '0.875rem' } }>
-								Rate{ isInherited && ' ↓' }
+								{ __( 'Rate', 'rest-api-firewall' ) }
 							</Typography>
 						}
 					/>
@@ -449,7 +449,7 @@ export function NodeContent( {
 						}
 						label={
 							<Typography variant="body2" sx={ { fontSize: '0.875rem' } }>
-								Disable{ isInherited && ' ↓' }
+								{ __( 'Disable', 'rest-api-firewall' ) }
 							</Typography>
 						}
 					/>

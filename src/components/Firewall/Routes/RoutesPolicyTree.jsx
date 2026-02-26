@@ -122,8 +122,6 @@ export default function RoutesPolicyTree( { form, setField } ) {
 
 	const customCount = countAllCustomNodes( nodes );
 
-	// Translate disabled_post_types slugs → /wp/v2/{rest_base} path prefixes.
-	// Requires adminData.post_types to include rest_base (added in Utils.php).
 	const disabledPostTypeRoutes = ( disabled_post_types || [] )
 		.map( ( slug ) => {
 			const pt = ( adminData?.post_types || [] ).find(
