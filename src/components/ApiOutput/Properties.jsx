@@ -6,7 +6,6 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import MenuItem from '@mui/material/MenuItem';
 import Box from '@mui/material/Box';
-
 import Switch from '@mui/material/Switch';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -14,7 +13,6 @@ import FormHelperText from '@mui/material/FormHelperText';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import Checkbox from '@mui/material/Checkbox';
-
 import Tooltip from '@mui/material/Tooltip';
 import Chip from '@mui/material/Chip';
 import Collapse from '@mui/material/Collapse';
@@ -23,6 +21,8 @@ import Link from '@mui/material/Link';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import CopyButton from '../CopyButton';
+import ObjectTypeSelect from '../ObjectTypeSelect';
+
 import Divider from '@mui/material/Divider';
 
 const TYPE_COLORS = {
@@ -34,10 +34,22 @@ const TYPE_COLORS = {
 	array: 'warning',
 };
 
+const TYPE_LABELS = {
+	post_type: 'Post Type',
+	taxonomy: 'Taxonomy',
+	author: 'User',
+};
+
 export default function Properties( { setField, postTypes, form } ) {
 	const { hasValidLicense } = useLicense();
+	const { adminData } = useAdminData();
 	const { __ } = wp.i18n || {};
-	const [ selectedPostType, setSelectedPostType ] = useState( 'post' );
+	const [ selectedObjectType, setSelectedObjectType ] = useState( 'post' );
+
+	const selectedObjectData =
+		adminData?.post_types?.find(
+			( t ) => t.value === selectedObjectType
+		) ?? null;
 
 	return (
 		<Stack spacing={ 3 }>
@@ -374,51 +386,89 @@ export default function Properties( { setField, postTypes, form } ) {
 						</Stack>
 					</Stack>
 				</Stack>
+			</Stack>
 
-				<Divider />
+			<Divider />
 
-				<Typography
-					variant="caption"
-					sx={ {
-						display: 'block',
-						mt: 1,
-						textTransform: 'uppercase',
-						letterSpacing: 0.5,
-						fontSize: '0.75rem',
-						color: ! hasValidLicense
-							? 'text.disabled'
-							: 'text.secondary',
-					} }
-				>
-					{ __( 'Per Property Settings', 'rest-api-firewall' ) }
-				</Typography>
-
-				<FormControl fullWidth sx={ { maxWidth: 270 } }>
-					<InputLabel>
-						{ __( 'Select Post Type', 'rest-api-firewall' ) }
-					</InputLabel>
-					<Select
-						value={ selectedPostType }
-						defaultValue={ postTypes[ 0 ].value || '' }
-						label={ __( 'Select Post Type', 'rest-api-firewall' ) }
-						onChange={ ( e ) =>
-							setSelectedPostType( e.target.value )
-						}
-					>
-						{ postTypes &&
-							postTypes.map( ( postType ) => (
-								<MenuItem
-									key={ postType.value }
-									value={ postType.value }
+			<Stack spacing={ 3 }>
+				<Stack gap={ 3 } direction="row">
+					<Stack spacing={ 3 }>
+						<Typography
+							variant="caption"
+							sx={ {
+								display: 'block',
+								mt: 1,
+								textTransform: 'uppercase',
+								letterSpacing: 0.5,
+								fontSize: '0.75rem',
+								color: ! hasValidLicense
+									? 'text.disabled'
+									: 'text.secondary',
+							} }
+						>
+							{ __(
+								'Per Property Settings',
+								'rest-api-firewall'
+							) }
+						</Typography>
+						<ObjectTypeSelect
+							types={ [ 'post_type', 'taxonomy', 'author' ] }
+							disabled={ ! hasValidLicense }
+							value={ selectedObjectType || '' }
+							defaultValue={ postTypes[ 0 ].value || '' }
+							label={ __(
+								'Select Object Type',
+								'rest-api-firewall'
+							) }
+							onChange={ ( e ) =>
+								setSelectedObjectType( e.target.value )
+							}
+							sx={ { width: 270, maxWidth: 270 } }
+							isSingle={ true }
+						/>
+					</Stack>
+					{ selectedObjectData && (
+						<Stack spacing={ 0 } justifyContent="flex-end">
+							<Typography variant="h6" fontWeight={ 600 }>
+								{ selectedObjectData.label }
+							</Typography>
+							<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
+								<Typography
+									color="text.secondary"
+									sx={ { textTransform: 'lowercase' } }
+									variant="caption"
 								>
-									{ postType.label }
-								</MenuItem>
-							) ) }
-					</Select>
-				</FormControl>
+									{ TYPE_LABELS[ selectedObjectData.type ] ??
+										selectedObjectData.type }{ ' ' }
+									/
+								</Typography>
+								<Typography
+									color="text.secondary"
+									variant="caption"
+								>
+									{ selectedObjectData.public
+										? __( 'public', 'rest-api-firewall' )
+										: __(
+												'private',
+												'rest-api-firewall'
+										  ) }{ ' ' }
+									/
+								</Typography>
+								<Typography
+									color="text.secondary"
+									variant="caption"
+								>
+									{ selectedObjectData._builtin
+										? __( 'builtin', 'rest-api-firewall' )
+										: __( 'custom', 'rest-api-firewall' ) }
+								</Typography>
+							</Stack>
+						</Stack>
+					) }
+				</Stack>
 
 				<ModelProperties
-					selectedPostType={ selectedPostType }
+					selectedObjectType={ selectedObjectType }
 					setField={ setField }
 				/>
 			</Stack>
@@ -429,7 +479,7 @@ export default function Properties( { setField, postTypes, form } ) {
 export function PropertyRow( {
 	propName,
 	propConfig,
-	selectedPostType,
+	selectedObjectType,
 	setField,
 	hasValidLicense,
 	__,
@@ -735,7 +785,7 @@ export function PropertyRow( {
 											? subConfig
 											: { type: String( subConfig ) }
 									}
-									selectedPostType={ selectedPostType }
+									selectedObjectType={ selectedObjectType }
 									setField={ setField }
 									hasValidLicense={ hasValidLicense }
 									__={ __ }
@@ -751,7 +801,7 @@ export function PropertyRow( {
 	);
 }
 
-function ModelProperties( { selectedPostType, setField } ) {
+function ModelProperties( { selectedObjectType, setField } ) {
 	const { __ } = wp.i18n || {};
 	const { hasValidLicense } = useLicense();
 	const { adminData } = useAdminData();
@@ -759,21 +809,21 @@ function ModelProperties( { selectedPostType, setField } ) {
 
 	return (
 		<Stack spacing={ 1 }>
-			{ selectedPostType &&
-				postProperties?.[ selectedPostType ]?.props && (
+			{ selectedObjectType &&
+				postProperties?.[ selectedObjectType ]?.props && (
 					<Stack spacing={ 0 }>
 						{ Object.entries(
-							postProperties[ selectedPostType ].props
+							postProperties[ selectedObjectType ].props
 						).map( ( [ propName, propConfig ] ) => (
 							<PropertyRow
 								key={ propName }
 								propName={ propName }
 								propConfig={ propConfig }
-								selectedPostType={ selectedPostType }
+								selectedObjectType={ selectedObjectType }
 								setField={ setField }
 								hasValidLicense={ hasValidLicense }
 								__={ __ }
-								basePath={ `postProperties.${ selectedPostType }.props.${ propName }` }
+								basePath={ `postProperties.${ selectedObjectType }.props.${ propName }` }
 							/>
 						) ) }
 					</Stack>

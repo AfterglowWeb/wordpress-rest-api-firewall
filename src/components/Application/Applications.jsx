@@ -158,7 +158,7 @@ export default function Applications() {
 		} finally {
 			setLoading( false );
 		}
-	}, [ adminData, nonce, listType ] );
+	}, [ adminData, nonce ] );
 
 	useEffect( () => {
 		fetchEntries();
@@ -211,7 +211,6 @@ export default function Applications() {
 					action: 'delete_application_entry',
 					nonce,
 					id,
-					list_type: listType,
 				} ),
 			} );
 
@@ -252,7 +251,6 @@ export default function Applications() {
 					action: 'delete_application_entries',
 					nonce,
 					ids: JSON.stringify( selectedIds ),
-					list_type: listType,
 				} ),
 			} );
 
@@ -291,16 +289,14 @@ export default function Applications() {
 						'rest-api-firewall'
 					) }
 					size="small"
-					error={ !! ipError }
-					helperText={ ipError }
 					sx={ { minWidth: 250 } }
 				/>
 
 				<Button
 					variant="contained"
 					size="small"
-					onClick={ handleAddIp }
-					disabled={ adding || ! newIp.trim() }
+					onClick={ handleAddApplication }
+					disabled={ adding || ! newApplication }
 					startIcon={ <AddIcon /> }
 				>
 					{ __( 'Create Application', 'rest-api-firewall' ) }

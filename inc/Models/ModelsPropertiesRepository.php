@@ -14,10 +14,7 @@ class ModelsPropertiesRepository {
 
 	public static function models_properties(): array {
 
-		$post_types = Utils::list_post_types();
-		$taxonomies = Utils::list_taxonomies();
-
-		$object_types = array_merge( $post_types, $taxonomies );
+		$object_types = Utils::list_rest_api_object_types();
 		$result       = array();
 
 		foreach ( $object_types as $object_type ) {
