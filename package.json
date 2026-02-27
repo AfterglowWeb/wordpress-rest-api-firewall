@@ -1,7 +1,7 @@
 {
-  "name": "rest-api-firewall",
-  "version": "0.1.0-alpha.2",
-  "description": "A minimal WordPress theme designed exclusively for headless CMS usage.",
+  "name": "application-layer",
+  "version": "0.1.0-alpha.8",
+  "description": "A WordPress plugin designed for application layer functionality.",
   "main": "./src/index.js",
   "scripts": {
     "start": "wp-scripts start --webpack-copy-php",

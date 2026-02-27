@@ -11,8 +11,6 @@ import ObjectTypeSelect from '../../ObjectTypeSelect';
 
 const HTTP_METHODS = [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ];
 
-const HTTP_METHODS = [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ];
-
 export default function GlobalRoutesPolicy( { form, setField } ) {
 	const { hasValidLicense } = useLicense();
 	const { __ } = wp.i18n || {};
@@ -187,47 +185,6 @@ export default function GlobalRoutesPolicy( { form, setField } ) {
 					</Stack>
 				</Tooltip>
 			</Stack>
-
-			{ adminData?.post_types && (
-				<Stack spacing={ 1 }>
-					<Tooltip
-						title={
-							! hasValidLicense
-								? __( 'Licence required', 'rest-api-firewall' )
-								: ''
-						}
-						followCursor
-					>
-						<Stack>
-							<MultipleSelect
-								disabled={ ! hasValidLicense }
-								name="disabled_post_types"
-								label={ __(
-									'Disable Object Types',
-									'rest-api-firewall'
-								) }
-								value={ form.disabled_post_types || [] }
-								helperText={
-									<Typography
-										variant="caption"
-										color="inherit"
-									>
-										{ __(
-											'Object types will be blocked in the REST API.',
-											'rest-api-firewall'
-										) }
-									</Typography>
-								}
-								options={ buildGroupedPostTypeOptions(
-									adminData.post_types,
-									__
-								) }
-								onChange={ setField }
-							/>
-						</Stack>
-					</Tooltip>
-				</Stack>
-			) }
 		</Stack>
 	);
 }
