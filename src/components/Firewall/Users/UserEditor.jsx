@@ -10,8 +10,8 @@ import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
-import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import FormControl from '@mui/material/FormControl';
 import IconButton from '@mui/material/IconButton';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -24,6 +24,9 @@ import Typography from '@mui/material/Typography';
 
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+
+import AuthManager from './AuthManager';
+import LoadingMessage from '../../LoadingMessage';
 
 function SectionHeader( { title, description } ) {
 	return (
@@ -42,18 +45,11 @@ function SectionHeader( { title, description } ) {
 
 const HTTP_METHODS = [ 'get', 'post', 'put', 'patch', 'delete' ];
 
-const AUTH_METHODS = [
-	{ value: 'any', label: 'Any (no restriction)' },
-	{ value: 'jwt', label: 'JWT' },
-	{ value: 'app_password', label: 'Application Password' },
-	{ value: 'wp_auth', label: 'WordPress Cookie / Session' },
-];
-
 export default function UserEditor( { user, onBack } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
 	const nonce = proNonce || adminData.nonce;
-	const { __ } = wp.i18n || {};
+	const { __, sprintf } = wp.i18n || {};
 
 	const { save, remove, saving } = useProActions();
 
@@ -70,6 +66,7 @@ export default function UserEditor( { user, onBack } ) {
 
 	const [ status, setStatus ] = useState( user.status === 'active' );
 	const [ authMethod, setAuthMethod ] = useState( user.auth_method || 'any' );
+	const [ authConfig, setAuthConfig ] = useState( user.auth_config || {} );
 	const [ allowedMethods, setAllowedMethods ] = useState(
 		user.allowed_methods || [ 'get' ]
 	);
@@ -103,6 +100,7 @@ export default function UserEditor( { user, onBack } ) {
 				setAppTitle( e.app_title || '' );
 				setStatus( e.status === 'active' );
 				setAuthMethod( e.auth_method || 'any' );
+				setAuthConfig( e.auth_config || {} );
 				setAllowedMethods( e.allowed_methods || [ 'get' ] );
 				setRateLimitRequests( e.rate_limit_max_requests ?? 100 );
 				setRateLimitWindow( e.rate_limit_window_seconds ?? 60 );
@@ -151,6 +149,7 @@ export default function UserEditor( { user, onBack } ) {
 	const commonPayload = {
 		status: status ? 'active' : 'inactive',
 		auth_method: authMethod,
+		auth_config: JSON.stringify( authConfig ),
 		allowed_methods: JSON.stringify( allowedMethods ),
 		rate_limit_max_requests: String(
 			parseInt( rateLimitRequests, 10 ) || 100
@@ -218,14 +217,10 @@ export default function UserEditor( { user, onBack } ) {
 	};
 
 	if ( loading ) {
-		return (
-			<Box sx={ { py: 4 } }>
-				<Typography color="text.secondary">
-					{ __( 'Loading…', 'rest-api-firewall' ) }
-				</Typography>
-			</Box>
-		);
-	}
+			return (
+				<LoadingMessage />
+			);
+		}
 
 	return (
 		<Stack spacing={ 0 }>
@@ -250,7 +245,12 @@ export default function UserEditor( { user, onBack } ) {
 							<ArrowBackIcon />
 						</IconButton>
 					</Stack>
-					<Stack spacing={ 0 }>
+					<Stack
+						spacing={ 0 }
+						direction={ { xs: 'column', sm: 'row' } }
+						alignItems={ { xs: 'flex-start', sm: 'center' } }
+						gap={ { xs: 0, sm: 2 } }
+					>
 						<Typography variant="h6" fontWeight={ 600 } noWrap>
 							{ isNew
 								? __( 'New User', 'rest-api-firewall' )
@@ -258,10 +258,9 @@ export default function UserEditor( { user, onBack } ) {
 						</Typography>
 						{ ! isNew && (
 							<Stack
-								direction={ { xs: 'column', xl: 'row' } }
+								direction={ { xs: 'column', sm: 'row' } }
 								gap={ { xs: 0, xl: 2 } }
 								flexWrap="wrap"
-								alignItems={ { xl: 'center' } }
 							>
 								<FormControlLabel
 									control={
@@ -278,28 +277,24 @@ export default function UserEditor( { user, onBack } ) {
 										'rest-api-firewall'
 									) }
 								/>
-								{ appTitle && (
-									<Chip
-										label={ appTitle }
-										size="small"
-										variant="outlined"
-										sx={ { fontFamily: 'monospace' } }
-									/>
-								) }
-								{ ( dateCreated || dateModified ) && (
+								{ ( appTitle || dateCreated || dateModified ) && (
 									<Typography
 										variant="caption"
 										color="text.secondary"
+										sx={{textAlign: 'left'}}
 									>
+										{  appTitle && (
+											<span>{ sprintf( __('Added to %s' , 'rest-api-firewall'), appTitle) }</span>
+										) }
 										{ dateCreated && (
-											<span>{ dateCreated }</span>
+											<span>{ sprintf( __(' @ %s', 'rest-api-firewall') , dateCreated ) }</span>
 										) }
 										{ dateModified && (
 											<>
 												<br />
 												<span>
 													{ __(
-														'Mod.',
+														'Modified @',
 														'rest-api-firewall'
 													) }{ ' ' }
 													{ dateModified }
@@ -347,7 +342,6 @@ export default function UserEditor( { user, onBack } ) {
 				spacing={ 3 }
 				sx={ { maxWidth: 760 } }
 			>
-				{ /* WP user selector — new user only */ }
 				{ isNew && (
 					<Stack spacing={ 2 }>
 						<SectionHeader
@@ -386,7 +380,6 @@ export default function UserEditor( { user, onBack } ) {
 							</Select>
 						</FormControl>
 
-						{ /* Status switch for new users */ }
 						<FormControlLabel
 							control={
 								<Switch
@@ -404,7 +397,6 @@ export default function UserEditor( { user, onBack } ) {
 					</Stack>
 				) }
 
-				{ /* Auth method */ }
 				<Stack spacing={ 2 }>
 					<SectionHeader
 						title={ __(
@@ -416,24 +408,12 @@ export default function UserEditor( { user, onBack } ) {
 							'rest-api-firewall'
 						) }
 					/>
-					<FormControl size="small" sx={ { maxWidth: 280 } }>
-						<InputLabel>
-							{ __( 'Auth Method', 'rest-api-firewall' ) }
-						</InputLabel>
-						<Select
-							value={ authMethod }
-							onChange={ ( e ) =>
-								setAuthMethod( e.target.value )
-							}
-							label={ __( 'Auth Method', 'rest-api-firewall' ) }
-						>
-							{ AUTH_METHODS.map( ( opt ) => (
-								<MenuItem key={ opt.value } value={ opt.value }>
-									{ opt.label }
-								</MenuItem>
-							) ) }
-						</Select>
-					</FormControl>
+					<AuthManager
+						authMethod={ authMethod }
+						onAuthMethodChange={ setAuthMethod }
+						authConfig={ authConfig }
+						onAuthConfigChange={ setAuthConfig }
+					/>
 				</Stack>
 
 				<Divider />

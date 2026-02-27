@@ -23,6 +23,7 @@ import LockOutlineIcon from '@mui/icons-material/LockOutline';
 
 import IpDataGrid from './IpDataGrid';
 import CountryBlockList from './CountryBlockList';
+import LoadingMessage from '../../LoadingMessage';
 
 export default function IpFilter() {
 	const { adminData } = useAdminData();
@@ -161,11 +162,7 @@ export default function IpFilter() {
 
 	if ( loading ) {
 		return (
-			<Box sx={ { py: 2 } }>
-				<Typography color="text.secondary">
-					{ __( 'Loading…', 'rest-api-firewall' ) }
-				</Typography>
-			</Box>
+			<LoadingMessage />
 		);
 	}
 
