@@ -28,6 +28,8 @@ import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import { isValidIpOrCidr } from '../../utils/sanitizeIp';
 import { isValidOrigin } from '../../utils/sanitizeHost';
 import formatDate from '../../utils/formatDate';
+import LinearProgress from '@mui/material/LinearProgress';
+import LoadingMessage from '../LoadingMessage';
 
 function SectionHeader( { title, description } ) {
 	return (
@@ -378,11 +380,7 @@ export default function ApplicationEditor( { application, onBack } ) {
 
 	if ( loading ) {
 		return (
-			<Box sx={ { py: 4 } }>
-				<Typography color="text.secondary">
-					{ __( 'Loading…', 'rest-api-firewall' ) }
-				</Typography>
-			</Box>
+			<LoadingMessage />
 		);
 	}
 

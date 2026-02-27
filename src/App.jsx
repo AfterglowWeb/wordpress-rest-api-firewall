@@ -10,7 +10,7 @@ import {
 import useSettingsForm from './hooks/useSettingsForm';
 import useSaveOptions from './hooks/useSaveOptions';
 
-import { styled, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -23,7 +23,6 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Toolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
-import Avatar from '@mui/material/Avatar';
 import AppBar from '@mui/material/AppBar';
 import Stack from '@mui/material/Stack';
 import Badge from '@mui/material/Badge';
@@ -70,6 +69,7 @@ import Applications from './components/Application/Applications';
 import Documentation from './components/Documentation/Documentation';
 import License from './components/License/License';
 import Users from './components/Firewall/Users/Users';
+import AppIdentity from './components/AppIdentity';
 
 const DRAWER_WIDTH = 220;
 const APP_BAR_HEIGHT = 75;
@@ -78,19 +78,6 @@ const WP_ADMIN_BAR_HEIGHT_DESKTOP = 32; // >= md.  : desktop admin bar
 const WP_ADMIN_BAR_HEIGHT_MOBILE = 46; // < md.   : mobile admin bar
 const WP_MENU_WIDTH_MD = 36; // md → lg : collapsed menu
 const WP_MENU_WIDTH_LG = 160; // lg+     : complete menu
-
-const AppLogo = styled( Avatar )( () => ( {
-	width: 48,
-	height: 48,
-	background: 'linear-gradient(307deg, #ffb7c4 0%, #ff002e 100%)',
-	borderRadius: 12,
-	fontSize: '1.4rem',
-	fontWeight: 500,
-	fontFamily: 'monospace, Helvetica, Arial, sans-serif',
-	color: 'white',
-	boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-	position: 'relative',
-} ) );
 
 function AppContent() {
 	const { adminData } = useAdminData();
@@ -111,7 +98,6 @@ function AppContent() {
 	const schemaUpdateNeeded = !! window.restApiFirewallPro?.schemaUpdateNeeded;
 	const isMigrated = !! window.restApiFirewallPro?.isMigrated;
 
-	// schema_update takes priority over free_to_pro; already_migrated is info-only (manual).
 	const migrationScenario = schemaUpdateNeeded
 		? 'schema_update'
 		: migrationNeeded
@@ -151,7 +137,8 @@ function AppContent() {
 		},
 		{
 			key: 'user-rate-limiting',
-			label: __( 'Auth. & Rate Limit', 'rest-api-firewall' ),
+			label: __( 'Authentication', 'rest-api-firewall' ),
+			secondary: 'Users & methods',
 			breadcrumbPrefix: 'REST API Firewall',
 			panelGroup: 1,
 			icon: SecurityOutlined,
@@ -178,6 +165,7 @@ function AppContent() {
 		{
 			key: 'collections',
 			label: __( 'Collections', 'rest-api-firewall' ),
+			secondary: 'wp/v2/posts/*',
 			breadcrumbPrefix: 'REST API Output',
 			panelGroup: 4,
 			icon: ApiIcon,
@@ -185,6 +173,7 @@ function AppContent() {
 		{
 			key: 'models-properties',
 			label: __( 'Properties', 'rest-api-firewall' ),
+			secondary: 'wp/v2/posts/*',
 			breadcrumbPrefix: 'REST API Output',
 			panelGroup: 5,
 			icon: RuleOutlinedIcon,
@@ -404,7 +393,7 @@ function AppContent() {
 								md: WP_MENU_WIDTH_MD,
 								lg: WP_MENU_WIDTH_LG,
 							},
-							minHeight: {
+							height: {
 								xs: `calc(100vh - ${
 									WP_ADMIN_BAR_HEIGHT_MOBILE +
 									APP_FOOTER_HEIGHT
@@ -418,28 +407,7 @@ function AppContent() {
 						},
 					} }
 				>
-					<Box
-						sx={ {
-							p: 2,
-							height: 75,
-							display: 'flex',
-							gap: 1,
-							boxSizing: 'border-box',
-						} }
-					>
-						<AppLogo>AL</AppLogo>
-						<Box>
-							<Typography variant="subtitle2" fontWeight={ 600 }>
-								{ adminData.plugin_name }
-							</Typography>
-							<Typography
-								variant="caption"
-								color="text.secondary"
-							>
-								v{ adminData.plugin_version }
-							</Typography>
-						</Box>
-					</Box>
+					<AppIdentity />
 					<Divider />
 
 					<List component="nav" disablePadding>
@@ -492,7 +460,6 @@ function AppContent() {
 									}
 									placement="right"
 								>
-									{ /* span needed for Tooltip on a disabled element */ }
 									<span>
 										<ListItemButton
 											sx={ {
@@ -607,7 +574,7 @@ function AppContent() {
 							</IconButton>
 						) }
 
-						{ hasValidLicense && (
+						{ hasValidLicense && panelGroup < 9 && (
 							<Stack
 								direction="row"
 								alignItems="center"
@@ -750,7 +717,7 @@ function AppContent() {
 					</Toolbar>
 				</AppBar>
 
-				<Box
+				<Stack
 					sx={ {
 						flexGrow: 1,
 						minWidth: 0,
@@ -798,7 +765,7 @@ function AppContent() {
 						</>
 					) }
 
-					<Box sx={ { p: 4 } }>
+					<Stack sx={ { p: 4, flexGrow: 1 } }>
 						{ panelGroup === 2 && (
 							<Stack
 								spacing={ 3 }
@@ -816,11 +783,7 @@ function AppContent() {
 							</Stack>
 						) }
 
-						{ panelGroup === 3 && (
-							<Stack id="section-ip-filtering">
-								<IpFilter />
-							</Stack>
-						) }
+						{ panelGroup === 3 && <IpFilter /> }
 
 						{ panelGroup === 4 && (
 							<Stack id="section-collections-per-page">
@@ -883,8 +846,8 @@ function AppContent() {
 								}
 							/>
 						) }
-					</Box>
-				</Box>
+					</Stack>
+				</Stack>
 			</Box>
 
 			<MigrationDialog
