@@ -63,6 +63,7 @@ import Applications from './components/Application/Applications';
 
 import Documentation from './components/Documentation/Documentation';
 import License from './components/License/License';
+import Users from './components/Firewall/Users/Users';
 
 const DRAWER_WIDTH = 220;
 const APP_BAR_HEIGHT = 75;
@@ -754,22 +755,28 @@ function AppContent() {
 						
 
 						{ panelGroup === 1 && (
-							<Stack
-								spacing={ 3 }
-								sx={ { maxWidth: 800 } }
-								id="section-auth-rate-limiting"
-							>
-								<RestApiUser
-									form={ form }
-									setField={ setField }
-								/>
-								<Divider />
-								<RateLimit
-									form={ form }
-									setField={ setField }
-								/>
-							</Stack>
-						) }
+							<>
+							{ hasValidLicense ? (
+							<Users />
+							) : (
+								<Stack
+									spacing={ 3 }
+									sx={ { maxWidth: 800 } }
+									id="section-auth-rate-limiting"
+								>
+									<RestApiUser
+										form={ form }
+										setField={ setField }
+									/>
+									<Divider />
+									<RateLimit
+										form={ form }
+										setField={ setField }
+									/>
+								</Stack>
+							) }
+							</>
+						)}
 
 						{ panelGroup === 2 && (
 							<Stack
