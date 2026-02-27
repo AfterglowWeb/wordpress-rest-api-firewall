@@ -34,8 +34,8 @@ class AdminPage {
 
 	public function register_admin_page() {
 		add_menu_page(
-			__( 'Headless Toolkit', 'rest-api-firewall' ),
-			__( 'Headless Toolkit', 'rest-api-firewall' ),
+			__( 'Application Layer', 'rest-api-firewall' ),
+			__( 'Application Layer', 'rest-api-firewall' ),
 			'rest_api_firewall_edit_options',
 			'rest-api-firewall-admin',
 			array( $this, 'render_admin_page' ),

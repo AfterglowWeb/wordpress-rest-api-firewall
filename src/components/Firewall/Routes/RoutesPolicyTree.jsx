@@ -117,9 +117,6 @@ export default function RoutesPolicyTree( { form, setField } ) {
 	const handleToggleCustom = ( id, effectiveValues ) =>
 		dispatch( { type: 'TOGGLE_CUSTOM', id, effectiveValues } );
 
-	const handleToggleCustom = ( id, effectiveValues ) =>
-		dispatch( { type: 'TOGGLE_CUSTOM', id, effectiveValues } );
-
 	const getNodeById = ( id ) => findNodeById( nodes, id );
 
 	const customCount = countAllCustomNodes( nodes );
@@ -189,16 +186,6 @@ export default function RoutesPolicyTree( { form, setField } ) {
 			( prev || [] ).map( ( u ) => {
 				if ( u.id !== userId ) {
 					return u;
-				}
-				let routes = [ ...u.related_routes_uuid ];
-				for ( const routeId of routeIds ) {
-					if ( grant ) {
-						if ( ! routes.includes( routeId ) ) {
-							routes.push( routeId );
-						}
-					} else {
-						routes = routes.filter( ( r ) => r !== routeId );
-					}
 				}
 				let routes = [ ...u.related_routes_uuid ];
 				for ( const routeId of routeIds ) {

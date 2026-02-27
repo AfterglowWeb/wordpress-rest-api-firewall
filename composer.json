@@ -1,6 +1,6 @@
 {
-  "name": "cmk/rest-api-firewall",
-  "description": "A minimal WordPress theme designed exclusively for headless CMS usage.",
+  "name": "cmk/application-layer",
+  "description": "A WordPress plugin designed for application layer functionality.",
   "type": "wordpress-plugin",
   "license": "GPL-2.0-or-later",
   "authors": [
