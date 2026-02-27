@@ -66,11 +66,11 @@ WordPress Application Layer is a comprehensive suite designed to secure, filter,
     </td>
   </tr>
   <tr>
-    <td align="center" width="75%" height="500px">
+    <td align="center" width="50%" height="500px">
       <img src="docs/wordpress-application-layer-routes-tab.webp" alt="Routes Management" />
       <br /><strong>Routes Tab</strong><br />
     </td>
-    <td align="top" width="25%">
+    <td align="top" width="50%">
       <img src="docs/wordpress-application-layer-license-tab.webp" alt="License Tab" />
       <br /><strong>License Tab</strong><br />
     </td>

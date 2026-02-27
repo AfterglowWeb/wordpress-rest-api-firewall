@@ -44,19 +44,37 @@ export default function Applications() {
 
 	const [ editingApp, setEditingApp ] = useState( null );
 
-	const handleDeleteOne = useCallback( ( id, title ) => {
-		remove(
-			{ action: 'delete_application_entry', id },
-			{
-				confirmTitle:   __( 'Delete Application', 'rest-api-firewall' ),
-				confirmMessage: title
-					? `${ __( 'Permanently delete', 'rest-api-firewall' ) } "${ title }"? ${ __( 'This action cannot be undone.', 'rest-api-firewall' ) }`
-					: __( 'Permanently delete this application? This action cannot be undone.', 'rest-api-firewall' ),
-				confirmLabel:   __( 'Delete', 'rest-api-firewall' ),
-				onSuccess: () => setRows( ( prev ) => prev.filter( ( row ) => row.id !== id ) ),
-			}
-		);
-	}, [ remove, __ ] );
+	const handleDeleteOne = useCallback(
+		( id, title ) => {
+			remove(
+				{ action: 'delete_application_entry', id },
+				{
+					confirmTitle: __(
+						'Delete Application',
+						'rest-api-firewall'
+					),
+					confirmMessage: title
+						? `${ __(
+								'Permanently delete',
+								'rest-api-firewall'
+						  ) } "${ title }"? ${ __(
+								'This action cannot be undone.',
+								'rest-api-firewall'
+						  ) }`
+						: __(
+								'Permanently delete this application? This action cannot be undone.',
+								'rest-api-firewall'
+						  ),
+					confirmLabel: __( 'Delete', 'rest-api-firewall' ),
+					onSuccess: () =>
+						setRows( ( prev ) =>
+							prev.filter( ( row ) => row.id !== id )
+						),
+				}
+			);
+		},
+		[ remove, __ ]
+	);
 
 	const columns = useMemo(
 		() => [
@@ -70,7 +88,9 @@ export default function Applications() {
 					<IconButton
 						size="small"
 						color="default"
-						onClick={ () => handleDeleteOne( params.row.id, params.row.title ) }
+						onClick={ () =>
+							handleDeleteOne( params.row.id, params.row.title )
+						}
 					>
 						<DeleteOutlineIcon fontSize="small" />
 					</IconButton>
@@ -210,18 +230,28 @@ export default function Applications() {
 	const handleDeleteSelected = () => {
 		const selectedIds = [ ...rowSelectionModel.ids ];
 		const count = selectedIds.length;
-		if ( count === 0 ) return;
+		if ( count === 0 ) {
+			return;
+		}
 
 		const selectedSet = new Set( selectedIds );
 
 		remove(
-			{ action: 'delete_application_entries', ids: JSON.stringify( selectedIds ) },
 			{
-				confirmTitle:   __( 'Delete Applications', 'rest-api-firewall' ),
-				confirmMessage: `${ count } ${ __( 'applications will be permanently deleted. This action cannot be undone.', 'rest-api-firewall' ) }`,
-				confirmLabel:   __( 'Delete', 'rest-api-firewall' ),
+				action: 'delete_application_entries',
+				ids: JSON.stringify( selectedIds ),
+			},
+			{
+				confirmTitle: __( 'Delete Applications', 'rest-api-firewall' ),
+				confirmMessage: `${ count } ${ __(
+					'applications will be permanently deleted. This action cannot be undone.',
+					'rest-api-firewall'
+				) }`,
+				confirmLabel: __( 'Delete', 'rest-api-firewall' ),
 				onSuccess: () => {
-					setRows( ( prev ) => prev.filter( ( row ) => ! selectedSet.has( row.id ) ) );
+					setRows( ( prev ) =>
+						prev.filter( ( row ) => ! selectedSet.has( row.id ) )
+					);
 					setRowSelectionModel( { type: 'include', ids: new Set() } );
 				},
 			}
@@ -241,13 +271,20 @@ export default function Applications() {
 	}
 
 	return (
-		<Stack spacing={ 2 } p={{ xs: 2, sm: 4 }}>
+		<Stack spacing={ 2 } p={ { xs: 2, sm: 4 } }>
 			<Toolbar disableGutters sx={ { gap: 2, mb: 2, flexWrap: 'wrap' } }>
 				<Button
 					variant="contained"
 					size="small"
 					disableElevation
-					onClick={ () => setEditingApp( { id: null, title: '', active: true, policy: false } ) }
+					onClick={ () =>
+						setEditingApp( {
+							id: null,
+							title: '',
+							active: false,
+							policy: false,
+						} )
+					}
 				>
 					{ __( 'New Application', 'rest-api-firewall' ) }
 				</Button>

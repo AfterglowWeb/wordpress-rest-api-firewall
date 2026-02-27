@@ -43,10 +43,10 @@ function SectionHeader( { title, description } ) {
 const HTTP_METHODS = [ 'get', 'post', 'put', 'patch', 'delete' ];
 
 const AUTH_METHODS = [
-	{ value: 'any',          label: 'Any (no restriction)' },
-	{ value: 'jwt',          label: 'JWT' },
+	{ value: 'any', label: 'Any (no restriction)' },
+	{ value: 'jwt', label: 'JWT' },
 	{ value: 'app_password', label: 'Application Password' },
-	{ value: 'wp_auth',      label: 'WordPress Cookie / Session' },
+	{ value: 'wp_auth', label: 'WordPress Cookie / Session' },
 ];
 
 export default function UserEditor( { user, onBack } ) {
@@ -57,28 +57,38 @@ export default function UserEditor( { user, onBack } ) {
 
 	const { save, remove, saving } = useProActions();
 
-	const [ loading, setLoading ] = useState( true );
+	const isNew = ! user.id;
+
+	const [ loading, setLoading ] = useState( ! isNew );
 	const [ loadError, setLoadError ] = useState( '' );
 
-	// read-only identity fields
+	const [ wpUserId, setWpUserId ] = useState( '' );
 	const [ displayName, setDisplayName ] = useState( user.display_name || '' );
-	const [ appTitle, setAppTitle ]       = useState( user.app_title || '' );
+	const [ appTitle, setAppTitle ] = useState( user.app_title || '' );
 	const [ dateCreated, setDateCreated ] = useState( '' );
 	const [ dateModified, setDateModified ] = useState( '' );
 
-	// editable fields
-	const [ status, setStatus ]                   = useState( user.status === 'active' );
-	const [ authMethod, setAuthMethod ]           = useState( 'any' );
-	const [ allowedMethods, setAllowedMethods ]   = useState( user.allowed_methods || [ 'get' ] );
-	const [ rateLimitRequests, setRateLimitRequests ] = useState( 100 );
-	const [ rateLimitWindow, setRateLimitWindow ]     = useState( 60 );
+	const [ status, setStatus ] = useState( user.status === 'active' );
+	const [ authMethod, setAuthMethod ] = useState( user.auth_method || 'any' );
+	const [ allowedMethods, setAllowedMethods ] = useState(
+		user.allowed_methods || [ 'get' ]
+	);
+	const [ rateLimitRequests, setRateLimitRequests ] = useState(
+		user.rate_limit_max_requests ?? 100
+	);
+	const [ rateLimitWindow, setRateLimitWindow ] = useState(
+		user.rate_limit_window_seconds ?? 60
+	);
 
 	const loadEntry = useCallback( async () => {
 		setLoading( true );
 		try {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+				headers: {
+					'Content-Type':
+						'application/x-www-form-urlencoded; charset=UTF-8',
+				},
 				body: new URLSearchParams( {
 					action: 'get_user_entry',
 					nonce,
@@ -94,12 +104,27 @@ export default function UserEditor( { user, onBack } ) {
 				setStatus( e.status === 'active' );
 				setAuthMethod( e.auth_method || 'any' );
 				setAllowedMethods( e.allowed_methods || [ 'get' ] );
-				setRateLimitRequests( e.rate_limit?.max_requests ?? 100 );
-				setRateLimitWindow( e.rate_limit?.window_seconds ?? 60 );
-				setDateCreated( formatDate( e.date_created, adminData.date_format, adminData.time_format ) );
-				setDateModified( formatDate( e.date_modified, adminData.date_format, adminData.time_format ) );
+				setRateLimitRequests( e.rate_limit_max_requests ?? 100 );
+				setRateLimitWindow( e.rate_limit_window_seconds ?? 60 );
+				setDateCreated(
+					formatDate(
+						e.date_created,
+						adminData.date_format,
+						adminData.time_format
+					)
+				);
+				setDateModified(
+					formatDate(
+						e.date_modified,
+						adminData.date_format,
+						adminData.time_format
+					)
+				);
 			} else {
-				setLoadError( result?.data?.message || __( 'Failed to load user', 'rest-api-firewall' ) );
+				setLoadError(
+					result?.data?.message ||
+						__( 'Failed to load user', 'rest-api-firewall' )
+				);
 			}
 		} catch ( err ) {
 			setLoadError( err.message );
@@ -109,8 +134,11 @@ export default function UserEditor( { user, onBack } ) {
 	}, [ adminData, nonce, user.id ] );
 
 	useEffect( () => {
+		if ( isNew ) {
+			return;
+		}
 		loadEntry();
-	}, [ loadEntry ] );
+	}, [ isNew, loadEntry ] );
 
 	const toggleMethod = ( method ) => {
 		setAllowedMethods( ( prev ) =>
@@ -120,39 +148,71 @@ export default function UserEditor( { user, onBack } ) {
 		);
 	};
 
+	const commonPayload = {
+		status: status ? 'active' : 'inactive',
+		auth_method: authMethod,
+		allowed_methods: JSON.stringify( allowedMethods ),
+		rate_limit_max_requests: String(
+			parseInt( rateLimitRequests, 10 ) || 100
+		),
+		rate_limit_window_seconds: String(
+			parseInt( rateLimitWindow, 10 ) || 60
+		),
+	};
+
 	const handleSave = () => {
-		save(
-			{
-				action:          'update_user_entry',
-				id:              user.id,
-				status:          status ? 'active' : 'inactive',
-				allowed_methods: JSON.stringify( allowedMethods ),
-				settings:        JSON.stringify( {
-					auth_method: authMethod,
-					rate_limit: {
-						max_requests:   parseInt( rateLimitRequests, 10 ) || 100,
-						window_seconds: parseInt( rateLimitWindow, 10 ) || 60,
-					},
-				} ),
-			},
-			{
-				skipConfirm:    true,
-				successTitle:   __( 'User Saved', 'rest-api-firewall' ),
-				successMessage: __( 'User settings saved successfully.', 'rest-api-firewall' ),
+		if ( isNew ) {
+			if ( ! wpUserId ) {
+				return;
 			}
-		);
+			save(
+				{
+					action: 'add_user_entry',
+					application_id: user.application_id,
+					wp_user_id: wpUserId,
+					...commonPayload,
+				},
+				{
+					skipConfirm: true,
+					successTitle: __( 'User Added', 'rest-api-firewall' ),
+					successMessage: __(
+						'User added successfully.',
+						'rest-api-firewall'
+					),
+					onSuccess: onBack,
+				}
+			);
+		} else {
+			save(
+				{ action: 'update_user_entry', id: user.id, ...commonPayload },
+				{
+					skipConfirm: true,
+					successTitle: __( 'User Saved', 'rest-api-firewall' ),
+					successMessage: __(
+						'User settings saved successfully.',
+						'rest-api-firewall'
+					),
+				}
+			);
+		}
 	};
 
 	const handleDelete = () => {
 		remove(
 			{ action: 'delete_user_entry', id: user.id },
 			{
-				confirmTitle:   __( 'Delete User', 'rest-api-firewall' ),
-				confirmMessage: __( 'Are you sure you want to permanently delete this user? This action cannot be undone.', 'rest-api-firewall' ),
-				confirmLabel:   __( 'Delete', 'rest-api-firewall' ),
-				successTitle:   __( 'User Deleted', 'rest-api-firewall' ),
-				successMessage: __( 'The user has been removed.', 'rest-api-firewall' ),
-				onSuccess:      onBack,
+				confirmTitle: __( 'Delete User', 'rest-api-firewall' ),
+				confirmMessage: __(
+					'Are you sure you want to permanently delete this user? This action cannot be undone.',
+					'rest-api-firewall'
+				),
+				confirmLabel: __( 'Delete', 'rest-api-firewall' ),
+				successTitle: __( 'User Deleted', 'rest-api-firewall' ),
+				successMessage: __(
+					'The user has been removed.',
+					'rest-api-firewall'
+				),
+				onSuccess: onBack,
 			}
 		);
 	};
@@ -182,40 +242,74 @@ export default function UserEditor( { user, onBack } ) {
 			>
 				<Stack direction="row" gap={ 2 }>
 					<Stack alignItems="center" justifyContent="center">
-						<IconButton size="small" onClick={ onBack } aria-label={ __( 'Back', 'rest-api-firewall' ) }>
+						<IconButton
+							size="small"
+							onClick={ onBack }
+							aria-label={ __( 'Back', 'rest-api-firewall' ) }
+						>
 							<ArrowBackIcon />
 						</IconButton>
 					</Stack>
 					<Stack spacing={ 0 }>
 						<Typography variant="h6" fontWeight={ 600 } noWrap>
-							{ displayName }
+							{ isNew
+								? __( 'New User', 'rest-api-firewall' )
+								: displayName }
 						</Typography>
-						<Stack direction={ { xs: 'column', xl: 'row' } } gap={ { xs: 0, xl: 2 } } flexWrap="wrap" alignItems={ { xl: 'center' } }>
-							<FormControlLabel
-								control={
-									<Switch
-										checked={ status }
-										onChange={ ( e ) => setStatus( e.target.checked ) }
-										size="small"
-									/>
-								}
-								label={ __( 'Active', 'rest-api-firewall' ) }
-							/>
-							{ appTitle && (
-								<Chip label={ appTitle } size="small" variant="outlined" sx={ { fontFamily: 'monospace' } } />
-							) }
-							{ ( dateCreated || dateModified ) && (
-								<Typography variant="caption" color="text.secondary">
-									{ dateCreated && <span>{ dateCreated }</span> }
-									{ dateModified && (
-										<>
-											<br />
-											<span>{ __( 'Mod.', 'rest-api-firewall' ) } { dateModified }</span>
-										</>
+						{ ! isNew && (
+							<Stack
+								direction={ { xs: 'column', xl: 'row' } }
+								gap={ { xs: 0, xl: 2 } }
+								flexWrap="wrap"
+								alignItems={ { xl: 'center' } }
+							>
+								<FormControlLabel
+									control={
+										<Switch
+											checked={ status }
+											onChange={ ( e ) =>
+												setStatus( e.target.checked )
+											}
+											size="small"
+										/>
+									}
+									label={ __(
+										'Active',
+										'rest-api-firewall'
 									) }
-								</Typography>
-							) }
-						</Stack>
+								/>
+								{ appTitle && (
+									<Chip
+										label={ appTitle }
+										size="small"
+										variant="outlined"
+										sx={ { fontFamily: 'monospace' } }
+									/>
+								) }
+								{ ( dateCreated || dateModified ) && (
+									<Typography
+										variant="caption"
+										color="text.secondary"
+									>
+										{ dateCreated && (
+											<span>{ dateCreated }</span>
+										) }
+										{ dateModified && (
+											<>
+												<br />
+												<span>
+													{ __(
+														'Mod.',
+														'rest-api-firewall'
+													) }{ ' ' }
+													{ dateModified }
+												</span>
+											</>
+										) }
+									</Typography>
+								) }
+							</Stack>
+						) }
 					</Stack>
 				</Stack>
 
@@ -224,40 +318,113 @@ export default function UserEditor( { user, onBack } ) {
 						variant="contained"
 						size="small"
 						disableElevation
-						disabled={ saving }
+						disabled={ saving || ( isNew && ! wpUserId ) }
 						onClick={ handleSave }
 					>
-						{ __( 'Save', 'rest-api-firewall' ) }
+						{ isNew
+							? __( 'Add User', 'rest-api-firewall' )
+							: __( 'Save', 'rest-api-firewall' ) }
 					</Button>
 
-					<Button
-						variant="outlined"
-						color="error"
-						size="small"
-						startIcon={ <DeleteOutlineIcon /> }
-						onClick={ handleDelete }
-					>
-						{ __( 'Delete', 'rest-api-firewall' ) }
-					</Button>
+					{ ! isNew && (
+						<Button
+							variant="outlined"
+							color="error"
+							size="small"
+							startIcon={ <DeleteOutlineIcon /> }
+							onClick={ handleDelete }
+						>
+							{ __( 'Delete', 'rest-api-firewall' ) }
+						</Button>
+					) }
 				</Stack>
 			</Toolbar>
 
 			{ loadError && <Alert severity="error">{ loadError }</Alert> }
 
-			<Stack p={ { xs: 2, sm: 4 } } spacing={ 3 } sx={ { maxWidth: 760 } }>
+			<Stack
+				p={ { xs: 2, sm: 4 } }
+				spacing={ 3 }
+				sx={ { maxWidth: 760 } }
+			>
+				{ /* WP user selector — new user only */ }
+				{ isNew && (
+					<Stack spacing={ 2 }>
+						<SectionHeader
+							title={ __(
+								'WordPress User',
+								'rest-api-firewall'
+							) }
+							description={ __(
+								'Select the WordPress user to link to this application.',
+								'rest-api-firewall'
+							) }
+						/>
+						<FormControl
+							size="small"
+							sx={ { maxWidth: 340 } }
+							required
+						>
+							<InputLabel>
+								{ __( 'WordPress User', 'rest-api-firewall' ) }
+							</InputLabel>
+							<Select
+								value={ wpUserId }
+								onChange={ ( e ) =>
+									setWpUserId( e.target.value )
+								}
+								label={ __(
+									'WordPress User',
+									'rest-api-firewall'
+								) }
+							>
+								{ ( adminData?.users || [] ).map( ( u ) => (
+									<MenuItem key={ u.value } value={ u.value }>
+										{ u.label }
+									</MenuItem>
+								) ) }
+							</Select>
+						</FormControl>
+
+						{ /* Status switch for new users */ }
+						<FormControlLabel
+							control={
+								<Switch
+									checked={ status }
+									onChange={ ( e ) =>
+										setStatus( e.target.checked )
+									}
+									size="small"
+								/>
+							}
+							label={ __( 'Active', 'rest-api-firewall' ) }
+						/>
+
+						<Divider />
+					</Stack>
+				) }
 
 				{ /* Auth method */ }
 				<Stack spacing={ 2 }>
 					<SectionHeader
-						title={ __( 'Authentication Method', 'rest-api-firewall' ) }
-						description={ __( 'Restrict which authentication mechanism this user must use. "Any" allows all configured methods.', 'rest-api-firewall' ) }
+						title={ __(
+							'Authentication Method',
+							'rest-api-firewall'
+						) }
+						description={ __(
+							'Restrict which authentication mechanism this user must use. "Any" allows all configured methods.',
+							'rest-api-firewall'
+						) }
 					/>
-
 					<FormControl size="small" sx={ { maxWidth: 280 } }>
-						<InputLabel>{ __( 'Auth Method', 'rest-api-firewall' ) }</InputLabel>
+						<InputLabel>
+							{ __( 'Auth Method', 'rest-api-firewall' ) }
+						</InputLabel>
 						<Select
 							value={ authMethod }
-							onChange={ ( e ) => setAuthMethod( e.target.value ) }
+							onChange={ ( e ) =>
+								setAuthMethod( e.target.value )
+							}
 							label={ __( 'Auth Method', 'rest-api-firewall' ) }
 						>
 							{ AUTH_METHODS.map( ( opt ) => (
@@ -274,23 +441,38 @@ export default function UserEditor( { user, onBack } ) {
 				{ /* Allowed HTTP methods */ }
 				<Stack spacing={ 2 }>
 					<SectionHeader
-						title={ __( 'Allowed HTTP Methods', 'rest-api-firewall' ) }
-						description={ __( 'Which HTTP verbs this user is allowed to use against the API.', 'rest-api-firewall' ) }
+						title={ __(
+							'Allowed HTTP Methods',
+							'rest-api-firewall'
+						) }
+						description={ __(
+							'Which HTTP verbs this user is allowed to use against the API.',
+							'rest-api-firewall'
+						) }
 					/>
-
 					<Stack direction="row" flexWrap="wrap" gap={ 1 }>
 						{ HTTP_METHODS.map( ( method ) => (
 							<FormControlLabel
 								key={ method }
 								label={
-									<Typography variant="body2" sx={ { fontFamily: 'monospace', fontWeight: 600 } }>
+									<Typography
+										variant="body2"
+										sx={ {
+											fontFamily: 'monospace',
+											fontWeight: 600,
+										} }
+									>
 										{ method.toUpperCase() }
 									</Typography>
 								}
 								control={
 									<Checkbox
-										checked={ allowedMethods.includes( method ) }
-										onChange={ () => toggleMethod( method ) }
+										checked={ allowedMethods.includes(
+											method
+										) }
+										onChange={ () =>
+											toggleMethod( method )
+										}
 										size="small"
 									/>
 								}
@@ -299,7 +481,11 @@ export default function UserEditor( { user, onBack } ) {
 									px: 1.5,
 									py: 0.5,
 									border: 1,
-									borderColor: allowedMethods.includes( method ) ? 'primary.main' : 'divider',
+									borderColor: allowedMethods.includes(
+										method
+									)
+										? 'primary.main'
+										: 'divider',
 									borderRadius: 1,
 									userSelect: 'none',
 								} }
@@ -314,33 +500,50 @@ export default function UserEditor( { user, onBack } ) {
 				<Stack spacing={ 2 }>
 					<SectionHeader
 						title={ __( 'Rate Limiting', 'rest-api-firewall' ) }
-						description={ __( 'Per-user request cap. Overrides the application-level rate limit when stricter limits are needed.', 'rest-api-firewall' ) }
+						description={ __(
+							'Per-user request cap. Overrides the application-level rate limit when stricter limits are needed.',
+							'rest-api-firewall'
+						) }
 					/>
-
-					<Stack direction={ { xs: 'column', sm: 'row' } } spacing={ 2 }>
+					<Stack
+						direction={ { xs: 'column', sm: 'row' } }
+						spacing={ 2 }
+					>
 						<TextField
 							label={ __( 'Max Requests', 'rest-api-firewall' ) }
 							type="number"
 							size="small"
 							value={ rateLimitRequests }
-							onChange={ ( e ) => setRateLimitRequests( e.target.value ) }
-							helperText={ __( 'Requests allowed per window', 'rest-api-firewall' ) }
+							onChange={ ( e ) =>
+								setRateLimitRequests( e.target.value )
+							}
+							helperText={ __(
+								'Requests allowed per window',
+								'rest-api-firewall'
+							) }
 							inputProps={ { min: 1 } }
 							sx={ { maxWidth: 200 } }
 						/>
 						<TextField
-							label={ __( 'Window (seconds)', 'rest-api-firewall' ) }
+							label={ __(
+								'Window (seconds)',
+								'rest-api-firewall'
+							) }
 							type="number"
 							size="small"
 							value={ rateLimitWindow }
-							onChange={ ( e ) => setRateLimitWindow( e.target.value ) }
-							helperText={ __( 'Rolling time window', 'rest-api-firewall' ) }
+							onChange={ ( e ) =>
+								setRateLimitWindow( e.target.value )
+							}
+							helperText={ __(
+								'Rolling time window',
+								'rest-api-firewall'
+							) }
 							inputProps={ { min: 1 } }
 							sx={ { maxWidth: 200 } }
 						/>
 					</Stack>
 				</Stack>
-
 			</Stack>
 		</Stack>
 	);

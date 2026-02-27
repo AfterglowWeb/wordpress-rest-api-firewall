@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useLicense } from '../../../contexts/LicenseContext';
+import { useApplication } from '../../../contexts/ApplicationContext';
 
 import { DataGrid } from '@mui/x-data-grid';
 
@@ -18,20 +19,13 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import UserEditor from './UserEditor';
 import useProActions from '../../../hooks/useProActions';
 
-const HTTP_METHOD_COLORS = {
-	get:    'success',
-	post:   'primary',
-	put:    'warning',
-	patch:  'warning',
-	delete: 'error',
-};
-
 export default function Users() {
 	const { adminData } = useAdminData();
 	const { hasValidLicense, proNonce } = useLicense();
 	const nonce = proNonce || adminData.nonce;
 	const { __ } = wp.i18n || {};
 
+	const { selectedApplicationId } = useApplication();
 	const { remove } = useProActions();
 
 	const [ rows, setRows ] = useState( [] );
@@ -47,23 +41,37 @@ export default function Users() {
 		type: 'include',
 		ids: new Set( [] ),
 	} );
-
 	const [ fetchError, setFetchError ] = useState( '' );
 	const [ editingUser, setEditingUser ] = useState( null );
 
-	const handleDeleteOne = useCallback( ( id, displayName ) => {
-		remove(
-			{ action: 'delete_user_entry', id },
-			{
-				confirmTitle:   __( 'Delete User', 'rest-api-firewall' ),
-				confirmMessage: displayName
-					? `${ __( 'Unlink and permanently delete', 'rest-api-firewall' ) } "${ displayName }"? ${ __( 'This action cannot be undone.', 'rest-api-firewall' ) }`
-					: __( 'Permanently delete this user? This action cannot be undone.', 'rest-api-firewall' ),
-				confirmLabel: __( 'Delete', 'rest-api-firewall' ),
-				onSuccess: () => setRows( ( prev ) => prev.filter( ( row ) => row.id !== id ) ),
-			}
-		);
-	}, [ remove, __ ] );
+	const handleDeleteOne = useCallback(
+		( id, displayName ) => {
+			remove(
+				{ action: 'delete_user_entry', id },
+				{
+					confirmTitle: __( 'Delete User', 'rest-api-firewall' ),
+					confirmMessage: displayName
+						? `${ __(
+								'Permanently delete',
+								'rest-api-firewall'
+						  ) } "${ displayName }"? ${ __(
+								'This action cannot be undone.',
+								'rest-api-firewall'
+						  ) }`
+						: __(
+								'Permanently delete this user? This action cannot be undone.',
+								'rest-api-firewall'
+						  ),
+					confirmLabel: __( 'Delete', 'rest-api-firewall' ),
+					onSuccess: () =>
+						setRows( ( prev ) =>
+							prev.filter( ( row ) => row.id !== id )
+						),
+				}
+			);
+		},
+		[ remove, __ ]
+	);
 
 	const columns = useMemo(
 		() => [
@@ -77,7 +85,12 @@ export default function Users() {
 					<IconButton
 						size="small"
 						color="default"
-						onClick={ () => handleDeleteOne( params.row.id, params.row.display_name ) }
+						onClick={ () =>
+							handleDeleteOne(
+								params.row.id,
+								params.row.display_name
+							)
+						}
 					>
 						<DeleteOutlineIcon fontSize="small" />
 					</IconButton>
@@ -89,9 +102,18 @@ export default function Users() {
 				width: 100,
 				renderCell: ( params ) =>
 					params.value === 'active' ? (
-						<Chip label={ __( 'Active', 'rest-api-firewall' ) } size="small" color="success" variant="outlined" />
+						<Chip
+							label={ __( 'Active', 'rest-api-firewall' ) }
+							size="small"
+							color="success"
+							variant="outlined"
+						/>
 					) : (
-						<Chip label={ __( 'Inactive', 'rest-api-firewall' ) } size="small" variant="outlined" />
+						<Chip
+							label={ __( 'Inactive', 'rest-api-firewall' ) }
+							size="small"
+							variant="outlined"
+						/>
 					),
 			},
 			{
@@ -116,26 +138,21 @@ export default function Users() {
 						>
 							{ params.value }
 						</Typography>
-						<OpenInNewIcon sx={ { fontSize: 13, color: 'text.disabled' } } />
+						<OpenInNewIcon
+							sx={ { fontSize: 13, color: 'text.disabled' } }
+						/>
 					</Stack>
-				),
-			},
-			{
-				field: 'app_title',
-				headerName: __( 'Application', 'rest-api-firewall' ),
-				width: 180,
-				renderCell: ( params ) => (
-					<Typography variant="body2" sx={ { fontFamily: 'monospace' } }>
-						{ params.value || '-' }
-					</Typography>
 				),
 			},
 			{
 				field: 'auth_method',
 				headerName: __( 'Auth Method', 'rest-api-firewall' ),
-				width: 130,
+				width: 140,
 				renderCell: ( params ) => (
-					<Typography variant="body2" sx={ { fontFamily: 'monospace' } }>
+					<Typography
+						variant="body2"
+						sx={ { fontFamily: 'monospace' } }
+					>
 						{ params.value || 'any' }
 					</Typography>
 				),
@@ -143,19 +160,20 @@ export default function Users() {
 			{
 				field: 'allowed_methods',
 				headerName: __( 'HTTP Methods', 'rest-api-firewall' ),
-				width: 200,
+				width: 210,
 				sortable: false,
 				renderCell: ( params ) => {
 					const methods = params.value || [];
-					if ( methods.length === 0 ) return <Typography variant="body2">-</Typography>;
+					if ( methods.length === 0 ) {
+						return <Typography variant="body2">-</Typography>;
+					}
 					return (
-						<Stack direction="row" spacing={ 0.5 } flexWrap="wrap">
+						<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
 							{ methods.map( ( m ) => (
 								<Chip
 									key={ m }
 									label={ m.toUpperCase() }
 									size="small"
-									color={ HTTP_METHOD_COLORS[ m ] || 'default' }
 									variant="outlined"
 									sx={ { fontSize: 10, height: 18 } }
 								/>
@@ -165,14 +183,24 @@ export default function Users() {
 				},
 			},
 			{
-				field: 'date_created',
-				headerName: __( 'Date Created', 'rest-api-firewall' ),
-				width: 150,
-				renderCell: ( params ) => params.value || '-',
+				field: 'rate_limit_max_requests',
+				headerName: __( 'Rate Limit', 'rest-api-firewall' ),
+				width: 120,
+				renderCell: ( params ) => (
+					<Typography
+						variant="body2"
+						sx={ { fontFamily: 'monospace' } }
+					>
+						{ params.value ?? '-' }
+						{ params.value
+							? ` / ${ params.row.rate_limit_window_seconds }s`
+							: '' }
+					</Typography>
+				),
 			},
 			{
-				field: 'date_modified',
-				headerName: __( 'Date Modified', 'rest-api-firewall' ),
+				field: 'date_created',
+				headerName: __( 'Date Created', 'rest-api-firewall' ),
 				width: 150,
 				renderCell: ( params ) => params.value || '-',
 			},
@@ -181,13 +209,27 @@ export default function Users() {
 	);
 
 	const fetchEntries = useCallback( async () => {
+		if ( ! selectedApplicationId ) {
+			setRows( [] );
+			setLoading( false );
+			return;
+		}
+
 		setLoading( true );
+		setFetchError( '' );
 
 		try {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-				body: new URLSearchParams( { action: 'get_user_entries', nonce } ),
+				headers: {
+					'Content-Type':
+						'application/x-www-form-urlencoded; charset=UTF-8',
+				},
+				body: new URLSearchParams( {
+					action: 'get_user_entries',
+					nonce,
+					application_id: selectedApplicationId,
+				} ),
 			} );
 
 			const result = await response.json();
@@ -200,7 +242,7 @@ export default function Users() {
 		} finally {
 			setLoading( false );
 		}
-	}, [ adminData, nonce ] );
+	}, [ adminData, nonce, selectedApplicationId ] );
 
 	useEffect( () => {
 		fetchEntries();
@@ -209,18 +251,28 @@ export default function Users() {
 	const handleDeleteSelected = () => {
 		const selectedIds = [ ...rowSelectionModel.ids ];
 		const count = selectedIds.length;
-		if ( count === 0 ) return;
+		if ( count === 0 ) {
+			return;
+		}
 
 		const selectedSet = new Set( selectedIds );
 
 		remove(
-			{ action: 'delete_user_entries', ids: JSON.stringify( selectedIds ) },
 			{
-				confirmTitle:   __( 'Delete Users', 'rest-api-firewall' ),
-				confirmMessage: `${ count } ${ __( 'users will be permanently deleted. This action cannot be undone.', 'rest-api-firewall' ) }`,
-				confirmLabel:   __( 'Delete', 'rest-api-firewall' ),
+				action: 'delete_user_entries',
+				ids: JSON.stringify( selectedIds ),
+			},
+			{
+				confirmTitle: __( 'Delete Users', 'rest-api-firewall' ),
+				confirmMessage: `${ count } ${ __(
+					'users will be permanently deleted. This action cannot be undone.',
+					'rest-api-firewall'
+				) }`,
+				confirmLabel: __( 'Delete', 'rest-api-firewall' ),
 				onSuccess: () => {
-					setRows( ( prev ) => prev.filter( ( row ) => ! selectedSet.has( row.id ) ) );
+					setRows( ( prev ) =>
+						prev.filter( ( row ) => ! selectedSet.has( row.id ) )
+					);
 					setRowSelectionModel( { type: 'include', ids: new Set() } );
 				},
 			}
@@ -242,6 +294,25 @@ export default function Users() {
 	return (
 		<Stack spacing={ 2 } p={ { xs: 2, sm: 4 } }>
 			<Toolbar disableGutters sx={ { gap: 2, mb: 2, flexWrap: 'wrap' } }>
+				<Button
+					variant="contained"
+					size="small"
+					disableElevation
+					onClick={ () =>
+						setEditingUser( {
+							id: null,
+							application_id: selectedApplicationId,
+							status: 'inactive',
+							auth_method: 'any',
+							allowed_methods: [ 'get' ],
+							rate_limit_max_requests: 100,
+							rate_limit_window_seconds: 60,
+						} )
+					}
+				>
+					{ __( 'New User', 'rest-api-firewall' ) }
+				</Button>
+
 				<Box sx={ { flexGrow: 1 } } />
 
 				{ rowSelectionModel.ids.size > 0 && (
@@ -252,7 +323,8 @@ export default function Users() {
 						onClick={ handleDeleteSelected }
 						startIcon={ <DeleteOutlineIcon /> }
 					>
-						{ __( 'Delete', 'rest-api-firewall' ) } ({ rowSelectionModel.ids.size })
+						{ __( 'Delete', 'rest-api-firewall' ) } (
+						{ rowSelectionModel.ids.size })
 					</Button>
 				) }
 			</Toolbar>

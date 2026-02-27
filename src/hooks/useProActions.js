@@ -59,11 +59,14 @@ export default function useProActions() {
 	const save = useCallback(
 		async ( payload, config = {} ) => {
 			const {
-				successTitle   = __( 'Saved', 'rest-api-firewall' ),
-				successMessage = __( 'Saved successfully.', 'rest-api-firewall' ),
-				confirmTitle   = __( 'Confirm Save', 'rest-api-firewall' ),
+				successTitle = __( 'Saved', 'rest-api-firewall' ),
+				successMessage = __(
+					'Saved successfully.',
+					'rest-api-firewall'
+				),
+				confirmTitle = __( 'Confirm Save', 'rest-api-firewall' ),
 				confirmMessage = __( 'Save changes?', 'rest-api-firewall' ),
-				skipConfirm    = false,
+				skipConfirm = false,
 				onSuccess,
 			} = config;
 
@@ -71,8 +74,8 @@ export default function useProActions() {
 				// openDialog (not updateDialog) so the dialog opens even when
 				// skipConfirm:true bypassed the initial openDialog(CONFIRM) call.
 				openDialog( {
-					type:    DIALOG_TYPES.LOADING,
-					title:   __( 'Saving', 'rest-api-firewall' ),
+					type: DIALOG_TYPES.LOADING,
+					title: __( 'Saving', 'rest-api-firewall' ),
 					content: __( 'Saving…', 'rest-api-firewall' ),
 				} );
 				setSaving( true );
@@ -82,12 +85,14 @@ export default function useProActions() {
 
 					if ( result?.success ) {
 						updateDialog( {
-							type:      DIALOG_TYPES.SUCCESS,
-							title:     successTitle,
-							content:   successMessage,
+							type: DIALOG_TYPES.SUCCESS,
+							title: successTitle,
+							content: successMessage,
 							autoClose: 2000,
 						} );
-						if ( onSuccess ) onSuccess( result.data );
+						if ( onSuccess ) {
+							onSuccess( result.data );
+						}
 						return { success: true, data: result.data };
 					}
 
@@ -96,15 +101,15 @@ export default function useProActions() {
 						result?.data?.error ||
 						__( 'Unknown error', 'rest-api-firewall' );
 					updateDialog( {
-						type:    DIALOG_TYPES.ERROR,
-						title:   __( 'Error', 'rest-api-firewall' ),
+						type: DIALOG_TYPES.ERROR,
+						title: __( 'Error', 'rest-api-firewall' ),
 						content: msg,
 					} );
 					return { success: false, error: msg };
 				} catch ( err ) {
 					updateDialog( {
-						type:    DIALOG_TYPES.ERROR,
-						title:   __( 'Error', 'rest-api-firewall' ),
+						type: DIALOG_TYPES.ERROR,
+						title: __( 'Error', 'rest-api-firewall' ),
 						content: err.message,
 					} );
 					return { success: false, error: err.message };
@@ -118,9 +123,9 @@ export default function useProActions() {
 			}
 
 			openDialog( {
-				type:     DIALOG_TYPES.CONFIRM,
-				title:    confirmTitle,
-				content:  confirmMessage,
+				type: DIALOG_TYPES.CONFIRM,
+				title: confirmTitle,
+				content: confirmMessage,
 				onConfirm: doSave,
 			} );
 		},
@@ -134,21 +139,24 @@ export default function useProActions() {
 	const remove = useCallback(
 		async ( payload, config = {} ) => {
 			const {
-				successTitle   = __( 'Deleted', 'rest-api-firewall' ),
-				successMessage = __( 'Deleted successfully.', 'rest-api-firewall' ),
-				confirmTitle   = __( 'Confirm Delete', 'rest-api-firewall' ),
+				successTitle = __( 'Deleted', 'rest-api-firewall' ),
+				successMessage = __(
+					'Deleted successfully.',
+					'rest-api-firewall'
+				),
+				confirmTitle = __( 'Confirm Delete', 'rest-api-firewall' ),
 				confirmMessage = __(
 					'Are you sure you want to delete this? This action cannot be undone.',
 					'rest-api-firewall'
 				),
-				confirmLabel   = __( 'Delete', 'rest-api-firewall' ),
+				confirmLabel = __( 'Delete', 'rest-api-firewall' ),
 				onSuccess,
 			} = config;
 
 			const doDelete = async () => {
 				openDialog( {
-					type:    DIALOG_TYPES.LOADING,
-					title:   __( 'Deleting', 'rest-api-firewall' ),
+					type: DIALOG_TYPES.LOADING,
+					title: __( 'Deleting', 'rest-api-firewall' ),
 					content: __( 'Deleting…', 'rest-api-firewall' ),
 				} );
 
@@ -157,12 +165,14 @@ export default function useProActions() {
 
 					if ( result?.success ) {
 						updateDialog( {
-							type:      DIALOG_TYPES.SUCCESS,
-							title:     successTitle,
-							content:   successMessage,
+							type: DIALOG_TYPES.SUCCESS,
+							title: successTitle,
+							content: successMessage,
 							autoClose: 1500,
 						} );
-						if ( onSuccess ) onSuccess( result.data );
+						if ( onSuccess ) {
+							onSuccess( result.data );
+						}
 						return { success: true };
 					}
 
@@ -171,15 +181,15 @@ export default function useProActions() {
 						result?.data?.error ||
 						__( 'Unknown error', 'rest-api-firewall' );
 					updateDialog( {
-						type:    DIALOG_TYPES.ERROR,
-						title:   __( 'Error', 'rest-api-firewall' ),
+						type: DIALOG_TYPES.ERROR,
+						title: __( 'Error', 'rest-api-firewall' ),
 						content: msg,
 					} );
 					return { success: false, error: msg };
 				} catch ( err ) {
 					updateDialog( {
-						type:    DIALOG_TYPES.ERROR,
-						title:   __( 'Error', 'rest-api-firewall' ),
+						type: DIALOG_TYPES.ERROR,
+						title: __( 'Error', 'rest-api-firewall' ),
 						content: err.message,
 					} );
 					return { success: false, error: err.message };
@@ -187,11 +197,11 @@ export default function useProActions() {
 			};
 
 			openDialog( {
-				type:         DIALOG_TYPES.CONFIRM,
-				title:        confirmTitle,
-				content:      confirmMessage,
+				type: DIALOG_TYPES.CONFIRM,
+				title: confirmTitle,
+				content: confirmMessage,
 				confirmLabel,
-				onConfirm:    doDelete,
+				onConfirm: doDelete,
 			} );
 		},
 		[ request, openDialog, updateDialog, __ ]
