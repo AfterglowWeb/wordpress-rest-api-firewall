@@ -1,12 +1,29 @@
-# REST API Tools — A WordPress Application Layer for Headless Architectures
+# WordPress Application Layer
 
-A WordPress plugin focused on REST API security, filtering, and headless architecture.
+A WordPress plugin that provides a secure application layer for the WordPress REST API.
 
-REST API Tools is a comprehensive suite designed to secure, filter, and extend the WordPress REST API while enabling seamless communication with front-end applications. It integrates with external apps built with Next.js, React, Vue, or any technology capable of consuming a REST API.
+WordPress Application Layer is a comprehensive suite designed to secure, filter, and extend the WordPress REST API while enabling seamless communication with front-end applications. It integrates with any technology or service capable of consuming REST APIs and webhooks.
+
+- Create multiple applications with distinct policy rules and data views, scoped per route and per user.
+- Map collections and properties through JSON objects, similar to Firebase or Supabase.
+- Create application users with restricted roles and specific authentication methods (JWT, OAuth, SSO, and WordPress authentication).
+- Trigger webhooks on WordPress events and custom events (support for major plugin events is under development).
+- Send notification emails.
+- Spin up a blank front-end template.
 
 ## Screenshots
 
 <table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/wordpress-application-layer-applications-1-tab.webp" alt="Applications List Tab" />
+      <br /><strong>Applications List Tab</strong><br />
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/wordpress-application-layer-applications-2-tab.webp" alt="Create Application Panel" />
+      <br /><strong>New Application Panel</strong><br />
+    </td>
+  </tr>
   <tr>
     <td align="center" width="50%">
       <img src="docs/wordpress-application-layer-auth-rate-limit-tab.webp" alt="Authentication and Rate Limit Tab" />
@@ -49,15 +66,19 @@ REST API Tools is a comprehensive suite designed to secure, filter, and extend t
     </td>
   </tr>
   <tr>
-    <td align="center" width="50%" height="300px">
+    <td align="center" width="75%" height="500px">
       <img src="docs/wordpress-application-layer-routes-tab.webp" alt="Routes Management" />
       <br /><strong>Routes Tab</strong><br />
+    </td>
+    <td align="top" width="25%">
+      <img src="docs/wordpress-application-layer-license-tab.webp" alt="License Tab" />
+      <br /><strong>License Tab</strong><br />
     </td>
   </tr>
 
 </table>
 
-## REST API Tools — FREE
+## Wordpress Application Layer — FREE
 
 - Enforce authentication, rate limiting, and IP blacklisting.
 - Add ACF options pages to the wp/v2/settings route.
@@ -84,11 +105,11 @@ Running fully headless? Deploy the bundled blank theme for additional control:
 - Limit image file size, and more
 </details>
 
-## REST API Tools — PRO
+## Wordpress Application Layer — PRO
 
-REST API Tools PRO introduces a multi-application architecture: serve multiple front-end applications with distinct REST API data views from a single WordPress installation. Configure multiple application environments and run them simultaneously.
+Wordpress Application Layer PRO introduces a multi-application architecture: serve multiple front-end applications with distinct REST API data views from a single WordPress installation. Configure multiple application environments and run them simultaneously.
 - Each application has its own security and content policy.
-- Request origin or IP determines which application configuration is loaded.
+- Authentication(s) and/or IP(s) determine which application configuration is loaded.
 - The same data source can be exposed through multiple REST API “views.”
 - Each application can replace the default wp/v2 namespace with a custom namespace.
 
@@ -156,7 +177,7 @@ Additionally, you can run applications entirely through webhooks. Data is sent u
 
 ## How does it work?
 
-REST API Tools operates exclusively within REST API and embedded contexts. It does not interfere with core WordPress or plugin functionality in the admin interface.
+Wordpress Application Layer operates exclusively within REST API and embedded contexts. It does not interfere with core WordPress or plugin functionality in the admin interface.
 
 If certain plugins require public REST API access, you can configure bypass rules.
 
@@ -171,7 +192,7 @@ If certain plugins require public REST API access, you can configure bypass rule
 
 ### Headless Forms — Endpoints & Entry Management
 
-Create secure endpoints to submit form data using REST API Tools’ security framework.
+Create secure endpoints to submit form data using Wordpress Application Layer’ security framework.
 
 The Entries Manager provides full CRUD operations for form submissions and is compatible with WPForms and Contact Form 7 out of the box.
 
@@ -181,7 +202,7 @@ Focused on security and privacy, it includes:
 - AES-256 entry encryption
 - Webhooks and notifications
 
-This module can be installed independently from REST API Tools.
+This module can be installed independently from Wordpress Application Layer.
 </details>
 
 <details>
@@ -264,7 +285,7 @@ yarn build
 
 ### 4. Optional: install the headless theme bundled with the plugin
 
-Navigate to the **REST API Tools** admin page, open the `Theme Options` tab, and click **Deploy**.
+Navigate to the **Wordpress Application Layer** admin page, open the `Theme Options` tab, and click **Deploy**.
 
 ## Roadmap — Free Features
 

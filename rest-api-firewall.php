@@ -1,16 +1,16 @@
 <?php namespace cmk\RestApiFirewall;
 
 /**
- * Headless Toolkit
+ * Application Layer
  *
- * @package Headless Toolkit
+ * @package Application Layer
  * @author  Cédric Moris Kelly
  *
  * @wordpress-plugin
- * Plugin Name:       Headless Toolkit
- * Version:           0.1.0-alpha.7
+ * Plugin Name:       Application Layer
+ * Version:           0.1.0-alpha.8
  * Description:       Secure REST API endpoints through authentication, rate limiting and much more. Set application Webhook with authentication to trigger external front-end application routines.
- * Tags:              firewall, rest api, rest, headless, webhook
+ * Tags:              firewall, rest, api, application, webhook
  * Plugin URI:        https://www.abc-plugins.com/wordpress-rest-api-firewall
  * Author:            Cédric Moris Kelly
  * Author URI:        https://www.moriskelly.com
@@ -26,7 +26,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'REST_API_FIREWALL_VERSION', '0.1.0-alpha.7' );
+define( 'REST_API_FIREWALL_VERSION', '0.1.0-alpha.8' );
 define( 'REST_API_FIREWALL_DIR', plugin_dir_path( __FILE__ ) );
 define( 'REST_API_FIREWALL_URL', plugin_dir_url( __FILE__ ) );
 define( 'REST_API_FIREWALL_FILE', __FILE__ );
@@ -38,7 +38,7 @@ if ( file_exists( REST_API_FIREWALL_DIR . '/vendor/autoload.php' ) ) {
 		'admin_notices',
 		function (): void {
 			echo '<div class="notice notice-error"><p>';
-			echo esc_html__( 'Headless Toolkit encountered an error and could not be activated.', 'rest-api-firewall' );
+			echo esc_html__( 'Application Layer encountered an error and could not be activated.', 'rest-api-firewall' );
 			echo '</p></div>';
 		}
 	);
@@ -72,14 +72,14 @@ add_action(
 		if ( $requires_wp && version_compare( get_bloginfo( 'version' ), $requires_wp, '<' ) ) {
 			echo '<div class="notice notice-error"><p>';
 			/* translators: %s is the WordPress version */
-			printf( esc_html__( 'Headless Toolkit requires WordPress version %s.', 'rest-api-firewall' ), esc_html( $requires_wp ) );
+			printf( esc_html__( 'Application Layer requires WordPress version %s.', 'rest-api-firewall' ), esc_html( $requires_wp ) );
 			echo '</p></div>';
 		}
 
 		if ( $requires_php && version_compare( PHP_VERSION, $requires_php, '<' ) ) {
 			echo '<div class="notice notice-error"><p>';
 			/* translators: %s is the PHP version */
-			printf( esc_html__( 'Headless Toolkit requires PHP version %s.', 'rest-api-firewall' ), esc_html( $requires_php ) );
+			printf( esc_html__( 'Application Layer requires PHP version %s.', 'rest-api-firewall' ), esc_html( $requires_php ) );
 			echo '</p></div>';
 		}
 	}

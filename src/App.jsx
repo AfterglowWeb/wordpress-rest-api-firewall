@@ -28,6 +28,8 @@ import Alert from '@mui/material/Alert';
 import Tooltip from '@mui/material/Tooltip';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
 
 import SecurityOutlined from '@mui/icons-material/SecurityOutlined';
 import PaletteOutlined from '@mui/icons-material/PaletteOutlined';
@@ -77,7 +79,7 @@ const AppLogo = styled( Avatar )( () => ( {
 	borderRadius: 12,
 	fontSize: '1.4rem',
 	fontWeight: 500,
-	fontFamily: 'Helvetica, Arial, sans-serif',
+	fontFamily: 'monospace, Helvetica, Arial, sans-serif',
 	color: 'white',
 	boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
 	position: 'relative',
@@ -429,7 +431,7 @@ function AppContent() {
 							boxSizing: 'border-box',
 						} }
 					>
-						<AppLogo>hT.</AppLogo>
+						<AppLogo>AL</AppLogo>
 						<Box>
 							<Typography variant="subtitle2" fontWeight={ 600 }>
 								{ adminData.plugin_name }
@@ -608,40 +610,48 @@ function AppContent() {
 							</IconButton>
 						) }
 
-						{ /* Application selector — shown when pro license is active */ }
 						{ hasValidLicense && (
-							<>
-								<Select
-									size="small"
-									value={ selectedApplicationId }
-									onChange={ ( e ) =>
-										setSelectedApplicationId( e.target.value )
-									}
-									displayEmpty
-									disabled={
-										applicationsLoading ||
-										applications.length === 0
-									}
-									sx={ { minWidth: 180, maxWidth: 260 } }
-									renderValue={ () =>
-										applicationsLoading
-											? __( 'Loading…', 'rest-api-firewall' )
-											: selectedApp?.title ||
-											  __(
-													'No application',
-													'rest-api-firewall'
-											  )
-									}
-								>
-									{ applications.map( ( app ) => (
-										<MenuItem key={ app.id } value={ app.id }>
-											{ app.title }
-										</MenuItem>
-									) ) }
-								</Select>
+							<Stack direction="row" alignItems="center" gap={ 2 }>
+								
+								<Stack sx={{ color: 'text.secondary' }}>
+									<AppsOutlinedIcon color="inherit" />
+								</Stack>
 
-								<Divider orientation="vertical" flexItem />
-							</>
+								<FormControl size="small" variant="standard" sx={{ minWidth: 180, maxWidth: 270 }}>
+									<InputLabel id={ `select-application-label` }>{ __('Application', 'rest-api-firewall') }</InputLabel>
+									<Select
+										size="small"
+										labelId={ `select-application-label` }
+										value={ selectedApplicationId }
+										onChange={ ( e ) =>
+											setSelectedApplicationId( e.target.value )
+										}
+										displayEmpty
+										disabled={
+											applicationsLoading ||
+											applications.length === 0
+										}
+										sx={ { minWidth: 180, maxWidth: 260 } }
+										renderValue={ () =>
+											applicationsLoading
+												? __( 'Loading…', 'rest-api-firewall' )
+												: selectedApp?.title ||
+												__(
+														'No application',
+														'rest-api-firewall'
+												)
+										}
+									>
+										{ applications.map( ( app ) => (
+											<MenuItem key={ app.id } value={ app.id }>
+												{ app.title }
+											</MenuItem>
+										) ) }
+									</Select>
+								</FormControl>
+
+								<Divider orientation="vertical" sx={ { ml: 2 } } flexItem variant="middle" />
+							</Stack>
 						) }
 
 						<Box sx={ { flex: 1, minWidth: 0 } }>
