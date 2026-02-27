@@ -1,60 +1,175 @@
 import { useState } from '@wordpress/element';
+import { useAdminData } from '../contexts/AdminDataContext';
 import { useLicense } from '../contexts/LicenseContext';
 
-import Button from '@mui/material/Button';
-import Drawer from '@mui/material/Drawer';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import IconButton from '@mui/material/IconButton';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import Switch from '@mui/material/Switch';
 import FormHelperText from '@mui/material/FormHelperText';
+import Stack from '@mui/material/Stack';
+import Switch from '@mui/material/Switch';
+import Typography from '@mui/material/Typography';
 
-export default function ConfigurationDialog( { form, setField } ) {
-	const [ error, setError ] = useState( '' );
-	const [ successMessage, setSuccessMessage ] = useState( '' );
-	const [ drawerOpen, setDrawerOpen ] = useState( false );
-	const { __ } = wp.i18n || {};
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import StorageIcon from '@mui/icons-material/Storage';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+
+export default function ConfigurationPanel( {
+	form,
+	setField,
+	schemaUpdateNeeded = false,
+	onSchemaUpdated,
+} ) {
+	const { adminData } = useAdminData();
 	const { hasValidLicense } = useLicense();
+	const { __ } = wp.i18n || {};
 
-	const toggleDrawer = ( open ) => () => {
-		setDrawerOpen( open );
-		if ( ! open ) {
-			setSuccessMessage( '' );
-			setError( '' );
+	const [ schemaRunning, setSchemaRunning ] = useState( false );
+	const [ schemaResult, setSchemaResult ] = useState( null ); // null | { success, message }
+
+	const handleSchemaUpdate = async () => {
+		setSchemaRunning( true );
+		setSchemaResult( null );
+		try {
+			const response = await fetch( adminData.ajaxurl, {
+				method: 'POST',
+				headers: {
+					'Content-Type':
+						'application/x-www-form-urlencoded; charset=UTF-8',
+				},
+				body: new URLSearchParams( {
+					action: 'rest_api_firewall_pro_update_schema',
+					nonce: adminData.nonce,
+				} ),
+			} );
+			const data = await response.json();
+			const success = !! data.success;
+			setSchemaResult( {
+				success,
+				message:
+					data.data?.message ||
+					( success
+						? __(
+								'Database updated successfully.',
+								'rest-api-firewall'
+						  )
+						: __(
+								'Update failed. Please try again.',
+								'rest-api-firewall'
+						  ) ),
+			} );
+			if ( success ) {
+				setTimeout( () => onSchemaUpdated?.(), 1200 );
+			}
+		} catch ( err ) {
+			setSchemaResult( {
+				success: false,
+				message:
+					err.message ||
+					__( 'An unexpected error occurred.', 'rest-api-firewall' ),
+			} );
+		} finally {
+			setSchemaRunning( false );
 		}
 	};
 
-	const drawerContent = (
-		<Box sx={ { width: 320, p: 2 } } role="presentation">
-			<IconButton
-				sx={ { position: 'absolute', top: 5, right: 5 } }
-				onClick={ () => setDrawerOpen( false ) }
-			>
-				<ArrowForwardIosIcon />
-			</IconButton>
-			<Stack spacing={ 3 }>
-				<Stack direction="row" alignItems="center" gap={ 1 }>
-					<Typography variant="h6" sx={ { fontWeight: 600 } }>
-						{ __( 'Configuration', 'rest-api-firewall' ) }
-					</Typography>
-				</Stack>
+	return (
+		<Stack spacing={ 0 } sx={ { maxWidth: 640 } }>
+			{ hasValidLicense && (
+				<>
+					<Stack spacing={ 2 } mb={ 4 }>
+						<Stack direction="row" alignItems="center" gap={ 1 }>
+							<StorageIcon fontSize="small" color="action" />
+							<Typography variant="subtitle1" fontWeight={ 600 }>
+								{ __( 'Database Schema', 'rest-api-firewall' ) }
+							</Typography>
+						</Stack>
 
-				{ successMessage && (
-					<Alert severity="success">{ successMessage }</Alert>
-				) }
+						<Stack
+							direction="row"
+							alignItems="center"
+							gap={ 2 }
+							flexWrap="wrap"
+						>
+							{ schemaUpdateNeeded && ! schemaResult?.success ? (
+								<Chip
+									icon={ <WarningAmberIcon /> }
+									label={ __(
+										'Update required',
+										'rest-api-firewall'
+									) }
+									color="warning"
+									variant="outlined"
+									size="small"
+								/>
+							) : (
+								<Chip
+									icon={ <CheckCircleOutlineIcon /> }
+									label={ __(
+										'Up to date',
+										'rest-api-firewall'
+									) }
+									color="success"
+									variant="outlined"
+									size="small"
+								/>
+							) }
 
-				{ error && <Alert severity="error">{ error }</Alert> }
+							{ schemaUpdateNeeded && ! schemaResult?.success && (
+								<Button
+									variant="contained"
+									disableElevation
+									size="small"
+									disabled={ schemaRunning }
+									startIcon={
+										schemaRunning ? (
+											<CircularProgress
+												size={ 14 }
+												color="inherit"
+											/>
+										) : null
+									}
+									onClick={ handleSchemaUpdate }
+								>
+									{ schemaRunning
+										? __( 'Updating…', 'rest-api-firewall' )
+										: __(
+												'Run Update',
+												'rest-api-firewall'
+										  ) }
+								</Button>
+							) }
+						</Stack>
 
-				<Typography
-					variant="subtitle1"
-					fontWeight={ 600 }
-					sx={ { mb: 2 } }
-				>
+						{ schemaResult && (
+							<Alert
+								severity={
+									schemaResult.success ? 'success' : 'error'
+								}
+							>
+								{ schemaResult.message }
+							</Alert>
+						) }
+
+						<Typography variant="body2" color="text.secondary">
+							{ __(
+								'When a plugin update adds new database columns, run this to apply the changes. Existing data is never affected.',
+								'rest-api-firewall'
+							) }
+						</Typography>
+					</Stack>
+
+					<Divider sx={ { mb: 4 } } />
+				</>
+			) }
+
+			<Stack spacing={ 2 }>
+				<Typography variant="subtitle1" fontWeight={ 600 }>
 					{ __( 'Delete data on uninstall', 'rest-api-firewall' ) }
 				</Typography>
 
@@ -102,26 +217,6 @@ export default function ConfigurationDialog( { form, setField } ) {
 					</FormControl>
 				) }
 			</Stack>
-		</Box>
-	);
-
-	return (
-		<>
-			<Button onClick={ toggleDrawer( true ) }>
-				{ __( 'Configuration', 'rest-api-firewall' ) }
-			</Button>
-			<Drawer
-				anchor="right"
-				open={ drawerOpen }
-				onClose={ toggleDrawer( false ) }
-				sx={ {
-					'& .MuiPaper-root': {
-						mt: { sm: '46px', md: '32px' },
-					},
-				} }
-			>
-				{ drawerContent }
-			</Drawer>
-		</>
+		</Stack>
 	);
 }

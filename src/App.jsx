@@ -2,6 +2,10 @@ import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from './contexts/AdminDataContext';
 import { DialogProvider } from './contexts/DialogContext';
 import { useLicense } from './contexts/LicenseContext';
+import {
+	ApplicationProvider,
+	useApplication,
+} from './contexts/ApplicationContext';
 
 import useSettingsForm from './hooks/useSettingsForm';
 import useSaveOptions from './hooks/useSaveOptions';
@@ -44,9 +48,11 @@ import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 import CardMembershipOutlinedIcon from '@mui/icons-material/CardMembershipOutlined';
 import RocketLaunchOutlinedIcon from '@mui/icons-material/RocketLaunchOutlined';
 import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
 import ConfirmDialog from './components/ConfirmDialog';
 import MigrationDialog from './components/Migration/MigrationDialog';
+import ConfigurationPanel from './components/ConfigurationDialog';
 
 import RoutesPolicyTree from './components/Firewall/Routes/RoutesPolicyTree';
 import GlobalRoutesPolicy from './components/Firewall/Routes/GlobalRoutesPolicy';
@@ -63,6 +69,7 @@ import Applications from './components/Application/Applications';
 
 import Documentation from './components/Documentation/Documentation';
 import License from './components/License/License';
+import Users from './components/Firewall/Users/Users';
 
 const DRAWER_WIDTH = 220;
 const APP_BAR_HEIGHT = 75;
@@ -101,48 +108,33 @@ function AppContent() {
 	const [ themeStatus, setThemeStatus ] = useState( null );
 
 	const migrationNeeded = !! window.restApiFirewallPro?.migrationNeeded;
-	const [ migrationOpen, setMigrationOpen ] = useState( migrationNeeded );
+	const schemaUpdateNeeded = !! window.restApiFirewallPro?.schemaUpdateNeeded;
+	const isMigrated = !! window.restApiFirewallPro?.isMigrated;
+
+	// schema_update takes priority over free_to_pro; already_migrated is info-only (manual).
+	const migrationScenario = schemaUpdateNeeded
+		? 'schema_update'
+		: migrationNeeded
+		? 'free_to_pro'
+		: 'already_migrated';
+
+	const [ migrationOpen, setMigrationOpen ] = useState(
+		schemaUpdateNeeded || migrationNeeded
+	);
 	const [ migrationDone, setMigrationDone ] = useState( false );
 	const [ snackDismissed, setSnackDismissed ] = useState( false );
 
-	const [ applications, setApplications ] = useState( [] );
-	const [ selectedApplicationId, setSelectedApplicationId ] = useState( '' );
-	const [ applicationsLoading, setApplicationsLoading ] = useState( false );
+	const {
+		applications,
+		selectedApplicationId,
+		selectedApplication,
+		applicationsLoading,
+		setSelectedApplicationId,
+	} = useApplication();
 
 	const { form, setField, setSlider, pickGroup } = useSettingsForm( {
 		adminData,
 	} );
-
-	useEffect( () => {
-		if ( ! hasValidLicense ) {
-			return;
-		}
-
-		setApplicationsLoading( true );
-
-		fetch( adminData.ajaxurl, {
-			method: 'POST',
-			headers: {
-				'Content-Type':
-					'application/x-www-form-urlencoded; charset=UTF-8',
-			},
-			body: new URLSearchParams( {
-				action: 'get_application_entries',
-				nonce,
-			} ),
-		} )
-			.then( ( r ) => r.json() )
-			.then( ( result ) => {
-				if ( result?.success && result?.data?.entries ) {
-					const entries = result.data.entries;
-					setApplications( entries );
-					if ( entries.length > 0 ) {
-						setSelectedApplicationId( entries[ 0 ].id );
-					}
-				}
-			} )
-			.finally( () => setApplicationsLoading( false ) );
-	}, [ hasValidLicense, adminData, nonce ] );
 
 	const menuItems = [
 		{
@@ -232,7 +224,7 @@ function AppContent() {
 		},
 		{
 			key: 'license',
-			label: __( 'License Management', 'rest-api-firewall' ),
+			label: __( 'License', 'rest-api-firewall' ),
 			breadcrumbPrefix: '',
 			panelGroup: 10,
 			icon: CardMembershipOutlinedIcon,
@@ -248,6 +240,14 @@ function AppContent() {
 					},
 			  ]
 			: [] ),
+		{
+			key: 'configuration',
+			label: __( 'Configuration', 'rest-api-firewall' ),
+			breadcrumbPrefix: '',
+			panelGroup: 11,
+			icon: SettingsOutlinedIcon,
+			badge: schemaUpdateNeeded && ! migrationDone,
+		},
 	];
 
 	useEffect( () => {
@@ -383,10 +383,6 @@ function AppContent() {
 	if ( ! adminData ) {
 		return null;
 	}
-
-	const selectedApp = applications.find(
-		( a ) => a.id === selectedApplicationId
-	);
 
 	return (
 		<>
@@ -542,7 +538,8 @@ function AppContent() {
 													'& .MuiListItemText-primary':
 														{
 															fontSize: '0.9rem',
-															lineHeight: 'normal',
+															lineHeight:
+																'normal',
 														},
 												} }
 												primary={ item.label }
@@ -611,20 +608,36 @@ function AppContent() {
 						) }
 
 						{ hasValidLicense && (
-							<Stack direction="row" alignItems="center" gap={ 2 }>
-								
-								<Stack sx={{ color: 'text.secondary' }}>
+							<Stack
+								direction="row"
+								alignItems="center"
+								gap={ 2 }
+							>
+								<Stack sx={ { color: 'text.secondary' } }>
 									<AppsOutlinedIcon color="inherit" />
 								</Stack>
 
-								<FormControl size="small" variant="standard" sx={{ minWidth: 180, maxWidth: 270 }}>
-									<InputLabel id={ `select-application-label` }>{ __('Application', 'rest-api-firewall') }</InputLabel>
+								<FormControl
+									size="small"
+									variant="standard"
+									sx={ { minWidth: 180, maxWidth: 270 } }
+								>
+									<InputLabel
+										id={ `select-application-label` }
+									>
+										{ __(
+											'Application',
+											'rest-api-firewall'
+										) }
+									</InputLabel>
 									<Select
 										size="small"
 										labelId={ `select-application-label` }
 										value={ selectedApplicationId }
 										onChange={ ( e ) =>
-											setSelectedApplicationId( e.target.value )
+											setSelectedApplicationId(
+												e.target.value
+											)
 										}
 										displayEmpty
 										disabled={
@@ -634,23 +647,34 @@ function AppContent() {
 										sx={ { minWidth: 180, maxWidth: 260 } }
 										renderValue={ () =>
 											applicationsLoading
-												? __( 'Loading…', 'rest-api-firewall' )
-												: selectedApp?.title ||
-												__(
+												? __(
+														'Loading…',
+														'rest-api-firewall'
+												  )
+												: selectedApplication?.title ||
+												  __(
 														'No application',
 														'rest-api-firewall'
-												)
+												  )
 										}
 									>
 										{ applications.map( ( app ) => (
-											<MenuItem key={ app.id } value={ app.id }>
+											<MenuItem
+												key={ app.id }
+												value={ app.id }
+											>
 												{ app.title }
 											</MenuItem>
 										) ) }
 									</Select>
 								</FormControl>
 
-								<Divider orientation="vertical" sx={ { ml: 2 } } flexItem variant="middle" />
+								<Divider
+									orientation="vertical"
+									sx={ { ml: 2 } }
+									flexItem
+									variant="middle"
+								/>
 							</Stack>
 						) }
 
@@ -747,30 +771,34 @@ function AppContent() {
 						bgcolor: theme.palette.background.paper,
 					} }
 				>
-				
 					{ panelGroup === 0 && <Applications /> }
-				
+
+					{ panelGroup === 1 && (
+						<>
+							{ hasValidLicense ? (
+								<Users />
+							) : (
+								<Stack
+									spacing={ 3 }
+									p={ 4 }
+									sx={ { maxWidth: 800 } }
+									id="section-auth-rate-limiting"
+								>
+									<RestApiUser
+										form={ form }
+										setField={ setField }
+									/>
+									<Divider />
+									<RateLimit
+										form={ form }
+										setField={ setField }
+									/>
+								</Stack>
+							) }
+						</>
+					) }
+
 					<Box sx={ { p: 4 } }>
-						
-
-						{ panelGroup === 1 && (
-							<Stack
-								spacing={ 3 }
-								sx={ { maxWidth: 800 } }
-								id="section-auth-rate-limiting"
-							>
-								<RestApiUser
-									form={ form }
-									setField={ setField }
-								/>
-								<Divider />
-								<RateLimit
-									form={ form }
-									setField={ setField }
-								/>
-							</Stack>
-						) }
-
 						{ panelGroup === 2 && (
 							<Stack
 								spacing={ 3 }
@@ -842,12 +870,26 @@ function AppContent() {
 						) }
 
 						{ panelGroup === 10 && <License /> }
+
+						{ panelGroup === 11 && (
+							<ConfigurationPanel
+								form={ form }
+								setField={ setField }
+								schemaUpdateNeeded={
+									schemaUpdateNeeded && ! migrationDone
+								}
+								onSchemaUpdated={ () =>
+									window.location.reload()
+								}
+							/>
+						) }
 					</Box>
 				</Box>
 			</Box>
 
 			<MigrationDialog
 				open={ migrationOpen }
+				scenario={ migrationScenario }
 				onClose={ () => setMigrationOpen( false ) }
 				onDone={ () => {
 					setMigrationDone( true );
@@ -858,7 +900,7 @@ function AppContent() {
 
 			<Snackbar
 				open={
-					migrationNeeded &&
+					( migrationNeeded || schemaUpdateNeeded ) &&
 					! migrationDone &&
 					! migrationOpen &&
 					! snackDismissed
@@ -870,23 +912,28 @@ function AppContent() {
 					severity="warning"
 					onClose={ () => setSnackDismissed( true ) }
 					action={
-						<>
-							<Button
-								variant="contained"
-								disableElevation
-								color="warning"
-								size="small"
-								onClick={ () => setMigrationOpen( true ) }
-							>
-								{ __( 'Migrate Now', 'rest-api-firewall' ) }
-							</Button>
-						</>
+						<Button
+							variant="contained"
+							disableElevation
+							color="warning"
+							size="small"
+							onClick={ () => setMigrationOpen( true ) }
+						>
+							{ schemaUpdateNeeded
+								? __( 'Update Now', 'rest-api-firewall' )
+								: __( 'Migrate Now', 'rest-api-firewall' ) }
+						</Button>
 					}
 				>
-					{ __(
-						'Pro migration pending — your free settings have not been imported yet.',
-						'rest-api-firewall'
-					) }
+					{ schemaUpdateNeeded
+						? __(
+								'Database update required — new columns need to be added.',
+								'rest-api-firewall'
+						  )
+						: __(
+								'Pro migration pending — your free settings have not been imported yet.',
+								'rest-api-firewall'
+						  ) }
 				</Alert>
 			</Snackbar>
 		</>
@@ -896,8 +943,10 @@ function AppContent() {
 export default function App() {
 	return (
 		<DialogProvider>
-			<AppContent />
-			<ConfirmDialog />
+			<ApplicationProvider>
+				<AppContent />
+				<ConfirmDialog />
+			</ApplicationProvider>
 		</DialogProvider>
 	);
 }

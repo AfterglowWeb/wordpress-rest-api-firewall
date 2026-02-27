@@ -11,22 +11,43 @@ import LinearProgress from '@mui/material/LinearProgress';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
+import Chip from '@mui/material/Chip';
 
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import StorageIcon from '@mui/icons-material/Storage';
+import RocketLaunchOutlinedIcon from '@mui/icons-material/RocketLaunchOutlined';
+import TaskAltIcon from '@mui/icons-material/TaskAlt';
 
-export default function MigrationDialog( { open, onClose, onDone } ) {
+/**
+ * MigrationDialog handles three scenarios:
+ *
+ * 'free_to_pro'     — First Pro activation: import existing free settings.
+ * 'schema_update'   — DB schema is outdated and needs to be updated.
+ * 'already_migrated'— Pro is active and already configured (info only).
+ * @param root0
+ * @param root0.open
+ * @param root0.onClose
+ * @param root0.onDone
+ * @param root0.scenario
+ */
+export default function MigrationDialog( {
+	open,
+	onClose,
+	onDone,
+	scenario = 'free_to_pro',
+} ) {
 	const { adminData } = useAdminData();
 	const { __ } = wp.i18n || {};
 
 	const [ title, setTitle ] = useState( '' );
-	const [ migrating, setMigrating ] = useState( false );
+	const [ running, setRunning ] = useState( false );
 	const [ result, setResult ] = useState( null ); // null | { success: bool, message: string }
 
 	useEffect( () => {
 		if ( open ) {
 			setTitle( '' );
-			setMigrating( false );
+			setRunning( false );
 			setResult( null );
 		}
 	}, [ open ] );
@@ -35,31 +56,45 @@ export default function MigrationDialog( { open, onClose, onDone } ) {
 		return null;
 	}
 
-	const canSubmit = title.trim().length > 0 && ! migrating;
+	// -------------------------------------------------------------------------
+	// Shared helpers
+	// -------------------------------------------------------------------------
+
+	const postAjax = async ( action, extraParams = {} ) => {
+		const response = await fetch( adminData.ajaxurl, {
+			method: 'POST',
+			headers: {
+				'Content-Type':
+					'application/x-www-form-urlencoded; charset=UTF-8',
+			},
+			body: new URLSearchParams( {
+				action,
+				nonce: adminData.nonce,
+				...extraParams,
+			} ),
+		} );
+		return response.json();
+	};
+
+	const handleDone = () => onDone?.();
+
+	const handleRetry = () => setResult( null );
+
+	// -------------------------------------------------------------------------
+	// Scenario: free_to_pro
+	// -------------------------------------------------------------------------
+
+	const canMigrate = title.trim().length > 0 && ! running;
 
 	const handleMigrate = async () => {
-		if ( ! canSubmit ) {
+		if ( ! canMigrate ) {
 			return;
 		}
-
-		setMigrating( true );
-
+		setRunning( true );
 		try {
-			const response = await fetch( adminData.ajaxurl, {
-				method: 'POST',
-				headers: {
-					'Content-Type':
-						'application/x-www-form-urlencoded; charset=UTF-8',
-				},
-				body: new URLSearchParams( {
-					action: 'rest_api_firewall_pro_migrate',
-					nonce: adminData.nonce,
-					title: title.trim(),
-				} ),
+			const data = await postAjax( 'rest_api_firewall_pro_migrate', {
+				title: title.trim(),
 			} );
-
-			const data = await response.json();
-
 			setResult( {
 				success: !! data.success,
 				message:
@@ -76,41 +111,235 @@ export default function MigrationDialog( { open, onClose, onDone } ) {
 					__( 'An unexpected error occurred.', 'rest-api-firewall' ),
 			} );
 		} finally {
-			setMigrating( false );
+			setRunning( false );
 		}
 	};
 
-	const handleRetry = () => {
-		setResult( null );
-	};
-
-	const handleDone = () => onDone?.();
-
 	const handleKeyDown = ( e ) => {
-		if ( e.key === 'Enter' && canSubmit ) {
+		if ( e.key === 'Enter' && canMigrate ) {
 			handleMigrate();
 		}
 	};
 
+	// -------------------------------------------------------------------------
+	// Scenario: schema_update
+	// -------------------------------------------------------------------------
+
+	const handleSchemaUpdate = async () => {
+		setRunning( true );
+		try {
+			const data = await postAjax(
+				'rest_api_firewall_pro_update_schema'
+			);
+			setResult( {
+				success: !! data.success,
+				message:
+					data.data?.message ||
+					( data.success
+						? __(
+								'Database updated successfully.',
+								'rest-api-firewall'
+						  )
+						: __( 'Update failed.', 'rest-api-firewall' ) ),
+			} );
+		} catch ( err ) {
+			setResult( {
+				success: false,
+				message:
+					err.message ||
+					__( 'An unexpected error occurred.', 'rest-api-firewall' ),
+			} );
+		} finally {
+			setRunning( false );
+		}
+	};
+
+	// -------------------------------------------------------------------------
+	// Render by scenario
+	// -------------------------------------------------------------------------
+
+	if ( scenario === 'already_migrated' ) {
+		return (
+			<Dialog open={ open } maxWidth="sm" fullWidth>
+				<DialogTitle
+					sx={ { display: 'flex', alignItems: 'center', gap: 1.5 } }
+				>
+					<TaskAltIcon color="success" />
+					{ __(
+						'REST API Toolkit Pro — Already Set Up',
+						'rest-api-firewall'
+					) }
+				</DialogTitle>
+				<DialogContent>
+					<Stack spacing={ 2 } pt={ 1 }>
+						<Alert
+							severity="success"
+							icon={ <TaskAltIcon fontSize="inherit" /> }
+						>
+							{ __(
+								'Your Pro configuration is already active. No action is required.',
+								'rest-api-firewall'
+							) }
+						</Alert>
+						<Typography variant="body2" color="text.secondary">
+							{ __(
+								'Your applications and settings are intact. You can manage them from the sidebar navigation.',
+								'rest-api-firewall'
+							) }
+						</Typography>
+					</Stack>
+				</DialogContent>
+				<DialogActions sx={ { px: 3, pb: 2 } }>
+					<Button
+						variant="contained"
+						disableElevation
+						onClick={ onClose }
+					>
+						{ __( 'Close', 'rest-api-firewall' ) }
+					</Button>
+				</DialogActions>
+			</Dialog>
+		);
+	}
+
+	if ( scenario === 'schema_update' ) {
+		return (
+			<Dialog
+				open={ open }
+				maxWidth="sm"
+				fullWidth
+				disableEscapeKeyDown={ running }
+			>
+				<DialogTitle
+					sx={ { display: 'flex', alignItems: 'center', gap: 1.5 } }
+				>
+					<StorageIcon color="warning" />
+					{ __( 'Database Update Required', 'rest-api-firewall' ) }
+				</DialogTitle>
+				<DialogContent>
+					<Stack spacing={ 3 } pt={ 1 }>
+						{ ! result && (
+							<Stack spacing={ 2 }>
+								<Typography
+									variant="body2"
+									color="text.secondary"
+								>
+									{ __(
+										'The database schema needs to be updated to support new features. New columns will be added to existing tables — your data will not be affected.',
+										'rest-api-firewall'
+									) }
+								</Typography>
+								<Stack
+									direction="row"
+									spacing={ 1 }
+									alignItems="center"
+								>
+									<Chip
+										label={ __(
+											'Schema update pending',
+											'rest-api-firewall'
+										) }
+										color="warning"
+										size="small"
+										variant="outlined"
+									/>
+								</Stack>
+							</Stack>
+						) }
+
+						{ running && (
+							<Stack spacing={ 1 }>
+								<Typography
+									variant="body2"
+									color="text.secondary"
+								>
+									{ __(
+										'Updating database schema…',
+										'rest-api-firewall'
+									) }
+								</Typography>
+								<LinearProgress />
+							</Stack>
+						) }
+
+						{ result && (
+							<Alert
+								severity={
+									result.success ? 'success' : 'error'
+								}
+								icon={
+									result.success ? (
+										<CheckCircleOutlineIcon fontSize="inherit" />
+									) : (
+										<ErrorOutlineIcon fontSize="inherit" />
+									)
+								}
+							>
+								{ result.message }
+							</Alert>
+						) }
+					</Stack>
+				</DialogContent>
+				<DialogActions sx={ { px: 3, pb: 2 } }>
+					<Button
+						variant="outlined"
+						disabled={ running }
+						onClick={ onClose }
+					>
+						{ __( 'Cancel', 'rest-api-firewall' ) }
+					</Button>
+
+					{ ! result && (
+						<Button
+							variant="contained"
+							disableElevation
+							disabled={ running }
+							onClick={ handleSchemaUpdate }
+						>
+							{ __( 'Run Update', 'rest-api-firewall' ) }
+						</Button>
+					) }
+
+					{ result?.success && (
+						<Button
+							variant="contained"
+							disableElevation
+							onClick={ handleDone }
+						>
+							{ __( 'Done', 'rest-api-firewall' ) }
+						</Button>
+					) }
+
+					{ result && ! result.success && (
+						<Button variant="outlined" onClick={ handleRetry }>
+							{ __( 'Try Again', 'rest-api-firewall' ) }
+						</Button>
+					) }
+				</DialogActions>
+			</Dialog>
+		);
+	}
+
+	// Default: free_to_pro
 	return (
 		<Dialog
 			open={ open }
 			maxWidth="sm"
 			fullWidth
-			disableEscapeKeyDown={ migrating }
+			disableEscapeKeyDown={ running }
 		>
 			<DialogTitle
 				sx={ { display: 'flex', alignItems: 'center', gap: 1.5 } }
 			>
+				<RocketLaunchOutlinedIcon color="primary" />
 				{ __(
-					'REST API Toolkit Pro, Import Existing Settings',
+					'REST API Toolkit Pro — Import Existing Settings',
 					'rest-api-firewall'
 				) }
 			</DialogTitle>
 
 			<DialogContent>
 				<Stack spacing={ 3 } pt={ 1 }>
-					{ /* Step 1 – no result yet */ }
 					{ ! result && (
 						<Stack spacing={ 3 }>
 							<Typography
@@ -137,7 +366,7 @@ export default function MigrationDialog( { open, onClose, onDone } ) {
 								value={ title }
 								onChange={ ( e ) => setTitle( e.target.value ) }
 								onKeyDown={ handleKeyDown }
-								disabled={ migrating }
+								disabled={ running }
 								fullWidth
 								autoFocus
 								placeholder={ __(
@@ -149,8 +378,7 @@ export default function MigrationDialog( { open, onClose, onDone } ) {
 						</Stack>
 					) }
 
-					{ /* Step 2 – migration in progress */ }
-					{ migrating && (
+					{ running && (
 						<Stack spacing={ 1 }>
 							<Typography variant="body2" color="text.secondary">
 								{ __(
@@ -162,7 +390,6 @@ export default function MigrationDialog( { open, onClose, onDone } ) {
 						</Stack>
 					) }
 
-					{ /* Step 3 – migration result */ }
 					{ result && (
 						<Alert
 							severity={ result.success ? 'success' : 'error' }
@@ -184,7 +411,7 @@ export default function MigrationDialog( { open, onClose, onDone } ) {
 				<Button
 					variant="outlined"
 					disableElevation
-					disabled={ migrating }
+					disabled={ running }
 					onClick={ onClose }
 				>
 					{ __( 'Cancel', 'rest-api-firewall' ) }
@@ -195,7 +422,7 @@ export default function MigrationDialog( { open, onClose, onDone } ) {
 						variant="contained"
 						disableElevation
 						onClick={ handleMigrate }
-						disabled={ ! canSubmit }
+						disabled={ ! canMigrate }
 					>
 						{ __( 'Start Migration', 'rest-api-firewall' ) }
 					</Button>

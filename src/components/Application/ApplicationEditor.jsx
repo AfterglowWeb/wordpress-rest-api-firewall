@@ -44,14 +44,22 @@ function SectionHeader( { title, description } ) {
 	);
 }
 
-function ChipInput( { values, onChange, placeholder, validate, inputSx = {} } ) {
+function ChipInput( {
+	values,
+	onChange,
+	placeholder,
+	validate,
+	inputSx = {},
+} ) {
 	const [ inputValue, setInputValue ] = useState( '' );
 	const [ inputError, setInputError ] = useState( '' );
 	const { __ } = wp.i18n || {};
 
 	const add = () => {
 		const val = inputValue.trim();
-		if ( ! val ) return;
+		if ( ! val ) {
+			return;
+		}
 
 		if ( validate ) {
 			const msg = validate( val );
@@ -72,12 +80,19 @@ function ChipInput( { values, onChange, placeholder, validate, inputSx = {} } ) 
 
 	return (
 		<Stack spacing={ 1 }>
-			<Stack direction="row" spacing={ 1 } alignItems="flex-start" sx={ { maxWidth: 420, ...inputSx } }>
+			<Stack
+				direction="row"
+				spacing={ 1 }
+				alignItems="flex-start"
+				sx={ { maxWidth: 420, ...inputSx } }
+			>
 				<TextField
 					value={ inputValue }
 					onChange={ ( e ) => {
 						setInputValue( e.target.value );
-						if ( inputError ) setInputError( '' );
+						if ( inputError ) {
+							setInputError( '' );
+						}
 					} }
 					onKeyDown={ ( e ) => {
 						if ( e.key === 'Enter' ) {
@@ -138,7 +153,9 @@ export default function ApplicationEditor( { application, onBack } ) {
 	const [ allowedOrigins, setAllowedOrigins ] = useState( [] );
 	const [ rateLimitRequests, setRateLimitRequests ] = useState( 100 );
 	const [ rateLimitWindow, setRateLimitWindow ] = useState( 60 );
-	const [ policyActive, setPolicyActive ] = useState( application.policy ?? false );
+	const [ policyActive, setPolicyActive ] = useState(
+		application.policy ?? false
+	);
 
 	const [ author, setAuthor ] = useState( '' );
 	const [ dateCreated, setDateCreated ] = useState( '' );
@@ -154,7 +171,10 @@ export default function ApplicationEditor( { application, onBack } ) {
 		try {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+				headers: {
+					'Content-Type':
+						'application/x-www-form-urlencoded; charset=UTF-8',
+				},
 				body: new URLSearchParams( {
 					action: 'get_application_entry',
 					nonce,
@@ -169,8 +189,20 @@ export default function ApplicationEditor( { application, onBack } ) {
 				setEnabled( e.active ?? true );
 				setPolicyActive( e.policy ?? false );
 				setAuthor( e.author_name || '' );
-				setDateCreated( formatDate( e.date_created, adminData.date_format, adminData.time_format ) );
-				setDateModified( formatDate( e.date_modified, adminData.date_format, adminData.time_format ) );
+				setDateCreated(
+					formatDate(
+						e.date_created,
+						adminData.date_format,
+						adminData.time_format
+					)
+				);
+				setDateModified(
+					formatDate(
+						e.date_modified,
+						adminData.date_format,
+						adminData.time_format
+					)
+				);
 
 				const s = e.settings || {};
 				setDescription( s.description || '' );
@@ -191,7 +223,10 @@ export default function ApplicationEditor( { application, onBack } ) {
 		try {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+				headers: {
+					'Content-Type':
+						'application/x-www-form-urlencoded; charset=UTF-8',
+				},
 				body: new URLSearchParams( {
 					action: 'get_application_users',
 					nonce,
@@ -208,35 +243,44 @@ export default function ApplicationEditor( { application, onBack } ) {
 	}, [ adminData, nonce, application.id ] );
 
 	useEffect( () => {
-		if ( isNew ) return;
+		if ( isNew ) {
+			return;
+		}
 		loadEntry();
 		loadUsers();
 	}, [ isNew, loadEntry, loadUsers ] );
 
 	const handleSave = () => {
-		if ( ! title.trim() ) return;
+		if ( ! title.trim() ) {
+			return;
+		}
 
 		save(
 			{
-				action:   isNew ? 'add_application_entry' : 'update_application_entry',
+				action: isNew
+					? 'add_application_entry'
+					: 'update_application_entry',
 				...( ! isNew && { id: application.id } ),
-				title:    title.trim(),
-				enabled:  enabled ? '1' : '0',
+				title: title.trim(),
+				enabled: enabled ? '1' : '0',
 				settings: JSON.stringify( {
 					description,
-					allowed_ips:     allowedIps,
+					allowed_ips: allowedIps,
 					allowed_origins: allowedOrigins,
 					rate_limit: {
-						max_requests:   parseInt( rateLimitRequests, 10 ) || 100,
+						max_requests: parseInt( rateLimitRequests, 10 ) || 100,
 						window_seconds: parseInt( rateLimitWindow, 10 ) || 60,
 					},
 				} ),
 			},
 			{
-				skipConfirm:    true,
-				successTitle:   __( 'Application Saved', 'rest-api-firewall' ),
-				successMessage: __( 'Application saved successfully.', 'rest-api-firewall' ),
-				onSuccess:      isNew ? onBack : undefined,
+				skipConfirm: true,
+				successTitle: __( 'Application Saved', 'rest-api-firewall' ),
+				successMessage: __(
+					'Application saved successfully.',
+					'rest-api-firewall'
+				),
+				onSuccess: isNew ? onBack : undefined,
 			}
 		);
 	};
@@ -248,24 +292,35 @@ export default function ApplicationEditor( { application, onBack } ) {
 				id: application.id,
 			},
 			{
-				confirmTitle:   __( 'Delete Application', 'rest-api-firewall' ),
-				confirmMessage: __( 'Are you sure you want to permanently delete this application? This action cannot be undone.', 'rest-api-firewall' ),
-				confirmLabel:   __( 'Delete', 'rest-api-firewall' ),
-				successTitle:   __( 'Application Deleted', 'rest-api-firewall' ),
-				successMessage: __( 'The application has been removed.', 'rest-api-firewall' ),
-				onSuccess:      onBack,
+				confirmTitle: __( 'Delete Application', 'rest-api-firewall' ),
+				confirmMessage: __(
+					'Are you sure you want to permanently delete this application? This action cannot be undone.',
+					'rest-api-firewall'
+				),
+				confirmLabel: __( 'Delete', 'rest-api-firewall' ),
+				successTitle: __( 'Application Deleted', 'rest-api-firewall' ),
+				successMessage: __(
+					'The application has been removed.',
+					'rest-api-firewall'
+				),
+				onSuccess: onBack,
 			}
 		);
 	};
 
 	const handleAddUser = async () => {
-		if ( ! addUserValue ) return;
+		if ( ! addUserValue ) {
+			return;
+		}
 		setUserError( '' );
 
 		try {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+				headers: {
+					'Content-Type':
+						'application/x-www-form-urlencoded; charset=UTF-8',
+				},
 				body: new URLSearchParams( {
 					action: 'add_application_user',
 					nonce,
@@ -279,7 +334,10 @@ export default function ApplicationEditor( { application, onBack } ) {
 				setAppUsers( ( prev ) => [ ...prev, result.data.user ] );
 				setAddUserValue( '' );
 			} else {
-				setUserError( result?.data?.message || __( 'Failed to add user', 'rest-api-firewall' ) );
+				setUserError(
+					result?.data?.message ||
+						__( 'Failed to add user', 'rest-api-firewall' )
+				);
 			}
 		} catch ( err ) {
 			setUserError( err.message );
@@ -292,7 +350,10 @@ export default function ApplicationEditor( { application, onBack } ) {
 		try {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+				headers: {
+					'Content-Type':
+						'application/x-www-form-urlencoded; charset=UTF-8',
+				},
 				body: new URLSearchParams( {
 					action: 'remove_application_user',
 					nonce,
@@ -309,7 +370,10 @@ export default function ApplicationEditor( { application, onBack } ) {
 	};
 
 	const availableWpUsers = ( adminData?.users || [] ).filter(
-		( wpUser ) => ! appUsers.some( ( au ) => String( au.wp_user_id ) === String( wpUser.value ) )
+		( wpUser ) =>
+			! appUsers.some(
+				( au ) => String( au.wp_user_id ) === String( wpUser.value )
+			)
 	);
 
 	if ( loading ) {
@@ -324,61 +388,91 @@ export default function ApplicationEditor( { application, onBack } ) {
 
 	return (
 		<Stack spacing={ 0 }>
-			<Toolbar sx={ { 
-				gap: 2, 
-				justifyContent: 'space-between', 
-				alignItems: 'center',
-				borderBottom: 1,
-				borderColor: 'divider',
-				flexWrap: 'wrap',
-				py: { xs: 2, sm: 1 },
-					} }>
+			<Toolbar
+				sx={ {
+					gap: 2,
+					justifyContent: 'space-between',
+					alignItems: 'center',
+					borderBottom: 1,
+					borderColor: 'divider',
+					flexWrap: 'wrap',
+					py: { xs: 2, sm: 1 },
+				} }
+			>
 				<Stack direction="row" gap={ 2 }>
 					<Stack alignItems="center" justifyContent="center">
-						<IconButton size="small" onClick={ onBack } aria-label={ __( 'Back', 'rest-api-firewall' ) }>
+						<IconButton
+							size="small"
+							onClick={ onBack }
+							aria-label={ __( 'Back', 'rest-api-firewall' ) }
+						>
 							<ArrowBackIcon />
 						</IconButton>
 					</Stack>
-					<Stack spacing={ 0 }>
-						<Typography variant="h6" fontWeight={ 600 } sx={ { flex: 1, minWidth: 0 } } noWrap>
+					<Stack
+						spacing={ 0 }
+						direction={ { xs: 'column', sm: 'row' } }
+						alignItems={ { xs: 'flex-start', sm: 'center' } }
+						gap={ { xs: 0, sm: 2 } }
+					>
+						<Typography
+							variant="h6"
+							fontWeight={ 600 }
+							sx={ { flex: 1, minWidth: 0 } }
+							noWrap
+						>
 							{ title || application.title }
 						</Typography>
 						{ ( author || dateCreated || dateModified ) && (
-							<Stack direction={{xs:'column', xl:'row'}} gap={{xs:0, xl:2}} flexWrap="wrap">
+							<Stack
+								direction={ { xs: 'column', sm: 'row' } }
+								gap={ { xs: 0, xl: 2 } }
+								flexWrap="wrap"
+							>
 								<FormControlLabel
 									control={
 										<Switch
 											checked={ enabled }
-											onChange={ ( e ) => setEnabled( e.target.checked ) }
+											onChange={ ( e ) =>
+												setEnabled( e.target.checked )
+											}
 											size="small"
 										/>
 									}
-									label={ __( 'Active', 'rest-api-firewall' ) }
+									label={ __(
+										'Active',
+										'rest-api-firewall'
+									) }
 								/>
-								<Typography variant="caption" color="text.secondary" >
-
-								{ author && (
-									<span>
-										{ author }{ dateCreated && ` @ ${ dateCreated }` }
-									</span>
-								) }
-								{ dateModified && (
-									<>
-									<br />
-									<span>
-										{ __( 'Mod.', 'rest-api-firewall' ) } { dateModified }
-									</span>
-									</>
-								) }
+								<Typography
+									variant="caption"
+									color="text.secondary"
+								>
+									{ author && (
+										<span>
+											{ author }
+											{ dateCreated &&
+												` @ ${ dateCreated }` }
+										</span>
+									) }
+									{ dateModified && (
+										<>
+											<br />
+											<span>
+												{ __(
+													'Mod.',
+													'rest-api-firewall'
+												) }{ ' ' }
+												{ dateModified }
+											</span>
+										</>
+									) }
 								</Typography>
 							</Stack>
 						) }
 					</Stack>
-					
 				</Stack>
 				<Stack direction="row" gap={ 2 }>
-					
-
 					<Button
 						variant="contained"
 						size="small"
@@ -405,10 +499,15 @@ export default function ApplicationEditor( { application, onBack } ) {
 
 			{ loadError && <Alert severity="error">{ loadError }</Alert> }
 
-			<Stack p={{ xs: 2, sm: 4 }} spacing={ 3 } sx={ { maxWidth: 760 } }>
-				
+			<Stack
+				p={ { xs: 2, sm: 4 } }
+				spacing={ 3 }
+				sx={ { maxWidth: 760 } }
+			>
 				<Stack spacing={ 2 }>
-					<SectionHeader title={ __( 'General', 'rest-api-firewall' ) } />
+					<SectionHeader
+						title={ __( 'General', 'rest-api-firewall' ) }
+					/>
 
 					<TextField
 						label={ __( 'Title', 'rest-api-firewall' ) }
@@ -425,7 +524,10 @@ export default function ApplicationEditor( { application, onBack } ) {
 						size="small"
 						multiline
 						rows={ 3 }
-						placeholder={ __( 'Optional notes about this application, its purpose, or linked services.', 'rest-api-firewall' ) }
+						placeholder={ __(
+							'Optional notes about this application, its purpose, or linked services.',
+							'rest-api-firewall'
+						) }
 						sx={ { maxWidth: 560 } }
 					/>
 				</Stack>
@@ -434,8 +536,14 @@ export default function ApplicationEditor( { application, onBack } ) {
 
 				<Stack spacing={ 2 }>
 					<SectionHeader
-						title={ __( 'Allowed IPs & CIDR', 'rest-api-firewall' ) }
-						description={ __( 'If populated, only requests from these IPs or CIDR ranges are accepted. Leave empty to allow all IPs.', 'rest-api-firewall' ) }
+						title={ __(
+							'Allowed IPs & CIDR',
+							'rest-api-firewall'
+						) }
+						description={ __(
+							'If populated, only requests from these IPs or CIDR ranges are accepted. Leave empty to allow all IPs.',
+							'rest-api-firewall'
+						) }
 					/>
 
 					<ChipInput
@@ -445,7 +553,10 @@ export default function ApplicationEditor( { application, onBack } ) {
 						validate={ ( val ) =>
 							isValidIpOrCidr( val )
 								? null
-								: __( 'Invalid IP address or CIDR range', 'rest-api-firewall' )
+								: __(
+										'Invalid IP address or CIDR range',
+										'rest-api-firewall'
+								  )
 						}
 					/>
 				</Stack>
@@ -455,7 +566,10 @@ export default function ApplicationEditor( { application, onBack } ) {
 				<Stack spacing={ 2 }>
 					<SectionHeader
 						title={ __( 'Allowed Origins', 'rest-api-firewall' ) }
-						description={ __( 'Filter by HTTP Origin header. Useful on shared/mutualized hosting where caller IPs are unstable (CDN, serverless).', 'rest-api-firewall' ) }
+						description={ __(
+							'Filter by HTTP Origin header. Useful on shared/mutualized hosting where caller IPs are unstable (CDN, serverless).',
+							'rest-api-firewall'
+						) }
 					/>
 
 					<Alert
@@ -463,7 +577,10 @@ export default function ApplicationEditor( { application, onBack } ) {
 						icon={ <WarningAmberOutlinedIcon fontSize="small" /> }
 						sx={ { maxWidth: 560 } }
 					>
-						{ __( 'The Origin header is client-controlled and can be spoofed. Use as a supplementary check only — always combine with user authentication (JWT or WP Application Password).', 'rest-api-firewall' ) }
+						{ __(
+							'The Origin header is client-controlled and can be spoofed. Use as a supplementary check only — always combine with user authentication (JWT or WP Application Password).',
+							'rest-api-firewall'
+						) }
 					</Alert>
 
 					<ChipInput
@@ -473,97 +590,147 @@ export default function ApplicationEditor( { application, onBack } ) {
 						validate={ ( val ) =>
 							isValidOrigin( val )
 								? null
-								: __( 'Invalid origin. Use https://domain.com[:port] format.', 'rest-api-firewall' )
+								: __(
+										'Invalid origin. Use https://domain.com[:port] format.',
+										'rest-api-firewall'
+								  )
 						}
 					/>
 				</Stack>
 
 				{ ! isNew && (
 					<>
-				<Divider />
+						<Divider />
 
-				<Stack spacing={ 2 }>
-					<SectionHeader
-						title={ __( 'Authorized Users', 'rest-api-firewall' ) }
-						description={ __( 'WordPress users allowed to authenticate with this application via Application Password or JWT.', 'rest-api-firewall' ) }
-					/>
+						<Stack spacing={ 2 }>
+							<SectionHeader
+								title={ __(
+									'Authorized Users',
+									'rest-api-firewall'
+								) }
+								description={ __(
+									'WordPress users allowed to authenticate with this application via Application Password or JWT.',
+									'rest-api-firewall'
+								) }
+							/>
 
-					<Stack direction="row" spacing={ 1 } alignItems="center" sx={ { maxWidth: 420 } }>
-						<FormControl size="small" sx={ { flex: 1 } } disabled={ availableWpUsers.length === 0 }>
-							<InputLabel>{ __( 'Add User', 'rest-api-firewall' ) }</InputLabel>
-							<Select
-								value={ addUserValue }
-								onChange={ ( e ) => setAddUserValue( e.target.value ) }
-								label={ __( 'Add User', 'rest-api-firewall' ) }
+							<Stack
+								direction="row"
+								spacing={ 1 }
+								alignItems="center"
+								sx={ { maxWidth: 420 } }
 							>
-								{ availableWpUsers.map( ( u ) => (
-									<MenuItem key={ u.value } value={ u.value }>
-										{ u.label }
-									</MenuItem>
-								) ) }
-							</Select>
-						</FormControl>
-
-						<IconButton
-							size="small"
-							onClick={ handleAddUser }
-							disabled={ ! addUserValue }
-							aria-label={ __( 'Add user', 'rest-api-firewall' ) }
-						>
-							<AddIcon />
-						</IconButton>
-					</Stack>
-
-					{ userError && (
-						<Typography variant="body2" color="error">
-							{ userError }
-						</Typography>
-					) }
-
-					{ ! usersLoading && appUsers.length === 0 && ! userError && (
-						<Typography variant="body2" color="text.secondary">
-							{ __( 'No users linked yet.', 'rest-api-firewall' ) }
-						</Typography>
-					) }
-
-					{ appUsers.length > 0 && (
-						<Stack spacing={ 1 }>
-							{ appUsers.map( ( user ) => (
-								<Stack
-									key={ user.id }
-									direction="row"
-									alignItems="center"
-									justifyContent="space-between"
-									sx={ {
-										px: 2,
-										py: 1,
-										border: 1,
-										borderColor: 'divider',
-										borderRadius: 1,
-										maxWidth: 420,
-									} }
+								<FormControl
+									size="small"
+									sx={ { flex: 1 } }
+									disabled={ availableWpUsers.length === 0 }
 								>
-									<Stack>
-										<Typography variant="body2">
-											{ user.display_name }
-										</Typography>
-										<Typography variant="caption" color="text.secondary">
-											{ user.status }
-										</Typography>
-									</Stack>
-
-									<IconButton
-										size="small"
-										onClick={ () => handleRemoveUser( user.id ) }
-										aria-label={ __( 'Remove user', 'rest-api-firewall' ) }
+									<InputLabel>
+										{ __(
+											'Add User',
+											'rest-api-firewall'
+										) }
+									</InputLabel>
+									<Select
+										value={ addUserValue }
+										onChange={ ( e ) =>
+											setAddUserValue( e.target.value )
+										}
+										label={ __(
+											'Add User',
+											'rest-api-firewall'
+										) }
 									>
-										<DeleteOutlineIcon fontSize="small" />
-									</IconButton>
+										{ availableWpUsers.map( ( u ) => (
+											<MenuItem
+												key={ u.value }
+												value={ u.value }
+											>
+												{ u.label }
+											</MenuItem>
+										) ) }
+									</Select>
+								</FormControl>
+
+								<IconButton
+									size="small"
+									onClick={ handleAddUser }
+									disabled={ ! addUserValue }
+									aria-label={ __(
+										'Add user',
+										'rest-api-firewall'
+									) }
+								>
+									<AddIcon />
+								</IconButton>
+							</Stack>
+
+							{ userError && (
+								<Typography variant="body2" color="error">
+									{ userError }
+								</Typography>
+							) }
+
+							{ ! usersLoading &&
+								appUsers.length === 0 &&
+								! userError && (
+									<Typography
+										variant="body2"
+										color="text.secondary"
+									>
+										{ __(
+											'No users linked yet.',
+											'rest-api-firewall'
+										) }
+									</Typography>
+								) }
+
+							{ appUsers.length > 0 && (
+								<Stack spacing={ 1 }>
+									{ appUsers.map( ( user ) => (
+										<Stack
+											key={ user.id }
+											direction="row"
+											alignItems="center"
+											justifyContent="space-between"
+											sx={ {
+												px: 2,
+												py: 1,
+												border: 1,
+												borderColor: 'divider',
+												borderRadius: 1,
+												maxWidth: 420,
+											} }
+										>
+											<Stack>
+												<Typography variant="body2">
+													{ user.display_name }
+												</Typography>
+												<Typography
+													variant="caption"
+													color="text.secondary"
+												>
+													{ user.status }
+												</Typography>
+											</Stack>
+
+											<IconButton
+												size="small"
+												onClick={ () =>
+													handleRemoveUser( user.id )
+												}
+												aria-label={ __(
+													'Remove user',
+													'rest-api-firewall'
+												) }
+											>
+												<DeleteOutlineIcon fontSize="small" />
+											</IconButton>
+										</Stack>
+									) ) }
 								</Stack>
-							) ) }
+							) }
 						</Stack>
-					) }
-				</Stack>
 					</>
 				) }
 
@@ -572,27 +739,46 @@ export default function ApplicationEditor( { application, onBack } ) {
 				<Stack spacing={ 2 }>
 					<SectionHeader
 						title={ __( 'Rate Limiting', 'rest-api-firewall' ) }
-						description={ __( 'Application-level cap applied across all routes and users.', 'rest-api-firewall' ) }
+						description={ __(
+							'Application-level cap applied across all routes and users.',
+							'rest-api-firewall'
+						) }
 					/>
 
-					<Stack direction={ { xs: 'column', sm: 'row' } } spacing={ 2 }>
+					<Stack
+						direction={ { xs: 'column', sm: 'row' } }
+						spacing={ 2 }
+					>
 						<TextField
 							label={ __( 'Max Requests', 'rest-api-firewall' ) }
 							type="number"
 							size="small"
 							value={ rateLimitRequests }
-							onChange={ ( e ) => setRateLimitRequests( e.target.value ) }
-							helperText={ __( 'Requests allowed per window', 'rest-api-firewall' ) }
+							onChange={ ( e ) =>
+								setRateLimitRequests( e.target.value )
+							}
+							helperText={ __(
+								'Requests allowed per window',
+								'rest-api-firewall'
+							) }
 							inputProps={ { min: 1 } }
 							sx={ { maxWidth: 200 } }
 						/>
 						<TextField
-							label={ __( 'Window (seconds)', 'rest-api-firewall' ) }
+							label={ __(
+								'Window (seconds)',
+								'rest-api-firewall'
+							) }
 							type="number"
 							size="small"
 							value={ rateLimitWindow }
-							onChange={ ( e ) => setRateLimitWindow( e.target.value ) }
-							helperText={ __( 'Rolling time window', 'rest-api-firewall' ) }
+							onChange={ ( e ) =>
+								setRateLimitWindow( e.target.value )
+							}
+							helperText={ __(
+								'Rolling time window',
+								'rest-api-firewall'
+							) }
 							inputProps={ { min: 1 } }
 							sx={ { maxWidth: 200 } }
 						/>
@@ -606,15 +792,22 @@ export default function ApplicationEditor( { application, onBack } ) {
 						title={ __( 'Route Policy', 'rest-api-firewall' ) }
 						description={
 							policyActive
-								? __( 'A route policy is active for this application. Configure access rules in the Routes panel.', 'rest-api-firewall' )
-								: __( 'No route policy yet. Use the Routes panel to define per-route access rules.', 'rest-api-firewall' )
+								? __(
+										'A route policy is active for this application. Configure access rules in the Routes panel.',
+										'rest-api-firewall'
+								  )
+								: __(
+										'No route policy yet. Use the Routes panel to define per-route access rules.',
+										'rest-api-firewall'
+								  )
 						}
 					/>
 					<Box>
 						<Chip
-							label={ policyActive
-								? __( 'Policy active', 'rest-api-firewall' )
-								: __( 'No policy', 'rest-api-firewall' )
+							label={
+								policyActive
+									? __( 'Policy active', 'rest-api-firewall' )
+									: __( 'No policy', 'rest-api-firewall' )
 							}
 							color={ policyActive ? 'success' : 'default' }
 							variant="outlined"
@@ -622,9 +815,7 @@ export default function ApplicationEditor( { application, onBack } ) {
 						/>
 					</Box>
 				</Stack>
-				
 			</Stack>
-
 		</Stack>
 	);
 }

@@ -12,8 +12,8 @@
  */
 
 // Longest valid value of each kind
-const MAX_IPV4_LEN      = 15; // "255.255.255.255"
-const MAX_IPV6_LEN      = 39; // "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+const MAX_IPV4_LEN = 15; // "255.255.255.255"
+const MAX_IPV6_LEN = 39; // "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
 const MAX_IPV6_CIDR_LEN = 43; // same + "/128" — covers IPv4 CIDR too
 
 // IPv4 — deterministic, bounded alternation, anchored start/end
@@ -22,10 +22,12 @@ const IPV4_RE =
 
 /**
  * @param {string} value
- * @returns {boolean}
+ * @return {boolean}
  */
 export function isValidIpv4( value ) {
-	if ( ! value || value.length > MAX_IPV4_LEN ) return false;
+	if ( ! value || value.length > MAX_IPV4_LEN ) {
+		return false;
+	}
 	return IPV4_RE.test( value );
 }
 
@@ -38,10 +40,12 @@ export function isValidIpv4( value ) {
  * forms (::1, 2001:db8::1, …).
  *
  * @param {string} value
- * @returns {boolean}
+ * @return {boolean}
  */
 export function isValidIpv6( value ) {
-	if ( ! value || value.length > MAX_IPV6_LEN ) return false;
+	if ( ! value || value.length > MAX_IPV6_LEN ) {
+		return false;
+	}
 	try {
 		new URL( `http://[${ value }]` );
 		return true;
@@ -54,23 +58,33 @@ export function isValidIpv6( value ) {
  * Validates a CIDR range — IPv4 (/0–32) or IPv6 (/0–128).
  *
  * @param {string} value
- * @returns {boolean}
+ * @return {boolean}
  */
 export function isValidCidr( value ) {
-	if ( ! value || value.length > MAX_IPV6_CIDR_LEN ) return false;
+	if ( ! value || value.length > MAX_IPV6_CIDR_LEN ) {
+		return false;
+	}
 
 	const slashIdx = value.indexOf( '/' );
-	if ( slashIdx === -1 ) return false;
+	if ( slashIdx === -1 ) {
+		return false;
+	}
 
-	const addr      = value.slice( 0, slashIdx );
+	const addr = value.slice( 0, slashIdx );
 	const prefixStr = value.slice( slashIdx + 1 );
 
 	// Prefix must be a plain non-negative integer — no leading zeros, no floats
-	if ( ! /^(?:0|[1-9][0-9]*)$/.test( prefixStr ) ) return false;
+	if ( ! /^(?:0|[1-9][0-9]*)$/.test( prefixStr ) ) {
+		return false;
+	}
 	const bits = parseInt( prefixStr, 10 );
 
-	if ( isValidIpv4( addr ) ) return bits <= 32;
-	if ( isValidIpv6( addr ) ) return bits <= 128;
+	if ( isValidIpv4( addr ) ) {
+		return bits <= 32;
+	}
+	if ( isValidIpv6( addr ) ) {
+		return bits <= 128;
+	}
 	return false;
 }
 
@@ -78,11 +92,17 @@ export function isValidCidr( value ) {
  * Returns true for a plain IPv4, IPv6, or CIDR range.
  *
  * @param {string}  value
- * @param {boolean} [allowCidr=true]  Set false to reject CIDR notation (free-tier parity).
- * @returns {boolean}
+ * @param {boolean} [allowCidr=true] Set false to reject CIDR notation (free-tier parity).
+ * @return {boolean}
  */
 export function isValidIpOrCidr( value, allowCidr = true ) {
-	if ( ! value ) return false;
+	if ( ! value ) {
+		return false;
+	}
 	const v = value.trim();
-	return isValidIpv4( v ) || isValidIpv6( v ) || ( allowCidr && isValidCidr( v ) );
+	return (
+		isValidIpv4( v ) ||
+		isValidIpv6( v ) ||
+		( allowCidr && isValidCidr( v ) )
+	);
 }
