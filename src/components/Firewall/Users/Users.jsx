@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
-import { useAdminData } from '../../contexts/AdminDataContext';
-import { useLicense } from '../../contexts/LicenseContext';
+import { useAdminData } from '../../../contexts/AdminDataContext';
+import { useLicense } from '../../../contexts/LicenseContext';
+import { useApplication } from '../../../contexts/ApplicationContext';
 
 import { DataGrid } from '@mui/x-data-grid';
 
@@ -15,15 +16,16 @@ import Typography from '@mui/material/Typography';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
-import ApplicationEditor from './ApplicationEditor';
-import useProActions from '../../hooks/useProActions';
+import UserEditor from './UserEditor';
+import useProActions from '../../../hooks/useProActions';
 
-export default function Applications() {
+export default function Users() {
 	const { adminData } = useAdminData();
 	const { hasValidLicense, proNonce } = useLicense();
 	const nonce = proNonce || adminData.nonce;
 	const { __ } = wp.i18n || {};
 
+	const { selectedApplicationId } = useApplication();
 	const { remove } = useProActions();
 
 	const [ rows, setRows ] = useState( [] );
@@ -39,30 +41,25 @@ export default function Applications() {
 		type: 'include',
 		ids: new Set( [] ),
 	} );
-
 	const [ fetchError, setFetchError ] = useState( '' );
-
-	const [ editingApp, setEditingApp ] = useState( null );
+	const [ editingUser, setEditingUser ] = useState( null );
 
 	const handleDeleteOne = useCallback(
-		( id, title ) => {
+		( id, displayName ) => {
 			remove(
-				{ action: 'delete_application_entry', id },
+				{ action: 'delete_user_entry', id },
 				{
-					confirmTitle: __(
-						'Delete Application',
-						'rest-api-firewall'
-					),
-					confirmMessage: title
+					confirmTitle: __( 'Delete User', 'rest-api-firewall' ),
+					confirmMessage: displayName
 						? `${ __(
 								'Permanently delete',
 								'rest-api-firewall'
-						  ) } "${ title }"? ${ __(
+						  ) } "${ displayName }"? ${ __(
 								'This action cannot be undone.',
 								'rest-api-firewall'
 						  ) }`
 						: __(
-								'Permanently delete this application? This action cannot be undone.',
+								'Permanently delete this user? This action cannot be undone.',
 								'rest-api-firewall'
 						  ),
 					confirmLabel: __( 'Delete', 'rest-api-firewall' ),
@@ -89,7 +86,10 @@ export default function Applications() {
 						size="small"
 						color="default"
 						onClick={ () =>
-							handleDeleteOne( params.row.id, params.row.title )
+							handleDeleteOne(
+								params.row.id,
+								params.row.display_name
+							)
 						}
 					>
 						<DeleteOutlineIcon fontSize="small" />
@@ -97,11 +97,11 @@ export default function Applications() {
 				),
 			},
 			{
-				field: 'active',
-				headerName: __( 'Active', 'rest-api-firewall' ),
+				field: 'status',
+				headerName: __( 'Status', 'rest-api-firewall' ),
 				width: 100,
 				renderCell: ( params ) =>
-					params.value ? (
+					params.value === 'active' ? (
 						<Chip
 							label={ __( 'Active', 'rest-api-firewall' ) }
 							size="small"
@@ -117,8 +117,8 @@ export default function Applications() {
 					),
 			},
 			{
-				field: 'title',
-				headerName: __( 'Title', 'rest-api-firewall' ),
+				field: 'display_name',
+				headerName: __( 'User', 'rest-api-firewall' ),
 				flex: 1,
 				minWidth: 150,
 				renderCell: ( params ) => (
@@ -127,12 +127,11 @@ export default function Applications() {
 						spacing={ 0.5 }
 						alignItems="center"
 						sx={ { cursor: 'pointer' } }
-						onClick={ () => setEditingApp( params.row ) }
+						onClick={ () => setEditingUser( params.row ) }
 					>
 						<Typography
 							variant="body2"
 							sx={ {
-								fontFamily: 'monospace',
 								color: 'primary.main',
 								'&:hover': { textDecoration: 'underline' },
 							} }
@@ -146,34 +145,56 @@ export default function Applications() {
 				),
 			},
 			{
-				field: 'clients',
-				headerName: __( 'Clients', 'rest-api-firewall' ),
-				width: 120,
+				field: 'auth_method',
+				headerName: __( 'Auth Method', 'rest-api-firewall' ),
+				width: 140,
 				renderCell: ( params ) => (
-					<Typography variant="body2">
-						{ params.value ?? '-' }
+					<Typography
+						variant="body2"
+						sx={ { fontFamily: 'monospace' } }
+					>
+						{ params.value || 'any' }
 					</Typography>
 				),
 			},
 			{
-				field: 'users',
-				headerName: __( 'Users', 'rest-api-firewall' ),
-				width: 120,
-				renderCell: ( params ) => (
-					<Typography variant="body2">
-						{ params.value ?? '-' }
-					</Typography>
-				),
+				field: 'allowed_methods',
+				headerName: __( 'HTTP Methods', 'rest-api-firewall' ),
+				width: 210,
+				sortable: false,
+				renderCell: ( params ) => {
+					const methods = params.value || [];
+					if ( methods.length === 0 ) {
+						return <Typography variant="body2">-</Typography>;
+					}
+					return (
+						<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
+							{ methods.map( ( m ) => (
+								<Chip
+									key={ m }
+									label={ m.toUpperCase() }
+									size="small"
+									variant="outlined"
+									sx={ { fontSize: 10, height: 18 } }
+								/>
+							) ) }
+						</Stack>
+					);
+				},
 			},
 			{
-				field: 'policy',
-				headerName: __( 'Policy Loaded', 'rest-api-firewall' ),
+				field: 'rate_limit_max_requests',
+				headerName: __( 'Rate Limit', 'rest-api-firewall' ),
 				width: 120,
 				renderCell: ( params ) => (
-					<Typography variant="body2">
+					<Typography
+						variant="body2"
+						sx={ { fontFamily: 'monospace' } }
+					>
+						{ params.value ?? '-' }
 						{ params.value
-							? __( 'Yes', 'rest-api-firewall' )
-							: '-' }
+							? ` / ${ params.row.rate_limit_window_seconds }s`
+							: '' }
 					</Typography>
 				),
 			},
@@ -183,18 +204,19 @@ export default function Applications() {
 				width: 150,
 				renderCell: ( params ) => params.value || '-',
 			},
-			{
-				field: 'date_modified',
-				headerName: __( 'Date Modified', 'rest-api-firewall' ),
-				width: 150,
-				renderCell: ( params ) => params.value || '-',
-			},
 		],
 		[ hasValidLicense, handleDeleteOne, __ ]
 	);
 
 	const fetchEntries = useCallback( async () => {
+		if ( ! selectedApplicationId ) {
+			setRows( [] );
+			setLoading( false );
+			return;
+		}
+
 		setLoading( true );
+		setFetchError( '' );
 
 		try {
 			const response = await fetch( adminData.ajaxurl, {
@@ -204,8 +226,9 @@ export default function Applications() {
 						'application/x-www-form-urlencoded; charset=UTF-8',
 				},
 				body: new URLSearchParams( {
-					action: 'get_application_entries',
+					action: 'get_user_entries',
 					nonce,
+					application_id: selectedApplicationId,
 				} ),
 			} );
 
@@ -215,13 +238,11 @@ export default function Applications() {
 				setRows( result.data.entries || [] );
 			}
 		} catch ( error ) {
-			setFetchError(
-				'Error fetching application entries:' + JSON.stringify( error )
-			);
+			setFetchError( 'Error fetching users: ' + JSON.stringify( error ) );
 		} finally {
 			setLoading( false );
 		}
-	}, [ adminData, nonce ] );
+	}, [ adminData, nonce, selectedApplicationId ] );
 
 	useEffect( () => {
 		fetchEntries();
@@ -238,13 +259,13 @@ export default function Applications() {
 
 		remove(
 			{
-				action: 'delete_application_entries',
+				action: 'delete_user_entries',
 				ids: JSON.stringify( selectedIds ),
 			},
 			{
-				confirmTitle: __( 'Delete Applications', 'rest-api-firewall' ),
+				confirmTitle: __( 'Delete Users', 'rest-api-firewall' ),
 				confirmMessage: `${ count } ${ __(
-					'applications will be permanently deleted. This action cannot be undone.',
+					'users will be permanently deleted. This action cannot be undone.',
 					'rest-api-firewall'
 				) }`,
 				confirmLabel: __( 'Delete', 'rest-api-firewall' ),
@@ -258,12 +279,12 @@ export default function Applications() {
 		);
 	};
 
-	if ( editingApp ) {
+	if ( editingUser ) {
 		return (
-			<ApplicationEditor
-				application={ editingApp }
+			<UserEditor
+				user={ editingUser }
 				onBack={ () => {
-					setEditingApp( null );
+					setEditingUser( null );
 					fetchEntries();
 				} }
 			/>
@@ -278,15 +299,18 @@ export default function Applications() {
 					size="small"
 					disableElevation
 					onClick={ () =>
-						setEditingApp( {
+						setEditingUser( {
 							id: null,
-							title: '',
-							active: false,
-							policy: false,
+							application_id: selectedApplicationId,
+							status: 'inactive',
+							auth_method: 'any',
+							allowed_methods: [ 'get' ],
+							rate_limit_max_requests: 100,
+							rate_limit_window_seconds: 60,
 						} )
 					}
 				>
-					{ __( 'New Application', 'rest-api-firewall' ) }
+					{ __( 'New User', 'rest-api-firewall' ) }
 				</Button>
 
 				<Box sx={ { flexGrow: 1 } } />
