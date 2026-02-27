@@ -158,6 +158,10 @@ class AdminPage {
 		#rest-api-firewall-admin-page input[type=checkbox]:disabled {
 			opacity:0;
 		}
+		#rest-api-firewall-admin-page textarea:focus {
+			border: unset;
+			box-shadow: unset;
+		}
 		';
 		echo '<style type="text/css">' . esc_html( $custom_css ) . '</style>';
 	}
