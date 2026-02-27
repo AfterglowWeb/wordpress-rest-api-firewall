@@ -188,6 +188,9 @@ export function normalizeTree( nodes, parentPath = '', parentSettings = null ) {
 			} else if ( node.settings.locked !== undefined ) {
 				nodeSettings.custom = !! node.settings.locked;
 			}
+			if ( node.settings.locked !== undefined ) {
+				nodeSettings.locked = !! node.settings.locked;
+			}
 		}
 
 		const normalizedNode = {

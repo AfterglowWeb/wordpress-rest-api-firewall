@@ -1,25 +1,30 @@
 import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
-import { useAdminData } from '../../../contexts/AdminDataContext';
-import { useLicense } from '../../../contexts/LicenseContext';
+import { useAdminData } from '../../contexts/AdminDataContext';
+import { useLicense } from '../../contexts/LicenseContext';
 
 import { DataGrid } from '@mui/x-data-grid';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 
-import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+
+import ApplicationEditor from './ApplicationEditor';
+import useProActions from '../../hooks/useProActions';
 
 export default function Applications() {
 	const { adminData } = useAdminData();
 	const { hasValidLicense, proNonce } = useLicense();
 	const nonce = proNonce || adminData.nonce;
 	const { __ } = wp.i18n || {};
+
+	const { remove } = useProActions();
 
 	const [ rows, setRows ] = useState( [] );
 	const [ loading, setLoading ] = useState( true );
@@ -35,12 +40,26 @@ export default function Applications() {
 		ids: new Set( [] ),
 	} );
 
-	const [ newApplication, setNewApplication ] = useState( '' );
-	const [ applicationError, setApplicationError ] = useState( '' );
-	const [ adding, setAdding ] = useState( false );
+	const [ fetchError, setFetchError ] = useState( '' );
 
-	const columns = useMemo( () => {
-		const baseColumns = [
+	const [ editingApp, setEditingApp ] = useState( null );
+
+	const handleDeleteOne = useCallback( ( id, title ) => {
+		remove(
+			{ action: 'delete_application_entry', id },
+			{
+				confirmTitle:   __( 'Delete Application', 'rest-api-firewall' ),
+				confirmMessage: title
+					? `${ __( 'Permanently delete', 'rest-api-firewall' ) } "${ title }"? ${ __( 'This action cannot be undone.', 'rest-api-firewall' ) }`
+					: __( 'Permanently delete this application? This action cannot be undone.', 'rest-api-firewall' ),
+				confirmLabel:   __( 'Delete', 'rest-api-firewall' ),
+				onSuccess: () => setRows( ( prev ) => prev.filter( ( row ) => row.id !== id ) ),
+			}
+		);
+	}, [ remove, __ ] );
+
+	const columns = useMemo(
+		() => [
 			{
 				field: 'actions',
 				headerName: __( 'Actions', 'rest-api-firewall' ),
@@ -51,7 +70,7 @@ export default function Applications() {
 					<IconButton
 						size="small"
 						color="default"
-						onClick={ () => handleDeleteOne( params.row.id ) }
+						onClick={ () => handleDeleteOne( params.row.id, params.row.title ) }
 					>
 						<DeleteOutlineIcon fontSize="small" />
 					</IconButton>
@@ -60,12 +79,22 @@ export default function Applications() {
 			{
 				field: 'active',
 				headerName: __( 'Active', 'rest-api-firewall' ),
-				width: 120,
-				renderCell: ( params ) => (
-					<Typography variant="body2">
-						{ params.value || '-' }
-					</Typography>
-				),
+				width: 100,
+				renderCell: ( params ) =>
+					params.value ? (
+						<Chip
+							label={ __( 'Active', 'rest-api-firewall' ) }
+							size="small"
+							color="success"
+							variant="outlined"
+						/>
+					) : (
+						<Chip
+							label={ __( 'Inactive', 'rest-api-firewall' ) }
+							size="small"
+							variant="outlined"
+						/>
+					),
 			},
 			{
 				field: 'title',
@@ -73,13 +102,26 @@ export default function Applications() {
 				flex: 1,
 				minWidth: 150,
 				renderCell: ( params ) => (
-					<Stack direction="row" spacing={ 1 } alignItems="center">
+					<Stack
+						direction="row"
+						spacing={ 0.5 }
+						alignItems="center"
+						sx={ { cursor: 'pointer' } }
+						onClick={ () => setEditingApp( params.row ) }
+					>
 						<Typography
 							variant="body2"
-							sx={ { fontFamily: 'monospace' } }
+							sx={ {
+								fontFamily: 'monospace',
+								color: 'primary.main',
+								'&:hover': { textDecoration: 'underline' },
+							} }
 						>
 							{ params.value }
 						</Typography>
+						<OpenInNewIcon
+							sx={ { fontSize: 13, color: 'text.disabled' } }
+						/>
 					</Stack>
 				),
 			},
@@ -89,7 +131,7 @@ export default function Applications() {
 				width: 120,
 				renderCell: ( params ) => (
 					<Typography variant="body2">
-						{ params.value || '-' }
+						{ params.value ?? '-' }
 					</Typography>
 				),
 			},
@@ -99,7 +141,7 @@ export default function Applications() {
 				width: 120,
 				renderCell: ( params ) => (
 					<Typography variant="body2">
-						{ params.value || '-' }
+						{ params.value ?? '-' }
 					</Typography>
 				),
 			},
@@ -109,7 +151,9 @@ export default function Applications() {
 				width: 120,
 				renderCell: ( params ) => (
 					<Typography variant="body2">
-						{ params.value || '-' }
+						{ params.value
+							? __( 'Yes', 'rest-api-firewall' )
+							: '-' }
 					</Typography>
 				),
 			},
@@ -125,10 +169,9 @@ export default function Applications() {
 				width: 150,
 				renderCell: ( params ) => params.value || '-',
 			},
-		];
-
-		return baseColumns;
-	}, [ hasValidLicense, __ ] );
+		],
+		[ hasValidLicense, handleDeleteOne, __ ]
+	);
 
 	const fetchEntries = useCallback( async () => {
 		setLoading( true );
@@ -152,7 +195,7 @@ export default function Applications() {
 				setRows( result.data.entries || [] );
 			}
 		} catch ( error ) {
-			setApplicationError(
+			setFetchError(
 				'Error fetching application entries:' + JSON.stringify( error )
 			);
 		} finally {
@@ -164,142 +207,49 @@ export default function Applications() {
 		fetchEntries();
 	}, [ fetchEntries ] );
 
-	const handleAddApplication = async () => {
-		try {
-			const response = await fetch( adminData.ajaxurl, {
-				method: 'POST',
-				headers: {
-					'Content-Type':
-						'application/x-www-form-urlencoded; charset=UTF-8',
-				},
-				body: new URLSearchParams( {
-					action: 'add_application_entry',
-					nonce,
-					data: { data: {} },
-				} ),
-			} );
-
-			const result = await response.json();
-
-			if ( result?.success && result?.data?.entry ) {
-				setNewApplication( '' );
-				setRows( ( prev ) => [ result.data.entry, ...prev ] );
-			} else {
-				setApplicationError(
-					result?.data?.message ||
-						__( 'Failed to add application', 'rest-api-firewall' )
-				);
-			}
-		} catch ( error ) {
-			setApplicationError( error.message );
-		} finally {
-			setAdding( false );
-		}
-	};
-
-	const handleDeleteOne = async ( id ) => {
-		setRows( ( prev ) => prev.filter( ( row ) => row.id !== id ) );
-
-		try {
-			const response = await fetch( adminData.ajaxurl, {
-				method: 'POST',
-				headers: {
-					'Content-Type':
-						'application/x-www-form-urlencoded; charset=UTF-8',
-				},
-				body: new URLSearchParams( {
-					action: 'delete_application_entry',
-					nonce,
-					id,
-				} ),
-			} );
-
-			const result = await response.json();
-
-			if ( ! result?.success ) {
-				fetchEntries();
-			}
-		} catch ( error ) {
-			setApplicationError(
-				'Error deleting application entry:' + JSON.stringify( error )
-			);
-			fetchEntries();
-		}
-	};
-
-	const handleDeleteSelected = async () => {
-		if ( rowSelectionModel && rowSelectionModel.ids.size === 0 ) {
-			return;
-		}
-
+	const handleDeleteSelected = () => {
 		const selectedIds = [ ...rowSelectionModel.ids ];
+		const count = selectedIds.length;
+		if ( count === 0 ) return;
+
 		const selectedSet = new Set( selectedIds );
 
-		setRows( ( prev ) =>
-			prev.filter( ( row ) => ! selectedSet.has( row.id ) )
-		);
-		setRowSelectionModel( { type: 'include', ids: new Set() } );
-
-		try {
-			const response = await fetch( adminData.ajaxurl, {
-				method: 'POST',
-				headers: {
-					'Content-Type':
-						'application/x-www-form-urlencoded; charset=UTF-8',
+		remove(
+			{ action: 'delete_application_entries', ids: JSON.stringify( selectedIds ) },
+			{
+				confirmTitle:   __( 'Delete Applications', 'rest-api-firewall' ),
+				confirmMessage: `${ count } ${ __( 'applications will be permanently deleted. This action cannot be undone.', 'rest-api-firewall' ) }`,
+				confirmLabel:   __( 'Delete', 'rest-api-firewall' ),
+				onSuccess: () => {
+					setRows( ( prev ) => prev.filter( ( row ) => ! selectedSet.has( row.id ) ) );
+					setRowSelectionModel( { type: 'include', ids: new Set() } );
 				},
-				body: new URLSearchParams( {
-					action: 'delete_application_entries',
-					nonce,
-					ids: JSON.stringify( selectedIds ),
-				} ),
-			} );
-
-			const result = await response.json();
-
-			if ( ! result?.success ) {
-				fetchEntries();
 			}
-		} catch ( error ) {
-			setApplicationError(
-				'Error deleting applications:' + JSON.stringify( error )
-			);
-			fetchEntries();
-		}
+		);
 	};
 
-	const handleKeyDown = ( e ) => {
-		if ( e.key === 'Enter' ) {
-			e.preventDefault();
-			handleAddApplication();
-		}
-	};
+	if ( editingApp ) {
+		return (
+			<ApplicationEditor
+				application={ editingApp }
+				onBack={ () => {
+					setEditingApp( null );
+					fetchEntries();
+				} }
+			/>
+		);
+	}
 
 	return (
-		<Stack spacing={ 2 }>
+		<Stack spacing={ 2 } p={{ xs: 2, sm: 4 }}>
 			<Toolbar disableGutters sx={ { gap: 2, mb: 2, flexWrap: 'wrap' } }>
-				<TextField
-					value={ newApplication }
-					onChange={ ( e ) => {
-						setNewApplication( e.target.value );
-						setApplicationError( '' );
-					} }
-					onKeyDown={ handleKeyDown }
-					placeholder={ __(
-						'Application Title',
-						'rest-api-firewall'
-					) }
-					size="small"
-					sx={ { minWidth: 250 } }
-				/>
-
 				<Button
 					variant="contained"
 					size="small"
-					onClick={ handleAddApplication }
-					disabled={ adding || ! newApplication }
-					startIcon={ <AddIcon /> }
+					disableElevation
+					onClick={ () => setEditingApp( { id: null, title: '', active: true, policy: false } ) }
 				>
-					{ __( 'Create Application', 'rest-api-firewall' ) }
+					{ __( 'New Application', 'rest-api-firewall' ) }
 				</Button>
 
 				<Box sx={ { flexGrow: 1 } } />
@@ -317,6 +267,12 @@ export default function Applications() {
 					</Button>
 				) }
 			</Toolbar>
+
+			{ fetchError && (
+				<Typography variant="body2" color="error">
+					{ fetchError }
+				</Typography>
+			) }
 
 			<DataGrid
 				showToolbar={ true }
