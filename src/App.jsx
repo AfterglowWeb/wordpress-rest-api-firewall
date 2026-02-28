@@ -62,6 +62,7 @@ import Properties from './components/ApiOutput/Properties';
 import SettingsRoute from './components/ApiOutput/SettingsRoute';
 import Collections from './components/ApiOutput/Collections';
 import Webhook from './components/Webhook/Webhook';
+import Webhooks from './components/Webhook/Webhooks';
 import Smtp from './components/Emails/Smtp';
 import ThemeSettings from './components/Theme/ThemeSettings';
 import Applications from './components/Application/Applications';
@@ -137,8 +138,7 @@ function AppContent() {
 		},
 		{
 			key: 'user-rate-limiting',
-			label: __( 'Authentication', 'rest-api-firewall' ),
-			secondary: 'Users & methods',
+			label: __( 'Auth. & Rate Limit', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'REST API Firewall',
 			panelGroup: 1,
 			icon: SecurityOutlined,
@@ -190,7 +190,7 @@ function AppContent() {
 		{ type: 'section', label: __( 'Integrations', 'rest-api-firewall' ) },
 		{
 			key: 'webhook',
-			label: __( 'Webhook', 'rest-api-firewall' ),
+			label: hasValidLicense ? __( 'Webhooks', 'rest-api-firewall' ) : __( 'Webhook', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Integrations',
 			panelGroup: 7,
 			icon: WebhookIcon,
@@ -357,16 +357,18 @@ function AppContent() {
 		6: 'settings_route',
 		7: 'webhook',
 		8: 'email',
-		9: 'theme',
 	};
+	if( hasValidLicense) {
+		delete PANEL_SAVE_GROUP[1];
+		delete PANEL_SAVE_GROUP[7];
+	}
 
 	const handleSave = ( group ) => {
 		save( pickGroup( group ), SAVE_CONFIG[ group ] );
 	};
 
 	const activeSaveGroup = PANEL_SAVE_GROUP[ panelGroup ] ?? null;
-	const showSaveButton =
-		activeSaveGroup !== null && ( panelGroup !== 9 || themeStatus?.active );
+	const showSaveButton = activeSaveGroup !== null;
 	const needsLicense = panelGroup === 5 && ! hasValidLicense;
 
 	if ( ! adminData ) {
@@ -738,7 +740,7 @@ function AppContent() {
 						bgcolor: theme.palette.background.paper,
 					} }
 				>
-					{ panelGroup === 0 && <Applications /> }
+					{ hasValidLicense && panelGroup === 0 && <Applications /> }
 
 					{ panelGroup === 1 && (
 						<>
@@ -767,10 +769,7 @@ function AppContent() {
 
 					<Stack sx={ { p: 4, flexGrow: 1 } }>
 						{ panelGroup === 2 && (
-							<Stack
-								spacing={ 3 }
-								id="section-routes-policy-settings"
-							>
+							<Stack spacing={ 3 }>
 								<GlobalRoutesPolicy
 									form={ form }
 									setField={ setField }
@@ -786,36 +785,30 @@ function AppContent() {
 						{ panelGroup === 3 && <IpFilter /> }
 
 						{ panelGroup === 4 && (
-							<Stack id="section-collections-per-page">
 								<Collections
 									form={ form }
 									setField={ setField }
 									postTypes={ postTypes }
 								/>
-							</Stack>
 						) }
 
 						{ panelGroup === 5 && (
-							<Stack id="section-models-properties">
 								<Properties
 									form={ form }
 									setField={ setField }
 									postTypes={ postTypes }
 								/>
-							</Stack>
 						) }
 
 						{ panelGroup === 6 && (
-							<Stack id="section-settings-route">
 								<SettingsRoute
 									form={ form }
 									setField={ setField }
 								/>
-							</Stack>
 						) }
 
 						{ panelGroup === 7 && (
-							<Webhook form={ form } setField={ setField } />
+							hasValidLicense ? <Webhooks /> : <Webhook form={ form } setField={ setField } />
 						) }
 
 						{ panelGroup === 8 && (
