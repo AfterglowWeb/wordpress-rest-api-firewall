@@ -64,6 +64,15 @@ class WebhookService {
 				'type'    => 'integer',
 				'default' => 0,
 			),
+			'body_payload'    => array(
+				'type'    => 'string',
+				'default' => '',
+			),
+			'type'            => array(
+				'type'    => 'string',
+				'default' => 'general',
+				'allowed' => array( 'general', 'notification', 'automation', 'data_sync', 'alert' ),
+			),
 			'created_at'      => array(
 				'type'    => 'string',
 				'default' => null,
