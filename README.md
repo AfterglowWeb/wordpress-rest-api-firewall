@@ -6,10 +6,14 @@ WordPress Application Layer is a comprehensive suite designed to secure, filter,
 
 - Create multiple applications with distinct policy rules and data views, scoped per route and per user.
 - Map collections and properties through JSON objects, similar to Firebase or Supabase.
-- Create application users with restricted roles and specific authentication methods (JWT, OAuth, SSO, and WordPress authentication).
-- Trigger webhooks on WordPress events and custom events (support for major plugin events is under development).
+- Create application users with restricted roles and specific authentication methods (JWT, OAuth, SSO, and WordPress Application Password).
+- Trigger webhooks on WordPress events and custom events *(support for major plugin events is under development)*.
 - Send notification emails.
 - Spin up a blank front-end template.
+
+> **Alpha version** 
+> This plugin is under active development. Architectural changes may still occur.
+> It is publicly available for testing and feedback. Stability is not yet guaranteed.
 
 ## Screenshots
 
@@ -27,7 +31,7 @@ WordPress Application Layer is a comprehensive suite designed to secure, filter,
   <tr>
     <td align="center" width="50%">
       <img src="docs/wordpress-application-layer-auth-rate-limit-tab.webp" alt="Authentication and Rate Limit Tab" />
-      <br /><strong>Auth. and Rate Limit. Tab</strong><br />
+      <br /><strong>Auth. and Rate Limit. Tab (free version)</strong><br />
     </td>
     <td align="center" width="50%">
       <img src="docs/wordpress-application-layer-ip-filters-tab.webp" alt="IPs Filter Tab" />
@@ -42,13 +46,13 @@ WordPress Application Layer is a comprehensive suite designed to secure, filter,
     </td>
     <td align="center" width="50%">
       <img src="docs/wordpress-application-layer-webhook-tab.webp" alt="Webhook Tab" />
-      <br /><strong>Webhook Tab</strong><br />
+      <br /><strong>Webhook Tab (free version)</strong><br />
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
       <img src="docs/wordpress-application-layer-smtp-tab.webp" alt="Emails Tab" />
-      <br /><strong>Emails Tab (under development)</strong><br />
+      <br /><strong>Emails Tab *(under development)*</strong><br />
     </td>
     <td align="center" width="50%">
       <img src="docs/wordpress-application-layer-theme-tab.webp" alt="Theme Tab" />
@@ -58,17 +62,17 @@ WordPress Application Layer is a comprehensive suite designed to secure, filter,
   <tr>
     <td align="center" width="50%" height="300px">
       <img src="docs/wordpress-application-layer-properties-tab.webp" alt="Properties Tab" />
-      <br /><strong>Properties Tab</strong><br />
+      <br /><strong>Properties Tab (free version)</strong><br />
     </td>
     <td align="center" width="50%" height="300px">
       <img src="docs/wordpress-application-layer-settings-route-tab.webp" alt="Settings Route" />
-      <br /><strong>Settings Route Tab</strong><br />
+      <br /><strong>Settings Route Tab (free version)</strong><br />
     </td>
   </tr>
   <tr>
     <td align="center" width="50%" height="500px">
       <img src="docs/wordpress-application-layer-routes-tab.webp" alt="Routes Management" />
-      <br /><strong>Routes Tab</strong><br />
+      <br /><strong>Routes Tab (free version)</strong><br />
     </td>
     <td align="top" width="50%">
       <img src="docs/wordpress-application-layer-license-tab.webp" alt="License Tab" />
@@ -109,9 +113,11 @@ Running fully headless? Deploy the bundled blank theme for additional control:
 
 Wordpress Application Layer PRO introduces a multi-application architecture: serve multiple front-end applications with distinct REST API data views from a single WordPress installation. Configure multiple application environments and run them simultaneously.
 - Each application has its own security and content policy.
+- Each application has one or multiple users.
+- Each user has its own Rate Limit, Auth Methods (JWT, oAuth, SSO or Wordpress Application Password), HTTP Methods (GET, POST, PUT, PATCH, DELETE) and Routes
 - Authentication(s) and/or IP(s) determine which application configuration is loaded.
 - The same data source can be exposed through multiple REST API “views.”
-- Each application can replace the default wp/v2 namespace with a custom namespace.
+- Each application can replace the default wp/v2 namespace with a custom namespace (under development).
 
 You may also configure a single application and benefit from all Pro features.
 
@@ -124,15 +130,15 @@ Additionally, you can run applications entirely through webhooks. Data is sent u
 
 ### Settings
 
-- Name your application and define allowed IPs and origins.
+- Name your application and define: allowed IPs/CIDR, global application Rate Limit, users and more.
 - Export and import application configurations.
 
 ### Security
 
 - Create multiple REST API users.
-- Assign authentication methods: WordPress Auth, Bearer Token, JWT, OAuth, or SSO.
+- Assign authentication methods: JWT, OAuth, SSO or WordPress Application Password.
 - Define allowed HTTP methods per user (GET, POST, PUT, PATCH, DELETE).
-- Add HTTP headers for security, caching, or compression.
+- Add HTTP headers for security, caching, or compression (under development).
 - Enforce per-route and per-method policies:
     - Restrict access to specific users
     - Rate-limit routes
@@ -140,6 +146,7 @@ Additionally, you can run applications entirely through webhooks. Data is sent u
     - Disable methods
     - Disable entire routes
     - Disable routes by post type or taxonomy.
+    - Disable routes by HTTP method.
 - Enable whitelist mode or advanced blacklist mode with:
     - Country blocking
     - CIDR blocking
@@ -148,12 +155,13 @@ Additionally, you can run applications entirely through webhooks. Data is sent u
 ### REST API Output
 
 - Selectively disable or filter properties per post type and taxonomy.
-- Flatten rendered, media, taxonomy, author, date, and meta fields.
+- Resolve, flatten or filter: rendered, attachments, terms, author, date, and meta fields.
 - Rename properties dynamically.
 - Hide _embed and _links properties.
 - Create a custom endpoint for ACF options page data.
 - Remove the WordPress domain from URLs.
 - Remove the uploads directory from attachment URLs.
+- Additionally, replace the REST API response by using our json builder to map properties through JSON objects, similar to Firebase or Supabase *(under development)*
 
 ### Webhooks
 - Create multiple secured webhooks.
@@ -177,13 +185,9 @@ Additionally, you can run applications entirely through webhooks. Data is sent u
 
 ## How does it work?
 
-Wordpress Application Layer operates exclusively within REST API and embedded contexts. It does not interfere with core WordPress or plugin functionality in the admin interface.
+Wordpress Application Layer operates exclusively within REST API read and embedded contexts. Admin loggedin queries are forwarded untouched so it does not interfere with core WordPress or plugin functionality in the admin interface.
 
 If certain plugins require public REST API access, you can configure bypass rules.
-
-> **Alpha version** 
-> This plugin is under active development. Architectural changes may still occur.
-> It is publicly available for testing and feedback. Stability is not yet guaranteed.
 
 ## Extra Modules
 
