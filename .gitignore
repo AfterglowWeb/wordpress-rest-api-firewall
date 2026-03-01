@@ -13,7 +13,6 @@ config/ui*
 .npm
 .vscode
 .eslintcache
-logs
 *.log
 *.log*
 

@@ -26,7 +26,6 @@ export default function Webhook( { form, setField } ) {
 
 	return (
 		<Stack maxWidth="xl" spacing={ 3 }>
-			{ /* ── New properties: type + body payload ── */ }
 			<Stack
 				direction={ { xs: 'column', sm: 'row' } }
 				spacing={ 2 }
@@ -58,7 +57,9 @@ export default function Webhook( { form, setField } ) {
 				rows={ 5 }
 				value={ form.body_payload || '' }
 				onChange={ ( e ) => setField( 'body_payload', e.target.value ) }
-				placeholder={ '{\n  "event": "{{event_type}}",\n  "data": {{payload}}\n}' }
+				placeholder={
+					'{\n  "event": "{{event_type}}",\n  "data": {{payload}}\n}'
+				}
 				helperText={ __(
 					'Optional JSON body template. Use {{placeholders}} for dynamic values.',
 					'rest-api-firewall'
@@ -70,7 +71,6 @@ export default function Webhook( { form, setField } ) {
 
 			<Divider />
 
-			{ /* ── Existing auth / events / test sections ── */ }
 			<Stack
 				direction={ { xs: 'column', xl: 'row' } }
 				flexWrap={ 'wrap' }
