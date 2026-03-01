@@ -18,6 +18,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useState } from '@wordpress/element';
+import ListItemText from '@mui/material/ListItemText';
 
 const PROP_TYPES = [ 'string', 'number', 'boolean', 'object', 'array', 'null' ];
 
@@ -91,7 +92,7 @@ function PropertyRow( {
 	};
 
 	return (
-		<Box
+		<Stack
 			sx={ {
 				pl: depth > 0 ? 2 : 0,
 				borderLeft: depth > 0 ? '2px solid' : 'none',
@@ -100,9 +101,9 @@ function PropertyRow( {
 		>
 			<Stack
 				direction="row"
-				spacing={ 1 }
+				gap={ 1 }
+				py={1 }
 				alignItems="center"
-				sx={ { py: 0.5 } }
 			>
 				{ isObject ? (
 					<IconButton
@@ -133,15 +134,20 @@ function PropertyRow( {
 					onBlur={ handleKeyBlur }
 					disabled={ readOnly }
 					placeholder={ __( 'property_name', 'rest-api-firewall' ) }
-					sx={ { width: 160 } }
-					inputProps={ {
-						style: { fontFamily: 'monospace', fontSize: '0.82rem' },
+					sx={ { 
+					width: 160, 
+					'.MuiInputBase-input': { 
+						padding: '10.5px 14px!important',
+						minHeight: 'unset!important',
+						fontFamily: 'monospace', 
+						fontSize: '0.82rem' 
+					}
 					} }
 				/>
 
 				<FormControl
 					size="small"
-					sx={ { width: 110 } }
+					sx={ { width: 100 } }
 					disabled={ readOnly }
 				>
 					<Select
@@ -180,10 +186,10 @@ function PropertyRow( {
 					( availableBindings && availableBindings.length > 0 ? (
 						<FormControl
 							size="small"
-							sx={ { flex: 1, minWidth: 140 } }
+							sx={ { width: 160 } }
 							disabled={ readOnly }
 						>
-							<InputLabel sx={ { fontSize: '0.8rem' } }>
+							<InputLabel id={`source-label-${propKey}`} sx={ { fontSize: '0.8rem' } }>
 								{ __( 'Source', 'rest-api-firewall' ) }
 							</InputLabel>
 							<Select
@@ -195,43 +201,26 @@ function PropertyRow( {
 										staticValue: '',
 									} )
 								}
+								renderValue={ ( val ) => {
+									const found = availableBindings.find( ( o ) => o.key === val );
+									return found?.key ?? val;
+								} }
 								displayEmpty
 							>
 								<MenuItem value="">
-									<Typography
-										variant="caption"
-										color="text.secondary"
-									>
-										{ __(
-											'— static value —',
+								  	<ListItemText
+										primary={ __(
+											'static value',
 											'rest-api-firewall'
 										) }
-									</Typography>
+									/>
 								</MenuItem>
 								{ availableBindings.map( ( b ) => (
 									<MenuItem key={ b.key } value={ b.key }>
-										<Stack>
-											<Typography
-												variant="caption"
-												sx={ {
-													fontFamily: 'monospace',
-													lineHeight: 1.2,
-												} }
-											>
-												{ b.key }
-											</Typography>
-											{ b.label && b.label !== b.key && (
-												<Typography
-													variant="caption"
-													color="text.secondary"
-													sx={ {
-														fontSize: '0.65rem',
-													} }
-												>
-													{ b.label }
-												</Typography>
-											) }
-										</Stack>
+										<ListItemText
+											primary={ b.key }
+											secondary={  b.label && b.label !== b.key ? b.label : null }
+										/>
 									</MenuItem>
 								) ) }
 							</Select>
@@ -250,12 +239,14 @@ function PropertyRow( {
 							'static value',
 							'rest-api-firewall'
 						) }
-						sx={ { flex: 1, minWidth: 120 } }
-						inputProps={ {
-							style: {
-								fontFamily: 'monospace',
-								fontSize: '0.82rem',
-							},
+						sx={ { 
+						width: 160, 
+						'.MuiInputBase-input': { 
+							padding: '10.5px 14px!important',
+							minHeight: 'unset!important',
+							fontFamily: 'monospace', 
+							fontSize: '0.82rem' 
+						}
 						} }
 					/>
 				) }
@@ -266,12 +257,14 @@ function PropertyRow( {
 						sx={ { width: 100 } }
 						disabled={ readOnly }
 					>
-						<InputLabel sx={ { fontSize: '0.8rem' } }>
+						<InputLabel 
+						id={`array-items-label-${propKey}`}
+						sx={ { fontSize: '0.8rem' } }>
 							{ __( 'Items', 'rest-api-firewall' ) }
 						</InputLabel>
 						<Select
+							labelId={`array-items-label-${propKey}`}
 							value={ propDef.itemType || 'string' }
-							label={ __( 'Items', 'rest-api-firewall' ) }
 							onChange={ ( e ) =>
 								update( { itemType: e.target.value } )
 							}
@@ -341,7 +334,7 @@ function PropertyRow( {
 					</Stack>
 				</Collapse>
 			) }
-		</Box>
+		</Stack>
 	);
 }
 
