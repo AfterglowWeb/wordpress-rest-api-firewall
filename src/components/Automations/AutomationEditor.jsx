@@ -39,7 +39,6 @@ const CONDITION_OPERATORS = [
 	{ value: 'lt', label: '<' },
 ];
 
-// Standard bindings available for payload mapping (event-agnostic base set).
 const BASE_BINDINGS = [
 	{ key: 'event.type', label: 'Event type', type: 'string' },
 	{ key: 'event.timestamp', label: 'Timestamp', type: 'string' },

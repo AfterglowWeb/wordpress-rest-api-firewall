@@ -93,14 +93,16 @@ function PropertyRow( {
 	};
 
 	const handleSubUpdate = ( subKey, subDef, newSubKey ) => {
-		const updated = { ...properties };
 		if ( newSubKey && newSubKey !== subKey ) {
-			delete updated[ subKey ];
-			updated[ newSubKey ] = subDef;
+			const rebuilt = {};
+			for ( const [ k, v ] of Object.entries( properties ) ) {
+				rebuilt[ k === subKey ? newSubKey : k ] =
+					k === subKey ? subDef : v;
+			}
+			update( { properties: rebuilt } );
 		} else {
-			updated[ subKey ] = subDef;
+			update( { properties: { ...properties, [ subKey ]: subDef } } );
 		}
-		update( { properties: updated } );
 	};
 
 	const handleSubRemove = ( subKey ) => {
@@ -383,14 +385,16 @@ export default function JsonSchemaBuilder( {
 
 	const handleUpdate = useCallback(
 		( key, def, newKey ) => {
-			const next = { ...value };
 			if ( newKey && newKey !== key ) {
-				delete next[ key ];
-				next[ newKey ] = def;
+				const next = {};
+				for ( const [ k, v ] of Object.entries( value ) ) {
+					next[ k === key ? newKey : k ] =
+						k === key ? def : v;
+				}
+				onChange( next );
 			} else {
-				next[ key ] = def;
+				onChange( { ...value, [ key ]: def } );
 			}
-			onChange( next );
 		},
 		[ value, onChange ]
 	);

@@ -34,7 +34,8 @@ import { PropertyRow } from './Properties';
 import JsonSchemaBuilder from '../shared/JsonSchemaBuilder';
 import ObjectTypeSelect from '../ObjectTypeSelect';
 
-const CUSTOM_BINDINGS = [
+// Fallback bindings when no WP REST schema is available for the object type.
+const FALLBACK_BINDINGS = [
 	{ key: 'id', label: 'ID', type: 'integer' },
 	{ key: 'slug', label: 'Slug', type: 'string' },
 	{ key: 'title', label: 'Title', type: 'string' },
@@ -54,7 +55,7 @@ const CUSTOM_BINDINGS = [
 export default function ModelEditor( { model, onBack } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
-	const { selectedApplicationId } = useApplication();
+	const { selectedApplicationId, setDirtyFlag } = useApplication();
 	const nonce = proNonce || adminData.nonce;
 	const { __ } = wp.i18n || {};
 
@@ -66,11 +67,33 @@ export default function ModelEditor( { model, onBack } ) {
 	const [ objectType, setObjectType ] = useState( model.object_type || '' );
 	const [ isCustom, setIsCustom ] = useState( model.is_custom || false );
 	const [ enabled, setEnabled ] = useState( model.enabled || false );
-	const [ properties, setProperties ] = useState( model.properties || {} );
+
+	// Separate states per mode so switching WP ↔ Custom doesn't destroy work.
+	const [ wpProperties, setWpProperties ] = useState(
+		! model.is_custom ? model.properties || {} : {}
+	);
+	const [ customProperties, setCustomProperties ] = useState(
+		model.is_custom ? model.properties || {} : {}
+	);
 
 	const [ loaded, setLoaded ] = useState( isNew );
 
-	// Fetch full entry from server when editing an existing model.
+	// Active properties + setter derived from current mode.
+	const properties = isCustom ? customProperties : wpProperties;
+	const setProperties = isCustom ? setCustomProperties : setWpProperties;
+
+	// Register dirty flag when editor is open; clear on unmount.
+	useEffect( () => {
+		setDirtyFlag( {
+			has: true,
+			message: __(
+				'You are editing a model. Unsaved changes will be lost.',
+				'rest-api-firewall'
+			),
+		} );
+		return () => setDirtyFlag( { has: false, message: '' } );
+	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps
+
 	useEffect( () => {
 		if ( isNew ) {
 			return;
@@ -92,7 +115,11 @@ export default function ModelEditor( { model, onBack } ) {
 					setObjectType( e.object_type || '' );
 					setIsCustom( e.is_custom || false );
 					setEnabled( e.enabled || false );
-					setProperties( e.properties || {} );
+					if ( e.is_custom ) {
+						setCustomProperties( e.properties || {} );
+					} else {
+						setWpProperties( e.properties || {} );
+					}
 				}
 			} finally {
 				setLoaded( true );
@@ -110,6 +137,16 @@ export default function ModelEditor( { model, onBack } ) {
 		application_id: selectedApplicationId || model.application_id || '',
 	} );
 
+	const clearDirty = useCallback(
+		() => setDirtyFlag( { has: false, message: '' } ),
+		[ setDirtyFlag ]
+	);
+
+	const handleBack = useCallback( () => {
+		clearDirty();
+		onBack();
+	}, [ clearDirty, onBack ] );
+
 	const handleSave = useCallback( () => {
 		if ( isNew ) {
 			save(
@@ -117,6 +154,7 @@ export default function ModelEditor( { model, onBack } ) {
 				{
 					onSuccess: ( data ) => {
 						if ( data?.entry ) {
+							clearDirty();
 							onBack();
 						}
 					},
@@ -129,7 +167,7 @@ export default function ModelEditor( { model, onBack } ) {
 					id: model.id,
 					...buildPayload(),
 				},
-				{}
+				{ onSuccess: clearDirty }
 			);
 		}
 	}, [
@@ -142,6 +180,8 @@ export default function ModelEditor( { model, onBack } ) {
 		properties,
 		nonce,
 		selectedApplicationId,
+		clearDirty,
+		onBack,
 	] );
 
 	const handleDelete = useCallback( () => {
@@ -157,24 +197,27 @@ export default function ModelEditor( { model, onBack } ) {
 					'rest-api-firewall'
 				) }`,
 				confirmLabel: __( 'Delete', 'rest-api-firewall' ),
-				onSuccess: onBack,
+				onSuccess: () => {
+					clearDirty();
+					onBack();
+				},
 			}
 		);
-	}, [ remove, model.id, label, nonce, onBack, __ ] );
+	}, [ remove, model.id, label, nonce, onBack, clearDirty, __ ] );
 
-	// When switching object type, reset properties (they're type-specific).
+	// Changing object type makes all existing properties irrelevant — reset both.
 	const handleObjectTypeChange = ( e ) => {
 		setObjectType( e.target.value );
-		setProperties( {} );
+		setWpProperties( {} );
+		setCustomProperties( {} );
 	};
 
-	// When switching schema mode, reset properties.
+	// Switching mode keeps each mode's work intact.
 	const handleModeChange = ( _, newMode ) => {
 		if ( newMode === null ) {
 			return;
 		}
 		setIsCustom( newMode === 'custom' );
-		setProperties( {} );
 	};
 
 	if ( ! loaded ) {
@@ -189,9 +232,45 @@ export default function ModelEditor( { model, onBack } ) {
 		);
 	}
 
-	// WP REST schema properties for the selected object type (from adminData).
 	const schemaProps =
 		adminData?.models_properties?.[ objectType ]?.props || null;
+
+	// Derive bindings for the custom schema builder from the WP REST schema when
+	// available; fall back to the static list when the object type has no schema.
+	// Sub-properties are included with dot notation (e.g. title.raw, title.rendered).
+	const availableBindings = schemaProps
+		? Object.entries( schemaProps ).flatMap( ( [ key, cfg ] ) => {
+				const type = Array.isArray( cfg.type ) ? cfg.type[ 0 ] : cfg.type;
+				const bindings = [
+					{ key, label: cfg.description || key, type },
+				];
+				if (
+					cfg.properties &&
+					typeof cfg.properties === 'object' &&
+					! Array.isArray( cfg.properties )
+				) {
+					Object.entries( cfg.properties ).forEach(
+						( [ subKey, subCfg ] ) => {
+							if (
+								typeof subCfg === 'object' &&
+								subCfg !== null
+							) {
+								bindings.push( {
+									key: `${ key }.${ subKey }`,
+									label:
+										subCfg.description ||
+										`${ key }.${ subKey }`,
+									type: Array.isArray( subCfg.type )
+										? subCfg.type[ 0 ]
+										: subCfg.type,
+								} );
+							}
+						}
+					);
+				}
+				return bindings;
+		  } )
+		: FALLBACK_BINDINGS;
 
 	return (
 		<Stack spacing={ 0 } sx={ { height: '100%' } }>
@@ -201,7 +280,7 @@ export default function ModelEditor( { model, onBack } ) {
 				sx={ { gap: 1, px: 2, minHeight: 56, flexWrap: 'wrap' } }
 				disableGutters
 			>
-				<IconButton size="small" onClick={ onBack }>
+				<IconButton size="small" onClick={ handleBack }>
 					<ArrowBackIcon />
 				</IconButton>
 
@@ -388,7 +467,7 @@ export default function ModelEditor( { model, onBack } ) {
 									<JsonSchemaBuilder
 										value={ properties }
 										onChange={ setProperties }
-										availableBindings={ CUSTOM_BINDINGS }
+										availableBindings={ availableBindings }
 									/>
 								</Box>
 							</Stack>
@@ -423,76 +502,116 @@ export default function ModelEditor( { model, onBack } ) {
 													propConfig={ {
 														...propConfig,
 														settings:
-															properties[
-																propName
-															]?.settings ||
+															properties[ propName ]?.settings ||
 															propConfig.settings ||
 															{},
+														properties: propConfig.properties
+															? Object.fromEntries(
+																Object.entries( propConfig.properties ).map(
+																	( [ subName, subConfig ] ) => [
+																		subName,
+																		typeof subConfig === 'object' &&
+																		subConfig !== null
+																			? {
+																				...subConfig,
+																				settings:
+																					properties[ propName ]?.properties?.[ subName ]?.settings ||
+																					subConfig.settings ||
+																					{},
+																			  }
+																			: subConfig,
+																	]
+																)
+															)
+															: propConfig.properties,
 													} }
 													selectedObjectType={
 														objectType
 													}
 													setField={ ( e ) => {
-														const path =
-															e.target.name; // e.g. "postProperties.post.props.title.settings.disable"
-														const parts =
-															path.split( '.' );
+														const path = e.target.name;
+														const parts = path.split( '.' );
+														const propsIdx = parts.indexOf( 'props' );
 														const propKey =
-															parts[
-																parts.indexOf(
-																	'props'
-																) + 1
-															] || propName;
-														const setting =
-															parts[
-																parts.length - 2
-															];
-														const key =
-															parts[
-																parts.length - 1
-															];
-														setProperties(
-															( prev ) => {
-																const next = {
-																	...prev,
+															parts[ propsIdx + 1 ] || propName;
+														// Sub-property path: ...props.title.properties.raw.settings.disable
+														const subPropsIdx = parts.indexOf(
+															'properties',
+															propsIdx + 2
+														);
+														const isSubProp = subPropsIdx > -1;
+														const subPropKey = isSubProp
+															? parts[ subPropsIdx + 1 ]
+															: null;
+														const setting = parts[ parts.length - 2 ];
+														const key = parts[ parts.length - 1 ];
+														setProperties( ( prev ) => {
+															const next = { ...prev };
+															if ( ! next[ propKey ] ) {
+																next[ propKey ] = {
+																	settings: { disable: false, filters: [] },
 																};
-																if (
-																	! next[
-																		propKey
-																	]
-																) {
-																	next[
-																		propKey
-																	] = {
-																		settings:
-																			{
-																				disable: false,
-																				filters:
-																					[],
-																			},
+															}
+															if ( isSubProp ) {
+																if ( ! next[ propKey ].properties ) {
+																	next[ propKey ] = {
+																		...next[ propKey ],
+																		properties: {},
 																	};
 																}
-																if (
-																	setting ===
-																	'settings'
-																) {
-																	next[
-																		propKey
-																	].settings =
-																		{
-																			...next[
-																				propKey
-																			]
-																				.settings,
-																			[ key ]:
-																				e
-																					.target
-																					.value,
+																if ( ! next[ propKey ].properties[ subPropKey ] ) {
+																	next[ propKey ].properties[ subPropKey ] = {
+																		settings: { disable: false, filters: [] },
+																	};
+																}
+																if ( setting === 'settings' ) {
+																	next[ propKey ].properties[ subPropKey ].settings = {
+																		...next[ propKey ].properties[ subPropKey ].settings,
+																		[ key ]: e.target.value,
+																	};
+																} else if ( setting === 'filters' ) {
+																	const subCfg =
+																		schemaProps?.[ propKey ]?.properties?.[ subPropKey ];
+																	const currentFilters =
+																		next[ propKey ].properties[
+																			subPropKey
+																		].settings?.filters ||
+																		subCfg?.filters ||
+																		[];
+																	next[ propKey ].properties[ subPropKey ].settings = {
+																		...next[ propKey ].properties[ subPropKey ].settings,
+																		filters: currentFilters.map(
+																			( f ) =>
+																				f.key === key
+																					? { ...f, value: e.target.value }
+																					: f
+																			),
 																		};
 																}
-																return next;
+															} else {
+																if ( setting === 'settings' ) {
+																	next[ propKey ].settings = {
+																		...next[ propKey ].settings,
+																		[ key ]: e.target.value,
+																	};
+																} else if ( setting === 'filters' ) {
+																	const currentFilters =
+																		next[ propKey ].settings?.filters ||
+																		propConfig.filters ||
+																		[];
+																	next[ propKey ].settings = {
+																		...next[ propKey ].settings,
+																		filters: currentFilters.map(
+																			( f ) =>
+																				f.key === key
+																					? { ...f, value: e.target.value }
+																					: f
+																			),
+																		};
+																}
 															}
-														);
+															return next;
+														} );
 													} }
 													hasValidLicense={ true }
 													__={ __ }

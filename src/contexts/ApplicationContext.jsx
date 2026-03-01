@@ -14,6 +14,8 @@ const ApplicationContext = createContext( {
 	applicationsLoading: false,
 	setSelectedApplicationId: () => {},
 	refreshApplications: () => {},
+	dirtyFlag: { has: false, message: '' },
+	setDirtyFlag: () => {},
 } );
 
 export function ApplicationProvider( { children } ) {
@@ -24,6 +26,7 @@ export function ApplicationProvider( { children } ) {
 	const [ applications, setApplications ] = useState( [] );
 	const [ selectedApplicationId, setSelectedApplicationId ] = useState( '' );
 	const [ applicationsLoading, setApplicationsLoading ] = useState( false );
+	const [ dirtyFlag, setDirtyFlag ] = useState( { has: false, message: '' } );
 
 	const fetchApplications = () => {
 		if ( ! hasValidLicense ) {
@@ -74,6 +77,8 @@ export function ApplicationProvider( { children } ) {
 				applicationsLoading,
 				setSelectedApplicationId,
 				refreshApplications: fetchApplications,
+				dirtyFlag,
+				setDirtyFlag,
 			} }
 		>
 			{ children }
