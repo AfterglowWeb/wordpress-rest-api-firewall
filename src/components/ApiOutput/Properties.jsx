@@ -147,6 +147,7 @@ export function PropertyRow( {
 	__,
 	depth = 0,
 	basePath = '',
+	alwaysExpanded = false,
 } ) {
 	const [ expanded, setExpanded ] = useState( false );
 	const [ detailsOpen, setDetailsOpen ] = useState( false );
@@ -219,7 +220,7 @@ export function PropertyRow( {
 					alignItems="center"
 					sx={ { minWidth: 0, flex: 1 } }
 				>
-					{ hasSubProperties ? (
+					{ hasSubProperties && ! alwaysExpanded ? (
 						<IconButton
 							size="small"
 							onClick={ () => setExpanded( ! expanded ) }
@@ -315,6 +316,14 @@ export function PropertyRow( {
 											<Checkbox
 												size="small"
 												checked={ !! filter.value }
+												onChange={ ( e ) =>
+													setField( {
+														target: {
+															name: `${ basePath }.settings.filters.${ filter.key }`,
+															value: e.target.checked,
+														},
+													} )
+												}
 											/>
 										}
 										label={
@@ -434,7 +443,7 @@ export function PropertyRow( {
 			</Collapse>
 
 			{ hasSubProperties && (
-				<Collapse in={ expanded }>
+				alwaysExpanded ? (
 					<Stack spacing={ 0 } sx={ { mt: 0.25, mb: 0.5 } }>
 						{ Object.entries( subProperties ).map(
 							( [ subName, subConfig ] ) => (
@@ -453,11 +462,37 @@ export function PropertyRow( {
 									__={ __ }
 									depth={ depth + 1 }
 									basePath={ `${ basePath }.properties.${ subName }` }
+									alwaysExpanded={ true }
 								/>
 							)
 						) }
 					</Stack>
-				</Collapse>
+				) : (
+					<Collapse in={ expanded }>
+						<Stack spacing={ 0 } sx={ { mt: 0.25, mb: 0.5 } }>
+							{ Object.entries( subProperties ).map(
+								( [ subName, subConfig ] ) => (
+									<PropertyRow
+										key={ subName }
+										propName={ subName }
+										propConfig={
+											typeof subConfig === 'object' &&
+											subConfig !== null
+												? subConfig
+												: { type: String( subConfig ) }
+										}
+										selectedObjectType={ selectedObjectType }
+										setField={ setField }
+										hasValidLicense={ hasValidLicense }
+										__={ __ }
+										depth={ depth + 1 }
+										basePath={ `${ basePath }.properties.${ subName }` }
+									/>
+								)
+							) }
+						</Stack>
+					</Collapse>
+				)
 			) }
 		</Box>
 	);

@@ -1,12 +1,3 @@
-/**
- * JsonSchemaBuilder — Firebase-style visual property tree builder.
- *
- * Props:
- *   value              {object}   Current schema object.
- *   onChange           {fn}       Called with the updated schema object.
- *   availableBindings  {Array}    [{key, label, type}] — source data points.
- *   readOnly           {bool}
- */
 import { useCallback } from '@wordpress/element';
 
 import Box from '@mui/material/Box';
@@ -39,18 +30,6 @@ const TYPE_COLORS = {
 	null: 'default',
 };
 
-/**
- * A single property row. Handles name, type, binding, and for "object" type:
- * a collapsible list of sub-properties.
- * @param root0
- * @param root0.propKey
- * @param root0.propDef
- * @param root0.onUpdate
- * @param root0.onRemove
- * @param root0.availableBindings
- * @param root0.readOnly
- * @param root0.depth
- */
 function PropertyRow( {
 	propKey,
 	propDef,
@@ -93,14 +72,16 @@ function PropertyRow( {
 	};
 
 	const handleSubUpdate = ( subKey, subDef, newSubKey ) => {
-		const updated = { ...properties };
 		if ( newSubKey && newSubKey !== subKey ) {
-			delete updated[ subKey ];
-			updated[ newSubKey ] = subDef;
+			const rebuilt = {};
+			for ( const [ k, v ] of Object.entries( properties ) ) {
+				rebuilt[ k === subKey ? newSubKey : k ] =
+					k === subKey ? subDef : v;
+			}
+			update( { properties: rebuilt } );
 		} else {
-			updated[ subKey ] = subDef;
+			update( { properties: { ...properties, [ subKey ]: subDef } } );
 		}
-		update( { properties: updated } );
 	};
 
 	const handleSubRemove = ( subKey ) => {
@@ -123,7 +104,6 @@ function PropertyRow( {
 				alignItems="center"
 				sx={ { py: 0.5 } }
 			>
-				{ /* Expand button for objects */ }
 				{ isObject ? (
 					<IconButton
 						size="small"
@@ -146,7 +126,6 @@ function PropertyRow( {
 					<Box sx={ { width: 28, flexShrink: 0 } } />
 				) }
 
-				{ /* Property name */ }
 				<TextField
 					size="small"
 					value={ localKey }
@@ -160,7 +139,6 @@ function PropertyRow( {
 					} }
 				/>
 
-				{ /* Type selector */ }
 				<FormControl
 					size="small"
 					sx={ { width: 110 } }
@@ -198,7 +176,6 @@ function PropertyRow( {
 					</Select>
 				</FormControl>
 
-				{ /* Binding or static value (only for leaf types) */ }
 				{ ! isObject &&
 					( availableBindings && availableBindings.length > 0 ? (
 						<FormControl
@@ -261,7 +238,6 @@ function PropertyRow( {
 						</FormControl>
 					) : null ) }
 
-				{ /* Static value input when no binding selected */ }
 				{ ! isObject && ! bind && (
 					<TextField
 						size="small"
@@ -284,7 +260,6 @@ function PropertyRow( {
 					/>
 				) }
 
-				{ /* Array item type */ }
 				{ isArray && (
 					<FormControl
 						size="small"
@@ -324,7 +299,6 @@ function PropertyRow( {
 				) }
 			</Stack>
 
-			{ /* Sub-properties for object type */ }
 			{ isObject && (
 				<Collapse in={ expanded }>
 					<Stack spacing={ 0 } sx={ { mt: 0.25 } }>
@@ -371,8 +345,6 @@ function PropertyRow( {
 	);
 }
 
-// ---------------------------------------------------------------------------
-
 export default function JsonSchemaBuilder( {
 	value = {},
 	onChange,
@@ -383,14 +355,16 @@ export default function JsonSchemaBuilder( {
 
 	const handleUpdate = useCallback(
 		( key, def, newKey ) => {
-			const next = { ...value };
 			if ( newKey && newKey !== key ) {
-				delete next[ key ];
-				next[ newKey ] = def;
+				const next = {};
+				for ( const [ k, v ] of Object.entries( value ) ) {
+					next[ k === key ? newKey : k ] =
+						k === key ? def : v;
+				}
+				onChange( next );
 			} else {
-				next[ key ] = def;
+				onChange( { ...value, [ key ]: def } );
 			}
-			onChange( next );
 		},
 		[ value, onChange ]
 	);
@@ -411,7 +385,6 @@ export default function JsonSchemaBuilder( {
 
 	return (
 		<Stack spacing={ 0 }>
-			{ /* Header row */ }
 			<Stack
 				direction="row"
 				spacing={ 1 }

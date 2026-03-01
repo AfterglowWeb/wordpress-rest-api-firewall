@@ -35,10 +35,6 @@ const WEBHOOK_TYPES = [
 	{ value: 'alert', label: 'Alert' },
 ];
 
-/**
- * Add local `_id` keys so React can track header rows stably.
- * @param raw
- */
 const normalizeHeaders = ( raw ) =>
 	( Array.isArray( raw ) ? raw : [] ).map( ( h ) => ( {
 		...h,

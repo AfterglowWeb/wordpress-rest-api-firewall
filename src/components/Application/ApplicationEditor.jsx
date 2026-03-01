@@ -144,7 +144,6 @@ export default function ApplicationEditor( { application, onBack } ) {
 	const { proNonce } = useLicense();
 	const nonce = proNonce || adminData.nonce;
 
-	// Global output settings (REST Properties) — stored as WP options, scoped here per UX.
 	const { form: outputForm, setField: setOutputField } = useSettingsForm( {
 		adminData,
 	} );
