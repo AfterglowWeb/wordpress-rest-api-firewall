@@ -35,7 +35,10 @@ const WEBHOOK_TYPES = [
 	{ value: 'alert', label: 'Alert' },
 ];
 
-/** Add local `_id` keys so React can track header rows stably. */
+/**
+ * Add local `_id` keys so React can track header rows stably.
+ * @param raw
+ */
 const normalizeHeaders = ( raw ) =>
 	( Array.isArray( raw ) ? raw : [] ).map( ( h ) => ( {
 		...h,
@@ -63,7 +66,11 @@ function HeadersEditor( { headers, onChange } ) {
 	const add = () =>
 		onChange( [
 			...headers,
-			{ _id: Math.random().toString( 36 ).slice( 2 ), key: '', value: '' },
+			{
+				_id: Math.random().toString( 36 ).slice( 2 ),
+				key: '',
+				value: '',
+			},
 		] );
 
 	const remove = ( id ) =>
@@ -71,7 +78,9 @@ function HeadersEditor( { headers, onChange } ) {
 
 	const update = ( id, field, val ) =>
 		onChange(
-			headers.map( ( h ) => ( h._id === id ? { ...h, [ field ]: val } : h ) )
+			headers.map( ( h ) =>
+				h._id === id ? { ...h, [ field ]: val } : h
+			)
 		);
 
 	return (
@@ -87,7 +96,9 @@ function HeadersEditor( { headers, onChange } ) {
 						label={ __( 'Name', 'rest-api-firewall' ) }
 						size="small"
 						value={ h.key }
-						onChange={ ( e ) => update( h._id, 'key', e.target.value ) }
+						onChange={ ( e ) =>
+							update( h._id, 'key', e.target.value )
+						}
 						placeholder="X-Api-Key"
 						sx={ { maxWidth: 200 } }
 						inputProps={ { sx: { fontFamily: 'monospace' } } }
@@ -106,7 +117,10 @@ function HeadersEditor( { headers, onChange } ) {
 					<IconButton
 						size="small"
 						onClick={ () => remove( h._id ) }
-						aria-label={ __( 'Remove header', 'rest-api-firewall' ) }
+						aria-label={ __(
+							'Remove header',
+							'rest-api-firewall'
+						) }
 					>
 						<DeleteOutlineIcon fontSize="small" />
 					</IconButton>
@@ -473,10 +487,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 						spacing={ 2 }
 					>
 						<TextField
-							label={ __(
-								'Endpoint URL',
-								'rest-api-firewall'
-							) }
+							label={ __( 'Endpoint URL', 'rest-api-firewall' ) }
 							size="small"
 							value={ endpoint }
 							onChange={ ( e ) => setEndpoint( e.target.value ) }
@@ -561,13 +572,18 @@ export default function WebhookEditor( { webhook, onBack } ) {
 						rows={ 6 }
 						value={ bodyPayload }
 						onChange={ ( e ) => setBodyPayload( e.target.value ) }
-						placeholder={ '{\n  "event": "{{event_type}}",\n  "data": {{payload}}\n}' }
+						placeholder={
+							'{\n  "event": "{{event_type}}",\n  "data": {{payload}}\n}'
+						}
 						helperText={ __(
 							'Use {{placeholders}} for dynamic values.',
 							'rest-api-firewall'
 						) }
 						inputProps={ {
-							sx: { fontFamily: 'monospace', fontSize: '0.85rem' },
+							sx: {
+								fontFamily: 'monospace',
+								fontSize: '0.85rem',
+							},
 						} }
 					/>
 				</Stack>
@@ -606,10 +622,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 							) }
 						/>
 						<TextField
-							label={ __(
-								'Retry Count',
-								'rest-api-firewall'
-							) }
+							label={ __( 'Retry Count', 'rest-api-firewall' ) }
 							type="number"
 							size="small"
 							value={ retryCount }

@@ -94,7 +94,9 @@ function JwtConfig( { config, onChange } ) {
 				rows={ 5 }
 				value={ config.public_key || '' }
 				onChange={ ( e ) => onChange( 'public_key', e.target.value ) }
-				placeholder={ '-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----' }
+				placeholder={
+					'-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----'
+				}
 				helperText={ __(
 					'PEM public key for RS*/ES* algorithms, or shared secret for HS* algorithms.',
 					'rest-api-firewall'
@@ -251,7 +253,9 @@ function SsoConfig( { config, onChange } ) {
 				rows={ 5 }
 				value={ config.certificate || '' }
 				onChange={ ( e ) => onChange( 'certificate', e.target.value ) }
-				placeholder={ '-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----' }
+				placeholder={
+					'-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----'
+				}
 				helperText={ __(
 					'X.509 certificate from your identity provider',
 					'rest-api-firewall'
@@ -270,7 +274,7 @@ function WpAuthInfo() {
 	return (
 		<Alert severity="info" sx={ { maxWidth: 560 } }>
 			{ __(
-				'WordPress Application Passwords are managed in the user\'s WordPress profile. The user must generate an Application Password under Users → Edit → Application Passwords. No additional configuration is required here.',
+				"WordPress Application Passwords are managed in the user's WordPress profile. The user must generate an Application Password under Users → Edit → Application Passwords. No additional configuration is required here.",
 				'rest-api-firewall'
 			) }
 		</Alert>

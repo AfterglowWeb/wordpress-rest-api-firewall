@@ -272,7 +272,7 @@ export default function Applications() {
 
 	return (
 		<Stack spacing={ 2 } p={ { xs: 2, sm: 4 } }>
-			<Toolbar disableGutters sx={ { gap: 2, mb: 2, flexWrap: 'wrap' } }>
+			<Toolbar disableGutters sx={ { gap: 2, flexWrap: 'wrap' } }>
 				<Button
 					variant="contained"
 					size="small"

@@ -161,9 +161,7 @@ export default function IpFilter() {
 	};
 
 	if ( loading ) {
-		return (
-			<LoadingMessage />
-		);
+		return <LoadingMessage />;
 	}
 
 	return (

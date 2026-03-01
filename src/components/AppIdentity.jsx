@@ -18,31 +18,28 @@ const AppLogo = styled( Avatar )( () => ( {
 } ) );
 
 export default function AppIdentity() {
-    const { __ } = wp.i18n || {};
-    const { adminData } = useAdminData();
+	const { __ } = wp.i18n || {};
+	const { adminData } = useAdminData();
 
-    return (
-        <Box
-            sx={ {
-                p: 2,
-                height: 75,
-                display: 'flex',
-                gap: 1,
-                boxSizing: 'border-box',
-            } }
-        >
-            <AppLogo>AL</AppLogo>
-            <Box>
-                <Typography variant="subtitle2" fontWeight={ 600 }>
-                    { adminData.plugin_name }
-                </Typography>
-                <Typography
-                    variant="caption"
-                    color="text.secondary"
-                >
-                    v{ adminData.plugin_version }
-                </Typography>
-            </Box>
-        </Box>
-    );
+	return (
+		<Box
+			sx={ {
+				p: 2,
+				height: 75,
+				display: 'flex',
+				gap: 1,
+				boxSizing: 'border-box',
+			} }
+		>
+			<AppLogo>AL</AppLogo>
+			<Box>
+				<Typography variant="subtitle2" fontWeight={ 600 }>
+					{ adminData.plugin_name }
+				</Typography>
+				<Typography variant="caption" color="text.secondary">
+					v{ adminData.plugin_version }
+				</Typography>
+			</Box>
+		</Box>
+	);
 }

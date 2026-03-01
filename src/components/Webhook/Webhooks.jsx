@@ -49,10 +49,7 @@ export default function Webhooks() {
 			remove(
 				{ action: 'delete_webhook_entry', id },
 				{
-					confirmTitle: __(
-						'Delete Webhook',
-						'rest-api-firewall'
-					),
+					confirmTitle: __( 'Delete Webhook', 'rest-api-firewall' ),
 					confirmMessage: title
 						? `${ __(
 								'Permanently delete',
@@ -145,7 +142,7 @@ export default function Webhooks() {
 					</Stack>
 				),
 			},
-						{
+			{
 				field: 'endpoint',
 				headerName: __( 'Endpoint', 'rest-api-firewall' ),
 				flex: 1,
@@ -204,11 +201,19 @@ export default function Webhooks() {
 				headerName: __( 'Headers', 'rest-api-firewall' ),
 				width: 100,
 				renderCell: ( params ) => {
-					const count = Array.isArray( params.value ) ? params.value.length : 0;
+					const count = Array.isArray( params.value )
+						? params.value.length
+						: 0;
 					return count > 0 ? (
-						<Chip label={ `${ count }` } size="small" variant="outlined" />
+						<Chip
+							label={ `${ count }` }
+							size="small"
+							variant="outlined"
+						/>
 					) : (
-						<Typography variant="body2" color="text.disabled">{ '-' }</Typography>
+						<Typography variant="body2" color="text.disabled">
+							{ '-' }
+						</Typography>
 					);
 				},
 			},
@@ -222,7 +227,8 @@ export default function Webhooks() {
 				field: 'retry_count',
 				headerName: __( 'Retries', 'rest-api-firewall' ),
 				width: 80,
-				renderCell: ( params ) => params.value !== undefined ? params.value : '-',
+				renderCell: ( params ) =>
+					params.value !== undefined ? params.value : '-',
 			},
 			{
 				field: 'body_payload',
@@ -232,16 +238,25 @@ export default function Webhooks() {
 					params.value ? (
 						<Typography
 							variant="caption"
-							sx={ { fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 100, color: 'text.secondary' } }
+							sx={ {
+								fontFamily: 'monospace',
+								overflow: 'hidden',
+								textOverflow: 'ellipsis',
+								whiteSpace: 'nowrap',
+								maxWidth: 100,
+								color: 'text.secondary',
+							} }
 							title={ params.value }
 						>
 							{ params.value }
 						</Typography>
 					) : (
-						<Typography variant="body2" color="text.disabled">{ '-' }</Typography>
+						<Typography variant="body2" color="text.disabled">
+							{ '-' }
+						</Typography>
 					),
 			},
-            {
+			{
 				field: 'author',
 				headerName: __( 'Author', 'rest-api-firewall' ),
 				width: 150,
