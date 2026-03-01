@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import useProActions from '../../hooks/useProActions';
+import useSettingsForm from '../../hooks/useSettingsForm';
+import useSaveOptions from '../../hooks/useSaveOptions';
+import GlobalProperties from '../ApiOutput/GlobalProperties';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -140,6 +143,12 @@ export default function ApplicationEditor( { application, onBack } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
 	const nonce = proNonce || adminData.nonce;
+
+	// Global output settings (REST Properties) — stored as WP options, scoped here per UX.
+	const { form: outputForm, setField: setOutputField } = useSettingsForm( {
+		adminData,
+	} );
+	const { save: saveOutput, saving: savingOutput } = useSaveOptions();
 	const { __ } = wp.i18n || {};
 
 	const { save, remove, saving } = useProActions();
@@ -379,9 +388,7 @@ export default function ApplicationEditor( { application, onBack } ) {
 	);
 
 	if ( loading ) {
-		return (
-			<LoadingMessage />
-		);
+		return <LoadingMessage />;
 	}
 
 	return (
@@ -812,6 +819,64 @@ export default function ApplicationEditor( { application, onBack } ) {
 							size="small"
 						/>
 					</Box>
+				</Stack>
+
+				<Divider />
+
+				{ /* REST Output Settings — global WP options displayed per-application */ }
+				<Stack spacing={ 2 }>
+					<Stack
+						direction="row"
+						alignItems="center"
+						justifyContent="space-between"
+					>
+						<SectionHeader
+							title={ __(
+								'REST Output Settings',
+								'rest-api-firewall'
+							) }
+							description={ __(
+								'Global output transformations applied to REST responses. Changes here affect all applications.',
+								'rest-api-firewall'
+							) }
+						/>
+						<Button
+							size="small"
+							variant="outlined"
+							disabled={ savingOutput }
+							onClick={ () =>
+								saveOutput(
+									{
+										models_properties:
+											outputForm.models_properties,
+									},
+									{
+										successTitle: __(
+											'Output Settings Saved',
+											'rest-api-firewall'
+										),
+										successMessage: __(
+											'REST output settings saved successfully.',
+											'rest-api-firewall'
+										),
+										confirmMessage: __(
+											'Save REST output settings?',
+											'rest-api-firewall'
+										),
+									}
+								)
+							}
+						>
+							{ __(
+								'Save Output Settings',
+								'rest-api-firewall'
+							) }
+						</Button>
+					</Stack>
+					<GlobalProperties
+						form={ outputForm }
+						setField={ setOutputField }
+					/>
 				</Stack>
 			</Stack>
 		</Stack>

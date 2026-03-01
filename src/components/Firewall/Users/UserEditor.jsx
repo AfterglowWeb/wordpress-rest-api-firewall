@@ -217,10 +217,8 @@ export default function UserEditor( { user, onBack } ) {
 	};
 
 	if ( loading ) {
-			return (
-				<LoadingMessage />
-			);
-		}
+		return <LoadingMessage />;
+	}
 
 	return (
 		<Stack spacing={ 0 }>
@@ -277,17 +275,35 @@ export default function UserEditor( { user, onBack } ) {
 										'rest-api-firewall'
 									) }
 								/>
-								{ ( appTitle || dateCreated || dateModified ) && (
+								{ ( appTitle ||
+									dateCreated ||
+									dateModified ) && (
 									<Typography
 										variant="caption"
 										color="text.secondary"
-										sx={{textAlign: 'left'}}
+										sx={ { textAlign: 'left' } }
 									>
-										{  appTitle && (
-											<span>{ sprintf( __('Added to %s' , 'rest-api-firewall'), appTitle) }</span>
+										{ appTitle && (
+											<span>
+												{ sprintf(
+													__(
+														'Added to %s',
+														'rest-api-firewall'
+													),
+													appTitle
+												) }
+											</span>
 										) }
 										{ dateCreated && (
-											<span>{ sprintf( __(' @ %s', 'rest-api-firewall') , dateCreated ) }</span>
+											<span>
+												{ sprintf(
+													__(
+														'@ %s',
+														'rest-api-firewall'
+													),
+													dateCreated
+												) }
+											</span>
 										) }
 										{ dateModified && (
 											<>

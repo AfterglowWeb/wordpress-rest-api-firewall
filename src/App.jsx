@@ -2,57 +2,26 @@ import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from './contexts/AdminDataContext';
 import { DialogProvider } from './contexts/DialogContext';
 import { useLicense } from './contexts/LicenseContext';
-import {
-	ApplicationProvider,
-	useApplication,
-} from './contexts/ApplicationContext';
+import { ApplicationProvider } from './contexts/ApplicationContext';
 
 import useSettingsForm from './hooks/useSettingsForm';
 import useSaveOptions from './hooks/useSaveOptions';
 
-import { useTheme } from '@mui/material/styles';
-import useMediaQuery from '@mui/material/useMediaQuery';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
-import List from '@mui/material/List';
-import Drawer from '@mui/material/Drawer';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
-import AppBar from '@mui/material/AppBar';
 import Stack from '@mui/material/Stack';
-import Badge from '@mui/material/Badge';
-import Snackbar from '@mui/material/Snackbar';
-import Alert from '@mui/material/Alert';
-import Tooltip from '@mui/material/Tooltip';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-
-import SecurityOutlined from '@mui/icons-material/SecurityOutlined';
-import PaletteOutlined from '@mui/icons-material/PaletteOutlined';
-import EmailOutlined from '@mui/icons-material/EmailOutlined';
-import MenuIcon from '@mui/icons-material/Menu';
-import ApiIcon from '@mui/icons-material/Api';
-import WebhookIcon from '@mui/icons-material/Webhook';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
-import VpnLockOutlinedIcon from '@mui/icons-material/VpnLockOutlined';
-import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined';
-import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
-import CardMembershipOutlinedIcon from '@mui/icons-material/CardMembershipOutlined';
-import RocketLaunchOutlinedIcon from '@mui/icons-material/RocketLaunchOutlined';
-import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
 import ConfirmDialog from './components/ConfirmDialog';
 import MigrationDialog from './components/Migration/MigrationDialog';
-import ConfigurationPanel from './components/ConfigurationDialog';
+import Navigation, {
+	APP_BAR_HEIGHT,
+	APP_FOOTER_HEIGHT,
+	DRAWER_WIDTH,
+	WP_ADMIN_BAR_HEIGHT_DESKTOP,
+	WP_ADMIN_BAR_HEIGHT_MOBILE,
+} from './components/Navigation';
 
+import ConfigurationPanel from './components/ConfigurationDialog';
 import RoutesPolicyTree from './components/Firewall/Routes/RoutesPolicyTree';
 import GlobalRoutesPolicy from './components/Firewall/Routes/GlobalRoutesPolicy';
 import IpFilter from './components/Firewall/IpFilter/IpFilter';
@@ -64,180 +33,36 @@ import Collections from './components/ApiOutput/Collections';
 import Webhook from './components/Webhook/Webhook';
 import Webhooks from './components/Webhook/Webhooks';
 import Smtp from './components/Emails/Smtp';
+import Emails from './components/Emails/Emails';
+import Logs from './components/Logs/Logs';
+import Automations from './components/Automations/Automations';
+import Models from './components/ApiOutput/Models';
 import ThemeSettings from './components/Theme/ThemeSettings';
 import Applications from './components/Application/Applications';
-
-import Documentation from './components/Documentation/Documentation';
 import License from './components/License/License';
 import Users from './components/Firewall/Users/Users';
-import AppIdentity from './components/AppIdentity';
-
-const DRAWER_WIDTH = 220;
-const APP_BAR_HEIGHT = 75;
-const APP_FOOTER_HEIGHT = 40;
-const WP_ADMIN_BAR_HEIGHT_DESKTOP = 32; // >= md.  : desktop admin bar
-const WP_ADMIN_BAR_HEIGHT_MOBILE = 46; // < md.   : mobile admin bar
-const WP_MENU_WIDTH_MD = 36; // md → lg : collapsed menu
-const WP_MENU_WIDTH_LG = 160; // lg+     : complete menu
 
 function AppContent() {
 	const { adminData } = useAdminData();
 	const { __ } = wp.i18n || {};
 	const { save, saving } = useSaveOptions();
-	const theme = useTheme();
-	const { hasValidLicense, proNonce } = useLicense();
-	const nonce = proNonce || adminData.nonce;
-
-	const isMobile = useMediaQuery( theme.breakpoints.down( 'md' ) );
+	const { hasValidLicense } = useLicense();
 
 	const [ postTypes, setPostTypes ] = useState( [] );
-	const [ mobileOpen, setMobileOpen ] = useState( false );
 	const [ panelGroup, setPanelGroup ] = useState( 1 );
 	const [ themeStatus, setThemeStatus ] = useState( null );
 
 	const migrationNeeded = !! window.restApiFirewallPro?.migrationNeeded;
 	const schemaUpdateNeeded = !! window.restApiFirewallPro?.schemaUpdateNeeded;
-	const isMigrated = !! window.restApiFirewallPro?.isMigrated;
-
-	const migrationScenario = schemaUpdateNeeded
-		? 'schema_update'
-		: migrationNeeded
-		? 'free_to_pro'
-		: 'already_migrated';
 
 	const [ migrationOpen, setMigrationOpen ] = useState(
 		schemaUpdateNeeded || migrationNeeded
 	);
 	const [ migrationDone, setMigrationDone ] = useState( false );
-	const [ snackDismissed, setSnackDismissed ] = useState( false );
-
-	const {
-		applications,
-		selectedApplicationId,
-		selectedApplication,
-		applicationsLoading,
-		setSelectedApplicationId,
-	} = useApplication();
 
 	const { form, setField, setSlider, pickGroup } = useSettingsForm( {
 		adminData,
 	} );
-
-	const menuItems = [
-		{
-			key: 'applications',
-			label: __( 'Applications', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'Pro',
-			panelGroup: 0,
-			icon: AppsOutlinedIcon,
-			disabled: ! hasValidLicense,
-		},
-		{
-			type: 'section',
-			label: __( 'REST API Firewall', 'rest-api-firewall' ),
-		},
-		{
-			key: 'user-rate-limiting',
-			label: __( 'Auth. & Rate Limit', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'REST API Firewall',
-			panelGroup: 1,
-			icon: SecurityOutlined,
-		},
-		{
-			key: 'per-route-settings',
-			label: __( 'Routes', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'REST API Firewall',
-			panelGroup: 2,
-			icon: AccountTreeIcon,
-		},
-		{
-			key: 'ip-filtering',
-			label: __( 'IP Filtering', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'REST API Firewall',
-			panelGroup: 3,
-			icon: VpnLockOutlinedIcon,
-		},
-
-		{
-			type: 'section',
-			label: __( 'REST API Output', 'rest-api-firewall' ),
-		},
-		{
-			key: 'collections',
-			label: __( 'Collections', 'rest-api-firewall' ),
-			secondary: 'wp/v2/posts/*',
-			breadcrumbPrefix: 'REST API Output',
-			panelGroup: 4,
-			icon: ApiIcon,
-		},
-		{
-			key: 'models-properties',
-			label: __( 'Properties', 'rest-api-firewall' ),
-			secondary: 'wp/v2/posts/*',
-			breadcrumbPrefix: 'REST API Output',
-			panelGroup: 5,
-			icon: RuleOutlinedIcon,
-		},
-		{
-			key: 'settings-route',
-			label: __( 'Settings Route', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'REST API Output',
-			secondary: 'wp/v2/settings',
-			panelGroup: 6,
-			icon: BusinessOutlinedIcon,
-		},
-
-		{ type: 'section', label: __( 'Integrations', 'rest-api-firewall' ) },
-		{
-			key: 'webhook',
-			label: hasValidLicense ? __( 'Webhooks', 'rest-api-firewall' ) : __( 'Webhook', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'Integrations',
-			panelGroup: 7,
-			icon: WebhookIcon,
-		},
-		{
-			key: 'emails',
-			label: __( 'Emails', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'Integrations',
-			panelGroup: 8,
-			icon: EmailOutlined,
-		},
-
-		{ type: 'section', label: __( '', 'rest-api-firewall' ) },
-		{
-			key: 'theme',
-			label: __( 'Theme', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'Modules',
-			panelGroup: 9,
-			icon: PaletteOutlined,
-		},
-		{
-			key: 'license',
-			label: __( 'License', 'rest-api-firewall' ),
-			breadcrumbPrefix: '',
-			panelGroup: 10,
-			icon: CardMembershipOutlinedIcon,
-		},
-		...( migrationNeeded && ! migrationDone
-			? [
-					{
-						key: 'migrate-pro',
-						label: __( 'Migrate to Pro', 'rest-api-firewall' ),
-						icon: RocketLaunchOutlinedIcon,
-						badge: true,
-						action: () => setMigrationOpen( true ),
-					},
-			  ]
-			: [] ),
-		{
-			key: 'configuration',
-			label: __( 'Configuration', 'rest-api-firewall' ),
-			breadcrumbPrefix: '',
-			panelGroup: 11,
-			icon: SettingsOutlinedIcon,
-			badge: schemaUpdateNeeded && ! migrationDone,
-		},
-	];
 
 	useEffect( () => {
 		const lastTab =
@@ -254,12 +79,11 @@ function AppContent() {
 	}, [ adminData ] );
 
 	const handleMenuClick = useCallback(
-		( newIndex, anchor ) => {
-			if ( newIndex === undefined && ! anchor ) {
+		( newIndex ) => {
+			if ( newIndex === undefined ) {
 				return false;
 			}
-			const changing = panelGroup !== newIndex;
-			if ( changing ) {
+			if ( panelGroup !== newIndex ) {
 				setPanelGroup( newIndex );
 				window.localStorage.setItem(
 					'rest_api_firewall_last_tab',
@@ -269,9 +93,6 @@ function AppContent() {
 		},
 		[ panelGroup ]
 	);
-
-	const activeMenuItem =
-		menuItems.find( ( m ) => m.panelGroup === panelGroup ) || null;
 
 	const SAVE_CONFIG = {
 		firewall_auth_rate: {
@@ -358,18 +179,20 @@ function AppContent() {
 		7: 'webhook',
 		8: 'email',
 	};
-	if( hasValidLicense) {
-		delete PANEL_SAVE_GROUP[1];
-		delete PANEL_SAVE_GROUP[7];
+	if ( hasValidLicense ) {
+		delete PANEL_SAVE_GROUP[ 1 ];
+		delete PANEL_SAVE_GROUP[ 5 ]; // Models has per-model save; no global save needed.
+		delete PANEL_SAVE_GROUP[ 7 ];
+		delete PANEL_SAVE_GROUP[ 8 ]; // Emails.jsx owns its own SMTP save.
 	}
-
-	const handleSave = ( group ) => {
-		save( pickGroup( group ), SAVE_CONFIG[ group ] );
-	};
 
 	const activeSaveGroup = PANEL_SAVE_GROUP[ panelGroup ] ?? null;
 	const showSaveButton = activeSaveGroup !== null;
 	const needsLicense = panelGroup === 5 && ! hasValidLicense;
+
+	const handleSave = () => {
+		save( pickGroup( activeSaveGroup ), SAVE_CONFIG[ activeSaveGroup ] );
+	};
 
 	if ( ! adminData ) {
 		return null;
@@ -378,346 +201,18 @@ function AppContent() {
 	return (
 		<>
 			<Box sx={ { display: 'flex' } }>
-				<Drawer
-					variant={ isMobile ? 'temporary' : 'permanent' }
-					anchor="left"
-					open={ isMobile ? mobileOpen : true }
-					onClose={ () => setMobileOpen( false ) }
-					sx={ {
-						'.MuiPaper-root': {
-							width: DRAWER_WIDTH,
-							top: {
-								xs: WP_ADMIN_BAR_HEIGHT_MOBILE,
-								md: WP_ADMIN_BAR_HEIGHT_DESKTOP,
-							},
-							left: {
-								xs: 0,
-								md: WP_MENU_WIDTH_MD,
-								lg: WP_MENU_WIDTH_LG,
-							},
-							height: {
-								xs: `calc(100vh - ${
-									WP_ADMIN_BAR_HEIGHT_MOBILE +
-									APP_FOOTER_HEIGHT
-								}px)`,
-								md: `calc(100vh - ${
-									WP_ADMIN_BAR_HEIGHT_DESKTOP +
-									APP_FOOTER_HEIGHT
-								}px)`,
-							},
-							overflowY: 'auto',
-						},
-					} }
-				>
-					<AppIdentity />
-					<Divider />
-
-					<List component="nav" disablePadding>
-						{ menuItems.map( ( item, index ) => {
-							if ( item.type === 'section' ) {
-								return (
-									<Stack
-										sx={ { mt: 1 === index ? 0 : 2 } }
-										key={ `section-${ index }` }
-									>
-										{ 0 !== index && <Divider /> }
-
-										{ item.label ? (
-											<Typography
-												key={ `section-${ index }` }
-												variant="caption"
-												sx={ {
-													display: 'block',
-													px: 2,
-													mb: 1,
-													mt: 2,
-													textTransform: 'uppercase',
-													letterSpacing: 0.5,
-													fontSize: '0.7rem',
-													color: 'text.secondary',
-												} }
-											>
-												{ item.label }
-											</Typography>
-										) : (
-											<Stack py={ 1 } />
-										) }
-									</Stack>
-								);
-							}
-
-							const isActive = panelGroup === item.panelGroup;
-							const Icon = item.icon;
-
-							return (
-								<Tooltip
-									key={ item.key }
-									title={
-										item.disabled
-											? __(
-													'License required',
-													'rest-api-firewall'
-											  )
-											: ''
-									}
-									placement="right"
-								>
-									<span>
-										<ListItemButton
-											sx={ {
-												px: 3,
-												backgroundColor: isActive
-													? 'grey.100'
-													: '',
-											} }
-											disabled={ !! item.disabled }
-											onClick={ () => {
-												item.action
-													? item.action()
-													: handleMenuClick(
-															item.panelGroup
-													  );
-												setMobileOpen( false );
-											} }
-										>
-											{ Icon && (
-												<ListItemIcon
-													sx={ {
-														px: 1,
-														minWidth: 32,
-														color: isActive
-															? 'primary.main'
-															: 'text.secondary',
-													} }
-												>
-													<Badge
-														color="error"
-														variant="dot"
-														invisible={
-															! item.badge
-														}
-													>
-														<Icon fontSize="small" />
-													</Badge>
-												</ListItemIcon>
-											) }
-
-											<ListItemText
-												sx={ {
-													'& .MuiListItemText-primary':
-														{
-															fontSize: '0.9rem',
-															lineHeight:
-																'normal',
-														},
-												} }
-												primary={ item.label }
-												secondary={
-													<Typography
-														variant="caption"
-														color="text.secondary"
-													>
-														{ item.secondary }
-													</Typography>
-												}
-											/>
-										</ListItemButton>
-									</span>
-								</Tooltip>
-							);
-						} ) }
-					</List>
-				</Drawer>
-
-				<AppBar
-					elevation={ 0 }
-					sx={ {
-						'&.MuiAppBar-positionFixed': {
-							top: {
-								xs: WP_ADMIN_BAR_HEIGHT_MOBILE,
-								md: WP_ADMIN_BAR_HEIGHT_DESKTOP,
-							},
-							left: {
-								xs: 0,
-								md: DRAWER_WIDTH + WP_MENU_WIDTH_MD,
-								lg: DRAWER_WIDTH + WP_MENU_WIDTH_LG,
-							},
-							width: {
-								xs: '100%',
-								md: `calc(100% - ${
-									DRAWER_WIDTH + WP_MENU_WIDTH_MD
-								}px)`,
-								lg: `calc(100% - ${
-									DRAWER_WIDTH + WP_MENU_WIDTH_LG
-								}px)`,
-							},
-						},
-					} }
-				>
-					<Toolbar
-						variant="dense"
-						sx={ {
-							bgcolor: 'background.paper',
-							borderBottom: 1,
-							borderColor: 'divider',
-							px: 2,
-							height: APP_BAR_HEIGHT,
-							overflow: 'hidden',
-							gap: 2,
-						} }
-					>
-						{ isMobile && (
-							<IconButton
-								edge="start"
-								onClick={ () => setMobileOpen( true ) }
-								sx={ { mr: 1, color: 'text.primary' } }
-							>
-								<MenuIcon />
-							</IconButton>
-						) }
-
-						{ hasValidLicense && panelGroup < 9 && (
-							<Stack
-								direction="row"
-								alignItems="center"
-								gap={ 2 }
-							>
-								<Stack sx={ { color: 'text.secondary' } }>
-									<AppsOutlinedIcon color="inherit" />
-								</Stack>
-
-								<FormControl
-									size="small"
-									variant="standard"
-									sx={ { minWidth: 180, maxWidth: 270 } }
-								>
-									<InputLabel
-										id={ `select-application-label` }
-									>
-										{ __(
-											'Application',
-											'rest-api-firewall'
-										) }
-									</InputLabel>
-									<Select
-										size="small"
-										labelId={ `select-application-label` }
-										value={ selectedApplicationId }
-										onChange={ ( e ) =>
-											setSelectedApplicationId(
-												e.target.value
-											)
-										}
-										displayEmpty
-										disabled={
-											applicationsLoading ||
-											applications.length === 0
-										}
-										sx={ { minWidth: 180, maxWidth: 260 } }
-										renderValue={ () =>
-											applicationsLoading
-												? __(
-														'Loading…',
-														'rest-api-firewall'
-												  )
-												: selectedApplication?.title ||
-												  __(
-														'No application',
-														'rest-api-firewall'
-												  )
-										}
-									>
-										{ applications.map( ( app ) => (
-											<MenuItem
-												key={ app.id }
-												value={ app.id }
-											>
-												{ app.title }
-											</MenuItem>
-										) ) }
-									</Select>
-								</FormControl>
-
-								<Divider
-									orientation="vertical"
-									sx={ { ml: 2 } }
-									flexItem
-									variant="middle"
-								/>
-							</Stack>
-						) }
-
-						<Box sx={ { flex: 1, minWidth: 0 } }>
-							{ activeMenuItem?.breadcrumbPrefix && (
-								<Typography
-									variant="caption"
-									color="text.secondary"
-									sx={ {
-										display: 'block',
-										textTransform: 'uppercase',
-										letterSpacing: 0.5,
-									} }
-								>
-									{ activeMenuItem.breadcrumbPrefix }
-								</Typography>
-							) }
-							<Typography
-								variant="h6"
-								fontWeight={ 600 }
-								color="text.primary"
-								sx={ { lineHeight: 1.2 } }
-							>
-								{ activeMenuItem?.label || '' }
-								{ activeMenuItem?.secondary && (
-									<Typography
-										variant="caption"
-										color="text.secondary"
-										sx={ { ml: 1 } }
-									>
-										{ activeMenuItem.secondary }
-									</Typography>
-								) }
-							</Typography>
-						</Box>
-						<Stack direction="row" gap={ 2 } alignItems="center">
-							<Documentation
-								page="getting-started"
-								buttonText="Doc."
-							/>
-
-							{ showSaveButton && (
-								<Tooltip
-									followCursor
-									title={
-										needsLicense
-											? __(
-													'Licence required',
-													'rest-api-firewall'
-											  )
-											: ''
-									}
-								>
-									<Box>
-										<Button
-											variant="contained"
-											disableElevation
-											size="small"
-											onClick={ () =>
-												handleSave( activeSaveGroup )
-											}
-											disabled={ needsLicense || saving }
-										>
-											{ __(
-												'Save',
-												'rest-api-firewall'
-											) }
-										</Button>
-									</Box>
-								</Tooltip>
-							) }
-						</Stack>
-					</Toolbar>
-				</AppBar>
+				<Navigation
+					panelGroup={ panelGroup }
+					onPanelChange={ handleMenuClick }
+					migrationNeeded={ migrationNeeded }
+					migrationDone={ migrationDone }
+					schemaUpdateNeeded={ schemaUpdateNeeded }
+					onOpenMigration={ () => setMigrationOpen( true ) }
+					showSaveButton={ showSaveButton }
+					onSave={ handleSave }
+					saving={ saving }
+					needsLicense={ needsLicense }
+				/>
 
 				<Stack
 					sx={ {
@@ -737,7 +232,7 @@ function AppContent() {
 								WP_ADMIN_BAR_HEIGHT_DESKTOP
 							}px)`,
 						},
-						bgcolor: theme.palette.background.paper,
+						bgcolor: 'background.paper',
 					} }
 				>
 					{ hasValidLicense && panelGroup === 0 && <Applications /> }
@@ -785,34 +280,49 @@ function AppContent() {
 						{ panelGroup === 3 && <IpFilter /> }
 
 						{ panelGroup === 4 && (
-								<Collections
-									form={ form }
-									setField={ setField }
-									postTypes={ postTypes }
-								/>
+							<Collections
+								form={ form }
+								setField={ setField }
+								postTypes={ postTypes }
+							/>
 						) }
 
-						{ panelGroup === 5 && (
+						{ panelGroup === 5 &&
+							( hasValidLicense ? (
+								<Models />
+							) : (
 								<Properties
 									form={ form }
 									setField={ setField }
 									postTypes={ postTypes }
 								/>
-						) }
+							) ) }
 
 						{ panelGroup === 6 && (
-								<SettingsRoute
-									form={ form }
-									setField={ setField }
-								/>
+							<SettingsRoute
+								form={ form }
+								setField={ setField }
+							/>
 						) }
 
-						{ panelGroup === 7 && (
-							hasValidLicense ? <Webhooks /> : <Webhook form={ form } setField={ setField } />
-						) }
+						{ panelGroup === 7 &&
+							( hasValidLicense ? (
+								<Webhooks />
+							) : (
+								<Webhook form={ form } setField={ setField } />
+							) ) }
 
-						{ panelGroup === 8 && (
-							<Smtp form={ form } setField={ setField } />
+						{ panelGroup === 8 &&
+							( hasValidLicense ? (
+								<Emails />
+							) : (
+								<Smtp form={ form } setField={ setField } />
+							) ) }
+
+						{ panelGroup === 12 && hasValidLicense && <Logs /> }
+
+						{ panelGroup === 13 && hasValidLicense && (
+							<Automations />
 						) }
 
 						{ panelGroup === 9 && (
@@ -845,7 +355,10 @@ function AppContent() {
 
 			<MigrationDialog
 				open={ migrationOpen }
-				scenario={ migrationScenario }
+				migrationNeeded={ migrationNeeded }
+				schemaUpdateNeeded={ schemaUpdateNeeded }
+				migrationDone={ migrationDone }
+				onOpenRequest={ () => setMigrationOpen( true ) }
 				onClose={ () => setMigrationOpen( false ) }
 				onDone={ () => {
 					setMigrationDone( true );
@@ -853,45 +366,6 @@ function AppContent() {
 					window.location.reload();
 				} }
 			/>
-
-			<Snackbar
-				open={
-					( migrationNeeded || schemaUpdateNeeded ) &&
-					! migrationDone &&
-					! migrationOpen &&
-					! snackDismissed
-				}
-				anchorOrigin={ { vertical: 'bottom', horizontal: 'center' } }
-				sx={ { mb: 2 } }
-			>
-				<Alert
-					severity="warning"
-					onClose={ () => setSnackDismissed( true ) }
-					action={
-						<Button
-							variant="contained"
-							disableElevation
-							color="warning"
-							size="small"
-							onClick={ () => setMigrationOpen( true ) }
-						>
-							{ schemaUpdateNeeded
-								? __( 'Update Now', 'rest-api-firewall' )
-								: __( 'Migrate Now', 'rest-api-firewall' ) }
-						</Button>
-					}
-				>
-					{ schemaUpdateNeeded
-						? __(
-								'Database update required — new columns need to be added.',
-								'rest-api-firewall'
-						  )
-						: __(
-								'Pro migration pending — your free settings have not been imported yet.',
-								'rest-api-firewall'
-						  ) }
-				</Alert>
-			</Snackbar>
 		</>
 	);
 }
