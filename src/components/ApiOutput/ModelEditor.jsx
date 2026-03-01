@@ -7,26 +7,18 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
-import Divider from '@mui/material/Divider';
-import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Toolbar from '@mui/material/Toolbar';
-import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import SchemaOutlinedIcon from '@mui/icons-material/SchemaOutlined';
 
 import useProActions from '../../hooks/useProActions';
 import formatDate from '../../utils/formatDate';
@@ -34,7 +26,7 @@ import { PropertyRow } from './Properties';
 import JsonSchemaBuilder from '../shared/JsonSchemaBuilder';
 import ObjectTypeSelect from '../ObjectTypeSelect';
 
-const CUSTOM_BINDINGS = [
+const FALLBACK_BINDINGS = [
 	{ key: 'id', label: 'ID', type: 'integer' },
 	{ key: 'slug', label: 'Slug', type: 'string' },
 	{ key: 'title', label: 'Title', type: 'string' },
@@ -54,7 +46,7 @@ const CUSTOM_BINDINGS = [
 export default function ModelEditor( { model, onBack } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
-	const { selectedApplicationId } = useApplication();
+	const { selectedApplicationId, setDirtyFlag } = useApplication();
 	const nonce = proNonce || adminData.nonce;
 	const { __ } = wp.i18n || {};
 
@@ -63,14 +55,33 @@ export default function ModelEditor( { model, onBack } ) {
 	const isNew = ! model.id;
 
 	const [ label, setLabel ] = useState( model.label || '' );
-	const [ objectType, setObjectType ] = useState( model.object_type || '' );
+	const [ objectType, setObjectType ] = useState( model.object_type || 'post' );
 	const [ isCustom, setIsCustom ] = useState( model.is_custom || false );
 	const [ enabled, setEnabled ] = useState( model.enabled || false );
-	const [ properties, setProperties ] = useState( model.properties || {} );
+
+	const [ wpProperties, setWpProperties ] = useState(
+		! model.is_custom ? model.properties || {} : {}
+	);
+	const [ customProperties, setCustomProperties ] = useState(
+		model.is_custom ? model.properties || {} : {}
+	);
 
 	const [ loaded, setLoaded ] = useState( isNew );
 
-	// Fetch full entry from server when editing an existing model.
+	const properties = isCustom ? customProperties : wpProperties;
+	const setProperties = isCustom ? setCustomProperties : setWpProperties;
+
+	useEffect( () => {
+		setDirtyFlag( {
+			has: true,
+			message: __(
+				'You are editing a model. Unsaved changes will be lost.',
+				'rest-api-firewall'
+			),
+		} );
+		return () => setDirtyFlag( { has: false, message: '' } );
+	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps
+
 	useEffect( () => {
 		if ( isNew ) {
 			return;
@@ -92,7 +103,11 @@ export default function ModelEditor( { model, onBack } ) {
 					setObjectType( e.object_type || '' );
 					setIsCustom( e.is_custom || false );
 					setEnabled( e.enabled || false );
-					setProperties( e.properties || {} );
+					if ( e.is_custom ) {
+						setCustomProperties( e.properties || {} );
+					} else {
+						setWpProperties( e.properties || {} );
+					}
 				}
 			} finally {
 				setLoaded( true );
@@ -110,6 +125,16 @@ export default function ModelEditor( { model, onBack } ) {
 		application_id: selectedApplicationId || model.application_id || '',
 	} );
 
+	const clearDirty = useCallback(
+		() => setDirtyFlag( { has: false, message: '' } ),
+		[ setDirtyFlag ]
+	);
+
+	const handleBack = useCallback( () => {
+		clearDirty();
+		onBack();
+	}, [ clearDirty, onBack ] );
+
 	const handleSave = useCallback( () => {
 		if ( isNew ) {
 			save(
@@ -117,6 +142,7 @@ export default function ModelEditor( { model, onBack } ) {
 				{
 					onSuccess: ( data ) => {
 						if ( data?.entry ) {
+							clearDirty();
 							onBack();
 						}
 					},
@@ -129,7 +155,7 @@ export default function ModelEditor( { model, onBack } ) {
 					id: model.id,
 					...buildPayload(),
 				},
-				{}
+				{ onSuccess: clearDirty }
 			);
 		}
 	}, [
@@ -142,6 +168,8 @@ export default function ModelEditor( { model, onBack } ) {
 		properties,
 		nonce,
 		selectedApplicationId,
+		clearDirty,
+		onBack,
 	] );
 
 	const handleDelete = useCallback( () => {
@@ -157,24 +185,25 @@ export default function ModelEditor( { model, onBack } ) {
 					'rest-api-firewall'
 				) }`,
 				confirmLabel: __( 'Delete', 'rest-api-firewall' ),
-				onSuccess: onBack,
+				onSuccess: () => {
+					clearDirty();
+					onBack();
+				},
 			}
 		);
-	}, [ remove, model.id, label, nonce, onBack, __ ] );
+	}, [ remove, model.id, label, nonce, onBack, clearDirty, __ ] );
 
-	// When switching object type, reset properties (they're type-specific).
 	const handleObjectTypeChange = ( e ) => {
 		setObjectType( e.target.value );
-		setProperties( {} );
+		setWpProperties( {} );
+		setCustomProperties( {} );
 	};
 
-	// When switching schema mode, reset properties.
 	const handleModeChange = ( _, newMode ) => {
 		if ( newMode === null ) {
 			return;
 		}
 		setIsCustom( newMode === 'custom' );
-		setProperties( {} );
 	};
 
 	if ( ! loaded ) {
@@ -189,19 +218,51 @@ export default function ModelEditor( { model, onBack } ) {
 		);
 	}
 
-	// WP REST schema properties for the selected object type (from adminData).
 	const schemaProps =
 		adminData?.models_properties?.[ objectType ]?.props || null;
 
+	const availableBindings = schemaProps
+		? Object.entries( schemaProps ).flatMap( ( [ key, cfg ] ) => {
+				const type = Array.isArray( cfg.type ) ? cfg.type[ 0 ] : cfg.type;
+				const bindings = [
+					{ key, label: cfg.description || key, type },
+				];
+				if (
+					cfg.properties &&
+					typeof cfg.properties === 'object' &&
+					! Array.isArray( cfg.properties )
+				) {
+					Object.entries( cfg.properties ).forEach(
+						( [ subKey, subCfg ] ) => {
+							if (
+								typeof subCfg === 'object' &&
+								subCfg !== null
+							) {
+								bindings.push( {
+									key: `${ key }.${ subKey }`,
+									label:
+										subCfg.description ||
+										`${ key }.${ subKey }`,
+									type: Array.isArray( subCfg.type )
+										? subCfg.type[ 0 ]
+										: subCfg.type,
+								} );
+							}
+						}
+					);
+				}
+				return bindings;
+		  } )
+		: FALLBACK_BINDINGS;
+
 	return (
 		<Stack spacing={ 0 } sx={ { height: '100%' } }>
-			{ /* Toolbar */ }
 			<Toolbar
 				variant="dense"
 				sx={ { gap: 1, px: 2, minHeight: 56, flexWrap: 'wrap' } }
 				disableGutters
 			>
-				<IconButton size="small" onClick={ onBack }>
+				<IconButton size="small" onClick={ handleBack }>
 					<ArrowBackIcon />
 				</IconButton>
 
@@ -259,30 +320,33 @@ export default function ModelEditor( { model, onBack } ) {
 				</Button>
 			</Toolbar>
 
-			<Stack spacing={ 3 } sx={ { overflowY: 'auto', flex: 1, p: 3 } }>
-				{ /* Label */ }
-				<TextField
-					label={ __( 'Model Name', 'rest-api-firewall' ) }
-					value={ label }
-					onChange={ ( e ) => setLabel( e.target.value ) }
-					size="small"
-					fullWidth
-					required
-					helperText={ __(
-						'Internal name for this model',
-						'rest-api-firewall'
-					) }
-				/>
-
-				<Divider />
-
-				{ /* Object Type + Schema Mode */ }
+			<Stack p={ 4 } spacing={ 3 } sx={ { overflowY: 'auto', flex: 1} }>
+				
 				<Stack
 					direction="row"
-					spacing={ 2 }
+					spacing={ 4 }
 					alignItems="flex-start"
 					flexWrap="wrap"
 				>
+					<TextField
+						label={ __( 'Model Name', 'rest-api-firewall' ) }
+						value={ label }
+						onChange={ ( e ) => setLabel( e.target.value ) }
+						size="small"
+						fullWidth
+						required
+						helperText={ __(
+							'Internal name for this model',
+							'rest-api-firewall'
+						) }
+						sx={{
+							maxWidth: 320,
+							'& .MuiInputLabel-root:not(.Mui-focused)': {
+								transform: 'translate(14px, 16px) scale(1)',
+							}
+						}}
+					/>
+
 					<ObjectTypeSelect
 						types={ [ 'post_type', 'taxonomy', 'author' ] }
 						value={ objectType }
@@ -296,67 +360,31 @@ export default function ModelEditor( { model, onBack } ) {
 						isSingle
 					/>
 
-					<Stack spacing={ 0.5 }>
-						<Typography variant="caption" color="text.secondary">
-							{ __( 'Schema mode', 'rest-api-firewall' ) }
-						</Typography>
-						<ToggleButtonGroup
-							value={ isCustom ? 'custom' : 'wp' }
-							exclusive
-							onChange={ handleModeChange }
-							size="small"
-						>
-							<ToggleButton
-								value="wp"
-								sx={ { gap: 0.5, px: 1.5 } }
-							>
-								<SchemaOutlinedIcon fontSize="small" />
-								<Typography variant="caption">
-									{ __( 'WP Schema', 'rest-api-firewall' ) }
-								</Typography>
-							</ToggleButton>
-							<ToggleButton
-								value="custom"
-								sx={ { gap: 0.5, px: 1.5 } }
-							>
-								<BuildOutlinedIcon fontSize="small" />
-								<Typography variant="caption">
-									{ __( 'Custom', 'rest-api-firewall' ) }
-								</Typography>
-							</ToggleButton>
-						</ToggleButtonGroup>
-						<Typography
-							variant="caption"
-							color="text.secondary"
-							sx={ { maxWidth: 260 } }
-						>
-							{ isCustom
-								? __(
-										'Define a fully custom JSON shape using the schema builder.',
-										'rest-api-firewall'
-								  )
-								: __(
-										'Toggle visibility of each standard WordPress REST property.',
-										'rest-api-firewall'
-								  ) }
-						</Typography>
-					</Stack>
 				</Stack>
 
-				{ ! objectType && (
-					<Alert severity="info">
-						{ __(
-							'Select an object type above to configure the model properties.',
-							'rest-api-firewall'
-						) }
-					</Alert>
-				) }
+				<ToggleButtonGroup
+					value={ isCustom ? 'custom' : 'wp' }
+					exclusive
+					onChange={ handleModeChange }
+				>
+					<ToggleButton
+						value="wp"
+					>
+						<Typography variant="caption">
+							{ __( 'WordPress Schema', 'rest-api-firewall' ) }
+						</Typography>
+					</ToggleButton>
+					<ToggleButton
+						value="custom"
+					>
+						<Typography variant="caption">
+							{ __( 'Custom Schema', 'rest-api-firewall' ) }
+						</Typography>
+					</ToggleButton>
+				</ToggleButtonGroup>
 
 				{ objectType && (
 					<>
-						<Divider />
-
-						{ /* Property editor */ }
 						{ isCustom ? (
 							<Stack spacing={ 1 }>
 								<Typography
@@ -388,31 +416,12 @@ export default function ModelEditor( { model, onBack } ) {
 									<JsonSchemaBuilder
 										value={ properties }
 										onChange={ setProperties }
-										availableBindings={ CUSTOM_BINDINGS }
+										availableBindings={ availableBindings }
 									/>
 								</Box>
 							</Stack>
 						) : (
-							<Stack spacing={ 1 }>
-								<Typography
-									variant="subtitle2"
-									fontWeight={ 600 }
-								>
-									{ __(
-										'Property Visibility',
-										'rest-api-firewall'
-									) }
-								</Typography>
-								<Typography
-									variant="caption"
-									color="text.secondary"
-								>
-									{ __(
-										'Toggle each property on or off for the REST response.',
-										'rest-api-firewall'
-									) }
-								</Typography>
-
+							<Stack>
 								{ schemaProps ? (
 									<Stack spacing={ 0 }>
 										{ Object.entries( schemaProps ).map(
@@ -423,76 +432,115 @@ export default function ModelEditor( { model, onBack } ) {
 													propConfig={ {
 														...propConfig,
 														settings:
-															properties[
-																propName
-															]?.settings ||
+															properties[ propName ]?.settings ||
 															propConfig.settings ||
 															{},
+														properties: propConfig.properties
+															? Object.fromEntries(
+																Object.entries( propConfig.properties ).map(
+																	( [ subName, subConfig ] ) => [
+																		subName,
+																		typeof subConfig === 'object' &&
+																		subConfig !== null
+																			? {
+																				...subConfig,
+																				settings:
+																					properties[ propName ]?.properties?.[ subName ]?.settings ||
+																					subConfig.settings ||
+																					{},
+																			  }
+																			: subConfig,
+																	]
+																)
+															)
+															: propConfig.properties,
 													} }
 													selectedObjectType={
 														objectType
 													}
 													setField={ ( e ) => {
-														const path =
-															e.target.name; // e.g. "postProperties.post.props.title.settings.disable"
-														const parts =
-															path.split( '.' );
+														const path = e.target.name;
+														const parts = path.split( '.' );
+														const propsIdx = parts.indexOf( 'props' );
 														const propKey =
-															parts[
-																parts.indexOf(
-																	'props'
-																) + 1
-															] || propName;
-														const setting =
-															parts[
-																parts.length - 2
-															];
-														const key =
-															parts[
-																parts.length - 1
-															];
-														setProperties(
-															( prev ) => {
-																const next = {
-																	...prev,
+															parts[ propsIdx + 1 ] || propName;
+														const subPropsIdx = parts.indexOf(
+															'properties',
+															propsIdx + 2
+														);
+														const isSubProp = subPropsIdx > -1;
+														const subPropKey = isSubProp
+															? parts[ subPropsIdx + 1 ]
+															: null;
+														const setting = parts[ parts.length - 2 ];
+														const key = parts[ parts.length - 1 ];
+														setProperties( ( prev ) => {
+															const next = { ...prev };
+															if ( ! next[ propKey ] ) {
+																next[ propKey ] = {
+																	settings: { disable: false, filters: [] },
 																};
-																if (
-																	! next[
-																		propKey
-																	]
-																) {
-																	next[
-																		propKey
-																	] = {
-																		settings:
-																			{
-																				disable: false,
-																				filters:
-																					[],
-																			},
+															}
+															if ( isSubProp ) {
+																if ( ! next[ propKey ].properties ) {
+																	next[ propKey ] = {
+																		...next[ propKey ],
+																		properties: {},
 																	};
 																}
-																if (
-																	setting ===
-																	'settings'
-																) {
-																	next[
-																		propKey
-																	].settings =
-																		{
-																			...next[
-																				propKey
-																			]
-																				.settings,
-																			[ key ]:
-																				e
-																					.target
-																					.value,
+																if ( ! next[ propKey ].properties[ subPropKey ] ) {
+																	next[ propKey ].properties[ subPropKey ] = {
+																		settings: { disable: false, filters: [] },
+																	};
+																}
+																if ( setting === 'settings' ) {
+																	next[ propKey ].properties[ subPropKey ].settings = {
+																		...next[ propKey ].properties[ subPropKey ].settings,
+																		[ key ]: e.target.value,
+																	};
+																} else if ( setting === 'filters' ) {
+																	const subCfg =
+																		schemaProps?.[ propKey ]?.properties?.[ subPropKey ];
+																	const currentFilters =
+																		next[ propKey ].properties[
+																			subPropKey
+																		].settings?.filters ||
+																		subCfg?.filters ||
+																		[];
+																	next[ propKey ].properties[ subPropKey ].settings = {
+																		...next[ propKey ].properties[ subPropKey ].settings,
+																		filters: currentFilters.map(
+																			( f ) =>
+																				f.key === key
+																					? { ...f, value: e.target.value }
+																					: f
+																			),
 																		};
 																}
-																return next;
+															} else {
+																if ( setting === 'settings' ) {
+																	next[ propKey ].settings = {
+																		...next[ propKey ].settings,
+																		[ key ]: e.target.value,
+																	};
+																} else if ( setting === 'filters' ) {
+																	const currentFilters =
+																		next[ propKey ].settings?.filters ||
+																		propConfig.filters ||
+																		[];
+																	next[ propKey ].settings = {
+																		...next[ propKey ].settings,
+																		filters: currentFilters.map(
+																			( f ) =>
+																				f.key === key
+																					? { ...f, value: e.target.value }
+																					: f
+																			),
+																		};
+																}
 															}
-														);
+															return next;
+														} );
 													} }
 													hasValidLicense={ true }
 													__={ __ }

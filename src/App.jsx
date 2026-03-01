@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from './contexts/AdminDataContext';
-import { DialogProvider } from './contexts/DialogContext';
+import { DialogProvider, useDialog, DIALOG_TYPES } from './contexts/DialogContext';
 import { useLicense } from './contexts/LicenseContext';
-import { ApplicationProvider } from './contexts/ApplicationContext';
+import { ApplicationProvider, useApplication } from './contexts/ApplicationContext';
 
 import useSettingsForm from './hooks/useSettingsForm';
 import useSaveOptions from './hooks/useSaveOptions';
@@ -47,6 +47,8 @@ function AppContent() {
 	const { __ } = wp.i18n || {};
 	const { save, saving } = useSaveOptions();
 	const { hasValidLicense } = useLicense();
+	const { dirtyFlag } = useApplication();
+	const { openDialog } = useDialog();
 
 	const [ postTypes, setPostTypes ] = useState( [] );
 	const [ panelGroup, setPanelGroup ] = useState( 1 );
@@ -78,20 +80,38 @@ function AppContent() {
 		}
 	}, [ adminData ] );
 
+	const navigateTo = useCallback( ( newIndex ) => {
+		setPanelGroup( newIndex );
+		window.localStorage.setItem( 'rest_api_firewall_last_tab', newIndex );
+	}, [] );
+
 	const handleMenuClick = useCallback(
 		( newIndex ) => {
 			if ( newIndex === undefined ) {
 				return false;
 			}
-			if ( panelGroup !== newIndex ) {
-				setPanelGroup( newIndex );
-				window.localStorage.setItem(
-					'rest_api_firewall_last_tab',
-					newIndex
-				);
+			if ( panelGroup === newIndex ) {
+				return;
 			}
+			if ( dirtyFlag.has ) {
+				openDialog( {
+					type: DIALOG_TYPES.CONFIRM,
+					title: __( 'Unsaved Changes', 'rest-api-firewall' ),
+					content:
+						dirtyFlag.message ||
+						__(
+							'You have unsaved changes. Leave anyway?',
+							'rest-api-firewall'
+						),
+					confirmLabel: __( 'Leave', 'rest-api-firewall' ),
+					cancelLabel: __( 'Stay', 'rest-api-firewall' ),
+					onConfirm: () => navigateTo( newIndex ),
+				} );
+				return;
+			}
+			navigateTo( newIndex );
 		},
-		[ panelGroup ]
+		[ panelGroup, dirtyFlag, openDialog, navigateTo, __ ]
 	);
 
 	const SAVE_CONFIG = {
@@ -246,7 +266,6 @@ function AppContent() {
 									spacing={ 3 }
 									p={ 4 }
 									sx={ { maxWidth: 800 } }
-									id="section-auth-rate-limiting"
 								>
 									<RestApiUser
 										form={ form }
@@ -262,9 +281,11 @@ function AppContent() {
 						</>
 					) }
 
-					<Stack sx={ { p: 4, flexGrow: 1 } }>
 						{ panelGroup === 2 && (
-							<Stack spacing={ 3 }>
+							<Stack 
+								spacing={ 3 } 
+								sx={ { p: 4, flexGrow: 1 } }
+							>
 								<GlobalRoutesPolicy
 									form={ form }
 									setField={ setField }
@@ -291,32 +312,40 @@ function AppContent() {
 							( hasValidLicense ? (
 								<Models />
 							) : (
+								<Stack sx={ { p: 4, flexGrow: 1 } }>
 								<Properties
 									form={ form }
 									setField={ setField }
 									postTypes={ postTypes }
 								/>
+								</Stack>
 							) ) }
 
 						{ panelGroup === 6 && (
+							<Stack sx={ { p: 4, flexGrow: 1 } }>
 							<SettingsRoute
 								form={ form }
 								setField={ setField }
 							/>
+							</Stack>
 						) }
 
 						{ panelGroup === 7 &&
 							( hasValidLicense ? (
 								<Webhooks />
 							) : (
+								<Stack sx={ { p: 4, flexGrow: 1 } }>
 								<Webhook form={ form } setField={ setField } />
+								</Stack>
 							) ) }
 
 						{ panelGroup === 8 &&
 							( hasValidLicense ? (
 								<Emails />
 							) : (
+								<Stack sx={ { p: 4, flexGrow: 1 } }>
 								<Smtp form={ form } setField={ setField } />
+								</Stack>
 							) ) }
 
 						{ panelGroup === 12 && hasValidLicense && <Logs /> }
@@ -349,7 +378,7 @@ function AppContent() {
 								}
 							/>
 						) }
-					</Stack>
+					
 				</Stack>
 			</Box>
 

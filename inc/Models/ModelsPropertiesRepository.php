@@ -87,6 +87,21 @@ class ModelsPropertiesRepository {
 			);
 		}
 
+		// Inject ACF sub-properties into the schema-fallback path as well.
+		if ( isset( $properties['acf'] ) && function_exists( 'acf_get_field_groups' ) ) {
+			$all_fields   = array();
+			$field_groups = acf_get_field_groups( array( 'post_type' => $post_type ) );
+			foreach ( $field_groups as $group ) {
+				$fields = isset( $group['key'] ) && acf_get_fields( $group['key'] ) ? acf_get_fields( $group['key'] ) : array();
+				foreach ( $fields as $field ) {
+					$all_fields[] = $field;
+				}
+			}
+			if ( ! empty( $all_fields ) ) {
+				$properties['acf']['properties'] = self::build_acf_subprops( $all_fields );
+			}
+		}
+
 		return $properties;
 	}
 

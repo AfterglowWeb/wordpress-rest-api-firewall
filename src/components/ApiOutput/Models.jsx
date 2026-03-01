@@ -3,7 +3,6 @@ import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
 
-import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
@@ -14,7 +13,6 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import { DataGrid } from '@mui/x-data-grid';
 
-import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
@@ -254,7 +252,7 @@ export default function Models() {
 	];
 
 	return (
-		<Stack spacing={ 2 } sx={ { height: '100%', flexGrow: 1 } }>
+		<Stack p={4} spacing={ 2 } sx={ { height: '100%', flexGrow: 1 } }>
 			
 			<Toolbar
 				disableGutters

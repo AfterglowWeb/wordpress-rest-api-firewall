@@ -40,7 +40,6 @@ import AppIdentity from './AppIdentity';
 import ApplicationSelector from './ApplicationSelector';
 import Documentation from './Documentation/Documentation';
 
-// Layout constants — exported so App.jsx can align the panels Stack.
 export const DRAWER_WIDTH = 220;
 export const APP_BAR_HEIGHT = 75;
 export const APP_FOOTER_HEIGHT = 40;
@@ -157,6 +156,8 @@ export default function Navigation( {
 			panelGroup: 8,
 			icon: EmailOutlined,
 		},
+
+		{ type: 'section', label: __( '', 'rest-api-firewall' ) },
 		{
 			key: 'logs',
 			label: __( 'Logs', 'rest-api-firewall' ),
@@ -207,7 +208,6 @@ export default function Navigation( {
 
 	return (
 		<>
-			{ /* Sidebar Drawer */ }
 			<Drawer
 				variant={ isMobile ? 'temporary' : 'permanent' }
 				anchor="left"
@@ -227,10 +227,10 @@ export default function Navigation( {
 						},
 						height: {
 							xs: `calc(100vh - ${
-								WP_ADMIN_BAR_HEIGHT_MOBILE + APP_FOOTER_HEIGHT
+								WP_ADMIN_BAR_HEIGHT_MOBILE
 							}px)`,
 							md: `calc(100vh - ${
-								WP_ADMIN_BAR_HEIGHT_DESKTOP + APP_FOOTER_HEIGHT
+								WP_ADMIN_BAR_HEIGHT_DESKTOP
 							}px)`,
 						},
 						overflowY: 'auto',
@@ -240,7 +240,7 @@ export default function Navigation( {
 				<AppIdentity />
 				<Divider />
 
-				<List component="nav" disablePadding>
+				<List component="nav" disablePadding sx={{pb:4}}>
 					{ menuItems.map( ( item, index ) => {
 						if ( item.type === 'section' ) {
 							return (
