@@ -55,7 +55,6 @@ export default function MailEditor( { mail, onBack } ) {
 	const [ testStatus, setTestStatus ] = useState( '' );
 	const [ testLoading, setTestLoading ] = useState( false );
 
-	// If editing an existing entry, reload from server on mount.
 	const [ loaded, setLoaded ] = useState( isNew );
 
 	useEffect( () => {

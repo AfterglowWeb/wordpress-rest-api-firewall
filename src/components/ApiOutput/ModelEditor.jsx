@@ -7,26 +7,18 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
-import Divider from '@mui/material/Divider';
-import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Toolbar from '@mui/material/Toolbar';
-import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import SchemaOutlinedIcon from '@mui/icons-material/SchemaOutlined';
 
 import useProActions from '../../hooks/useProActions';
 import formatDate from '../../utils/formatDate';
@@ -34,7 +26,6 @@ import { PropertyRow } from './Properties';
 import JsonSchemaBuilder from '../shared/JsonSchemaBuilder';
 import ObjectTypeSelect from '../ObjectTypeSelect';
 
-// Fallback bindings when no WP REST schema is available for the object type.
 const FALLBACK_BINDINGS = [
 	{ key: 'id', label: 'ID', type: 'integer' },
 	{ key: 'slug', label: 'Slug', type: 'string' },
@@ -64,11 +55,10 @@ export default function ModelEditor( { model, onBack } ) {
 	const isNew = ! model.id;
 
 	const [ label, setLabel ] = useState( model.label || '' );
-	const [ objectType, setObjectType ] = useState( model.object_type || '' );
+	const [ objectType, setObjectType ] = useState( model.object_type || 'post' );
 	const [ isCustom, setIsCustom ] = useState( model.is_custom || false );
 	const [ enabled, setEnabled ] = useState( model.enabled || false );
 
-	// Separate states per mode so switching WP ↔ Custom doesn't destroy work.
 	const [ wpProperties, setWpProperties ] = useState(
 		! model.is_custom ? model.properties || {} : {}
 	);
@@ -78,11 +68,9 @@ export default function ModelEditor( { model, onBack } ) {
 
 	const [ loaded, setLoaded ] = useState( isNew );
 
-	// Active properties + setter derived from current mode.
 	const properties = isCustom ? customProperties : wpProperties;
 	const setProperties = isCustom ? setCustomProperties : setWpProperties;
 
-	// Register dirty flag when editor is open; clear on unmount.
 	useEffect( () => {
 		setDirtyFlag( {
 			has: true,
@@ -205,14 +193,12 @@ export default function ModelEditor( { model, onBack } ) {
 		);
 	}, [ remove, model.id, label, nonce, onBack, clearDirty, __ ] );
 
-	// Changing object type makes all existing properties irrelevant — reset both.
 	const handleObjectTypeChange = ( e ) => {
 		setObjectType( e.target.value );
 		setWpProperties( {} );
 		setCustomProperties( {} );
 	};
 
-	// Switching mode keeps each mode's work intact.
 	const handleModeChange = ( _, newMode ) => {
 		if ( newMode === null ) {
 			return;
@@ -235,9 +221,6 @@ export default function ModelEditor( { model, onBack } ) {
 	const schemaProps =
 		adminData?.models_properties?.[ objectType ]?.props || null;
 
-	// Derive bindings for the custom schema builder from the WP REST schema when
-	// available; fall back to the static list when the object type has no schema.
-	// Sub-properties are included with dot notation (e.g. title.raw, title.rendered).
 	const availableBindings = schemaProps
 		? Object.entries( schemaProps ).flatMap( ( [ key, cfg ] ) => {
 				const type = Array.isArray( cfg.type ) ? cfg.type[ 0 ] : cfg.type;
@@ -274,7 +257,6 @@ export default function ModelEditor( { model, onBack } ) {
 
 	return (
 		<Stack spacing={ 0 } sx={ { height: '100%' } }>
-			{ /* Toolbar */ }
 			<Toolbar
 				variant="dense"
 				sx={ { gap: 1, px: 2, minHeight: 56, flexWrap: 'wrap' } }
@@ -338,30 +320,33 @@ export default function ModelEditor( { model, onBack } ) {
 				</Button>
 			</Toolbar>
 
-			<Stack spacing={ 3 } sx={ { overflowY: 'auto', flex: 1, p: 3 } }>
-				{ /* Label */ }
-				<TextField
-					label={ __( 'Model Name', 'rest-api-firewall' ) }
-					value={ label }
-					onChange={ ( e ) => setLabel( e.target.value ) }
-					size="small"
-					fullWidth
-					required
-					helperText={ __(
-						'Internal name for this model',
-						'rest-api-firewall'
-					) }
-				/>
-
-				<Divider />
-
-				{ /* Object Type + Schema Mode */ }
+			<Stack p={ 4 } spacing={ 3 } sx={ { overflowY: 'auto', flex: 1} }>
+				
 				<Stack
 					direction="row"
-					spacing={ 2 }
+					spacing={ 4 }
 					alignItems="flex-start"
 					flexWrap="wrap"
 				>
+					<TextField
+						label={ __( 'Model Name', 'rest-api-firewall' ) }
+						value={ label }
+						onChange={ ( e ) => setLabel( e.target.value ) }
+						size="small"
+						fullWidth
+						required
+						helperText={ __(
+							'Internal name for this model',
+							'rest-api-firewall'
+						) }
+						sx={{
+							maxWidth: 320,
+							'& .MuiInputLabel-root:not(.Mui-focused)': {
+								transform: 'translate(14px, 16px) scale(1)',
+							}
+						}}
+					/>
+
 					<ObjectTypeSelect
 						types={ [ 'post_type', 'taxonomy', 'author' ] }
 						value={ objectType }
@@ -375,67 +360,31 @@ export default function ModelEditor( { model, onBack } ) {
 						isSingle
 					/>
 
-					<Stack spacing={ 0.5 }>
-						<Typography variant="caption" color="text.secondary">
-							{ __( 'Schema mode', 'rest-api-firewall' ) }
-						</Typography>
-						<ToggleButtonGroup
-							value={ isCustom ? 'custom' : 'wp' }
-							exclusive
-							onChange={ handleModeChange }
-							size="small"
-						>
-							<ToggleButton
-								value="wp"
-								sx={ { gap: 0.5, px: 1.5 } }
-							>
-								<SchemaOutlinedIcon fontSize="small" />
-								<Typography variant="caption">
-									{ __( 'WP Schema', 'rest-api-firewall' ) }
-								</Typography>
-							</ToggleButton>
-							<ToggleButton
-								value="custom"
-								sx={ { gap: 0.5, px: 1.5 } }
-							>
-								<BuildOutlinedIcon fontSize="small" />
-								<Typography variant="caption">
-									{ __( 'Custom', 'rest-api-firewall' ) }
-								</Typography>
-							</ToggleButton>
-						</ToggleButtonGroup>
-						<Typography
-							variant="caption"
-							color="text.secondary"
-							sx={ { maxWidth: 260 } }
-						>
-							{ isCustom
-								? __(
-										'Define a fully custom JSON shape using the schema builder.',
-										'rest-api-firewall'
-								  )
-								: __(
-										'Toggle visibility of each standard WordPress REST property.',
-										'rest-api-firewall'
-								  ) }
-						</Typography>
-					</Stack>
 				</Stack>
 
-				{ ! objectType && (
-					<Alert severity="info">
-						{ __(
-							'Select an object type above to configure the model properties.',
-							'rest-api-firewall'
-						) }
-					</Alert>
-				) }
+				<ToggleButtonGroup
+					value={ isCustom ? 'custom' : 'wp' }
+					exclusive
+					onChange={ handleModeChange }
+				>
+					<ToggleButton
+						value="wp"
+					>
+						<Typography variant="caption">
+							{ __( 'WordPress Schema', 'rest-api-firewall' ) }
+						</Typography>
+					</ToggleButton>
+					<ToggleButton
+						value="custom"
+					>
+						<Typography variant="caption">
+							{ __( 'Custom Schema', 'rest-api-firewall' ) }
+						</Typography>
+					</ToggleButton>
+				</ToggleButtonGroup>
 
 				{ objectType && (
 					<>
-						<Divider />
-
-						{ /* Property editor */ }
 						{ isCustom ? (
 							<Stack spacing={ 1 }>
 								<Typography
@@ -472,26 +421,7 @@ export default function ModelEditor( { model, onBack } ) {
 								</Box>
 							</Stack>
 						) : (
-							<Stack spacing={ 1 }>
-								<Typography
-									variant="subtitle2"
-									fontWeight={ 600 }
-								>
-									{ __(
-										'Property Visibility',
-										'rest-api-firewall'
-									) }
-								</Typography>
-								<Typography
-									variant="caption"
-									color="text.secondary"
-								>
-									{ __(
-										'Toggle each property on or off for the REST response.',
-										'rest-api-firewall'
-									) }
-								</Typography>
-
+							<Stack>
 								{ schemaProps ? (
 									<Stack spacing={ 0 }>
 										{ Object.entries( schemaProps ).map(
@@ -534,7 +464,6 @@ export default function ModelEditor( { model, onBack } ) {
 														const propsIdx = parts.indexOf( 'props' );
 														const propKey =
 															parts[ propsIdx + 1 ] || propName;
-														// Sub-property path: ...props.title.properties.raw.settings.disable
 														const subPropsIdx = parts.indexOf(
 															'properties',
 															propsIdx + 2

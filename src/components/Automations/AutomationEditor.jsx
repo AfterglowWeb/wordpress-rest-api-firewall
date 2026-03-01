@@ -243,13 +243,11 @@ export default function AutomationEditor( { automation, onBack } ) {
 	const [ mailIds, setMailIds ] = useState( automation.mail_ids || [] );
 	const [ active, setActive ] = useState( automation.active !== false );
 
-	// Available events list from server.
 	const [ events, setEvents ] = useState( [] );
 	const [ webhooks, setWebhooks ] = useState( [] );
 	const [ mails, setMails ] = useState( [] );
 	const [ loaded, setLoaded ] = useState( false );
 
-	// Fetch supporting data on mount.
 	useEffect( () => {
 		const fetchAll = async () => {
 			const [ eventsRes, webhooksRes, mailsRes ] = await Promise.all( [
@@ -290,7 +288,6 @@ export default function AutomationEditor( { automation, onBack } ) {
 				setMails( mj.data.entries || [] );
 			}
 
-			// If editing, reload from server.
 			if ( ! isNew ) {
 				const entryRes = await fetch( adminData.ajaxurl, {
 					method: 'POST',
@@ -316,7 +313,6 @@ export default function AutomationEditor( { automation, onBack } ) {
 		fetchAll();
 	}, [ isNew, automation.id, adminData, nonce ] );
 
-	// Group events by group field.
 	const eventsByGroup = events.reduce( ( acc, ev ) => {
 		const g = ev.group || 'other';
 		if ( ! acc[ g ] ) {

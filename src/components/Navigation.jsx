@@ -40,7 +40,6 @@ import AppIdentity from './AppIdentity';
 import ApplicationSelector from './ApplicationSelector';
 import Documentation from './Documentation/Documentation';
 
-// Layout constants — exported so App.jsx can align the panels Stack.
 export const DRAWER_WIDTH = 220;
 export const APP_BAR_HEIGHT = 75;
 export const APP_FOOTER_HEIGHT = 40;

@@ -1,12 +1,3 @@
-/**
- * JsonSchemaBuilder — Firebase-style visual property tree builder.
- *
- * Props:
- *   value              {object}   Current schema object.
- *   onChange           {fn}       Called with the updated schema object.
- *   availableBindings  {Array}    [{key, label, type}] — source data points.
- *   readOnly           {bool}
- */
 import { useCallback } from '@wordpress/element';
 
 import Box from '@mui/material/Box';
@@ -39,18 +30,6 @@ const TYPE_COLORS = {
 	null: 'default',
 };
 
-/**
- * A single property row. Handles name, type, binding, and for "object" type:
- * a collapsible list of sub-properties.
- * @param root0
- * @param root0.propKey
- * @param root0.propDef
- * @param root0.onUpdate
- * @param root0.onRemove
- * @param root0.availableBindings
- * @param root0.readOnly
- * @param root0.depth
- */
 function PropertyRow( {
 	propKey,
 	propDef,
@@ -125,7 +104,6 @@ function PropertyRow( {
 				alignItems="center"
 				sx={ { py: 0.5 } }
 			>
-				{ /* Expand button for objects */ }
 				{ isObject ? (
 					<IconButton
 						size="small"
@@ -148,7 +126,6 @@ function PropertyRow( {
 					<Box sx={ { width: 28, flexShrink: 0 } } />
 				) }
 
-				{ /* Property name */ }
 				<TextField
 					size="small"
 					value={ localKey }
@@ -162,7 +139,6 @@ function PropertyRow( {
 					} }
 				/>
 
-				{ /* Type selector */ }
 				<FormControl
 					size="small"
 					sx={ { width: 110 } }
@@ -200,7 +176,6 @@ function PropertyRow( {
 					</Select>
 				</FormControl>
 
-				{ /* Binding or static value (only for leaf types) */ }
 				{ ! isObject &&
 					( availableBindings && availableBindings.length > 0 ? (
 						<FormControl
@@ -263,7 +238,6 @@ function PropertyRow( {
 						</FormControl>
 					) : null ) }
 
-				{ /* Static value input when no binding selected */ }
 				{ ! isObject && ! bind && (
 					<TextField
 						size="small"
@@ -286,7 +260,6 @@ function PropertyRow( {
 					/>
 				) }
 
-				{ /* Array item type */ }
 				{ isArray && (
 					<FormControl
 						size="small"
@@ -326,7 +299,6 @@ function PropertyRow( {
 				) }
 			</Stack>
 
-			{ /* Sub-properties for object type */ }
 			{ isObject && (
 				<Collapse in={ expanded }>
 					<Stack spacing={ 0 } sx={ { mt: 0.25 } }>
@@ -373,8 +345,6 @@ function PropertyRow( {
 	);
 }
 
-// ---------------------------------------------------------------------------
-
 export default function JsonSchemaBuilder( {
 	value = {},
 	onChange,
@@ -415,7 +385,6 @@ export default function JsonSchemaBuilder( {
 
 	return (
 		<Stack spacing={ 0 }>
-			{ /* Header row */ }
 			<Stack
 				direction="row"
 				spacing={ 1 }

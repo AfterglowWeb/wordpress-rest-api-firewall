@@ -266,7 +266,6 @@ function AppContent() {
 									spacing={ 3 }
 									p={ 4 }
 									sx={ { maxWidth: 800 } }
-									id="section-auth-rate-limiting"
 								>
 									<RestApiUser
 										form={ form }
@@ -282,9 +281,11 @@ function AppContent() {
 						</>
 					) }
 
-					<Stack sx={ { p: 4, flexGrow: 1 } }>
 						{ panelGroup === 2 && (
-							<Stack spacing={ 3 }>
+							<Stack 
+								spacing={ 3 } 
+								sx={ { p: 4, flexGrow: 1 } }
+							>
 								<GlobalRoutesPolicy
 									form={ form }
 									setField={ setField }
@@ -311,32 +312,40 @@ function AppContent() {
 							( hasValidLicense ? (
 								<Models />
 							) : (
+								<Stack sx={ { p: 4, flexGrow: 1 } }>
 								<Properties
 									form={ form }
 									setField={ setField }
 									postTypes={ postTypes }
 								/>
+								</Stack>
 							) ) }
 
 						{ panelGroup === 6 && (
+							<Stack sx={ { p: 4, flexGrow: 1 } }>
 							<SettingsRoute
 								form={ form }
 								setField={ setField }
 							/>
+							</Stack>
 						) }
 
 						{ panelGroup === 7 &&
 							( hasValidLicense ? (
 								<Webhooks />
 							) : (
+								<Stack sx={ { p: 4, flexGrow: 1 } }>
 								<Webhook form={ form } setField={ setField } />
+								</Stack>
 							) ) }
 
 						{ panelGroup === 8 &&
 							( hasValidLicense ? (
 								<Emails />
 							) : (
+								<Stack sx={ { p: 4, flexGrow: 1 } }>
 								<Smtp form={ form } setField={ setField } />
+								</Stack>
 							) ) }
 
 						{ panelGroup === 12 && hasValidLicense && <Logs /> }
@@ -369,7 +378,7 @@ function AppContent() {
 								}
 							/>
 						) }
-					</Stack>
+					
 				</Stack>
 			</Box>
 
