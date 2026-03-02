@@ -104,7 +104,7 @@ function PropertyRow( {
 				py={1 }
 				alignItems="center"
 			>
-				{ isObject ? (
+				{ isObject && (
 					<IconButton
 						size="small"
 						onClick={ () => setExpanded( ( v ) => ! v ) }
@@ -122,8 +122,6 @@ function PropertyRow( {
 							sx={ { fontSize: 18 } }
 						/>
 					</IconButton>
-				) : (
-					<Box sx={ { width: 28, flexShrink: 0 } } />
 				) }
 
 				<TextField
@@ -134,10 +132,12 @@ function PropertyRow( {
 					disabled={ readOnly }
 					placeholder={ __( 'property_name', 'rest-api-firewall' ) }
 					sx={ { 
-					width: 160, 
+					flex: 1, 
+					maxWidth: 300,
 					'.MuiInputBase-input': { 
 						padding: '10.5px 14px!important',
 						minHeight: 'unset!important',
+						height: '25px!important',
 						fontFamily: 'monospace', 
 						fontSize: '0.82rem' 
 					}
@@ -185,10 +185,13 @@ function PropertyRow( {
 					( availableBindings && availableBindings.length > 0 ? (
 						<FormControl
 							size="small"
-							sx={ { width: 160 } }
+							sx={ { 
+								flex: 1, 
+								maxWidth: 300,
+							} }
 							disabled={ readOnly }
 						>
-							<InputLabel id={`source-label-${propKey}`} sx={ { fontSize: '0.8rem' } }>
+							<InputLabel sx={ { fontSize: '0.8rem' } }>
 								{ __( 'Source', 'rest-api-firewall' ) }
 							</InputLabel>
 							<Select
@@ -204,7 +207,6 @@ function PropertyRow( {
 									const found = availableBindings.find( ( o ) => o.key === val );
 									return found?.key ?? val;
 								} }
-								displayEmpty
 							>
 								<MenuItem value="">
 								  	<ListItemText
@@ -239,10 +241,12 @@ function PropertyRow( {
 							'rest-api-firewall'
 						) }
 						sx={ { 
-						width: 160, 
+						flex: 1, 
+						maxWidth: 300,
 						'.MuiInputBase-input': { 
 							padding: '10.5px 14px!important',
 							minHeight: 'unset!important',
+							height: '25px!important',
 							fontFamily: 'monospace', 
 							fontSize: '0.82rem' 
 						}
@@ -253,7 +257,7 @@ function PropertyRow( {
 				{ isArray && (
 					<FormControl
 						size="small"
-						sx={ { width: 100 } }
+						sx={ { width: 100, height: '25px!important' } }
 						disabled={ readOnly }
 					>
 						<InputLabel 
@@ -408,19 +412,6 @@ export default function JsonSchemaBuilder( {
 						: __( 'Value', 'rest-api-firewall' ) }
 				</Typography>
 			</Stack>
-
-			{ Object.keys( value ).length === 0 && (
-				<Typography
-					variant="body2"
-					color="text.secondary"
-					sx={ { py: 2, textAlign: 'center' } }
-				>
-					{ __(
-						'No properties defined. Click "Add Property" to start.',
-						'rest-api-firewall'
-					) }
-				</Typography>
-			) }
 
 			{ Object.entries( value ).map( ( [ key, def ] ) => (
 				<PropertyRow

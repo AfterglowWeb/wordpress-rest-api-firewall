@@ -111,23 +111,14 @@ export default function HookRegistry() {
 					px: 2,
 					py: 1.25,
 					cursor: 'pointer',
-					bgcolor: open ? 'action.hover' : 'transparent',
-					'&:hover': { bgcolor: 'action.hover' },
 				} }
 				onClick={ () => setOpen( ( v ) => ! v ) }
 			>
-				<BookmarksOutlinedIcon fontSize="small" color="action" />
 
 				<Typography variant="subtitle2" fontWeight={ 600 } sx={ { flex: 1 } }>
-					{ __( 'Hook Registry', 'rest-api-firewall' ) }
+					{ __( 'Custom Hooks', 'rest-api-firewall' ) }
 				</Typography>
-
-				{ rows.length > 0 && (
-					<Typography variant="caption" color="text.secondary">
-						{ rows.length }
-					</Typography>
-				) }
-
+			
 				<ExpandMoreIcon
 					fontSize="small"
 					sx={ {
@@ -142,7 +133,7 @@ export default function HookRegistry() {
 				<Stack spacing={ 1.5 } sx={ { p: 2 } }>
 					<Typography variant="body2" color="text.secondary">
 						{ __(
-							'Add additionnal plugins hooks as automation triggers. Allowed characters: a–z, 0–9, _, -, /',
+							'Add additionnal hooks as automation triggers. WordPress core hooks are already registered.',
 							'rest-api-firewall'
 						) }
 					</Typography>
@@ -163,7 +154,14 @@ export default function HookRegistry() {
 										onChange={ ( e ) =>
 											updateRow( i, 'label', e.target.value )
 										}
-										sx={ { flex: 1 } }
+										sx={ { 
+											flex: 1, 
+											'.MuiInputBase-input': { 
+												padding: '10.5px 14px!important',
+												minHeight: 'unset!important',
+												height: '25px!important'
+											}
+										} }
 									/>
 									<TextField
 										size="small"
@@ -172,9 +170,15 @@ export default function HookRegistry() {
 										onChange={ ( e ) =>
 											updateRow( i, 'hook', e.target.value )
 										}
-										sx={ { flex: 2 } }
-										inputProps={ {
-											style: { fontFamily: 'monospace', fontSize: '0.85rem' },
+										sx={ { 
+											flex: 1, 
+											'.MuiInputBase-input': { 
+												padding: '10.5px 14px!important',
+												minHeight: 'unset!important',
+												height: '25px!important',
+												fontFamily: 'monospace', 
+												fontSize: '0.82rem' 
+											}
 										} }
 									/>
 									<IconButton

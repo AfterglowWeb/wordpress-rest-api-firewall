@@ -70,12 +70,13 @@ function ConditionRow( { condition, onChange, onRemove } ) {
 					'.MuiInputBase-input': { 
 						padding: '10.5px 14px!important',
 						minHeight: 'unset!important',
+						height: '25px!important',
 						fontFamily: 'monospace', 
 						fontSize: '0.82rem' 
 					}
 				} }
 			/>
-			<FormControl size="small" sx={ { width: 110 } }>
+			<FormControl size="small" sx={ { width: 110} }>
 				<Select
 					value={ condition.operator || 'eq' }
 					onChange={ ( e ) =>
@@ -101,6 +102,7 @@ function ConditionRow( { condition, onChange, onRemove } ) {
 					'.MuiInputBase-input': { 
 						padding: '10.5px 14px!important',
 						minHeight: 'unset!important',
+						height: '25px!important',
 						fontFamily: 'monospace', 
 						fontSize: '0.82rem' 
 					}
@@ -240,6 +242,7 @@ export default function AutomationEditor( { automation, onBack } ) {
 
 	const isNew = ! automation.id;
 
+	const [ title, setTitle ] = useState( automation.title || '' );
 	const [ event, setEvent ] = useState( automation.event || '' );
 	const [ conditions, setConditions ] = useState(
 		automation.conditions || []
@@ -337,6 +340,7 @@ export default function AutomationEditor( { automation, onBack } ) {
 				const entryJson = await entryRes.json();
 				if ( entryJson.success ) {
 					const e = entryJson.data.entry;
+					setTitle( e.title || '' );
 					setEvent( e.event || '' );
 					setConditions( e.conditions || [] );
 					setPayloadMap( e.payload_map || {} );
@@ -352,6 +356,7 @@ export default function AutomationEditor( { automation, onBack } ) {
 
 	const buildPayload = () => ( {
 		nonce,
+		title,
 		event,
 		conditions: JSON.stringify( conditions ),
 		payload_map: JSON.stringify( payloadMap ),
@@ -385,6 +390,7 @@ export default function AutomationEditor( { automation, onBack } ) {
 	}, [
 		isNew,
 		automation.id,
+		title,
 		event,
 		conditions,
 		payloadMap,
@@ -452,12 +458,13 @@ export default function AutomationEditor( { automation, onBack } ) {
 					<ArrowBackIcon />
 				</IconButton>
 
-				<Typography variant="h6" fontWeight={ 600 } sx={ { flex: 1 } }>
-					{ isNew
-						? __( 'New Automation', 'rest-api-firewall' )
-						: event ||
-						  __( 'Edit Automation', 'rest-api-firewall' ) }
-				</Typography>
+				<TextField
+					size="small"
+					placeholder={ __( 'Automation title', 'rest-api-firewall' ) }
+					value={ title }
+					onChange={ ( e ) => setTitle( e.target.value ) }
+					sx={ { flex: 1 } }
+				/>
 
 				{ ! isNew && (
 					<FormControlLabel
@@ -498,12 +505,11 @@ export default function AutomationEditor( { automation, onBack } ) {
 				<Button
 					size="small"
 					variant="contained"
+					disableElevation
 					onClick={ handleSave }
 					disabled={ saving }
 				>
-					{ isNew
-						? __( 'Create', 'rest-api-firewall' )
-						: __( 'Save', 'rest-api-firewall' ) }
+					{ __( 'Save', 'rest-api-firewall' ) }
 				</Button>
 			</Toolbar>
 
@@ -536,11 +542,7 @@ export default function AutomationEditor( { automation, onBack } ) {
 									( o ) => o.value === value
 								);
 								return (
-									<Stack
-										direction="row"
-										spacing={ 1 }
-										alignItems="center"
-									>
+									<Stack>
 										{ opt && opt.label !== opt.value && (
 											<Typography variant="body2">
 												{ opt.label }
