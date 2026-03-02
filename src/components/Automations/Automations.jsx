@@ -14,11 +14,11 @@ import Switch from '@mui/material/Switch';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 
-import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import AutomationEditor from './AutomationEditor';
+import HookRegistry from './HookRegistry';
 import useProActions from '../../hooks/useProActions';
 import formatDate from '../../utils/formatDate';
 
@@ -257,18 +257,32 @@ export default function Automations() {
 	const selectedCount = rowSelectionModel.ids.size;
 
 	return (
-		<Stack spacing={ 0 } sx={ { height: '100%' } }>
+		<Stack spacing={ 0 } sx={ { height: '100%', p: 4 } }>
 			<Toolbar
-				variant="dense"
-				sx={ { gap: 1, px: 0, minHeight: 56 } }
 				disableGutters
+				sx={ { gap: 2, mb: 2, flexWrap: 'wrap' } }
 			>
-				<Typography variant="h6" fontWeight={ 600 }>
-					{ __( 'Automations', 'rest-api-firewall' ) }
-				</Typography>
 
-				<Box sx={ { flex: 1 } } />
-
+				<Button
+					size="small"
+					variant="contained"
+					disableElevation
+					onClick={ () =>
+						setEditingAutomation( {
+							id: null,
+							event: '',
+							conditions: [],
+							payload_map: {},
+							webhook_ids: [],
+							mail_ids: [],
+							active: true,
+						} )
+					}
+					disabled={ ! hasValidLicense }
+				>
+					{ __( 'New Automation', 'rest-api-firewall' ) }
+				</Button>
+				
 				{ selectedCount > 0 && (
 					<>
 						<Chip
@@ -290,25 +304,7 @@ export default function Automations() {
 					</>
 				) }
 
-				<Button
-					size="small"
-					variant="contained"
-					startIcon={ <AddIcon /> }
-					onClick={ () =>
-						setEditingAutomation( {
-							id: null,
-							event: '',
-							conditions: [],
-							payload_map: {},
-							webhook_ids: [],
-							mail_ids: [],
-							active: true,
-						} )
-					}
-					disabled={ ! hasValidLicense }
-				>
-					{ __( 'New Automation', 'rest-api-firewall' ) }
-				</Button>
+
 			</Toolbar>
 
 			{ fetchError && (
@@ -316,6 +312,8 @@ export default function Automations() {
 					{ fetchError }
 				</Alert>
 			) }
+
+			<HookRegistry />
 
 			<Box sx={ { flex: 1, minHeight: 0 } }>
 				<DataGrid
@@ -329,13 +327,11 @@ export default function Automations() {
 					onSortModelChange={ setSortModel }
 					checkboxSelection
 					rowSelectionModel={ rowSelectionModel }
+					showToolbar
 					onRowSelectionModelChange={ setRowSelectionModel }
 					onRowDoubleClick={ ( params ) =>
 						setEditingAutomation( params.row )
 					}
-					disableColumnFilter
-					disableColumnSelector
-					disableDensitySelector
 				/>
 			</Box>
 		</Stack>
