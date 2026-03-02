@@ -18,7 +18,7 @@ export default function Collections( { form, setField, postTypes } ) {
 		hasValidLicense && form.rest_collections_sortable_enabled;
 
 	return (
-		<Stack spacing={ 3 } maxWidth={ 600 }>
+		<Stack spacing={ 3 } maxWidth={ 600 } sx={{ p: 4, pt: 6}}>
 			<Stack
 				spacing={ 3 }
 				direction={ 'row' }
@@ -159,7 +159,7 @@ export default function Collections( { form, setField, postTypes } ) {
 						/>
 						<FormHelperText>
 							{ __(
-								'Fall back to manual sort order when no orderby parameter is specified.',
+								'Applies in requests with no orderby parameter.',
 								'rest-api-firewall'
 							) }
 						</FormHelperText>
@@ -184,7 +184,7 @@ export default function Collections( { form, setField, postTypes } ) {
 						/>
 						<FormHelperText>
 							{ __(
-								'Fall back to manual sort order when no orderby argument is specified.',
+								'Applies in queries with no orderby argument.',
 								'rest-api-firewall'
 							) }
 						</FormHelperText>
