@@ -301,7 +301,7 @@ export default function Logs() {
 	);
 
 	return (
-		<Stack spacing={ 2 } sx={ { height: '100%' } }>
+		<Stack spacing={ 2 } sx={ { height: '100%', p: 4 } }>
 			<Toolbar
 				variant="dense"
 				sx={ {
