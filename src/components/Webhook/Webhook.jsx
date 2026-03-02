@@ -64,8 +64,8 @@ export default function Webhook( { form, setField } ) {
 					'Optional JSON body template. Use {{placeholders}} for dynamic values.',
 					'rest-api-firewall'
 				) }
-				inputProps={ {
-					sx: { fontFamily: 'monospace', fontSize: '0.85rem' },
+				sx={ {
+					'& .MuiInputBase-root': { fontFamily: 'monospace', fontSize: '0.85rem' },
 				} }
 			/>
 
@@ -83,12 +83,7 @@ export default function Webhook( { form, setField } ) {
 					setField={ setField }
 				/>
 
-				<Divider
-					sx={ { display: { xs: 'block', xl: 'none' } } }
-					orientation="horizontal"
-					variant="middle"
-					flexItem
-				/>
+
 				<Divider
 					sx={ { display: { xs: 'none', xl: 'block' } } }
 					orientation="vertical"
@@ -104,12 +99,7 @@ export default function Webhook( { form, setField } ) {
 					variant="middle"
 					flexItem
 				/>
-				<Divider
-					sx={ { display: { xs: 'none', xl: 'block' } } }
-					orientation="vertical"
-					variant="middle"
-					flexItem
-				/>
+
 
 				<WebhookTest hasSecret={ hasSecret } />
 			</Stack>

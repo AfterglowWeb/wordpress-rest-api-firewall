@@ -2,12 +2,9 @@ import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 
-import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
-import CircularProgress from '@mui/material/CircularProgress';
-import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
@@ -19,7 +16,6 @@ import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Toolbar from '@mui/material/Toolbar';
-import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
 import AddIcon from '@mui/icons-material/Add';
@@ -29,6 +25,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import JsonSchemaBuilder from '../shared/JsonSchemaBuilder';
 import useProActions from '../../hooks/useProActions';
 import formatDate from '../../utils/formatDate';
+import LoadingMessage from '../LoadingMessage';
 
 const CONDITION_OPERATORS = [
 	{ value: 'eq', label: '=' },
@@ -68,9 +65,14 @@ function ConditionRow( { condition, onChange, onRemove } ) {
 					onChange( { ...condition, field: e.target.value } )
 				}
 				placeholder={ __( 'field', 'rest-api-firewall' ) }
-				sx={ { width: 140 } }
-				inputProps={ {
-					style: { fontFamily: 'monospace', fontSize: '0.82rem' },
+				sx={ { 
+					flex: 1, 
+					'.MuiInputBase-input': { 
+						padding: '10.5px 14px!important',
+						minHeight: 'unset!important',
+						fontFamily: 'monospace', 
+						fontSize: '0.82rem' 
+					}
 				} }
 			/>
 			<FormControl size="small" sx={ { width: 110 } }>
@@ -94,7 +96,15 @@ function ConditionRow( { condition, onChange, onRemove } ) {
 					onChange( { ...condition, value: e.target.value } )
 				}
 				placeholder={ __( 'value', 'rest-api-firewall' ) }
-				sx={ { flex: 1 } }
+				sx={ { 
+					flex: 1, 
+					'.MuiInputBase-input': { 
+						padding: '10.5px 14px!important',
+						minHeight: 'unset!important',
+						fontFamily: 'monospace', 
+						fontSize: '0.82rem' 
+					}
+				} }
 			/>
 			<IconButton size="small" color="error" onClick={ onRemove }>
 				<DeleteOutlineIcon fontSize="small" />
@@ -243,18 +253,25 @@ export default function AutomationEditor( { automation, onBack } ) {
 	const [ mailIds, setMailIds ] = useState( automation.mail_ids || [] );
 	const [ active, setActive ] = useState( automation.active !== false );
 
-	const [ events, setEvents ] = useState( [] );
+	const [ eventOptions, setEventOptions ] = useState( [] );
 	const [ webhooks, setWebhooks ] = useState( [] );
 	const [ mails, setMails ] = useState( [] );
 	const [ loaded, setLoaded ] = useState( false );
 
 	useEffect( () => {
 		const fetchAll = async () => {
-			const [ eventsRes, webhooksRes, mailsRes ] = await Promise.all( [
+			const [ eventsRes, registryRes, webhooksRes, mailsRes ] = await Promise.all( [
 				fetch( adminData.ajaxurl, {
 					method: 'POST',
 					body: new URLSearchParams( {
 						action: 'get_automation_events',
+						nonce,
+					} ),
+				} ),
+				fetch( adminData.ajaxurl, {
+					method: 'POST',
+					body: new URLSearchParams( {
+						action: 'get_hook_registry',
 						nonce,
 					} ),
 				} ),
@@ -273,14 +290,34 @@ export default function AutomationEditor( { automation, onBack } ) {
 					} ),
 				} ),
 			] );
-			const [ ej, wj, mj ] = await Promise.all( [
+			const [ ej, rj, wj, mj ] = await Promise.all( [
 				eventsRes.json(),
+				registryRes.json(),
 				webhooksRes.json(),
 				mailsRes.json(),
 			] );
+
+			const options = [];
 			if ( ej.success ) {
-				setEvents( ej.data.events || [] );
+				for ( const ev of ej.data.events || [] ) {
+					options.push( {
+						label: ev.label || ev.key,
+						value: ev.key,
+						group: ev.group || 'wordpress',
+					} );
+				}
 			}
+			if ( rj.success ) {
+				for ( const entry of rj.data.registry || [] ) {
+					options.push( {
+						label: entry.label || entry.hook,
+						value: entry.hook,
+						group: __( 'custom', 'rest-api-firewall' ),
+					} );
+				}
+			}
+			setEventOptions( options );
+
 			if ( wj.success ) {
 				setWebhooks( wj.data.entries || [] );
 			}
@@ -312,15 +349,6 @@ export default function AutomationEditor( { automation, onBack } ) {
 		};
 		fetchAll();
 	}, [ isNew, automation.id, adminData, nonce ] );
-
-	const eventsByGroup = events.reduce( ( acc, ev ) => {
-		const g = ev.group || 'other';
-		if ( ! acc[ g ] ) {
-			acc[ g ] = [];
-		}
-		acc[ g ].push( ev );
-		return acc;
-	}, {} );
 
 	const buildPayload = () => ( {
 		nonce,
@@ -384,32 +412,41 @@ export default function AutomationEditor( { automation, onBack } ) {
 		);
 	}, [ remove, automation.id, onBack, __ ] );
 
-	const handleAddCondition = () => {
+	const handleAddAnd = () => {
 		setConditions( ( prev ) => [
 			...prev,
 			{ field: '', operator: 'eq', value: '' },
 		] );
 	};
 
+	const handleAddOr = () => {
+		setConditions( ( prev ) => [
+			...prev,
+			{ type: 'or' },
+			{ field: '', operator: 'eq', value: '' },
+		] );
+	};
+
+	// Build grouped options for the event Select.
+	const groupedEventOptions = eventOptions.reduce( ( acc, opt ) => {
+		const g = opt.group || 'other';
+		if ( ! acc[ g ] ) {
+			acc[ g ] = [];
+		}
+		acc[ g ].push( opt );
+		return acc;
+	}, {} );
+
 	if ( ! loaded ) {
 		return (
-			<Stack
-				alignItems="center"
-				justifyContent="center"
-				sx={ { height: 200 } }
-			>
-				<CircularProgress size={ 32 } />
-			</Stack>
+			<LoadingMessage />
 		);
 	}
 
 	return (
 		<Stack spacing={ 0 } sx={ { height: '100%' } }>
-			{ /* Toolbar */ }
 			<Toolbar
-				variant="dense"
-				sx={ { gap: 1, px: 0, minHeight: 56, flexWrap: 'wrap' } }
-				disableGutters
+				sx={ { gap: 1, flexWrap: 'wrap', borderBottom: 1, borderColor: 'divider' } }
 			>
 				<IconButton size="small" onClick={ onBack }>
 					<ArrowBackIcon />
@@ -470,8 +507,8 @@ export default function AutomationEditor( { automation, onBack } ) {
 				</Button>
 			</Toolbar>
 
-			<Stack spacing={ 3 } sx={ { overflowY: 'auto', flex: 1, pb: 3 } }>
-				{ /* 1. Trigger event */ }
+			<Stack spacing={ 3 } sx={ { overflowY: 'auto', flex: 1, p: 4 } }>
+				{ /* 1. Trigger Event */ }
 				<Paper variant="outlined" sx={ { p: 2 } }>
 					<Typography
 						variant="caption"
@@ -488,15 +525,43 @@ export default function AutomationEditor( { automation, onBack } ) {
 
 					<FormControl size="small" fullWidth>
 						<InputLabel>
-							{ __( 'Event', 'rest-api-firewall' ) }
+							{ __( 'Trigger Hook', 'rest-api-firewall' ) }
 						</InputLabel>
 						<Select
 							value={ event }
-							label={ __( 'Event', 'rest-api-firewall' ) }
+							label={ __( 'Trigger Hook', 'rest-api-firewall' ) }
 							onChange={ ( e ) => setEvent( e.target.value ) }
+							renderValue={ ( value ) => {
+								const opt = eventOptions.find(
+									( o ) => o.value === value
+								);
+								return (
+									<Stack
+										direction="row"
+										spacing={ 1 }
+										alignItems="center"
+									>
+										{ opt && opt.label !== opt.value && (
+											<Typography variant="body2">
+												{ opt.label }
+											</Typography>
+										) }
+										<Typography
+											variant="body2"
+											sx={ {
+												fontFamily: 'monospace',
+												fontSize: '0.85rem',
+												color: 'text.secondary',
+											} }
+										>
+											{ value }
+										</Typography>
+									</Stack>
+								);
+							} }
 						>
-							{ Object.entries( eventsByGroup ).map(
-								( [ group, evList ] ) => [
+							{ Object.entries( groupedEventOptions ).flatMap(
+								( [ group, opts ] ) => [
 									<MenuItem
 										key={ `__g_${ group }` }
 										disabled
@@ -509,12 +574,28 @@ export default function AutomationEditor( { automation, onBack } ) {
 									>
 										{ group }
 									</MenuItem>,
-									...evList.map( ( ev ) => (
+									...opts.map( ( opt ) => (
 										<MenuItem
-											key={ ev.key }
-											value={ ev.key }
+											key={ opt.value }
+											value={ opt.value }
 										>
-											{ ev.label || ev.key }
+											<Stack>
+												<Typography variant="body2">
+													{ opt.label }
+												</Typography>
+												{ opt.label !== opt.value && (
+													<Typography
+														variant="caption"
+														color="text.secondary"
+														sx={ {
+															fontFamily:
+																'monospace',
+														} }
+													>
+														{ opt.value }
+													</Typography>
+												) }
+											</Stack>
 										</MenuItem>
 									) ),
 								]
@@ -525,57 +606,106 @@ export default function AutomationEditor( { automation, onBack } ) {
 
 				{ /* 2. Conditions */ }
 				<Paper variant="outlined" sx={ { p: 2 } }>
-					<Stack
-						direction="row"
-						alignItems="center"
-						justifyContent="space-between"
-						sx={ { mb: 1.5 } }
+					<Typography
+						variant="caption"
+						sx={ {
+							textTransform: 'uppercase',
+							letterSpacing: 0.5,
+							color: 'text.secondary',
+							display: 'block',
+							mb: 1.5,
+						} }
 					>
-						<Typography
-							variant="caption"
-							sx={ {
-								textTransform: 'uppercase',
-								letterSpacing: 0.5,
-								color: 'text.secondary',
-							} }
-						>
-							{ __( '2 · Conditions', 'rest-api-firewall' ) }
-						</Typography>
-						<Chip
-							label={ __( 'AND logic', 'rest-api-firewall' ) }
-							size="small"
-							variant="outlined"
-							sx={ { height: 20, fontSize: '0.65rem' } }
-						/>
-					</Stack>
+						{ __( '2 · Conditions', 'rest-api-firewall' ) }
+					</Typography>
 
 					<Stack spacing={ 1 }>
-						{ conditions.map( ( cond, i ) => (
-							<ConditionRow
-								key={ i }
-								condition={ cond }
-								onChange={ ( updated ) =>
-									setConditions( ( prev ) =>
-										prev.map( ( c, idx ) =>
-											idx === i ? updated : c
+						{ conditions.map( ( item, i ) =>
+							item.type === 'or' ? (
+								<Stack
+									key={ i }
+									direction="row"
+									alignItems="center"
+									spacing={ 1 }
+								>
+									<Box
+										sx={ {
+											flex: 1,
+											height: '1px',
+											bgcolor: 'divider',
+										} }
+									/>
+									<Chip
+										label={ __( 'OR', 'rest-api-firewall' ) }
+										size="small"
+										variant="outlined"
+										onDelete={ () =>
+											setConditions( ( prev ) =>
+												prev.filter(
+													( _, idx ) => idx !== i
+												)
+											)
+										}
+										sx={ { height: 22, fontSize: '0.7rem' } }
+									/>
+									<Box
+										sx={ {
+											flex: 1,
+											height: '1px',
+											bgcolor: 'divider',
+										} }
+									/>
+								</Stack>
+							) : (
+								<ConditionRow
+									key={ i }
+									condition={ item }
+									onChange={ ( updated ) =>
+										setConditions( ( prev ) =>
+											prev.map( ( c, idx ) =>
+												idx === i ? updated : c
+											)
 										)
-									)
-								}
-								onRemove={ () =>
-									setConditions( ( prev ) =>
-										prev.filter( ( _, idx ) => idx !== i )
-									)
-								}
-							/>
-						) ) }
-						<Button
-							size="small"
-							startIcon={ <AddIcon /> }
-							onClick={ handleAddCondition }
-							sx={ { alignSelf: 'flex-start' } }
-						>
-							{ __( 'Add Condition', 'rest-api-firewall' ) }
-						</Button>
+									}
+									onRemove={ () =>
+										setConditions( ( prev ) =>
+											prev.filter(
+												( _, idx ) => idx !== i
+											)
+										)
+									}
+								/>
+							)
+						) }
+
+						<Stack direction="row" spacing={ 1 } sx={ { mt: 0.5 } }>
+							{ conditions.length === 0 ? (
+								<Button
+									size="small"
+									startIcon={ <AddIcon /> }
+									onClick={ handleAddAnd }
+								>
+									{ __( 'Add condition', 'rest-api-firewall' ) }
+								</Button>
+							) : (
+								<>
+									<Button
+										size="small"
+										startIcon={ <AddIcon /> }
+										onClick={ handleAddAnd }
+									>
+										{ __( 'AND', 'rest-api-firewall' ) }
+									</Button>
+									<Button
+										size="small"
+										startIcon={ <AddIcon /> }
+										onClick={ handleAddOr }
+									>
+										{ __( 'OR', 'rest-api-firewall' ) }
+									</Button>
+								</>
+							) }
+						</Stack>
 					</Stack>
 				</Paper>
 

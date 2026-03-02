@@ -25,6 +25,8 @@ import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
+import WebhookEditorSecretManager from './WebhookEditorSecretManager';
+
 const HTTP_METHODS = [ 'POST', 'PUT', 'PATCH' ];
 
 const WEBHOOK_TYPES = [
@@ -169,6 +171,8 @@ export default function WebhookEditor( { webhook, onBack } ) {
 	const [ type, setType ] = useState( webhook.type || 'general' );
 	const [ dateCreated, setDateCreated ] = useState( '' );
 	const [ dateModified, setDateModified ] = useState( '' );
+	const [ hasSecret, setHasSecret ] = useState( false );
+	const [ pendingSecret, setPendingSecret ] = useState( undefined );
 
 	const loadEntry = useCallback( async () => {
 		setLoading( true );
@@ -198,6 +202,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 				setRetryCount( e.retry_count ?? 0 );
 				setBodyPayload( e.body_payload || '' );
 				setType( e.type || 'general' );
+				setHasSecret( e.has_secret || false );
 				setDateCreated(
 					formatDate(
 						e.date_created,
@@ -244,6 +249,9 @@ export default function WebhookEditor( { webhook, onBack } ) {
 		retry_count: String( parseInt( retryCount, 10 ) || 0 ),
 		body_payload: bodyPayload,
 		type,
+		...( pendingSecret !== undefined
+			? { secret: pendingSecret ?? '' }
+			: {} ),
 	};
 
 	const handleSave = () => {
@@ -277,6 +285,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 						'Webhook settings saved successfully.',
 						'rest-api-firewall'
 					),
+					onSuccess: () => setPendingSecret( undefined ),
 				}
 			);
 		}
@@ -437,13 +446,11 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 			{ loadError && <Alert severity="error">{ loadError }</Alert> }
 
-			{ /* Form */ }
 			<Stack
 				p={ { xs: 2, sm: 4 } }
 				spacing={ 3 }
 				sx={ { maxWidth: 760 } }
 			>
-				{ /* Active toggle for new webhooks */ }
 				{ isNew && (
 					<FormControlLabel
 						control={
@@ -459,7 +466,6 @@ export default function WebhookEditor( { webhook, onBack } ) {
 					/>
 				) }
 
-				{ /* ── Webhook ── */ }
 				<Stack spacing={ 2 }>
 					<SectionHeader
 						title={ __( 'Webhook', 'rest-api-firewall' ) }
@@ -475,7 +481,12 @@ export default function WebhookEditor( { webhook, onBack } ) {
 						value={ title }
 						onChange={ ( e ) => setTitle( e.target.value ) }
 						required
-						sx={ { maxWidth: 340 } }
+						sx={ { 
+							maxWidth: 340,
+							'& .MuiInputLabel-root:not(.Mui-focused)': {
+								transform: 'translate(14px, 16px) scale(1)',
+							}
+						}}
 					/>
 
 					<Stack
@@ -488,7 +499,12 @@ export default function WebhookEditor( { webhook, onBack } ) {
 							value={ endpoint }
 							onChange={ ( e ) => setEndpoint( e.target.value ) }
 							placeholder="https://api.example.com/webhook"
-							sx={ { flex: 1 } }
+							sx={ { 
+								flex: 1,
+								'& .MuiInputLabel-root:not(.Mui-focused)': {
+									transform: 'translate(14px, 16px) scale(1)',
+								}
+							}}
 							helperText={ __(
 								'The URL to send the webhook request to.',
 								'rest-api-firewall'
@@ -534,8 +550,26 @@ export default function WebhookEditor( { webhook, onBack } ) {
 				</Stack>
 
 				<Divider />
+				
+				<Stack spacing={ 2 }>
+					<SectionHeader
+						title={ __(
+							'Authentication',
+							'rest-api-firewall'
+						) }
+						description={ __(
+							'Configure a secret to sign outgoing webhook requests using HMAC-SHA256.',
+							'rest-api-firewall'
+						) }
+					/>
+					<WebhookEditorSecretManager
+						initialHasSecret={ hasSecret }
+						onChange={ setPendingSecret }
+					/>
+				</Stack>
 
-				{ /* ── Headers ── */ }
+				<Divider />
+
 				<Stack spacing={ 2 }>
 					<SectionHeader
 						title={ __( 'Headers', 'rest-api-firewall' ) }
@@ -552,7 +586,6 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 				<Divider />
 
-				{ /* ── Body payload ── */ }
 				<Stack spacing={ 2 }>
 					<SectionHeader
 						title={ __( 'Body Payload', 'rest-api-firewall' ) }
@@ -586,7 +619,6 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 				<Divider />
 
-				{ /* ── Advanced ── */ }
 				<Stack spacing={ 2 }>
 					<SectionHeader
 						title={ __( 'Advanced', 'rest-api-firewall' ) }
@@ -634,6 +666,8 @@ export default function WebhookEditor( { webhook, onBack } ) {
 						/>
 					</Stack>
 				</Stack>
+
+				
 			</Stack>
 		</Stack>
 	);
