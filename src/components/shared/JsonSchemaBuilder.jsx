@@ -4,7 +4,6 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Collapse from '@mui/material/Collapse';
-import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
 import IconButton from '@mui/material/IconButton';
 import InputLabel from '@mui/material/InputLabel';
@@ -410,8 +409,6 @@ export default function JsonSchemaBuilder( {
 				</Typography>
 			</Stack>
 
-			<Divider />
-
 			{ Object.keys( value ).length === 0 && (
 				<Typography
 					variant="body2"
@@ -443,17 +440,14 @@ export default function JsonSchemaBuilder( {
 			) ) }
 
 			{ ! readOnly && (
-				<>
-					<Divider sx={ { my: 0.5 } } />
-					<Button
-						size="small"
-						startIcon={ <AddIcon /> }
-						onClick={ handleAdd }
-						sx={ { alignSelf: 'flex-start' } }
-					>
-						{ __( 'Add Property', 'rest-api-firewall' ) }
-					</Button>
-				</>
+				<Button
+					size="small"
+					startIcon={ <AddIcon /> }
+					onClick={ handleAdd }
+					sx={ { alignSelf: 'flex-start' } }
+				>
+					{ __( 'Add Property', 'rest-api-firewall' ) }
+				</Button>
 			) }
 		</Stack>
 	);
