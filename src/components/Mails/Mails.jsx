@@ -7,6 +7,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Link from '@mui/material/Link';
 import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
@@ -14,9 +15,7 @@ import Switch from '@mui/material/Switch';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 
-import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import MailEditor from './MailEditor';
 import useProActions from '../../hooks/useProActions';
@@ -148,31 +147,85 @@ export default function Mails() {
 	const columns = useMemo(
 		() => [
 			{
+				field: '_actions',
+				headerName: __( 'Delete', 'rest-api-firewall' ),
+				width: 70,
+				sortable: false,
+				renderCell: ( params ) => (
+					<IconButton
+						size="small"
+						color="error"
+						onClick={ () =>
+							handleDeleteOne( params.row.id, params.row.title )
+						}
+					>
+						<DeleteOutlineIcon fontSize="small" />
+					</IconButton>
+				),
+			},
+			{
 				field: 'active',
 				headerName: __( 'Active', 'rest-api-firewall' ),
 				width: 70,
 				sortable: false,
-				renderCell: ( { value } ) => (
-					<Switch size="small" checked={ !! value } disabled />
+				renderCell: ( params ) => (
+					<Switch size="small" checked={ !! params.value } disabled />
 				),
 			},
 			{
 				field: 'title',
-				headerName: __( 'Label', 'rest-api-firewall' ),
+				headerName: __( 'Title', 'rest-api-firewall' ),
 				flex: 1,
 				minWidth: 140,
+				renderCell: ( params ) => (
+					<Link
+					component="button"
+					size="small"
+					onClick={ () => setEditingMail( params.row ) }
+					>
+						{ params.value }
+					</Link>
+				),
 			},
 			{
 				field: 'recipient',
 				headerName: __( 'Recipient', 'rest-api-firewall' ),
 				width: 200,
-				renderCell: ( { value } ) => (
+				renderCell: ( params ) => (
 					<Typography
 						variant="body2"
 						noWrap
 						sx={ { fontFamily: 'monospace', fontSize: '0.8rem' } }
 					>
-						{ value }
+						{ params.value }
+					</Typography>
+				),
+			},
+			{
+				field: 'cc',
+				headerName: __( 'CC', 'rest-api-firewall' ),
+				width: 200,
+				renderCell: ( params ) => (
+					<Typography
+						variant="body2"
+						noWrap
+						sx={ { fontFamily: 'monospace', fontSize: '0.8rem' } }
+					>
+						{ params.value }
+					</Typography>
+				),
+			},
+			{
+				field: 'bcc',
+				headerName: __( 'BCC', 'rest-api-firewall' ),
+				width: 200,
+				renderCell: ( params ) => (
+					<Typography
+						variant="body2"
+						noWrap
+						sx={ { fontFamily: 'monospace', fontSize: '0.8rem' } }
+					>
+						{ params.value }
 					</Typography>
 				),
 			},
@@ -181,9 +234,9 @@ export default function Mails() {
 				headerName: __( 'Subject', 'rest-api-firewall' ),
 				flex: 1,
 				minWidth: 160,
-				renderCell: ( { value } ) => (
+				renderCell: ( params ) => (
 					<Typography variant="body2" noWrap color="text.secondary">
-						{ value }
+						{ params.value }
 					</Typography>
 				),
 			},
@@ -191,37 +244,12 @@ export default function Mails() {
 				field: 'date_created',
 				headerName: __( 'Created', 'rest-api-firewall' ),
 				width: 150,
-				renderCell: ( { value } ) => (
+				renderCell: ( params ) => (
 					<Typography variant="caption" color="text.secondary">
-						{ formatDate( value ) }
+						{ formatDate( params.value ) }
 					</Typography>
 				),
-			},
-			{
-				field: '_actions',
-				headerName: '',
-				width: 90,
-				sortable: false,
-				renderCell: ( { row } ) => (
-					<Stack direction="row" spacing={ 0 }>
-						<IconButton
-							size="small"
-							onClick={ () => setEditingMail( row ) }
-						>
-							<OpenInNewIcon fontSize="small" />
-						</IconButton>
-						<IconButton
-							size="small"
-							color="error"
-							onClick={ () =>
-								handleDeleteOne( row.id, row.title )
-							}
-						>
-							<DeleteOutlineIcon fontSize="small" />
-						</IconButton>
-					</Stack>
-				),
-			},
+			}
 		],
 		[ __, handleDeleteOne ]
 	);
@@ -241,11 +269,16 @@ export default function Mails() {
 	const selectedCount = rowSelectionModel.ids.size;
 
 	return (
-		<Stack spacing={ 0 } sx={ { height: '100%' } }>
+		<Stack spacing={ 0 } flexGrow={ 1 }>
 			<Toolbar
-				variant="dense"
-				sx={ { gap: 1, px: 0, minHeight: 56 } }
 				disableGutters
+				sx={ {
+					gap: 2,
+					justifyContent: 'space-between',
+					alignItems: 'center',
+					flexWrap: 'wrap',
+					py: { xs: 2, sm: 1 },
+				} }
 			>
 				<Typography variant="h6" fontWeight={ 600 }>
 					{ __( 'Mail Templates', 'rest-api-firewall' ) }
@@ -266,7 +299,7 @@ export default function Mails() {
 							size="small"
 							color="error"
 							variant="outlined"
-							startIcon={ <DeleteOutlineIcon /> }
+							disableElevation
 							onClick={ handleDeleteSelected }
 						>
 							{ __( 'Delete selected', 'rest-api-firewall' ) }
@@ -277,7 +310,7 @@ export default function Mails() {
 				<Button
 					size="small"
 					variant="contained"
-					startIcon={ <AddIcon /> }
+					disableElevation
 					onClick={ () =>
 						setEditingMail( {
 							id: null,
@@ -323,6 +356,12 @@ export default function Mails() {
 					disableColumnFilter
 					disableColumnSelector
 					disableDensitySelector
+					sx={ {
+						'& .MuiDataGrid-cell': {
+							display: 'flex',
+							alignItems: 'center',
+						},
+					} }
 				/>
 			</Box>
 		</Stack>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
+import { useApplication } from '../../contexts/ApplicationContext';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -38,6 +39,7 @@ export default function MailEditor( { mail, onBack } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
 	const nonce = proNonce || adminData.nonce;
+	const { selectedApplicationId } = useApplication();
 	const { __ } = wp.i18n || {};
 
 	const { save, remove, saving } = useProActions();
@@ -51,6 +53,11 @@ export default function MailEditor( { mail, onBack } ) {
 	const [ subject, setSubject ] = useState( mail.subject || '' );
 	const [ content, setContent ] = useState( mail.content || '' );
 	const [ active, setActive ] = useState( mail.active !== false );
+	const [ author, setAuthor ] = useState( '' );
+	const [ dateCreated, setDateCreated ] = useState( '' );
+	const [ dateModified, setDateModified ] = useState( '' );
+
+	const [ dirty, setDirty ] = useState( isNew );
 
 	const [ testStatus, setTestStatus ] = useState( '' );
 	const [ testLoading, setTestLoading ] = useState( false );
@@ -82,6 +89,21 @@ export default function MailEditor( { mail, onBack } ) {
 					setSubject( e.subject || '' );
 					setContent( e.content || '' );
 					setActive( e.active !== false );
+					setDateCreated(
+						formatDate(
+							e.date_created,
+							adminData.date_format,
+							adminData.time_format
+						)
+					);
+					setDateModified(
+						formatDate(
+							e.date_modified,
+							adminData.date_format,
+							adminData.time_format
+						)
+					);
+					setAuthor( e.author_name || '' );
 				}
 			} finally {
 				setLoaded( true );
@@ -91,6 +113,7 @@ export default function MailEditor( { mail, onBack } ) {
 
 	const buildPayload = () => ( {
 		nonce,
+		application_id: selectedApplicationId,
 		title,
 		recipient,
 		cc,
@@ -115,7 +138,7 @@ export default function MailEditor( { mail, onBack } ) {
 		} else {
 			save(
 				{ action: 'update_mail_entry', id: mail.id, ...buildPayload() },
-				{}
+				{ onSuccess: () => setDirty( false ) }
 			);
 		}
 	}, [
@@ -194,61 +217,114 @@ export default function MailEditor( { mail, onBack } ) {
 	}
 
 	return (
-		<Stack spacing={ 0 } sx={ { height: '100%' } }>
-			{ /* Toolbar */ }
+		<Stack spacing={ 3 } flexGrow={ 1 }>
 			<Toolbar
-				variant="dense"
-				sx={ { gap: 1, px: 0, minHeight: 56, flexWrap: 'wrap' } }
 				disableGutters
+				sx={ {
+					gap: 2,
+					justifyContent: 'space-between',
+					alignItems: 'center',
+					borderBottom: 1,
+					borderColor: 'divider',
+					flexWrap: 'wrap',
+					py: { xs: 2, sm: 1 },
+				} }
 			>
-				<IconButton size="small" onClick={ onBack }>
-					<ArrowBackIcon />
-				</IconButton>
-
-				<Typography variant="h6" fontWeight={ 600 } sx={ { flex: 1 } }>
-					{ isNew
-						? __( 'New Mail Template', 'rest-api-firewall' )
-						: title ||
-						  __( 'Edit Mail Template', 'rest-api-firewall' ) }
-				</Typography>
-
-				{ ! isNew && (
-					<FormControlLabel
-						control={
-							<Switch
-								size="small"
-								checked={ active }
-								onChange={ ( e ) =>
-									setActive( e.target.checked )
-								}
-							/>
-						}
-						label={
-							<Typography variant="body2">
-								{ __( 'Active', 'rest-api-firewall' ) }
-							</Typography>
-						}
-					/>
-				) }
-
-				{ mail.date_modified && (
-					<Typography variant="caption" color="text.secondary">
-						{ __( 'Modified', 'rest-api-firewall' ) }{ ' ' }
-						{ formatDate( mail.date_modified ) }
-					</Typography>
-				) }
-
-				{ ! isNew && (
-					<Tooltip
-						title={ __(
-							'Send a test email to the recipient',
-							'rest-api-firewall'
+				<Stack direction="row" gap={ 2 }>
+					<Stack alignItems="center" justifyContent="center">
+						<IconButton
+							size="small"
+							onClick={ onBack }
+							aria-label={ __( 'Back', 'rest-api-firewall' ) }
+						>
+							<ArrowBackIcon />
+						</IconButton>
+					</Stack>
+					<Stack
+						spacing={ 0 }
+						direction={ { xs: 'column', sm: 'row' } }
+						alignItems={ { xs: 'flex-start', sm: 'center' } }
+						gap={ { xs: 0, sm: 2 } }
+					>
+						<Typography
+							variant="h6"
+							fontWeight={ 600 }
+							sx={ { flex: 1, minWidth: 0 } }
+							noWrap
+						>
+							{ isNew
+								? __( 'New Mail Template', 'rest-api-firewall' )
+								: title ||
+								  __( 'Edit Mail Template', 'rest-api-firewall' ) }
+						</Typography>
+						{ ! isNew && (
+							<Stack
+								direction={ { xs: 'column', sm: 'row' } }
+								gap={ { xs: 0, xl: 2 } }
+								flexWrap="wrap"
+								alignItems={ { sm: 'center' } }
+							>
+								{ ( author || dateCreated || dateModified ) && (
+									<Stack
+										direction={ { xs: 'column', sm: 'row' } }
+										gap={ { xs: 0, xl: 2 } }
+										flexWrap="wrap"
+									>
+										<FormControlLabel
+											control={
+												<Switch
+													size="small"
+													checked={ active }
+													onChange={ ( e ) => {
+														setActive( e.target.checked );
+														setDirty( true );
+													} }
+												/>
+											}
+											label={ __( 'Active', 'rest-api-firewall' ) }
+										/>
+										<Typography
+											variant="caption"
+											color="text.secondary"
+										>
+											{ author && (
+												<span>
+													{ author }
+													{ dateCreated &&
+														` @ ${ dateCreated }` }
+												</span>
+											) }
+											{ dateModified && (
+												<>
+													<br />
+													<span>
+														{ __(
+															'Mod.',
+															'rest-api-firewall'
+														) }{ ' ' }
+														{ dateModified }
+													</span>
+												</>
+											) }
+										</Typography>
+									</Stack>
+								) }
+							</Stack>
 						) }
+					</Stack>
+				</Stack>
+				<Stack direction="row" gap={ 2 }>
+					<Tooltip
+						title={
+							dirty || isNew
+								? __( 'Save the template first to send a test', 'rest-api-firewall' )
+								: __( 'Send a test email to the recipient', 'rest-api-firewall' )
+						}
 					>
 						<span>
 							<Button
 								size="small"
-								variant="outlined"
+								disableElevation
 								startIcon={
 									testLoading ? (
 										<CircularProgress size={ 14 } />
@@ -257,34 +333,36 @@ export default function MailEditor( { mail, onBack } ) {
 									)
 								}
 								onClick={ handleTest }
-								disabled={ testLoading }
+								disabled={ testLoading || dirty || isNew }
 							>
 								{ __( 'Send Test', 'rest-api-firewall' ) }
 							</Button>
 						</span>
 					</Tooltip>
-				) }
-
-				{ ! isNew && (
-					<IconButton
+					<Button
 						size="small"
-						color="error"
-						onClick={ handleDelete }
+						variant="contained"
+						onClick={ handleSave }
+						disabled={ saving }
+						disableElevation
 					>
-						<DeleteOutlineIcon />
-					</IconButton>
-				) }
-
-				<Button
-					size="small"
-					variant="contained"
-					onClick={ handleSave }
-					disabled={ saving }
-				>
-					{ isNew
-						? __( 'Create', 'rest-api-firewall' )
-						: __( 'Save', 'rest-api-firewall' ) }
-				</Button>
+						{ isNew
+							? __( 'Create', 'rest-api-firewall' )
+							: __( 'Save', 'rest-api-firewall' ) }
+					</Button>
+					{ ! isNew && (
+						<Button
+							size="small"
+							variant="outlined"
+							color="error"
+							onClick={ handleDelete }
+							disableElevation
+							startIcon={ <DeleteOutlineIcon /> }
+						>
+							{ __( 'Delete', 'rest-api-firewall' ) }
+						</Button>
+					) }
+				</Stack>
 			</Toolbar>
 
 			{ testStatus && (
@@ -301,23 +379,25 @@ export default function MailEditor( { mail, onBack } ) {
 				</Alert>
 			) }
 
-			<Stack spacing={ 3 } sx={ { overflowY: 'auto', flex: 1, pb: 3 } }>
-				{ /* Label */ }
+			<Stack spacing={ 3 } sx={ { flex: 1, pb: 3 } }>
 				<TextField
-					label={ __( 'Label', 'rest-api-firewall' ) }
+					label={ __( 'Title', 'rest-api-firewall' ) }
 					value={ title }
-					onChange={ ( e ) => setTitle( e.target.value ) }
+					onChange={ ( e ) => { setTitle( e.target.value ); setDirty( true ); } }
 					size="small"
 					fullWidth
+					required
 					helperText={ __(
 						'Internal name for this mail template',
 						'rest-api-firewall'
 					) }
+					sx={{
+						maxWidth: 370,
+					}}
 				/>
 
 				<Divider />
 
-				{ /* Recipients */ }
 				<Typography
 					variant="caption"
 					sx={ {
@@ -332,36 +412,46 @@ export default function MailEditor( { mail, onBack } ) {
 				<TextField
 					label={ __( 'Recipient', 'rest-api-firewall' ) }
 					value={ recipient }
-					onChange={ ( e ) => setRecipient( e.target.value ) }
+					onChange={ ( e ) => { setRecipient( e.target.value ); setDirty( true ); } }
 					size="small"
 					fullWidth
 					type="email"
 					required
 					placeholder="user@example.com"
+					helperText={ __(
+						'Email addresses separated by commas.',
+						'rest-api-firewall'
+					) }
 				/>
 
-				<Stack direction="row" spacing={ 2 }>
-					<TextField
-						label={ __( 'CC', 'rest-api-firewall' ) }
-						value={ cc }
-						onChange={ ( e ) => setCc( e.target.value ) }
-						size="small"
-						fullWidth
-						placeholder="cc@example.com"
-					/>
-					<TextField
-						label={ __( 'BCC', 'rest-api-firewall' ) }
-						value={ cci }
-						onChange={ ( e ) => setCci( e.target.value ) }
-						size="small"
-						fullWidth
-						placeholder="bcc@example.com"
-					/>
-				</Stack>
+				<TextField
+					label={ __( 'CC', 'rest-api-firewall' ) }
+					value={ cc }
+					onChange={ ( e ) => { setCc( e.target.value ); setDirty( true ); } }
+					size="small"
+					fullWidth
+					placeholder="cc@example.com"
+					helperText={ __(
+					'Email addresses separated by commas.',
+					'rest-api-firewall'
+				) }
+				/>
+
+				<TextField
+					label={ __( 'BCC', 'rest-api-firewall' ) }
+					value={ cci }
+					onChange={ ( e ) => { setCci( e.target.value ); setDirty( true ); } }
+					size="small"
+					fullWidth
+					placeholder="bcc@example.com"
+					helperText={ __(
+					'Email addresses separated by commas.',
+					'rest-api-firewall'
+				) }
+				/>
 
 				<Divider />
 
-				{ /* Message */ }
 				<Typography
 					variant="caption"
 					sx={ {
@@ -376,7 +466,7 @@ export default function MailEditor( { mail, onBack } ) {
 				<TextField
 					label={ __( 'Subject', 'rest-api-firewall' ) }
 					value={ subject }
-					onChange={ ( e ) => setSubject( e.target.value ) }
+					onChange={ ( e ) => { setSubject( e.target.value ); setDirty( true ); } }
 					size="small"
 					fullWidth
 					placeholder={ __(
@@ -388,20 +478,16 @@ export default function MailEditor( { mail, onBack } ) {
 				<TextField
 					label={ __( 'Content (HTML)', 'rest-api-firewall' ) }
 					value={ content }
-					onChange={ ( e ) => setContent( e.target.value ) }
+					onChange={ ( e ) => { setContent( e.target.value ); setDirty( true ); } }
 					size="small"
 					fullWidth
 					multiline
 					rows={ 10 }
-					inputProps={ {
-						style: { fontFamily: 'monospace', fontSize: '0.85rem' },
-					} }
 					placeholder={
 						'<p>Event: {{event.type}}</p>\n<p>IP: {{event.ip}}</p>'
 					}
 				/>
 
-				{ /* Template variables hint */ }
 				<Box>
 					<Typography
 						variant="caption"

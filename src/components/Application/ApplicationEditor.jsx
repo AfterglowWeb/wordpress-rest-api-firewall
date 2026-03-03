@@ -31,7 +31,6 @@ import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import { isValidIpOrCidr } from '../../utils/sanitizeIp';
 import { isValidOrigin } from '../../utils/sanitizeHost';
 import formatDate from '../../utils/formatDate';
-import LinearProgress from '@mui/material/LinearProgress';
 import LoadingMessage from '../LoadingMessage';
 
 function SectionHeader( { title, description } ) {

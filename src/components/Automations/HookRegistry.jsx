@@ -4,6 +4,7 @@ import { useLicense } from '../../contexts/LicenseContext';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
 import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
@@ -11,15 +12,19 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
 import AddIcon from '@mui/icons-material/Add';
-import BookmarksOutlinedIcon from '@mui/icons-material/BookmarksOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SaveIcon from '@mui/icons-material/Save';
 
 const HOOK_RE = /[^a-z0-9_\-\/]/g;
+const ARG_RE  = /[^a-z0-9_]/g;
 
 function sanitizeHook( value ) {
 	return value.toLowerCase().replace( HOOK_RE, '' );
+}
+
+function sanitizeArg( value ) {
+	return value.toLowerCase().replace( ARG_RE, '' );
 }
 
 export default function HookRegistry() {
@@ -33,6 +38,9 @@ export default function HookRegistry() {
 	const [ saving, setSaving ] = useState( false );
 	const [ dirty, setDirty ] = useState( false );
 
+	// Ephemeral drafts for the arg text inputs (keyed by row index).
+	const [ argDrafts, setArgDrafts ] = useState( {} );
+
 	useEffect( () => {
 		if ( ! open ) {
 			return;
@@ -44,32 +52,66 @@ export default function HookRegistry() {
 			.then( ( r ) => r.json() )
 			.then( ( json ) => {
 				if ( json.success ) {
-					setRows( json.data.registry || [] );
+					setRows(
+						( json.data.registry || [] ).map( ( r ) => ( {
+							...r,
+							args: r.args || [],
+						} ) )
+					);
 					setDirty( false );
+					setArgDrafts( {} );
 				}
 			} )
 			.catch( () => {} );
 	}, [ open ] );
 
 	const addRow = () => {
-		setRows( ( prev ) => [ ...prev, { label: '', hook: '' } ] );
+		setRows( ( prev ) => [ ...prev, { label: '', hook: '', args: [] } ] );
 		setDirty( true );
 	};
 
 	const updateRow = ( index, field, value ) => {
 		setRows( ( prev ) =>
-			prev.map( ( r, i ) =>
-				i === index
-					? { ...r, [ field ]: field === 'hook' ? sanitizeHook( value ) : value }
-					: r
-			)
+			prev.map( ( r, i ) => {
+				if ( i !== index ) return r;
+				if ( field === 'hook' ) return { ...r, hook: sanitizeHook( value ) };
+				return { ...r, [ field ]: value };
+			} )
 		);
 		setDirty( true );
 	};
 
 	const removeRow = ( index ) => {
 		setRows( ( prev ) => prev.filter( ( _, i ) => i !== index ) );
+		setArgDrafts( ( prev ) => {
+			const next = {};
+			Object.keys( prev ).forEach( ( k ) => {
+				const ki = parseInt( k, 10 );
+				if ( ki < index ) next[ ki ] = prev[ k ];
+				else if ( ki > index ) next[ ki - 1 ] = prev[ k ];
+			} );
+			return next;
+		} );
 		setDirty( true );
+	};
+
+	const setArgDraft = ( rowIdx, val ) =>
+		setArgDrafts( ( prev ) => ( { ...prev, [ rowIdx ]: val } ) );
+
+	const commitArg = ( rowIdx ) => {
+		const clean = sanitizeArg( argDrafts[ rowIdx ] || '' );
+		if ( clean ) {
+			updateRow( rowIdx, 'args', [ ...( rows[ rowIdx ]?.args || [] ), clean ] );
+			setArgDraft( rowIdx, '' );
+		}
+	};
+
+	const removeArg = ( rowIdx, argIdx ) => {
+		updateRow(
+			rowIdx,
+			'args',
+			( rows[ rowIdx ]?.args || [] ).filter( ( _, i ) => i !== argIdx )
+		);
 	};
 
 	const handleSave = async () => {
@@ -93,6 +135,14 @@ export default function HookRegistry() {
 		}
 	};
 
+	const inputSx = {
+		'.MuiInputBase-input': {
+			padding: '10.5px 14px!important',
+			minHeight: 'unset!important',
+			height: '25px!important',
+		},
+	};
+
 	return (
 		<Box
 			sx={ {
@@ -114,11 +164,10 @@ export default function HookRegistry() {
 				} }
 				onClick={ () => setOpen( ( v ) => ! v ) }
 			>
-
 				<Typography variant="subtitle2" fontWeight={ 600 } sx={ { flex: 1 } }>
 					{ __( 'Custom Hooks', 'rest-api-firewall' ) }
 				</Typography>
-			
+
 				<ExpandMoreIcon
 					fontSize="small"
 					sx={ {
@@ -133,7 +182,7 @@ export default function HookRegistry() {
 				<Stack spacing={ 1.5 } sx={ { p: 2 } }>
 					<Typography variant="body2" color="text.secondary">
 						{ __(
-							'Add additionnal hooks as automation triggers. WordPress core hooks are already registered.',
+							'Register custom hooks as automation triggers. Declare each argument the hook passes so it becomes available in conditions and payload mapping.',
 							'rest-api-firewall'
 						) }
 					</Typography>
@@ -141,54 +190,113 @@ export default function HookRegistry() {
 					{ rows.length > 0 && (
 						<Stack spacing={ 1 }>
 							{ rows.map( ( row, i ) => (
-								<Stack
+								<Box
 									key={ i }
-									direction="row"
-									spacing={ 1 }
-									alignItems="center"
+									sx={ {
+										border: '1px solid',
+										borderColor: 'divider',
+										borderRadius: 1,
+										p: 1,
+									} }
 								>
-									<TextField
-										size="small"
-										placeholder={ __( 'Label', 'rest-api-firewall' ) }
-										value={ row.label }
-										onChange={ ( e ) =>
-											updateRow( i, 'label', e.target.value )
-										}
-										sx={ { 
-											flex: 1, 
-											'.MuiInputBase-input': { 
-												padding: '10.5px 14px!important',
-												minHeight: 'unset!important',
-												height: '25px!important'
-											}
-										} }
-									/>
-									<TextField
-										size="small"
-										placeholder="hook_name"
-										value={ row.hook }
-										onChange={ ( e ) =>
-											updateRow( i, 'hook', e.target.value )
-										}
-										sx={ { 
-											flex: 1, 
-											'.MuiInputBase-input': { 
-												padding: '10.5px 14px!important',
-												minHeight: 'unset!important',
-												height: '25px!important',
-												fontFamily: 'monospace', 
-												fontSize: '0.82rem' 
-											}
-										} }
-									/>
-									<IconButton
-										size="small"
-										color="error"
-										onClick={ () => removeRow( i ) }
+									{ /* Label + Hook + Delete */ }
+									<Stack
+										direction="row"
+										spacing={ 1 }
+										alignItems="center"
+										sx={ { mb: 0.75 } }
 									>
-										<DeleteOutlineIcon fontSize="small" />
-									</IconButton>
-								</Stack>
+										<TextField
+											size="small"
+											placeholder={ __( 'Label', 'rest-api-firewall' ) }
+											value={ row.label }
+											onChange={ ( e ) =>
+												updateRow( i, 'label', e.target.value )
+											}
+											sx={ { flex: 1, ...inputSx } }
+										/>
+										<TextField
+											size="small"
+											placeholder="hook_name"
+											value={ row.hook }
+											onChange={ ( e ) =>
+												updateRow( i, 'hook', e.target.value )
+											}
+											sx={ {
+												flex: 1,
+												'.MuiInputBase-input': {
+													...inputSx[ '.MuiInputBase-input' ],
+													fontFamily: 'monospace',
+													fontSize: '0.82rem',
+												},
+											} }
+										/>
+										<IconButton
+											size="small"
+											color="error"
+											onClick={ () => removeRow( i ) }
+										>
+											<DeleteOutlineIcon fontSize="small" />
+										</IconButton>
+									</Stack>
+
+									{ /* Args row */ }
+									<Stack
+										direction="row"
+										spacing={ 0.5 }
+										alignItems="center"
+										flexWrap="wrap"
+										useFlexGap
+									>
+										<Typography
+											variant="caption"
+											color="text.secondary"
+											sx={ { fontFamily: 'monospace', mr: 0.5 } }
+										>
+											args:
+										</Typography>
+
+										{ ( row.args || [] ).map( ( arg, ai ) => (
+											<Chip
+												key={ ai }
+												label={ arg }
+												size="small"
+												onDelete={ () => removeArg( i, ai ) }
+												sx={ {
+													height: 20,
+													fontSize: '0.72rem',
+													fontFamily: 'monospace',
+												} }
+											/>
+										) ) }
+
+										<TextField
+											size="small"
+											placeholder="arg_name"
+											value={ argDrafts[ i ] || '' }
+											onChange={ ( e ) =>
+												setArgDraft( i, sanitizeArg( e.target.value ) )
+											}
+											onKeyDown={ ( e ) => {
+												if ( e.key === 'Enter' ) {
+													e.preventDefault();
+													commitArg( i );
+												}
+											} }
+											onBlur={ () => commitArg( i ) }
+											sx={ {
+												width: 110,
+												'.MuiInputBase-input': {
+													padding: '2px 8px!important',
+													minHeight: 'unset!important',
+													height: '18px!important',
+													fontFamily: 'monospace',
+													fontSize: '0.72rem',
+												},
+											} }
+										/>
+									</Stack>
+								</Box>
 							) ) }
 						</Stack>
 					) }
@@ -207,6 +315,7 @@ export default function HookRegistry() {
 								size="small"
 								variant="contained"
 								disableElevation
+								startIcon={ <SaveIcon /> }
 								onClick={ handleSave }
 								disabled={ saving }
 							>
