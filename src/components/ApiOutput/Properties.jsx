@@ -47,7 +47,7 @@ export default function Properties( { setField, postTypes, form } ) {
 		) ?? null;
 
 	return (
-		<Stack spacing={ 3 }>
+		<Stack spacing={ 3 } p={4} flexGrow={ 1 }>
 			<GlobalProperties form={ form } setField={ setField } />
 
 			<Divider />

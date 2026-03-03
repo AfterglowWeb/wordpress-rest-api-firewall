@@ -452,68 +452,106 @@ export default function AutomationEditor( { automation, onBack } ) {
 	return (
 		<Stack spacing={ 0 } sx={ { height: '100%' } }>
 			<Toolbar
-				sx={ { gap: 1, flexWrap: 'wrap', borderBottom: 1, borderColor: 'divider' } }
+				sx={ {
+					gap: 2,
+					justifyContent: 'space-between',
+					alignItems: 'center',
+					borderBottom: 1,
+					borderColor: 'divider',
+					flexWrap: 'wrap',
+					py: { xs: 2, sm: 1 },
+				} }
 			>
-				<IconButton size="small" onClick={ onBack }>
-					<ArrowBackIcon />
-				</IconButton>
-
-				<TextField
-					size="small"
-					placeholder={ __( 'Automation title', 'rest-api-firewall' ) }
-					value={ title }
-					onChange={ ( e ) => setTitle( e.target.value ) }
-					sx={ { flex: 1 } }
-				/>
-
-				{ ! isNew && (
-					<FormControlLabel
-						control={
-							<Switch
-								size="small"
-								checked={ active }
-								onChange={ ( e ) =>
-									setActive( e.target.checked )
-								}
-							/>
-						}
-						label={
-							<Typography variant="body2">
-								{ __( 'Active', 'rest-api-firewall' ) }
-							</Typography>
-						}
-					/>
-				) }
-
-				{ automation.date_modified && (
-					<Typography variant="caption" color="text.secondary">
-						{ __( 'Modified', 'rest-api-firewall' ) }{ ' ' }
-						{ formatDate( automation.date_modified ) }
-					</Typography>
-				) }
-
-				{ ! isNew && (
-					<IconButton
-						size="small"
-						color="error"
-						onClick={ handleDelete }
+				<Stack direction="row" gap={ 2 }>
+					<Stack alignItems="center" justifyContent="center">
+						<IconButton
+							size="small"
+							onClick={ onBack }
+							aria-label={ __( 'Back', 'rest-api-firewall' ) }
+						>
+							<ArrowBackIcon />
+						</IconButton>
+					</Stack>
+					<Stack
+						spacing={ 0 }
+						direction={ { xs: 'column', sm: 'row' } }
+						alignItems={ { xs: 'flex-start', sm: 'center' } }
+						gap={ { xs: 0, sm: 2 } }
 					>
-						<DeleteOutlineIcon />
-					</IconButton>
-				) }
-
-				<Button
-					size="small"
-					variant="contained"
-					disableElevation
-					onClick={ handleSave }
-					disabled={ saving }
-				>
-					{ __( 'Save', 'rest-api-firewall' ) }
-				</Button>
+						<Typography
+							variant="h6"
+							fontWeight={ 600 }
+							sx={ { flex: 1, minWidth: 0 } }
+							noWrap
+						>
+							{ isNew
+								? __( 'New Automation', 'rest-api-firewall' )
+								: title || __( 'Edit Automation', 'rest-api-firewall' ) }
+						</Typography>
+						{ ! isNew && (
+							<Stack
+								direction={ { xs: 'column', sm: 'row' } }
+								gap={ { xs: 0, xl: 2 } }
+								flexWrap="wrap"
+								alignItems={ { sm: 'center' } }
+							>
+								<FormControlLabel
+									control={
+										<Switch
+											size="small"
+											checked={ active }
+											onChange={ ( e ) =>
+												setActive( e.target.checked )
+											}
+										/>
+									}
+									label={ __( 'Active', 'rest-api-firewall' ) }
+								/>
+								{ automation.date_modified && (
+									<Typography variant="caption" color="text.secondary">
+										{ __( 'Mod.', 'rest-api-firewall' ) }{ ' ' }
+										{ formatDate( automation.date_modified ) }
+									</Typography>
+								) }
+							</Stack>
+						) }
+					</Stack>
+				</Stack>
+				<Stack direction="row" gap={ 2 }>
+					<Button
+						size="small"
+						variant="contained"
+						disableElevation
+						onClick={ handleSave }
+						disabled={ saving }
+					>
+						{ isNew
+							? __( 'Create', 'rest-api-firewall' )
+							: __( 'Save', 'rest-api-firewall' ) }
+					</Button>
+					{ ! isNew && (
+						<Button
+							variant="outlined"
+							color="error"
+							size="small"
+							startIcon={ <DeleteOutlineIcon /> }
+							onClick={ handleDelete }
+						>
+							{ __( 'Delete', 'rest-api-firewall' ) }
+						</Button>
+					) }
+				</Stack>
 			</Toolbar>
 
 			<Stack spacing={ 3 } sx={ { overflowY: 'auto', flex: 1, p: 4 } }>
+				<TextField
+					size="small"
+					label={ __( 'Title', 'rest-api-firewall' ) }
+					value={ title }
+					onChange={ ( e ) => setTitle( e.target.value ) }
+					sx={ { maxWidth: 400 } }
+					required
+				/>
 				{ /* 1. Trigger Event */ }
 				<Paper variant="outlined" sx={ { p: 2 } }>
 					<Typography

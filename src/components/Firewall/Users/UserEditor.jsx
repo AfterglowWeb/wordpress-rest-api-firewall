@@ -8,7 +8,6 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
-import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
@@ -77,6 +76,10 @@ export default function UserEditor( { user, onBack } ) {
 		user.rate_limit_window_seconds ?? 60
 	);
 
+	const [ rateLimitRelease, setRateLimitRelease] = useState(
+		user.rate_limit_release_seconds ?? 300
+	);
+
 	const loadEntry = useCallback( async () => {
 		setLoading( true );
 		try {
@@ -104,6 +107,7 @@ export default function UserEditor( { user, onBack } ) {
 				setAllowedMethods( e.allowed_methods || [ 'get' ] );
 				setRateLimitRequests( e.rate_limit_max_requests ?? 100 );
 				setRateLimitWindow( e.rate_limit_window_seconds ?? 60 );
+				setRateLimitRelease( e.rate_limit_release_seconds ?? 300 );
 				setDateCreated(
 					formatDate(
 						e.date_created,
@@ -156,6 +160,9 @@ export default function UserEditor( { user, onBack } ) {
 		),
 		rate_limit_window_seconds: String(
 			parseInt( rateLimitWindow, 10 ) || 60
+		),
+		rate_limit_release: String(
+			parseInt( rateLimitRelease, 10 ) || 300
 		),
 	};
 
@@ -434,7 +441,6 @@ export default function UserEditor( { user, onBack } ) {
 
 				<Divider />
 
-				{ /* Allowed HTTP methods */ }
 				<Stack spacing={ 2 }>
 					<SectionHeader
 						title={ __(
@@ -492,7 +498,6 @@ export default function UserEditor( { user, onBack } ) {
 
 				<Divider />
 
-				{ /* Rate limit */ }
 				<Stack spacing={ 2 }>
 					<SectionHeader
 						title={ __( 'Rate Limiting', 'rest-api-firewall' ) }
@@ -517,7 +522,6 @@ export default function UserEditor( { user, onBack } ) {
 								'Requests allowed per window',
 								'rest-api-firewall'
 							) }
-							inputProps={ { min: 1 } }
 							sx={ { maxWidth: 200 } }
 						/>
 						<TextField
@@ -535,8 +539,23 @@ export default function UserEditor( { user, onBack } ) {
 								'Rolling time window',
 								'rest-api-firewall'
 							) }
-							inputProps={ { min: 1 } }
 							sx={ { maxWidth: 200 } }
+						/>
+						<TextField
+							label={ __(
+								'Release (seconds)',
+								'rest-api-firewall'
+							) }
+							type="number"
+							size="small"
+							helperText={ __(
+								'Wait time before limitation resets',
+								'rest-api-firewall'
+							) }
+							value={ rateLimitRelease }
+							onChange={ ( e ) =>
+								setRateLimitRelease( e.target.value ) }
+							sx={ {  maxWidth: 200 } }
 						/>
 					</Stack>
 				</Stack>

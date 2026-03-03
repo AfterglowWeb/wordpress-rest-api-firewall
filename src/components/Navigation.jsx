@@ -155,6 +155,7 @@ export default function Navigation( {
 			breadcrumbPrefix: 'Integrations',
 			panelGroup: 8,
 			icon: EmailOutlined,
+			disabled: ! hasValidLicense,
 		},
 
 		{ type: 'section', label: __( '', 'rest-api-firewall' ) },
