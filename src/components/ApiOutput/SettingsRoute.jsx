@@ -17,7 +17,7 @@ export default function SettingsRoute( { form, setField } ) {
 	const { hasValidLicense } = useLicense();
 
 	return (
-		<Stack spacing={ 3 }>
+		<Stack spacing={ 3 } p={4} flexGrow={ 1 }>
 			<FormControl>
 				<FormControlLabel
 					control={

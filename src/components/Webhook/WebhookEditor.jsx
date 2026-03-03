@@ -354,8 +354,13 @@ export default function WebhookEditor( { webhook, onBack } ) {
 						</IconButton>
 					</Stack>
 
-					<Stack spacing={ 0 }>
-						<Typography variant="h6" fontWeight={ 600 } noWrap>
+					<Stack
+						spacing={ 0 }
+						direction={ { xs: 'column', sm: 'row' } }
+						alignItems={ { xs: 'flex-start', sm: 'center' } }
+						gap={ { xs: 0, sm: 2 } }
+					>
+						<Typography variant="h6" fontWeight={ 600 } sx={ { flex: 1, minWidth: 0 } } noWrap>
 							{ isNew
 								? __( 'New Webhook', 'rest-api-firewall' )
 								: title }
@@ -364,8 +369,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 						{ ! isNew && (
 							<Stack
 								direction={ { xs: 'column', sm: 'row' } }
-								gap={ { xs: 0, sm: 2 } }
-								alignItems={ { sm: 'center' } }
+								gap={ { xs: 0, xl: 2 } }
 								flexWrap="wrap"
 							>
 								<FormControlLabel

@@ -25,7 +25,7 @@ export default function Webhook( { form, setField } ) {
 	const [ hasSecret, setHasSecret ] = useState( null );
 
 	return (
-		<Stack maxWidth="xl" spacing={ 3 }>
+		<Stack maxWidth="xl" p={4} flexGrow={ 1 } spacing={ 3 }>
 			<Stack
 				direction={ { xs: 'column', sm: 'row' } }
 				spacing={ 2 }

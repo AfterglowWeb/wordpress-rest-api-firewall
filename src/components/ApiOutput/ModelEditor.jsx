@@ -258,66 +258,95 @@ export default function ModelEditor( { model, onBack } ) {
 	return (
 		<Stack spacing={ 0 } sx={ { height: '100%' } }>
 			<Toolbar
-				variant="dense"
-				sx={ { gap: 1, px: 2, minHeight: 56, flexWrap: 'wrap' } }
-				disableGutters
+				sx={ {
+					gap: 2,
+					justifyContent: 'space-between',
+					alignItems: 'center',
+					borderBottom: 1,
+					borderColor: 'divider',
+					flexWrap: 'wrap',
+					py: { xs: 2, sm: 1 },
+				} }
 			>
-				<IconButton size="small" onClick={ handleBack }>
-					<ArrowBackIcon />
-				</IconButton>
-
-				<Typography variant="h6" fontWeight={ 600 } sx={ { flex: 1 } }>
-					{ isNew
-						? __( 'New Model', 'rest-api-firewall' )
-						: label || __( 'Edit Model', 'rest-api-firewall' ) }
-				</Typography>
-
-				{ ! isNew && (
-					<FormControlLabel
-						control={
-							<Switch
-								size="small"
-								checked={ enabled }
-								onChange={ ( e ) =>
-									setEnabled( e.target.checked )
-								}
-							/>
-						}
-						label={
-							<Typography variant="body2">
-								{ __( 'Active', 'rest-api-firewall' ) }
-							</Typography>
-						}
-					/>
-				) }
-
-				{ model.date_modified && (
-					<Typography variant="caption" color="text.secondary">
-						{ __( 'Modified', 'rest-api-firewall' ) }{ ' ' }
-						{ formatDate( model.date_modified ) }
-					</Typography>
-				) }
-
-				{ ! isNew && (
-					<IconButton
-						size="small"
-						color="error"
-						onClick={ handleDelete }
+				<Stack direction="row" gap={ 2 }>
+					<Stack alignItems="center" justifyContent="center">
+						<IconButton
+							size="small"
+							onClick={ handleBack }
+							aria-label={ __( 'Back', 'rest-api-firewall' ) }
+						>
+							<ArrowBackIcon />
+						</IconButton>
+					</Stack>
+					<Stack
+						spacing={ 0 }
+						direction={ { xs: 'column', sm: 'row' } }
+						alignItems={ { xs: 'flex-start', sm: 'center' } }
+						gap={ { xs: 0, sm: 2 } }
 					>
-						<DeleteOutlineIcon />
-					</IconButton>
-				) }
-
-				<Button
-					size="small"
-					variant="contained"
-					onClick={ handleSave }
-					disabled={ saving || ! label || ! objectType }
-				>
-					{ isNew
-						? __( 'Create', 'rest-api-firewall' )
-						: __( 'Save', 'rest-api-firewall' ) }
-				</Button>
+						<Typography
+							variant="h6"
+							fontWeight={ 600 }
+							sx={ { flex: 1, minWidth: 0 } }
+							noWrap
+						>
+							{ isNew
+								? __( 'New Model', 'rest-api-firewall' )
+								: label || __( 'Edit Model', 'rest-api-firewall' ) }
+						</Typography>
+						{ ! isNew && (
+							<Stack
+								direction={ { xs: 'column', sm: 'row' } }
+								gap={ { xs: 0, xl: 2 } }
+								flexWrap="wrap"
+								alignItems={ { sm: 'center' } }
+							>
+								<FormControlLabel
+									control={
+										<Switch
+											size="small"
+											checked={ enabled }
+											onChange={ ( e ) =>
+												setEnabled( e.target.checked )
+											}
+										/>
+									}
+									label={ __( 'Active', 'rest-api-firewall' ) }
+								/>
+								{ model.date_modified && (
+									<Typography variant="caption" color="text.secondary">
+										{ __( 'Mod.', 'rest-api-firewall' ) }{ ' ' }
+										{ formatDate( model.date_modified ) }
+									</Typography>
+								) }
+							</Stack>
+						) }
+					</Stack>
+				</Stack>
+				<Stack direction="row" gap={ 2 }>
+					<Button
+						size="small"
+						variant="contained"
+						disableElevation
+						onClick={ handleSave }
+						disabled={ saving || ! label || ! objectType }
+					>
+						{ isNew
+							? __( 'Create', 'rest-api-firewall' )
+							: __( 'Save', 'rest-api-firewall' ) }
+					</Button>
+					{ ! isNew && (
+						<Button
+							variant="outlined"
+							color="error"
+							size="small"
+							startIcon={ <DeleteOutlineIcon /> }
+							onClick={ handleDelete }
+						>
+							{ __( 'Delete', 'rest-api-firewall' ) }
+						</Button>
+					) }
+				</Stack>
 			</Toolbar>
 
 			<Stack p={ 4 } spacing={ 3 } sx={ { overflowY: 'auto', flex: 1} }>

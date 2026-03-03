@@ -32,8 +32,8 @@ import SettingsRoute from './components/ApiOutput/SettingsRoute';
 import Collections from './components/ApiOutput/Collections';
 import Webhook from './components/Webhook/Webhook';
 import Webhooks from './components/Webhook/Webhooks';
-import Smtp from './components/Emails/Smtp';
-import Emails from './components/Emails/Emails';
+import Smtp from './components/Mails/Smtp';
+import MailsPanel from './components/Mails/MailsPanel';
 import Logs from './components/Logs/Logs';
 import Automations from './components/Automations/Automations';
 import Models from './components/ApiOutput/Models';
@@ -172,14 +172,6 @@ function AppContent() {
 			),
 			confirmMessage: __( 'Save webhook settings?', 'rest-api-firewall' ),
 		},
-		email: {
-			successTitle: __( 'Emails Saved', 'rest-api-firewall' ),
-			successMessage: __(
-				'Email settings saved successfully.',
-				'rest-api-firewall'
-			),
-			confirmMessage: __( 'Save email settings?', 'rest-api-firewall' ),
-		},
 		theme: {
 			successTitle: __( 'Theme Saved', 'rest-api-firewall' ),
 			successMessage: __(
@@ -197,13 +189,11 @@ function AppContent() {
 		5: 'models_properties',
 		6: 'settings_route',
 		7: 'webhook',
-		8: 'email',
 	};
 	if ( hasValidLicense ) {
 		delete PANEL_SAVE_GROUP[ 1 ];
-		delete PANEL_SAVE_GROUP[ 5 ]; // Models has per-model save; no global save needed.
+		delete PANEL_SAVE_GROUP[ 5 ];
 		delete PANEL_SAVE_GROUP[ 7 ];
-		delete PANEL_SAVE_GROUP[ 8 ]; // Emails.jsx owns its own SMTP save.
 	}
 
 	const activeSaveGroup = PANEL_SAVE_GROUP[ panelGroup ] ?? null;
@@ -281,103 +271,88 @@ function AppContent() {
 						</>
 					) }
 
-						{ panelGroup === 2 && (
-							<Stack 
-								spacing={ 3 } 
-								sx={ { p: 4, flexGrow: 1 } }
-							>
-								<GlobalRoutesPolicy
-									form={ form }
-									setField={ setField }
-								/>
-								<Divider />
-								<RoutesPolicyTree
-									form={ form }
-									setField={ setField }
-								/>
-							</Stack>
-						) }
+					{ panelGroup === 2 && (
+						<Stack 
+							spacing={ 3 } 
+							sx={ { p: 4, flexGrow: 1 } }
+						>
+							<GlobalRoutesPolicy
+								form={ form }
+								setField={ setField }
+							/>
+							<Divider />
+							<RoutesPolicyTree
+								form={ form }
+								setField={ setField }
+							/>
+						</Stack>
+					) }
 
-						{ panelGroup === 3 && <IpFilter /> }
+					{ panelGroup === 3 && <IpFilter /> }
 
-						{ panelGroup === 4 && (
-							<Collections
+					{ panelGroup === 4 && (
+						<Collections
+							form={ form }
+							setField={ setField }
+							postTypes={ postTypes }
+						/>
+					) }
+
+					{ panelGroup === 5 &&
+						( hasValidLicense ? (
+							<Models />
+						) : (
+							<Properties
 								form={ form }
 								setField={ setField }
 								postTypes={ postTypes }
 							/>
-						) }
+						) ) }
 
-						{ panelGroup === 5 &&
-							( hasValidLicense ? (
-								<Models />
-							) : (
-								<Stack sx={ { p: 4, flexGrow: 1 } }>
-								<Properties
-									form={ form }
-									setField={ setField }
-									postTypes={ postTypes }
-								/>
-								</Stack>
-							) ) }
+					{ panelGroup === 6 && (
+						<SettingsRoute
+							form={ form }
+							setField={ setField }
+						/>
+					) }
 
-						{ panelGroup === 6 && (
-							<Stack sx={ { p: 4, flexGrow: 1 } }>
-							<SettingsRoute
-								form={ form }
-								setField={ setField }
-							/>
-							</Stack>
-						) }
+					{ panelGroup === 7 &&
+						( hasValidLicense ? (
+							<Webhooks />
+						) : (
+							<Webhook form={ form } setField={ setField } />
+						) ) }
 
-						{ panelGroup === 7 &&
-							( hasValidLicense ? (
-								<Webhooks />
-							) : (
-								<Stack sx={ { p: 4, flexGrow: 1 } }>
-								<Webhook form={ form } setField={ setField } />
-								</Stack>
-							) ) }
+					{ panelGroup === 8 && hasValidLicense && <MailsPanel /> }
 
-						{ panelGroup === 8 &&
-							( hasValidLicense ? (
-								<Emails />
-							) : (
-								<Stack sx={ { p: 4, flexGrow: 1 } }>
-								<Smtp form={ form } setField={ setField } />
-								</Stack>
-							) ) }
+					{ panelGroup === 12 && hasValidLicense && <Logs /> }
 
-						{ panelGroup === 12 && hasValidLicense && <Logs /> }
+					{ panelGroup === 13 && hasValidLicense && <Automations /> }
 
-						{ panelGroup === 13 && hasValidLicense && (
-							<Automations />
-						) }
+					{ panelGroup === 9 && (
+						<ThemeSettings
+							form={ form }
+							setField={ setField }
+							setSlider={ setSlider }
+							themeStatus={ themeStatus }
+							setThemeStatus={ setThemeStatus }
+						/>
+					) }
 
-						{ panelGroup === 9 && (
-							<ThemeSettings
-								form={ form }
-								setField={ setField }
-								setSlider={ setSlider }
-								themeStatus={ themeStatus }
-								setThemeStatus={ setThemeStatus }
-							/>
-						) }
+					{ panelGroup === 10 && <License /> }
 
-						{ panelGroup === 10 && <License /> }
-
-						{ panelGroup === 11 && (
-							<ConfigurationPanel
-								form={ form }
-								setField={ setField }
-								schemaUpdateNeeded={
-									schemaUpdateNeeded && ! migrationDone
-								}
-								onSchemaUpdated={ () =>
-									window.location.reload()
-								}
-							/>
-						) }
+					{ panelGroup === 11 && (
+						<ConfigurationPanel
+							form={ form }
+							setField={ setField }
+							schemaUpdateNeeded={
+								schemaUpdateNeeded && ! migrationDone
+							}
+							onSchemaUpdated={ () =>
+								window.location.reload()
+							}
+						/>
+					) }
 					
 				</Stack>
 			</Box>
