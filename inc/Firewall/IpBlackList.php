@@ -233,9 +233,10 @@ class IpBlackList {
 
 		wp_send_json_success(
 			array(
-				'enabled'   => $options['enabled'],
-				'mode'      => $options['mode'],
-				'client_ip' => self::get_client_ip(),
+				'enabled'        => $options['enabled'],
+				'mode'           => $options['mode'],
+				'expiry_seconds' => $options['expiry_seconds'],
+				'client_ip'      => self::get_client_ip(),
 			),
 			200
 		);
