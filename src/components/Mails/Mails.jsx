@@ -11,11 +11,11 @@ import Link from '@mui/material/Link';
 import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import MailEditor from './MailEditor';
 import useProActions from '../../hooks/useProActions';
@@ -43,7 +43,7 @@ export default function Mails() {
 		type: 'include',
 		ids: new Set( [] ),
 	} );
-	const [ editingMail, setEditingMail ] = useState( null );
+	const [ editing, setEditing ] = useState( null );
 
 	const fetchEntries = useCallback( async () => {
 		setLoading( true );
@@ -148,13 +148,14 @@ export default function Mails() {
 		() => [
 			{
 				field: '_actions',
-				headerName: __( 'Delete', 'rest-api-firewall' ),
-				width: 70,
+				headerName: __( 'Actions', 'rest-api-firewall' ),
+				width: 80,
 				sortable: false,
+				filterable: false,
 				renderCell: ( params ) => (
 					<IconButton
 						size="small"
-						color="error"
+						color="default"
 						onClick={ () =>
 							handleDeleteOne( params.row.id, params.row.title )
 						}
@@ -164,13 +165,24 @@ export default function Mails() {
 				),
 			},
 			{
-				field: 'active',
+				field: 'enabled',
 				headerName: __( 'Active', 'rest-api-firewall' ),
-				width: 70,
-				sortable: false,
-				renderCell: ( params ) => (
-					<Switch size="small" checked={ !! params.value } disabled />
-				),
+				width: 100,
+				renderCell: ( params ) =>
+					params.value ? (
+						<Chip
+							label={ __( 'Active', 'rest-api-firewall' ) }
+							size="small"
+							color="success"
+							variant="outlined"
+						/>
+					) : (
+						<Chip
+							label={ __( 'Inactive', 'rest-api-firewall' ) }
+							size="small"
+							variant="outlined"
+						/>
+					),
 			},
 			{
 				field: 'title',
@@ -178,18 +190,27 @@ export default function Mails() {
 				flex: 1,
 				minWidth: 140,
 				renderCell: ( params ) => (
-					<Link
-					component="button"
-					size="small"
-					onClick={ () => setEditingMail( params.row ) }
+					<a
+					href="#"
+					style={ {
+						display: 'flex',
+						alignItems: 'center',
+						gap: '4px',
+						fontFamily: 'monospace',
+						color: 'primary.main',
+					} }
+					onClick={ () => setEditing( params.row ) }
 					>
-						{ params.value }
-					</Link>
+					{ params.value }
+						<OpenInNewIcon
+							sx={ { fontSize: 13, color: 'primary.main' } }
+						/>
+					</a>
 				),
 			},
 			{
 				field: 'recipient',
-				headerName: __( 'Recipient', 'rest-api-firewall' ),
+				headerName: __( 'TO', 'rest-api-firewall' ),
 				width: 200,
 				renderCell: ( params ) => (
 					<Typography
@@ -216,8 +237,8 @@ export default function Mails() {
 				),
 			},
 			{
-				field: 'bcc',
-				headerName: __( 'BCC', 'rest-api-firewall' ),
+				field: 'cci',
+				headerName: __( 'CCI', 'rest-api-firewall' ),
 				width: 200,
 				renderCell: ( params ) => (
 					<Typography
@@ -234,32 +255,30 @@ export default function Mails() {
 				headerName: __( 'Subject', 'rest-api-firewall' ),
 				flex: 1,
 				minWidth: 160,
-				renderCell: ( params ) => (
-					<Typography variant="body2" noWrap color="text.secondary">
-						{ params.value }
-					</Typography>
-				),
+				renderCell: ( params ) => params.value || '-',
 			},
 			{
 				field: 'date_created',
-				headerName: __( 'Created', 'rest-api-firewall' ),
+				headerName: __( 'Date Created', 'rest-api-firewall' ),
 				width: 150,
-				renderCell: ( params ) => (
-					<Typography variant="caption" color="text.secondary">
-						{ formatDate( params.value ) }
-					</Typography>
-				),
-			}
+				renderCell: ( params ) => params.value || '-',
+			},
+			{
+				field: 'date_modified',
+				headerName: __( 'Date Modified', 'rest-api-firewall' ),
+				width: 150,
+				renderCell: ( params ) => params.value || '-',
+			},
 		],
 		[ __, handleDeleteOne ]
 	);
 
-	if ( editingMail ) {
+	if ( editing ) {
 		return (
 			<MailEditor
-				mail={ editingMail }
+				mail={ editing }
 				onBack={ () => {
-					setEditingMail( null );
+					setEditing( null );
 					fetchEntries();
 				} }
 			/>
@@ -312,7 +331,7 @@ export default function Mails() {
 					variant="contained"
 					disableElevation
 					onClick={ () =>
-						setEditingMail( {
+						setEditing( {
 							id: null,
 							title: '',
 							recipient: '',
@@ -320,7 +339,7 @@ export default function Mails() {
 							cci: '',
 							subject: '',
 							content: '',
-							active: true,
+							enabled: true,
 							date_created: null,
 							date_modified: null,
 						} )
@@ -351,7 +370,7 @@ export default function Mails() {
 					rowSelectionModel={ rowSelectionModel }
 					onRowSelectionModelChange={ setRowSelectionModel }
 					onRowDoubleClick={ ( params ) =>
-						setEditingMail( params.row )
+						setEditing( params.row )
 					}
 					disableColumnFilter
 					disableColumnSelector

@@ -4,9 +4,9 @@ namespace cmk\RestApiFirewall\Firewall;
 
 class GeoIpService {
 
-	private const CACHE_KEY    = 'rest_api_firewall_geoip_cache';
-	private const CACHE_TTL    = 86400 * 30;
-	private const API_ENDPOINT = 'https://ipapi.co/{ip}/json/';
+	private const CACHE_KEY_PREFIX = 'rest_api_fw_geoip_';
+	private const CACHE_TTL        = 86400 * 7; // 7 days.
+	private const API_ENDPOINT     = 'https://ipapi.co/{ip}/json/';
 
 	public static function get_geoip( string $ip ): ?array {
 
@@ -58,20 +58,27 @@ class GeoIpService {
 	}
 
 	private static function get_cached( string $ip ): ?array {
-		$cache = get_transient( self::CACHE_KEY );
-
-		if ( ! is_array( $cache ) ) {
-			$cache = array();
+		$key    = self::CACHE_KEY_PREFIX . md5( $ip );
+		$cached = wp_cache_get( $key, 'rest_api_firewall' );
+		if ( false !== $cached ) {
+			return $cached;
 		}
 
-		return $cache[ $ip ] ?? null;
+		$from_transient = get_transient( $key );
+		if ( false !== $from_transient ) {
+			wp_cache_set( $key, $from_transient, 'rest_api_firewall', self::CACHE_TTL );
+			return $from_transient;
+		}
+
+		return null;
 	}
 
 	private static function cache_result( string $ip, array $data ): void {
+		$key = self::CACHE_KEY_PREFIX . md5( $ip );
+		wp_cache_set( $key, $data, 'rest_api_firewall', self::CACHE_TTL );
 
-		$transient    = get_transient( self::CACHE_KEY );
-		$cache        = false !== $transient ? $transient : array();
-		$cache[ $ip ] = $data;
-		set_transient( self::CACHE_KEY, $cache, self::CACHE_TTL );
+		if ( wp_using_ext_object_cache() || is_admin() ) {
+			set_transient( $key, $data, self::CACHE_TTL );
+		}
 	}
 }

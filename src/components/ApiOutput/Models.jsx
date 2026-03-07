@@ -6,16 +6,13 @@ import { useApplication } from '../../contexts/ApplicationContext';
 import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
 import Toolbar from '@mui/material/Toolbar';
-import Tooltip from '@mui/material/Tooltip';
-import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import { DataGrid } from '@mui/x-data-grid';
 
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import useProActions from '../../hooks/useProActions';
 import formatDate from '../../utils/formatDate';
@@ -84,7 +81,7 @@ export default function Models() {
 		[ adminData, nonce, fetchModels ]
 	);
 
-	const handleDelete = useCallback(
+	const handleDeleteOne = useCallback(
 		( id, label ) => {
 			remove(
 				{ action: 'delete_model_entry', nonce, id },
@@ -147,35 +144,65 @@ export default function Models() {
 
 	const columns = [
 		{
-			field: 'enabled',
-			headerName: __( 'Active', 'rest-api-firewall' ),
+			field: '_actions',
+			headerName: __( 'Actions', 'rest-api-firewall' ),
 			width: 80,
 			sortable: false,
-			renderCell: ( { row } ) => (
-				<Switch
+			filterable: false,
+			renderCell: ( params ) => (
+				<IconButton
 					size="small"
-					checked={ row.enabled }
-					onChange={ ( e ) =>
-						handleToggle( row.id, e.target.checked )
+					color="default"
+					onClick={ () =>
+						handleDeleteOne( params.row.id, params.row.title )
 					}
-				/>
+				>
+					<DeleteOutlineIcon fontSize="small" />
+				</IconButton>
 			),
 		},
 		{
-			field: 'label',
-			headerName: __( 'Name', 'rest-api-firewall' ),
+			field: 'enabled',
+			headerName: __( 'Active', 'rest-api-firewall' ),
+			width: 100,
+			renderCell: ( params ) =>
+				params.value ? (
+					<Chip
+						label={ __( 'Active', 'rest-api-firewall' ) }
+						size="small"
+						color="success"
+						variant="outlined"
+					/>
+				) : (
+					<Chip
+						label={ __( 'Inactive', 'rest-api-firewall' ) }
+						size="small"
+						variant="outlined"
+					/>
+				),
+		},
+		{
+			field: 'title',
+			headerName: __( 'Title', 'rest-api-firewall' ),
 			flex: 1,
-			renderCell: ( { row } ) => (
-				<Stack>
-					<Typography variant="body2" fontWeight={ 500 }>
-						{ row.label }
-					</Typography>
-					{ row.is_custom && (
-						<Typography variant="caption" color="text.secondary">
-							{ __( 'custom schema', 'rest-api-firewall' ) }
-						</Typography>
-					) }
-				</Stack>
+			minWidth: 150,
+			renderCell: ( params ) => (
+				<a
+				href="#"
+				style={ {
+					display: 'flex',
+					alignItems: 'center',
+					gap: '4px',
+					fontFamily: 'monospace',
+					color: 'primary.main',
+				} }
+				onClick={ () => setEditing( params.row ) }
+			>
+				{ params.value }
+				<OpenInNewIcon
+					sx={ { fontSize: 13, color: 'primary.main' } }
+				/>
+			</a>
 			),
 		},
 		{
@@ -214,40 +241,15 @@ export default function Models() {
 		},
 		{
 			field: 'date_created',
-			headerName: __( 'Created', 'rest-api-firewall' ),
-			width: 140,
-			renderCell: ( { value } ) => (
-				<Typography variant="caption" color="text.secondary">
-					{ formatDate( value ) }
-				</Typography>
-			),
+			headerName: __( 'Date Created', 'rest-api-firewall' ),
+			width: 150,
+			renderCell: ( params ) => params.value || '-',
 		},
 		{
-			field: '_actions',
-			headerName: '',
-			width: 90,
-			sortable: false,
-			renderCell: ( { row } ) => (
-				<Stack direction="row" spacing={ 0.5 }>
-					<Tooltip title={ __( 'Edit', 'rest-api-firewall' ) }>
-						<IconButton
-							size="small"
-							onClick={ () => setEditing( row ) }
-						>
-							<EditOutlinedIcon fontSize="small" />
-						</IconButton>
-					</Tooltip>
-					<Tooltip title={ __( 'Delete', 'rest-api-firewall' ) }>
-						<IconButton
-							size="small"
-							color="error"
-							onClick={ () => handleDelete( row.id, row.label ) }
-						>
-							<DeleteOutlineIcon fontSize="small" />
-						</IconButton>
-					</Tooltip>
-				</Stack>
-			),
+			field: 'date_modified',
+			headerName: __( 'Date Modified', 'rest-api-firewall' ),
+			width: 150,
+			renderCell: ( params ) => params.value || '-',
 		},
 	];
 

@@ -38,7 +38,7 @@ export default function ThemeSettings( {
 		value >= 1024 ? `${ value / 1024 } MB` : `${ value } KB`;
 
 	return (
-		<Stack direction={ 'row' } gap={ 4 }>
+		<Stack p={ 4 } flexGrow={ 1 } direction={ { xs: 'column', xl: 'row' } } gap={ 4 }>
 			<Stack flex={ 1 } spacing={ 3 }>
 				<DeployTheme
 					status={ themeStatus }
@@ -71,6 +71,44 @@ export default function ThemeSettings( {
 								'rest-api-firewall'
 							) }
 						/>
+						
+					</FormControl>
+
+					<FormControl sx={{ maxWidth: 300 }} disabled={ disabled ||
+								! form.theme_redirect_templates_enabled ||
+								form.theme_redirect_templates_free_url_enabled }>
+						<InputLabel id="redirect-templates-preset-url-label">
+							{ __( 'WordPress Pages', 'rest-api-firewall' ) }
+						</InputLabel>
+						<Select
+							labelId="redirect-templates-preset-url-label"
+							id="theme_redirect_templates_preset_url"
+							name="theme_redirect_templates_preset_url"
+							value={ form.theme_redirect_templates_preset_url }
+							label={ __( 'Redirect Page', 'rest-api-firewall' ) }
+							onChange={ setField }
+						>
+							<MenuItem value={ 0 }>
+								<em>
+									{ __(
+										'Select a Page',
+										'rest-api-firewall'
+									) }
+								</em>
+							</MenuItem>
+							{ redirectPresetUrlOptions &&
+								redirectPresetUrlOptions.length > 0 &&
+								redirectPresetUrlOptions.map( ( presetUrl ) =>
+									presetUrl.value && presetUrl.label ? (
+										<MenuItem
+											key={ presetUrl.value }
+											value={ presetUrl.value }
+										>
+											{ presetUrl.label }
+										</MenuItem>
+									) : null
+								) }
+						</Select>
 						<FormHelperText>
 							{ __(
 								'Redirect theme templates to front page, blog page, login page or a custom URL',
@@ -103,46 +141,6 @@ export default function ThemeSettings( {
 								'rest-api-firewall'
 							) }
 						</FormHelperText>
-					</FormControl>
-
-					<FormControl disabled={ disabled }>
-						<InputLabel id="redirect-templates-preset-url-label">
-							{ __( 'WordPress Pages', 'rest-api-firewall' ) }
-						</InputLabel>
-						<Select
-							labelId="redirect-templates-preset-url-label"
-							id="theme_redirect_templates_preset_url"
-							name="theme_redirect_templates_preset_url"
-							value={ form.theme_redirect_templates_preset_url }
-							label={ __( 'Redirect Page', 'rest-api-firewall' ) }
-							onChange={ setField }
-							disabled={
-								disabled ||
-								! form.theme_redirect_templates_enabled ||
-								form.theme_redirect_templates_free_url_enabled
-							}
-						>
-							<MenuItem value={ 0 }>
-								<em>
-									{ __(
-										'Select a Page',
-										'rest-api-firewall'
-									) }
-								</em>
-							</MenuItem>
-							{ redirectPresetUrlOptions &&
-								redirectPresetUrlOptions.length > 0 &&
-								redirectPresetUrlOptions.map( ( presetUrl ) =>
-									presetUrl.value && presetUrl.label ? (
-										<MenuItem
-											key={ presetUrl.value }
-											value={ presetUrl.value }
-										>
-											{ presetUrl.label }
-										</MenuItem>
-									) : null
-								) }
-						</Select>
 					</FormControl>
 
 					<TextField

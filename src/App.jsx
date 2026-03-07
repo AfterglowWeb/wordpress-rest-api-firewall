@@ -22,24 +22,33 @@ import Navigation, {
 } from './components/Navigation';
 
 import ConfigurationPanel from './components/ConfigurationDialog';
+
 import RoutesPolicyTree from './components/Firewall/Routes/RoutesPolicyTree';
 import GlobalRoutesPolicy from './components/Firewall/Routes/GlobalRoutesPolicy';
 import IpFilter from './components/Firewall/IpFilter/IpFilter';
 import RateLimit from './components/Firewall/RateLimit';
 import RestApiUser from './components/Firewall/RestApiUser';
+
 import Properties from './components/ApiOutput/Properties';
 import SettingsRoute from './components/ApiOutput/SettingsRoute';
 import Collections from './components/ApiOutput/Collections';
-import Webhook from './components/Webhook/Webhook';
-import Webhooks from './components/Webhook/Webhooks';
-import Smtp from './components/Mails/Smtp';
-import MailsPanel from './components/Mails/MailsPanel';
-import Logs from './components/Logs/Logs';
-import Automations from './components/Automations/Automations';
 import Models from './components/ApiOutput/Models';
+
+import Webhook from './components/Webhooks/Webhook';
+import Webhooks from './components/Webhooks/Webhooks';
+
+import MailsPanel from './components/Mails/MailsPanel';
+
+import Logs from './components/Logs/Logs';
+
+import Automations from './components/Automations/Automations';
+
 import ThemeSettings from './components/Theme/ThemeSettings';
-import Applications from './components/Application/Applications';
+
+import Applications from './components/Applications/Applications';
+
 import License from './components/License/License';
+
 import Users from './components/Firewall/Users/Users';
 
 function AppContent() {

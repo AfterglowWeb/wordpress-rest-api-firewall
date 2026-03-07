@@ -192,7 +192,7 @@ export default function License() {
 
 	return (
 		<>
-			<Stack spacing={ 3 } width={ 320 }>
+			<Stack p={ 4 } flexGrow={ 1 } spacing={ 3 } width={ 320 }>
 				<Stack direction="row" alignItems="center" gap={ 1 }>
 					{ isLicenseActive ? (
 						<CheckCircleIcon sx={ { color: 'success.main' } } />

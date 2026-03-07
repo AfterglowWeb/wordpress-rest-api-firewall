@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
+import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useLicense } from '../../../contexts/LicenseContext';
 
@@ -18,15 +18,12 @@ import LockIcon from '@mui/icons-material/Lock';
 /**
  * CountryBlockList component
  * @param {Object} props
- * @param {string} props.listType    - 'whitelist' or 'blacklist'
- * @param {Array}  props.freeEntries - For Free users: array of IP entries from local settings
+ * @param {string} props.listType - 'whitelist' or 'blacklist'
  */
-export default function CountryBlockList( {
-	listType = 'blacklist',
-	freeEntries = [],
-} ) {
+export default function CountryBlockList( { listType = 'blacklist' } ) {
 	const { adminData } = useAdminData();
-	const { hasValidLicense } = useLicense();
+	const { hasValidLicense, proNonce } = useLicense();
+	const nonce = ( hasValidLicense && proNonce ) ? proNonce : adminData.nonce;
 	const { __ } = wp.i18n || {};
 
 	const [ loading, setLoading ] = useState( true );
@@ -35,41 +32,7 @@ export default function CountryBlockList( {
 	const [ blockedCountries, setBlockedCountries ] = useState( [] );
 	const [ selectedCountries, setSelectedCountries ] = useState( [] );
 
-	const freeStats = useMemo( () => {
-		if ( hasValidLicense ) {
-			return [];
-		}
-
-		const countryMap = {};
-		freeEntries.forEach( ( entry ) => {
-			const countryCode =
-				entry?.country_code || entry?.geoIp?.country || null;
-			const countryName =
-				entry?.country_name || entry?.geoIp?.countryName || null;
-			if ( countryCode ) {
-				if ( ! countryMap[ countryCode ] ) {
-					countryMap[ countryCode ] = {
-						country_code: countryCode,
-						country_name: countryName,
-						count: 0,
-					};
-				}
-				countryMap[ countryCode ].count++;
-			}
-		} );
-
-		return Object.values( countryMap ).sort(
-			( a, b ) => b.count - a.count
-		);
-	}, [ freeEntries, hasValidLicense ] );
-
 	const fetchStats = useCallback( async () => {
-		if ( ! hasValidLicense ) {
-			setStats( freeStats );
-			setLoading( false );
-			return;
-		}
-
 		setLoading( true );
 		try {
 			const response = await fetch( adminData.ajaxurl, {
@@ -80,7 +43,7 @@ export default function CountryBlockList( {
 				},
 				body: new URLSearchParams( {
 					action: 'get_country_stats',
-					nonce: adminData.nonce,
+					nonce,
 					list_type: listType,
 				} ),
 			} );
@@ -89,15 +52,18 @@ export default function CountryBlockList( {
 
 			if ( result?.success && result?.data ) {
 				setStats( result.data.stats || [] );
-				setBlockedCountries( result.data.blocked_countries || [] );
-				setSelectedCountries( result.data.blocked_countries || [] );
+				// blocked_countries is only present in the pro response.
+				if ( result.data.blocked_countries !== undefined ) {
+					setBlockedCountries( result.data.blocked_countries );
+					setSelectedCountries( result.data.blocked_countries );
+				}
 			}
 		} catch ( error ) {
 			// Handle error silently.
 		} finally {
 			setLoading( false );
 		}
-	}, [ adminData, listType, hasValidLicense, freeStats ] );
+	}, [ adminData, nonce, listType ] );
 
 	useEffect( () => {
 		fetchStats();
@@ -131,7 +97,7 @@ export default function CountryBlockList( {
 				},
 				body: new URLSearchParams( {
 					action: 'update_blocked_countries',
-					nonce: adminData.nonce,
+					nonce,
 					countries: JSON.stringify( selectedCountries ),
 				} ),
 			} );
@@ -149,8 +115,8 @@ export default function CountryBlockList( {
 	};
 
 	const hasChanges =
-		JSON.stringify( selectedCountries.sort() ) !==
-		JSON.stringify( blockedCountries.sort() );
+		JSON.stringify( [ ...selectedCountries ].sort() ) !==
+		JSON.stringify( [ ...blockedCountries ].sort() );
 
 	if ( loading ) {
 		return (

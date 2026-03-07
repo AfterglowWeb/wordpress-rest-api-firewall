@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
+import { useApplication } from '../../contexts/ApplicationContext';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import IconButton from '@mui/material/IconButton';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
@@ -15,16 +15,15 @@ import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
-import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 
 import AddIcon from '@mui/icons-material/Add';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import JsonSchemaBuilder from '../shared/JsonSchemaBuilder';
 import useProActions from '../../hooks/useProActions';
 import formatDate from '../../utils/formatDate';
+import EntryToolbar from '../shared/EntryToolbar';
 import LoadingMessage from '../LoadingMessage';
 
 const CONDITION_OPERATORS = [
@@ -239,6 +238,8 @@ export default function AutomationEditor( { automation, onBack } ) {
 	const { __ } = wp.i18n || {};
 
 	const { save, remove, saving } = useProActions();
+	const { selectedApplicationId, setDirtyFlag } = useApplication();
+	
 
 	const isNew = ! automation.id;
 
@@ -254,7 +255,7 @@ export default function AutomationEditor( { automation, onBack } ) {
 		automation.webhook_ids || []
 	);
 	const [ mailIds, setMailIds ] = useState( automation.mail_ids || [] );
-	const [ active, setActive ] = useState( automation.active !== false );
+	const [ enabled, setEnabled ] = useState( automation.enabled !== false );
 
 	const [ eventOptions, setEventOptions ] = useState( [] );
 	const [ webhooks, setWebhooks ] = useState( [] );
@@ -346,7 +347,7 @@ export default function AutomationEditor( { automation, onBack } ) {
 					setPayloadMap( e.payload_map || {} );
 					setWebhookIds( e.webhook_ids || [] );
 					setMailIds( e.mail_ids || [] );
-					setActive( e.active !== false );
+					setEnabled( e.enabled !== false );
 				}
 			}
 			setLoaded( true );
@@ -360,9 +361,10 @@ export default function AutomationEditor( { automation, onBack } ) {
 		event,
 		conditions: JSON.stringify( conditions ),
 		payload_map: JSON.stringify( payloadMap ),
-		active: active ? '1' : '0',
+		enabled: enabled ? '1' : '0',
 		webhook_ids: JSON.stringify( webhookIds ),
 		mail_ids: JSON.stringify( mailIds ),
+		application_id: selectedApplicationId || automation.application_id || '',
 	} );
 
 	const handleSave = useCallback( () => {
@@ -396,7 +398,7 @@ export default function AutomationEditor( { automation, onBack } ) {
 		payloadMap,
 		webhookIds,
 		mailIds,
-		active,
+		enabled,
 		nonce,
 	] );
 
@@ -451,97 +453,17 @@ export default function AutomationEditor( { automation, onBack } ) {
 
 	return (
 		<Stack spacing={ 0 } sx={ { height: '100%' } }>
-			<Toolbar
-				sx={ {
-					gap: 2,
-					justifyContent: 'space-between',
-					alignItems: 'center',
-					borderBottom: 1,
-					borderColor: 'divider',
-					flexWrap: 'wrap',
-					py: { xs: 2, sm: 1 },
-				} }
-			>
-				<Stack direction="row" gap={ 2 }>
-					<Stack alignItems="center" justifyContent="center">
-						<IconButton
-							size="small"
-							onClick={ onBack }
-							aria-label={ __( 'Back', 'rest-api-firewall' ) }
-						>
-							<ArrowBackIcon />
-						</IconButton>
-					</Stack>
-					<Stack
-						spacing={ 0 }
-						direction={ { xs: 'column', sm: 'row' } }
-						alignItems={ { xs: 'flex-start', sm: 'center' } }
-						gap={ { xs: 0, sm: 2 } }
-					>
-						<Typography
-							variant="h6"
-							fontWeight={ 600 }
-							sx={ { flex: 1, minWidth: 0 } }
-							noWrap
-						>
-							{ isNew
-								? __( 'New Automation', 'rest-api-firewall' )
-								: title || __( 'Edit Automation', 'rest-api-firewall' ) }
-						</Typography>
-						{ ! isNew && (
-							<Stack
-								direction={ { xs: 'column', sm: 'row' } }
-								gap={ { xs: 0, xl: 2 } }
-								flexWrap="wrap"
-								alignItems={ { sm: 'center' } }
-							>
-								<FormControlLabel
-									control={
-										<Switch
-											size="small"
-											checked={ active }
-											onChange={ ( e ) =>
-												setActive( e.target.checked )
-											}
-										/>
-									}
-									label={ __( 'Active', 'rest-api-firewall' ) }
-								/>
-								{ automation.date_modified && (
-									<Typography variant="caption" color="text.secondary">
-										{ __( 'Mod.', 'rest-api-firewall' ) }{ ' ' }
-										{ formatDate( automation.date_modified ) }
-									</Typography>
-								) }
-							</Stack>
-						) }
-					</Stack>
-				</Stack>
-				<Stack direction="row" gap={ 2 }>
-					<Button
-						size="small"
-						variant="contained"
-						disableElevation
-						onClick={ handleSave }
-						disabled={ saving }
-					>
-						{ isNew
-							? __( 'Create', 'rest-api-firewall' )
-							: __( 'Save', 'rest-api-firewall' ) }
-					</Button>
-					{ ! isNew && (
-						<Button
-							variant="outlined"
-							color="error"
-							size="small"
-							startIcon={ <DeleteOutlineIcon /> }
-							onClick={ handleDelete }
-						>
-							{ __( 'Delete', 'rest-api-firewall' ) }
-						</Button>
-					) }
-				</Stack>
-			</Toolbar>
+			<EntryToolbar
+				isNew={ isNew }
+				title={ title }
+				dateModified={ automation.date_modified ? formatDate( automation.date_modified ) : '' }
+				handleBack={ onBack }
+				handleSave={ handleSave }
+				handleDelete={ handleDelete }
+				saving={ saving }
+				enabled={ isNew ? null : enabled }
+				setEnabled={ isNew ? null : setEnabled }
+			/>
 
 			<Stack spacing={ 3 } sx={ { overflowY: 'auto', flex: 1, p: 4 } }>
 				<TextField
