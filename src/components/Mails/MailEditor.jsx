@@ -9,21 +9,17 @@ import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
-import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SendIcon from '@mui/icons-material/Send';
 
 import useProActions from '../../hooks/useProActions';
 import formatDate from '../../utils/formatDate';
+import EntryToolbar from '../shared/EntryToolbar';
 
 const TEMPLATE_VARS = [
 	'{{event.type}}',
@@ -52,7 +48,7 @@ export default function MailEditor( { mail, onBack } ) {
 	const [ cci, setCci ] = useState( mail.cci || '' );
 	const [ subject, setSubject ] = useState( mail.subject || '' );
 	const [ content, setContent ] = useState( mail.content || '' );
-	const [ active, setActive ] = useState( mail.active !== false );
+	const [ enabled, setEnabled ] = useState( mail.enabled !== false );
 	const [ author, setAuthor ] = useState( '' );
 	const [ dateCreated, setDateCreated ] = useState( '' );
 	const [ dateModified, setDateModified ] = useState( '' );
@@ -88,7 +84,7 @@ export default function MailEditor( { mail, onBack } ) {
 					setCci( e.cci || '' );
 					setSubject( e.subject || '' );
 					setContent( e.content || '' );
-					setActive( e.active !== false );
+					setEnabled( e.enabled !== false );
 					setDateCreated(
 						formatDate(
 							e.date_created,
@@ -120,7 +116,7 @@ export default function MailEditor( { mail, onBack } ) {
 		cci,
 		subject,
 		content,
-		active: active ? '1' : '0',
+		enabled: enabled ? '1' : '0',
 	} );
 
 	const handleSave = useCallback( () => {
@@ -150,7 +146,7 @@ export default function MailEditor( { mail, onBack } ) {
 		cci,
 		subject,
 		content,
-		active,
+		enabled,
 		nonce,
 	] );
 
@@ -218,152 +214,46 @@ export default function MailEditor( { mail, onBack } ) {
 
 	return (
 		<Stack spacing={ 3 } flexGrow={ 1 }>
-			<Toolbar
-				disableGutters
-				sx={ {
-					gap: 2,
-					justifyContent: 'space-between',
-					alignItems: 'center',
-					borderBottom: 1,
-					borderColor: 'divider',
-					flexWrap: 'wrap',
-					py: { xs: 2, sm: 1 },
-				} }
+			<EntryToolbar
+				isNew={ isNew }
+				title={ title }
+				author={ author }
+				dateCreated={ dateCreated }
+				dateModified={ dateModified }
+				handleBack={ onBack }
+				handleSave={ handleSave }
+				handleDelete={ handleDelete }
+				saving={ saving }
+				enabled={ isNew ? null : enabled }
+				setEnabled={ isNew ? null : ( checked ) => { setEnabled( checked ); setDirty( true ); } }
+				saveLabel={ isNew ? __( 'Create', 'rest-api-firewall' ) : null }
 			>
-				<Stack direction="row" gap={ 2 }>
-					<Stack alignItems="center" justifyContent="center">
-						<IconButton
-							size="small"
-							onClick={ onBack }
-							aria-label={ __( 'Back', 'rest-api-firewall' ) }
-						>
-							<ArrowBackIcon />
-						</IconButton>
-					</Stack>
-					<Stack
-						spacing={ 0 }
-						direction={ { xs: 'column', sm: 'row' } }
-						alignItems={ { xs: 'flex-start', sm: 'center' } }
-						gap={ { xs: 0, sm: 2 } }
-					>
-						<Typography
-							variant="h6"
-							fontWeight={ 600 }
-							sx={ { flex: 1, minWidth: 0 } }
-							noWrap
-						>
-							{ isNew
-								? __( 'New Mail Template', 'rest-api-firewall' )
-								: title ||
-								  __( 'Edit Mail Template', 'rest-api-firewall' ) }
-						</Typography>
-						{ ! isNew && (
-							<Stack
-								direction={ { xs: 'column', sm: 'row' } }
-								gap={ { xs: 0, xl: 2 } }
-								flexWrap="wrap"
-								alignItems={ { sm: 'center' } }
-							>
-								{ ( author || dateCreated || dateModified ) && (
-									<Stack
-										direction={ { xs: 'column', sm: 'row' } }
-										gap={ { xs: 0, xl: 2 } }
-										flexWrap="wrap"
-									>
-										<FormControlLabel
-											control={
-												<Switch
-													size="small"
-													checked={ active }
-													onChange={ ( e ) => {
-														setActive( e.target.checked );
-														setDirty( true );
-													} }
-												/>
-											}
-											label={ __( 'Active', 'rest-api-firewall' ) }
-										/>
-										<Typography
-											variant="caption"
-											color="text.secondary"
-										>
-											{ author && (
-												<span>
-													{ author }
-													{ dateCreated &&
-														` @ ${ dateCreated }` }
-												</span>
-											) }
-											{ dateModified && (
-												<>
-													<br />
-													<span>
-														{ __(
-															'Mod.',
-															'rest-api-firewall'
-														) }{ ' ' }
-														{ dateModified }
-													</span>
-												</>
-											) }
-										</Typography>
-									</Stack>
-								) }
-							</Stack>
-						) }
-					</Stack>
-				</Stack>
-				<Stack direction="row" gap={ 2 }>
-					<Tooltip
-						title={
-							dirty || isNew
-								? __( 'Save the template first to send a test', 'rest-api-firewall' )
-								: __( 'Send a test email to the recipient', 'rest-api-firewall' )
-						}
-					>
-						<span>
-							<Button
-								size="small"
-								disableElevation
-								startIcon={
-									testLoading ? (
-										<CircularProgress size={ 14 } />
-									) : (
-										<SendIcon />
-									)
-								}
-								onClick={ handleTest }
-								disabled={ testLoading || dirty || isNew }
-							>
-								{ __( 'Send Test', 'rest-api-firewall' ) }
-							</Button>
-						</span>
-					</Tooltip>
-					<Button
-						size="small"
-						variant="contained"
-						onClick={ handleSave }
-						disabled={ saving }
-						disableElevation
-					>
-						{ isNew
-							? __( 'Create', 'rest-api-firewall' )
-							: __( 'Save', 'rest-api-firewall' ) }
-					</Button>
-					{ ! isNew && (
+				<Tooltip
+					title={
+						dirty || isNew
+							? __( 'Save the template first to send a test', 'rest-api-firewall' )
+							: __( 'Send a test email to the recipient', 'rest-api-firewall' )
+					}
+				>
+					<span>
 						<Button
 							size="small"
-							variant="outlined"
-							color="error"
-							onClick={ handleDelete }
 							disableElevation
-							startIcon={ <DeleteOutlineIcon /> }
+							startIcon={
+								testLoading ? (
+									<CircularProgress size={ 14 } />
+								) : (
+									<SendIcon />
+								)
+							}
+							onClick={ handleTest }
+							disabled={ testLoading || dirty || isNew }
 						>
-							{ __( 'Delete', 'rest-api-firewall' ) }
+							{ __( 'Send Test', 'rest-api-firewall' ) }
 						</Button>
-					) }
-				</Stack>
-			</Toolbar>
+					</span>
+				</Tooltip>
+			</EntryToolbar>
 
 			{ testStatus && (
 				<Alert
@@ -410,7 +300,7 @@ export default function MailEditor( { mail, onBack } ) {
 				</Typography>
 
 				<TextField
-					label={ __( 'Recipient', 'rest-api-firewall' ) }
+					label={ __( 'TO', 'rest-api-firewall' ) }
 					value={ recipient }
 					onChange={ ( e ) => { setRecipient( e.target.value ); setDirty( true ); } }
 					size="small"

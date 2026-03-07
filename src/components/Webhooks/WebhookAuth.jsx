@@ -256,6 +256,7 @@ export default function WebhookAuth( {
 						) }
 						value={ form.application_host }
 						onChange={ setField }
+						size={ 'small' }
 						fullWidth
 					/>
 
@@ -271,6 +272,7 @@ export default function WebhookAuth( {
 						) }
 						value={ form.application_webhook_endpoint }
 						onChange={ setField }
+						size={ 'small' }
 						fullWidth
 					/>
 

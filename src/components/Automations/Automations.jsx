@@ -10,7 +10,6 @@ import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 
@@ -44,7 +43,7 @@ export default function Automations() {
 		type: 'include',
 		ids: new Set( [] ),
 	} );
-	const [ editingAutomation, setEditingAutomation ] = useState( null );
+	const [ editing, setEditing ] = useState( null );
 
 	const fetchEntries = useCallback( async () => {
 		setLoading( true );
@@ -142,12 +141,65 @@ export default function Automations() {
 	const columns = useMemo(
 		() => [
 			{
-				field: 'active',
-				headerName: __( 'Active', 'rest-api-firewall' ),
-				width: 70,
+				field: '_actions',
+				headerName: __( 'Actions', 'rest-api-firewall' ),
+				width: 80,
 				sortable: false,
-				renderCell: ( { value } ) => (
-					<Switch size="small" checked={ !! value } disabled />
+				filterable: false,
+				renderCell: ( params ) => (
+					<IconButton
+						size="small"
+						color="default"
+						onClick={ () =>
+							handleDeleteOne( params.row.id, params.row.title )
+						}
+					>
+						<DeleteOutlineIcon fontSize="small" />
+					</IconButton>
+				),
+			},
+			{
+				field: 'enabled',
+				headerName: __( 'Active', 'rest-api-firewall' ),
+				width: 100,
+				renderCell: ( params ) =>
+					params.value ? (
+						<Chip
+							label={ __( 'Active', 'rest-api-firewall' ) }
+							size="small"
+							color="success"
+							variant="outlined"
+						/>
+					) : (
+						<Chip
+							label={ __( 'Inactive', 'rest-api-firewall' ) }
+							size="small"
+							variant="outlined"
+						/>
+					),
+			},
+			{
+				field: 'title',
+				headerName: __( 'Title', 'rest-api-firewall' ),
+				flex: 1,
+				minWidth: 150,
+				renderCell: ( params ) => (
+					<a
+					href="#"
+					style={ {
+						display: 'flex',
+						alignItems: 'center',
+						gap: '4px',
+						fontFamily: 'monospace',
+						color: 'primary.main',
+					} }
+					onClick={ () => setEditing( params.row ) }
+					>
+					{ params.value }
+						<OpenInNewIcon
+							sx={ { fontSize: 13, color: 'primary.main' } }
+						/>
+					</a>
 				),
 			},
 			{
@@ -205,49 +257,27 @@ export default function Automations() {
 			},
 			{
 				field: 'date_created',
-				headerName: __( 'Created', 'rest-api-firewall' ),
+				headerName: __( 'Date Created', 'rest-api-firewall' ),
 				width: 150,
-				renderCell: ( { value } ) => (
-					<Typography variant="caption" color="text.secondary">
-						{ formatDate( value ) }
-					</Typography>
-				),
+				renderCell: ( params ) => params.value || '-',
 			},
 			{
-				field: '_actions',
-				headerName: '',
-				width: 90,
-				sortable: false,
-				renderCell: ( { row } ) => (
-					<Stack direction="row" spacing={ 0 }>
-						<IconButton
-							size="small"
-							onClick={ () => setEditingAutomation( row ) }
-						>
-							<OpenInNewIcon fontSize="small" />
-						</IconButton>
-						<IconButton
-							size="small"
-							color="error"
-							onClick={ () =>
-								handleDeleteOne( row.id, row.event )
-							}
-						>
-							<DeleteOutlineIcon fontSize="small" />
-						</IconButton>
-					</Stack>
-				),
+				field: 'date_modified',
+				headerName: __( 'Date Modified', 'rest-api-firewall' ),
+				width: 150,
+				renderCell: ( params ) => params.value || '-',
 			},
+			
 		],
 		[ __, handleDeleteOne ]
 	);
 
-	if ( editingAutomation ) {
+	if ( editing ) {
 		return (
 			<AutomationEditor
-				automation={ editingAutomation }
+				automation={ editing }
 				onBack={ () => {
-					setEditingAutomation( null );
+					setEditing( null );
 					fetchEntries();
 				} }
 			/>
@@ -268,14 +298,14 @@ export default function Automations() {
 					variant="contained"
 					disableElevation
 					onClick={ () =>
-						setEditingAutomation( {
+						setEditing( {
 							id: null,
 							event: '',
 							conditions: [],
 							payload_map: {},
 							webhook_ids: [],
 							mail_ids: [],
-							active: true,
+							enabled: true,
 						} )
 					}
 					disabled={ ! hasValidLicense }
@@ -330,8 +360,14 @@ export default function Automations() {
 					showToolbar
 					onRowSelectionModelChange={ setRowSelectionModel }
 					onRowDoubleClick={ ( params ) =>
-						setEditingAutomation( params.row )
+						setEditing( params.row )
 					}
+					sx={ {
+						'& .MuiDataGrid-cell': {
+							display: 'flex',
+							alignItems: 'center',
+						},
+					} }
 				/>
 			</Box>
 		</Stack>

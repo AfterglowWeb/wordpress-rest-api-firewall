@@ -33,8 +33,6 @@ export default function IpFilter() {
 	const [ settings, setSettings ] = useState( {
 		enabled: false,
 		mode: 'blacklist',
-		whitelist: [],
-		blacklist: [],
 	} );
 	const [ currentTab, setCurrentTab ] = useState( 0 );
 	const { hasValidLicense } = useLicense();
@@ -42,8 +40,6 @@ export default function IpFilter() {
 	const isIpFilterDisabled = ! settings.enabled;
 	const isDisabled = ! hasValidLicense || isIpFilterDisabled;
 
-	const activeList =
-		settings.mode === 'whitelist' ? settings.whitelist : settings.blacklist;
 	const activeListKey =
 		settings.mode === 'whitelist' ? 'whitelist' : 'blacklist';
 
@@ -68,8 +64,6 @@ export default function IpFilter() {
 				setSettings( {
 					enabled: result.data.enabled ?? false,
 					mode: result.data.mode ?? 'blacklist',
-					whitelist: result.data.whitelist ?? [],
-					blacklist: result.data.blacklist ?? [],
 				} );
 			}
 		} catch ( error ) {
@@ -165,7 +159,7 @@ export default function IpFilter() {
 	}
 
 	return (
-		<Stack spacing={ 3 }>
+		<Stack p={ 4 } flexGrow={ 1 } spacing={ 3 }>
 			{ ! hasValidLicense && (
 				<Alert
 					severity="info"
@@ -262,10 +256,7 @@ export default function IpFilter() {
 			{ currentTab === 0 && <IpDataGrid listType={ activeListKey } /> }
 
 			{ currentTab === 1 && (
-				<CountryBlockList
-					listType={ activeListKey }
-					freeEntries={ activeList }
-				/>
+				<CountryBlockList listType={ activeListKey } />
 			) }
 		</Stack>
 	);

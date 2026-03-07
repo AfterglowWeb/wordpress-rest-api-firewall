@@ -2,28 +2,21 @@ import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
+import useProActions from '../../hooks/useProActions';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
-import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-
-import useProActions from '../../hooks/useProActions';
 import formatDate from '../../utils/formatDate';
 import { PropertyRow } from './Properties';
 import JsonSchemaBuilder from '../shared/JsonSchemaBuilder';
+import EntryToolbar from '../shared/EntryToolbar';
 import ObjectTypeSelect from '../ObjectTypeSelect';
 
 const FALLBACK_BINDINGS = [
@@ -54,10 +47,14 @@ export default function ModelEditor( { model, onBack } ) {
 
 	const isNew = ! model.id;
 
-	const [ label, setLabel ] = useState( model.label || '' );
+	const [ title, setTitle ] = useState( model.title || '' );
 	const [ objectType, setObjectType ] = useState( model.object_type || 'post' );
 	const [ isCustom, setIsCustom ] = useState( model.is_custom || false );
 	const [ enabled, setEnabled ] = useState( model.enabled || false );
+
+	const [ author, setAuthor ] = useState( '' );
+	const [ dateCreated, setDateCreated ] = useState( '' );
+	const [ dateModified, setDateModified ] = useState( '' );
 
 	const [ wpProperties, setWpProperties ] = useState(
 		! model.is_custom ? model.properties || {} : {}
@@ -99,10 +96,26 @@ export default function ModelEditor( { model, onBack } ) {
 				const json = await res.json();
 				if ( json.success ) {
 					const e = json.data.entry;
-					setLabel( e.label || '' );
+					setTitle( e.title || '' );
+					setEnabled( e.enabled ?? true );
+					setAuthor( e.author_name || '' );
+					setDateCreated(
+						formatDate(
+							e.date_created,
+							adminData.date_format,
+							adminData.time_format
+						)
+					);
+					setDateModified(
+						formatDate(
+							e.date_modified,
+							adminData.date_format,
+							adminData.time_format
+						)
+					);
+					
 					setObjectType( e.object_type || '' );
 					setIsCustom( e.is_custom || false );
-					setEnabled( e.enabled || false );
 					if ( e.is_custom ) {
 						setCustomProperties( e.properties || {} );
 					} else {
@@ -117,7 +130,7 @@ export default function ModelEditor( { model, onBack } ) {
 
 	const buildPayload = () => ( {
 		nonce,
-		label,
+		title: title.trim(),
 		object_type: objectType,
 		is_custom: isCustom ? '1' : '0',
 		enabled: enabled ? '1' : '0',
@@ -161,7 +174,7 @@ export default function ModelEditor( { model, onBack } ) {
 	}, [
 		isNew,
 		model.id,
-		label,
+		title,
 		objectType,
 		isCustom,
 		enabled,
@@ -180,7 +193,7 @@ export default function ModelEditor( { model, onBack } ) {
 				confirmMessage: `${ __(
 					'Permanently delete',
 					'rest-api-firewall'
-				) } "${ label }"? ${ __(
+				) } "${ title }"? ${ __(
 					'This action cannot be undone.',
 					'rest-api-firewall'
 				) }`,
@@ -191,7 +204,7 @@ export default function ModelEditor( { model, onBack } ) {
 				},
 			}
 		);
-	}, [ remove, model.id, label, nonce, onBack, clearDirty, __ ] );
+	}, [ remove, model.id, title, nonce, onBack, clearDirty, __ ] );
 
 	const handleObjectTypeChange = ( e ) => {
 		setObjectType( e.target.value );
@@ -257,98 +270,20 @@ export default function ModelEditor( { model, onBack } ) {
 
 	return (
 		<Stack spacing={ 0 } sx={ { height: '100%' } }>
-			<Toolbar
-				sx={ {
-					gap: 2,
-					justifyContent: 'space-between',
-					alignItems: 'center',
-					borderBottom: 1,
-					borderColor: 'divider',
-					flexWrap: 'wrap',
-					py: { xs: 2, sm: 1 },
-				} }
-			>
-				<Stack direction="row" gap={ 2 }>
-					<Stack alignItems="center" justifyContent="center">
-						<IconButton
-							size="small"
-							onClick={ handleBack }
-							aria-label={ __( 'Back', 'rest-api-firewall' ) }
-						>
-							<ArrowBackIcon />
-						</IconButton>
-					</Stack>
-					<Stack
-						spacing={ 0 }
-						direction={ { xs: 'column', sm: 'row' } }
-						alignItems={ { xs: 'flex-start', sm: 'center' } }
-						gap={ { xs: 0, sm: 2 } }
-					>
-						<Typography
-							variant="h6"
-							fontWeight={ 600 }
-							sx={ { flex: 1, minWidth: 0 } }
-							noWrap
-						>
-							{ isNew
-								? __( 'New Model', 'rest-api-firewall' )
-								: label || __( 'Edit Model', 'rest-api-firewall' ) }
-						</Typography>
-						{ ! isNew && (
-							<Stack
-								direction={ { xs: 'column', sm: 'row' } }
-								gap={ { xs: 0, xl: 2 } }
-								flexWrap="wrap"
-								alignItems={ { sm: 'center' } }
-							>
-								<FormControlLabel
-									control={
-										<Switch
-											size="small"
-											checked={ enabled }
-											onChange={ ( e ) =>
-												setEnabled( e.target.checked )
-											}
-										/>
-									}
-									label={ __( 'Active', 'rest-api-firewall' ) }
-								/>
-								{ model.date_modified && (
-									<Typography variant="caption" color="text.secondary">
-										{ __( 'Mod.', 'rest-api-firewall' ) }{ ' ' }
-										{ formatDate( model.date_modified ) }
-									</Typography>
-								) }
-							</Stack>
-						) }
-					</Stack>
-				</Stack>
-				<Stack direction="row" gap={ 2 }>
-					<Button
-						size="small"
-						variant="contained"
-						disableElevation
-						onClick={ handleSave }
-						disabled={ saving || ! label || ! objectType }
-					>
-						{ isNew
-							? __( 'Create', 'rest-api-firewall' )
-							: __( 'Save', 'rest-api-firewall' ) }
-					</Button>
-					{ ! isNew && (
-						<Button
-							variant="outlined"
-							color="error"
-							size="small"
-							startIcon={ <DeleteOutlineIcon /> }
-							onClick={ handleDelete }
-						>
-							{ __( 'Delete', 'rest-api-firewall' ) }
-						</Button>
-					) }
-				</Stack>
-			</Toolbar>
-
+			<EntryToolbar 
+				isNew={ isNew }
+				title={ title }
+				author={ author }
+				dateCreated={ dateCreated }
+				dateModified={ dateModified }
+				handleBack={ handleBack }
+				handleSave={ handleSave }
+				handleDelete={ handleDelete }
+				saving={ saving }
+				enabled={ enabled }
+				setEnabled={ setEnabled }
+			/>
+			
 			<Stack p={ 4 } spacing={ 3 } sx={ { overflowY: 'auto', flex: 1} }>
 				
 				<Stack
@@ -359,8 +294,8 @@ export default function ModelEditor( { model, onBack } ) {
 				>
 					<TextField
 						label={ __( 'Model Name', 'rest-api-firewall' ) }
-						value={ label }
-						onChange={ ( e ) => setLabel( e.target.value ) }
+						value={ title }
+						onChange={ ( e ) => setTitle( e.target.value ) }
 						size="small"
 						fullWidth
 						required
@@ -369,10 +304,7 @@ export default function ModelEditor( { model, onBack } ) {
 							'rest-api-firewall'
 						) }
 						sx={{
-							maxWidth: 320,
-							'& .MuiInputLabel-root:not(.Mui-focused)': {
-								transform: 'translate(14px, 16px) scale(1)',
-							}
+							maxWidth: 320
 						}}
 					/>
 

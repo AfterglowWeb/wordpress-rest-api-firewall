@@ -7,15 +7,12 @@ vendor/
 build/
 dist/
 .cache/
-config/group*
-config/ui*
 
 .npm
 .vscode
 .eslintcache
 *.log
 *.log*
-
 *.zip
 **/*.tgz
 **/*.zip

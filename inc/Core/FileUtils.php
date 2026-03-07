@@ -22,7 +22,7 @@ class FileUtils {
 			try {
 				require_once ABSPATH . 'wp-admin/includes/file.php';
 				WP_Filesystem();
-			} catch ( Exception $e ) {
+			} catch ( Exception $e ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
 				return null;
 			}
 		}
