@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from '@wordpress/element';
+import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useLicense } from '../../../contexts/LicenseContext';
 
@@ -7,20 +7,20 @@ import { DataGrid } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import Divider from '@mui/material/Divider';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
 import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
+import Paper from '@mui/material/Paper';
 import Popover from '@mui/material/Popover';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Toolbar from '@mui/material/Toolbar';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import Checkbox from '@mui/material/Checkbox';
-import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormHelperText from '@mui/material/FormHelperText';
 
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import LockIcon from '@mui/icons-material/Lock';
@@ -54,11 +54,14 @@ export default function IpDataGrid( { listType = 'blacklist' } ) {
 
 	const [ expiryValue, setExpiryValue ] = useState( '' );
 	const [ expiryUnit, setExpiryUnit ] = useState( 'days' );
-	const [ expiryLoaded, setExpiryLoaded ] = useState( false );
-	const [ anchorEl, setAnchorEl ] = useState( null );
-	const [ applyToExisting, setApplyToExisting ] = useState( false );
 
-	const saveTimeoutRef = useRef( null );
+	const [ pendingExpiryValue, setPendingExpiryValue ] = useState( '' );
+	const [ pendingExpiryUnit, setPendingExpiryUnit ] = useState( 'days' );
+	const [ savingExpiry, setSavingExpiry ] = useState( false );
+	const [ applyToAll, setApplyToAll ] = useState( false );
+
+	const [ anchorEl, setAnchorEl ] = useState( null );
+	const expiryPopoverOpen = Boolean( anchorEl );
 
 	const valueUnitToSeconds = ( val, unit ) => {
 		const v = parseInt( val, 10 );
@@ -95,8 +98,6 @@ export default function IpDataGrid( { listType = 'blacklist' } ) {
 			}
 		} catch ( e ) {
 			// silent
-		} finally {
-			setExpiryLoaded( true );
 		}
 	}, [ adminData, nonce ] );
 
@@ -104,30 +105,73 @@ export default function IpDataGrid( { listType = 'blacklist' } ) {
 		fetchExpiry();
 	}, [ fetchExpiry ] );
 
-	useEffect( () => {
-		if ( ! expiryLoaded ) return;
-		if ( saveTimeoutRef.current ) clearTimeout( saveTimeoutRef.current );
-		saveTimeoutRef.current = setTimeout( async () => {
-			const expiry_seconds = valueUnitToSeconds( expiryValue, expiryUnit );
-			try {
+	const handleOpenExpiryPopover = ( e ) => {
+		setPendingExpiryValue( expiryValue );
+		setPendingExpiryUnit( expiryUnit );
+		setApplyToAll( false );
+		setAnchorEl( e.currentTarget );
+	};
+
+	const handleCloseExpiryPopover = () => {
+		setAnchorEl( null );
+	};
+
+	const handleSaveExpiry = async () => {
+		setSavingExpiry( true );
+		const expiry_seconds = valueUnitToSeconds( pendingExpiryValue, pendingExpiryUnit );
+		try {
+			await fetch( adminData.ajaxurl, {
+				method: 'POST',
+				headers: {
+					'Content-Type':
+						'application/x-www-form-urlencoded; charset=UTF-8',
+				},
+				body: new URLSearchParams( {
+					action: 'save_ip_filter',
+					nonce,
+					expiry_seconds,
+				} ),
+			} );
+			setExpiryValue( pendingExpiryValue );
+			setExpiryUnit( pendingExpiryUnit );
+
+			const selectedIds = [ ...rowSelectionModel.ids ];
+			const hasSelection = selectedIds.length > 0;
+
+			if ( hasValidLicense && ( hasSelection || applyToAll ) ) {
+				const body = {
+					action: 'update_entries_expiry',
+					nonce,
+					list_type: listType,
+				};
+				if ( hasSelection && ! applyToAll ) {
+					body.ids = JSON.stringify( selectedIds );
+				}
 				await fetch( adminData.ajaxurl, {
 					method: 'POST',
 					headers: {
 						'Content-Type':
 							'application/x-www-form-urlencoded; charset=UTF-8',
 					},
-					body: new URLSearchParams( {
-						action: 'save_ip_filter',
-						nonce,
-						expiry_seconds,
-					} ),
+					body: new URLSearchParams( body ),
 				} );
-			} catch ( e ) {
-				// silent.
+				fetchEntries();
 			}
-		}, 600 );
-		return () => clearTimeout( saveTimeoutRef.current );
-	}, [ expiryValue, expiryUnit, expiryLoaded ] );
+		} catch ( e ) {
+			// silent
+		} finally {
+			setSavingExpiry( false );
+			setAnchorEl( null );
+		}
+	};
+
+	const expiryLabel = useMemo( () => {
+		if ( ! expiryValue ) {
+			return '';
+		}
+		const unitLabels = { hours: __( 'h', 'rest-api-firewall' ), days: __( 'd.', 'rest-api-firewall' ), weeks: __( 'w.', 'rest-api-firewall' ), months: __( 'mo.', 'rest-api-firewall' ) };
+		return `${ __( 'Release Time', 'rest-api-firewall' ) } ${ expiryValue }${ unitLabels[ expiryUnit ] ?? expiryUnit }`;
+	}, [ expiryValue, expiryUnit, __ ] );
 
 	const columns = useMemo( () => {
 		const baseColumns = [
@@ -419,7 +463,7 @@ export default function IpDataGrid( { listType = 'blacklist' } ) {
 
 	return (
 		<Box>
-			<Toolbar disableGutters sx={ { gap: 2, mb: 2, flexWrap: 'wrap' } }>
+			<Toolbar disableGutters sx={ { gap: 1.5, mb: 2, flexWrap: 'wrap' } }>
 				<TextField
 					value={ newIp }
 					onChange={ ( e ) => {
@@ -455,8 +499,6 @@ export default function IpDataGrid( { listType = 'blacklist' } ) {
 
 				<Box sx={ { flexGrow: 1 } } />
 
-
-
 				{ hasValidLicense && rowSelectionModel.ids.size > 0 && (
 					<Button
 						variant="outlined"
@@ -465,51 +507,127 @@ export default function IpDataGrid( { listType = 'blacklist' } ) {
 						onClick={ handleDeleteSelected }
 						startIcon={ <DeleteOutlineIcon /> }
 					>
-						{ __( 'Delete', 'rest-api-firewall' ) } (
-						{ rowSelectionModel.ids.size })
+						{ __( 'Delete', 'rest-api-firewall' ) } ({ rowSelectionModel.ids.size })
 					</Button>
 				) }
 
-				<Stack direction="row" spacing={ 1 } alignItems="center">
-					<TextField
-						type="number"
-						value={ expiryValue }
-						onChange={ ( e ) => setExpiryValue( e.target.value ) }
-						placeholder={ __( 'Never', 'rest-api-firewall' ) }
-						label={ __( 'Release in', 'rest-api-firewall' ) }
-						size="small"
-						sx={ { width: 110 } }
-					/>
-					<Select
-						value={ expiryUnit }
-						onChange={ ( e ) => setExpiryUnit( e.target.value ) }
-						size="small"
-						sx={ { minWidth: 90 } }
-					>
-						<MenuItem value="hours">{ __( 'Hours', 'rest-api-firewall' ) }</MenuItem>
-						<MenuItem value="days">{ __( 'Days', 'rest-api-firewall' ) }</MenuItem>
-						<MenuItem value="weeks">{ __( 'Weeks', 'rest-api-firewall' ) }</MenuItem>
-						<MenuItem value="months">{ __( 'Months', 'rest-api-firewall' ) }</MenuItem>
-					</Select>
-					<FormControlLabel
-						control={
-							<Checkbox
-								checked={ applyToExisting }
-								onChange={ ( e ) =>
-									setApplyToExisting( e.target.checked )
-								}
-								size="small"
-								disabled={ ! expiryValue }
-							/>
-						}
-						label={
-							<Typography variant="body2">
-								{ __( 'Apply to existing', 'rest-api-firewall' ) }
+				<Tooltip
+					title={
+						! hasValidLicense
+							? __( 'Release time is a Pro feature', 'rest-api-firewall' )
+							: ''
+					}
+				>
+					<Stack spacing={ 0.5 } direction="row" alignItems="center" gap={1}>
+						<Chip size="small" variant="outlined" label={ expiryLabel } />
+						<Button
+							size="small"
+							variant="text"
+							onClick={ handleOpenExpiryPopover }
+						>
+							{ __( 'Set Release Time', 'rest-api-firewall' ) }
+						</Button>
+						
+					</Stack>
+				</Tooltip>
+
+				<Popover
+					open={ expiryPopoverOpen }
+					anchorEl={ anchorEl }
+					onClose={ handleCloseExpiryPopover }
+					anchorOrigin={ { vertical: 'bottom', horizontal: 'right' } }
+					transformOrigin={ { vertical: 'top', horizontal: 'right' } }
+				>
+					<Paper sx={ { p: 2, maxWidth: 300 } }>
+						<Stack spacing={ 1 }>
+							<Typography variant="subtitle2" gutterBottom>
+								{ __( 'Release Time', 'rest-api-firewall' ) }
 							</Typography>
-						}
-						sx={ { m: 0 } }
-					/>
-				</Stack>
+							<Typography variant="body2" color="text.secondary">
+								{ __(
+									'New entries will be automatically released after this delay. Leave empty for no expiry.',
+									'rest-api-firewall'
+								) }
+							</Typography>
+
+							<Stack>
+								<Stack pt={ 1 } direction="row" gap={ 1 } alignItems="flex-start">
+									<TextField
+										type="number"
+										value={ pendingExpiryValue }
+										onChange={ ( e ) => setPendingExpiryValue( e.target.value ) }
+										placeholder={ __( 'Never', 'rest-api-firewall' ) }
+										label={ __( 'Duration', 'rest-api-firewall' ) }
+										size="small"
+										disabled={ ! hasValidLicense }
+										sx={ { width: 110 } }
+									/>
+									<Select
+										value={ pendingExpiryUnit }
+										onChange={ ( e ) => setPendingExpiryUnit( e.target.value ) }
+										size="small"
+										disabled={ ! hasValidLicense }
+										sx={ { minWidth: 100 } }
+									>
+										<MenuItem value="hours">{ __( 'Hours', 'rest-api-firewall' ) }</MenuItem>
+										<MenuItem value="days">{ __( 'Days', 'rest-api-firewall' ) }</MenuItem>
+										<MenuItem value="weeks">{ __( 'Weeks', 'rest-api-firewall' ) }</MenuItem>
+										<MenuItem value="months">{ __( 'Months', 'rest-api-firewall' ) }</MenuItem>
+									</Select>
+									
+								</Stack>
+								{ ! hasValidLicense && (
+									<Typography variant="caption" color="text.secondary" sx={{ display: 'flex', pl: 1 }}>
+										{ __( 'Configure release time needs a license.', 'rest-api-firewall' ) }
+									</Typography>
+								) }
+							</Stack>
+
+							<Divider />
+
+							<Stack spacing={ 1 }>
+								{ rowSelectionModel.ids.size > 0 ? (
+									<Typography variant="body2" color="primary">
+										{ rowSelectionModel.ids.size }{ ' ' }
+										{ __( 'Selected entries will be updated.', 'rest-api-firewall' ) }
+									</Typography>
+								) : (
+									<FormControlLabel disabled={ !hasValidLicense || !pendingExpiryValue }
+										control={
+											<Checkbox
+												checked={ applyToAll }
+												onChange={ ( e ) => setApplyToAll( e.target.checked ) }
+												size="small"
+											/>
+										}
+										label={
+											<Typography variant="body2" color={ hasValidLicense ? 'text.primary' : 'text.disabled' }>
+												{ __( 'Apply to all existing entries', 'rest-api-firewall' ) }
+											</Typography>
+										}
+									/>
+								) }
+							</Stack>
+					
+							<Stack direction="row" justifyContent="flex-end" spacing={ 1 }>
+								<Button size="small" onClick={ handleCloseExpiryPopover }>
+									{ __( 'Cancel', 'rest-api-firewall' ) }
+								</Button>
+								<Button
+									size="small"
+									variant="contained"
+									disableElevation
+									onClick={ handleSaveExpiry }
+									disabled={ ! hasValidLicense || savingExpiry }
+								>
+									{ savingExpiry
+										? __( 'Saving…', 'rest-api-firewall' )
+										: __( 'Save', 'rest-api-firewall' ) }
+								</Button>
+							</Stack>
+						</Stack>
+					</Paper>
+				</Popover>
 
 				<IconButton onClick={ fetchEntries } disabled={ loading }>
 					<RefreshIcon />

@@ -172,7 +172,8 @@ class AdminPage {
 			padding-top: 1px;
 			padding: 8.5px 14px;
 		}
-		#rest-api-firewall-admin-page input[type=checkbox]:disabled {
+		#rest-api-firewall-admin-page input[type=checkbox]:disabled,
+		body.toplevel_page_rest-api-firewall-admin input[type=checkbox]:disabled {
 			opacity:0;
 		}
 		#rest-api-firewall-admin-page textarea:focus {
