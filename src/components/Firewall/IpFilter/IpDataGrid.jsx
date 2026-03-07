@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
+import { useState, useEffect, useCallback, useMemo, useRef } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useLicense } from '../../../contexts/LicenseContext';
 
@@ -8,13 +8,22 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
+import MenuItem from '@mui/material/MenuItem';
+import Popover from '@mui/material/Popover';
+import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
+import Checkbox from '@mui/material/Checkbox';
+import FormControl from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormHelperText from '@mui/material/FormHelperText';
 
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import LockIcon from '@mui/icons-material/Lock';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
 import { isValidIpOrCidr } from '../../../utils/sanitizeIp';
@@ -22,7 +31,7 @@ import { isValidIpOrCidr } from '../../../utils/sanitizeIp';
 export default function IpDataGrid( { listType = 'blacklist' } ) {
 	const { adminData } = useAdminData();
 	const { hasValidLicense, proNonce } = useLicense();
-	const nonce = proNonce || adminData.nonce;
+	const nonce = ( hasValidLicense && proNonce ) ? proNonce : adminData.nonce;
 	const { __ } = wp.i18n || {};
 
 	const [ rows, setRows ] = useState( [] );
@@ -42,6 +51,83 @@ export default function IpDataGrid( { listType = 'blacklist' } ) {
 	const [ newIp, setNewIp ] = useState( '' );
 	const [ ipError, setIpError ] = useState( '' );
 	const [ adding, setAdding ] = useState( false );
+
+	const [ expiryValue, setExpiryValue ] = useState( '' );
+	const [ expiryUnit, setExpiryUnit ] = useState( 'days' );
+	const [ expiryLoaded, setExpiryLoaded ] = useState( false );
+	const [ anchorEl, setAnchorEl ] = useState( null );
+	const [ applyToExisting, setApplyToExisting ] = useState( false );
+
+	const saveTimeoutRef = useRef( null );
+
+	const valueUnitToSeconds = ( val, unit ) => {
+		const v = parseInt( val, 10 );
+		if ( ! v || v <= 0 ) return 0;
+		const map = { hours: 3600, days: 86400, weeks: 604800, months: 2592000 };
+		return v * ( map[ unit ] ?? 86400 );
+	};
+
+	const secondsToValueUnit = ( seconds ) => {
+		if ( ! seconds || seconds <= 0 ) return { value: '', unit: 'days' };
+		if ( seconds % 2592000 === 0 ) return { value: String( seconds / 2592000 ), unit: 'months' };
+		if ( seconds % 604800 === 0 ) return { value: String( seconds / 604800 ), unit: 'weeks' };
+		if ( seconds % 86400 === 0 ) return { value: String( seconds / 86400 ), unit: 'days' };
+		return { value: String( Math.round( seconds / 3600 ) ), unit: 'hours' };
+	};
+
+	const fetchExpiry = useCallback( async () => {
+		try {
+			const response = await fetch( adminData.ajaxurl, {
+				method: 'POST',
+				headers: {
+					'Content-Type':
+						'application/x-www-form-urlencoded; charset=UTF-8',
+				},
+				body: new URLSearchParams( { action: 'get_ip_filter', nonce } ),
+			} );
+			const result = await response.json();
+			if ( result?.success && result?.data ) {
+				const parsed = secondsToValueUnit(
+					result.data.expiry_seconds ?? 0
+				);
+				setExpiryValue( parsed.value );
+				setExpiryUnit( parsed.unit );
+			}
+		} catch ( e ) {
+			// silent
+		} finally {
+			setExpiryLoaded( true );
+		}
+	}, [ adminData, nonce ] );
+
+	useEffect( () => {
+		fetchExpiry();
+	}, [ fetchExpiry ] );
+
+	useEffect( () => {
+		if ( ! expiryLoaded ) return;
+		if ( saveTimeoutRef.current ) clearTimeout( saveTimeoutRef.current );
+		saveTimeoutRef.current = setTimeout( async () => {
+			const expiry_seconds = valueUnitToSeconds( expiryValue, expiryUnit );
+			try {
+				await fetch( adminData.ajaxurl, {
+					method: 'POST',
+					headers: {
+						'Content-Type':
+							'application/x-www-form-urlencoded; charset=UTF-8',
+					},
+					body: new URLSearchParams( {
+						action: 'save_ip_filter',
+						nonce,
+						expiry_seconds,
+					} ),
+				} );
+			} catch ( e ) {
+				// silent.
+			}
+		}, 600 );
+		return () => clearTimeout( saveTimeoutRef.current );
+	}, [ expiryValue, expiryUnit, expiryLoaded ] );
 
 	const columns = useMemo( () => {
 		const baseColumns = [
@@ -234,9 +320,13 @@ export default function IpDataGrid( { listType = 'blacklist' } ) {
 
 			const result = await response.json();
 
-			if ( result?.success && result?.data?.entry ) {
+			if ( result?.success ) {
 				setNewIp( '' );
-				setRows( ( prev ) => [ result.data.entry, ...prev ] );
+				if ( result?.data?.entry ) {
+					setRows( ( prev ) => [ result.data.entry, ...prev ] );
+				} else {
+					fetchEntries();
+				}
 			} else {
 				setIpError(
 					result?.data?.message ||
@@ -353,6 +443,7 @@ export default function IpDataGrid( { listType = 'blacklist' } ) {
 				<Button
 					variant="contained"
 					size="small"
+					disableElevation
 					onClick={ handleAddIp }
 					disabled={ adding || ! newIp.trim() }
 					startIcon={ <AddIcon /> }
@@ -364,9 +455,7 @@ export default function IpDataGrid( { listType = 'blacklist' } ) {
 
 				<Box sx={ { flexGrow: 1 } } />
 
-				<IconButton onClick={ fetchEntries } disabled={ loading }>
-					<RefreshIcon />
-				</IconButton>
+
 
 				{ hasValidLicense && rowSelectionModel.ids.size > 0 && (
 					<Button
@@ -380,6 +469,51 @@ export default function IpDataGrid( { listType = 'blacklist' } ) {
 						{ rowSelectionModel.ids.size })
 					</Button>
 				) }
+
+				<Stack direction="row" spacing={ 1 } alignItems="center">
+					<TextField
+						type="number"
+						value={ expiryValue }
+						onChange={ ( e ) => setExpiryValue( e.target.value ) }
+						placeholder={ __( 'Never', 'rest-api-firewall' ) }
+						label={ __( 'Release in', 'rest-api-firewall' ) }
+						size="small"
+						sx={ { width: 110 } }
+					/>
+					<Select
+						value={ expiryUnit }
+						onChange={ ( e ) => setExpiryUnit( e.target.value ) }
+						size="small"
+						sx={ { minWidth: 90 } }
+					>
+						<MenuItem value="hours">{ __( 'Hours', 'rest-api-firewall' ) }</MenuItem>
+						<MenuItem value="days">{ __( 'Days', 'rest-api-firewall' ) }</MenuItem>
+						<MenuItem value="weeks">{ __( 'Weeks', 'rest-api-firewall' ) }</MenuItem>
+						<MenuItem value="months">{ __( 'Months', 'rest-api-firewall' ) }</MenuItem>
+					</Select>
+					<FormControlLabel
+						control={
+							<Checkbox
+								checked={ applyToExisting }
+								onChange={ ( e ) =>
+									setApplyToExisting( e.target.checked )
+								}
+								size="small"
+								disabled={ ! expiryValue }
+							/>
+						}
+						label={
+							<Typography variant="body2">
+								{ __( 'Apply to existing', 'rest-api-firewall' ) }
+							</Typography>
+						}
+						sx={ { m: 0 } }
+					/>
+				</Stack>
+
+				<IconButton onClick={ fetchEntries } disabled={ loading }>
+					<RefreshIcon />
+				</IconButton>
 			</Toolbar>
 
 			<DataGrid

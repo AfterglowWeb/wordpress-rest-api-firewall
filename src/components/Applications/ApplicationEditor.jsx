@@ -12,19 +12,15 @@ import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
-import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 
 import AddIcon from '@mui/icons-material/Add';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 
@@ -32,6 +28,7 @@ import { isValidIpOrCidr } from '../../utils/sanitizeIp';
 import { isValidOrigin } from '../../utils/sanitizeHost';
 import formatDate from '../../utils/formatDate';
 import LoadingMessage from '../LoadingMessage';
+import EntryToolbar from '../shared/EntryToolbar';
 
 function SectionHeader( { title, description } ) {
 	return (
@@ -156,7 +153,7 @@ export default function ApplicationEditor( { application, onBack } ) {
 	const [ loadError, setLoadError ] = useState( '' );
 
 	const [ title, setTitle ] = useState( application.title || '' );
-	const [ enabled, setEnabled ] = useState( application.active ?? true );
+	const [ enabled, setEnabled ] = useState( application.enabled ?? true );
 	const [ description, setDescription ] = useState( '' );
 	const [ allowedIps, setAllowedIps ] = useState( [] );
 	const [ allowedOrigins, setAllowedOrigins ] = useState( [] );
@@ -195,7 +192,7 @@ export default function ApplicationEditor( { application, onBack } ) {
 			if ( result?.success && result?.data?.entry ) {
 				const e = result.data.entry;
 				setTitle( e.title || '' );
-				setEnabled( e.active ?? true );
+				setEnabled( e.enabled ?? true );
 				setPolicyActive( e.policy ?? false );
 				setAuthor( e.author_name || '' );
 				setDateCreated(
@@ -386,119 +383,24 @@ export default function ApplicationEditor( { application, onBack } ) {
 	);
 
 	if ( loading ) {
-		return <LoadingMessage />;
+		return <LoadingMessage />
 	}
 
 	return (
 		<Stack spacing={ 0 }>
-			<Toolbar
-				sx={ {
-					gap: 2,
-					justifyContent: 'space-between',
-					alignItems: 'center',
-					borderBottom: 1,
-					borderColor: 'divider',
-					flexWrap: 'wrap',
-					py: { xs: 2, sm: 1 },
-				} }
-			>
-				<Stack direction="row" gap={ 2 }>
-					<Stack alignItems="center" justifyContent="center">
-						<IconButton
-							size="small"
-							onClick={ onBack }
-							aria-label={ __( 'Back', 'rest-api-firewall' ) }
-						>
-							<ArrowBackIcon />
-						</IconButton>
-					</Stack>
-					<Stack
-						spacing={ 0 }
-						direction={ { xs: 'column', sm: 'row' } }
-						alignItems={ { xs: 'flex-start', sm: 'center' } }
-						gap={ { xs: 0, sm: 2 } }
-					>
-						<Typography
-							variant="h6"
-							fontWeight={ 600 }
-							sx={ { flex: 1, minWidth: 0 } }
-							noWrap
-						>
-							{ title || application.title }
-						</Typography>
-						{ ( author || dateCreated || dateModified ) && (
-							<Stack
-								direction={ { xs: 'column', sm: 'row' } }
-								gap={ { xs: 0, xl: 2 } }
-								flexWrap="wrap"
-							>
-								<FormControlLabel
-									control={
-										<Switch
-											checked={ enabled }
-											onChange={ ( e ) =>
-												setEnabled( e.target.checked )
-											}
-											size="small"
-										/>
-									}
-									label={ __(
-										'Active',
-										'rest-api-firewall'
-									) }
-								/>
-								<Typography
-									variant="caption"
-									color="text.secondary"
-								>
-									{ author && (
-										<span>
-											{ author }
-											{ dateCreated &&
-												` @ ${ dateCreated }` }
-										</span>
-									) }
-									{ dateModified && (
-										<>
-											<br />
-											<span>
-												{ __(
-													'Mod.',
-													'rest-api-firewall'
-												) }{ ' ' }
-												{ dateModified }
-											</span>
-										</>
-									) }
-								</Typography>
-							</Stack>
-						) }
-					</Stack>
-				</Stack>
-				<Stack direction="row" gap={ 2 }>
-					<Button
-						variant="contained"
-						size="small"
-						disableElevation
-						disabled={ saving || ! title.trim() }
-						onClick={ handleSave }
-					>
-						{ __( 'Save', 'rest-api-firewall' ) }
-					</Button>
-
-					{ ! isNew && (
-						<Button
-							variant="outlined"
-							color="error"
-							size="small"
-							startIcon={ <DeleteOutlineIcon /> }
-							onClick={ handleDelete }
-						>
-							{ __( 'Delete', 'rest-api-firewall' ) }
-						</Button>
-					) }
-				</Stack>
-			</Toolbar>
+			<EntryToolbar 
+				isNew={ isNew }
+				title={ title }
+				author={ author }
+				dateCreated={ dateCreated }
+				dateModified={ dateModified }
+				handleBack={ onBack }
+				handleSave={ handleSave }
+				handleDelete={ handleDelete }
+				saving={ saving }
+				enabled={ enabled }
+				setEnabled={ setEnabled }
+			/>
 
 			{ loadError && <Alert severity="error">{ loadError }</Alert> }
 
@@ -764,7 +666,6 @@ export default function ApplicationEditor( { application, onBack } ) {
 								'Requests allowed per window',
 								'rest-api-firewall'
 							) }
-							inputProps={ { min: 1 } }
 							sx={ { maxWidth: 200 } }
 						/>
 						<TextField
@@ -782,7 +683,6 @@ export default function ApplicationEditor( { application, onBack } ) {
 								'Rolling time window',
 								'rest-api-firewall'
 							) }
-							inputProps={ { min: 1 } }
 							sx={ { maxWidth: 200 } }
 						/>
 					</Stack>
@@ -821,7 +721,6 @@ export default function ApplicationEditor( { application, onBack } ) {
 
 				<Divider />
 
-				{ /* REST Output Settings — global WP options displayed per-application */ }
 				<Stack spacing={ 2 }>
 					<Stack
 						direction="row"

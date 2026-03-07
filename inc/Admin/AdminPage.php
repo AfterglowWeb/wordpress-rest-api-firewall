@@ -144,16 +144,33 @@ class AdminPage {
 		#rest-api-firewall-admin-page input[type=week],
 		body.toplevel_page_rest-api-firewall-admin input[type=text],
 		body.toplevel_page_rest-api-firewall-admin input[type=password],
-		body.toplevel_page_rest-api-firewall-admin input[type=email] {
+		body.toplevel_page_rest-api-firewall-admin input[type=email],
+		body.toplevel_page_rest-api-firewall-admin input[type=number],
+		body.toplevel_page_rest-api-firewall-admin input[type=tel],
+		body.toplevel_page_rest-api-firewall-admin input[type=url] {
 			box-shadow: unset;
 			border-radius: 4px;
-			border: 0;
 			background-color: none;
-			color: currentColor;
-			padding: 16.5px 14px;
 			line-height: normal;
 			min-height: auto;
+			font: inherit;
+			letter-spacing: inherit;
+			color: currentColor;
+			border: 0;
+			box-sizing: content-box;
+			background: none;
 			height: 1.4375em;
+			margin: 0;
+			-webkit-tap-highlight-color: transparent;
+			display: block;
+			min-width: 0;
+			width: 100%;
+			-webkit-animation-name: mui-auto-fill-cancel;
+			animation-name: mui-auto-fill-cancel;
+			-webkit-animation-duration: 10ms;
+			animation-duration: 10ms;
+			padding-top: 1px;
+			padding: 8.5px 14px;
 		}
 		#rest-api-firewall-admin-page input[type=checkbox]:disabled {
 			opacity:0;

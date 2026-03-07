@@ -6,6 +6,7 @@ use cmk\RestApiFirewall\Admin\AdminPage;
 use cmk\RestApiFirewall\Admin\Documentation;
 use cmk\RestApiFirewall\Routes\Routes;
 use cmk\RestApiFirewall\Firewall\IpBlackList;
+use cmk\RestApiFirewall\Firewall\IpFilter\IpSchema;
 use cmk\RestApiFirewall\Policy\PolicyRepository;
 use cmk\RestApiFirewall\Policy\TestPolicy;
 use cmk\RestApiFirewall\Webhook\WebhookService;
@@ -25,6 +26,7 @@ final class Bootstrap {
 
 	private function __construct() {
 
+		IpSchema::install();
 		CoreOptions::get_instance();
 		IpBlackList::get_instance();
 		Routes::register();

@@ -1,28 +1,25 @@
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
+import { useApplication } from '../../contexts/ApplicationContext';
 import useProActions from '../../hooks/useProActions';
 import formatDate from '../../utils/formatDate';
+import EntryToolbar from '../shared/EntryToolbar';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
-import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 
 import AddIcon from '@mui/icons-material/Add';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import WebhookEditorSecretManager from './WebhookEditorSecretManager';
@@ -142,6 +139,7 @@ function HeadersEditor( { headers, onChange } ) {
 export default function WebhookEditor( { webhook, onBack } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
+	const { selectedApplicationId, setDirtyFlag } = useApplication();
 	const nonce = proNonce || adminData.nonce;
 	const { __ } = wp.i18n || {};
 
@@ -155,8 +153,8 @@ export default function WebhookEditor( { webhook, onBack } ) {
 	const [ title, setTitle ] = useState( webhook.title || '' );
 	const [ endpoint, setEndpoint ] = useState( webhook.endpoint || '' );
 	const [ method, setMethod ] = useState( webhook.method || 'POST' );
-	const [ active, setActive ] = useState(
-		webhook.active !== undefined ? webhook.active : true
+	const [ enabled, setEnabled ] = useState(
+		webhook.enabled !== undefined ? webhook.enabled : true
 	);
 	const [ headers, setHeaders ] = useState(
 		normalizeHeaders( webhook.headers )
@@ -196,7 +194,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 				setTitle( e.title || '' );
 				setEndpoint( e.endpoint || '' );
 				setMethod( e.method || 'POST' );
-				setActive( e.active !== undefined ? e.active : true );
+				setEnabled( e.enabled !== undefined ? e.enabled : true );
 				setHeaders( normalizeHeaders( e.headers ) );
 				setTimeoutSeconds( e.timeout_seconds ?? 10 );
 				setRetryCount( e.retry_count ?? 0 );
@@ -241,13 +239,14 @@ export default function WebhookEditor( { webhook, onBack } ) {
 		title,
 		endpoint,
 		method,
-		active: active ? '1' : '0',
+		enabled: enabled ? '1' : '0',
 		headers: JSON.stringify(
 			headers.map( ( { key, value } ) => ( { key, value } ) )
 		),
 		timeout_seconds: String( parseInt( timeoutSeconds, 10 ) || 10 ),
 		retry_count: String( parseInt( retryCount, 10 ) || 0 ),
 		body_payload: bodyPayload,
+		application_id: selectedApplicationId || webhook.application_id || '',
 		type,
 		...( pendingSecret !== undefined
 			? { secret: pendingSecret ?? '' }
@@ -332,121 +331,19 @@ export default function WebhookEditor( { webhook, onBack } ) {
 	return (
 		<Stack spacing={ 0 }>
 			{ /* Toolbar */ }
-			<Toolbar
-				sx={ {
-					gap: 2,
-					justifyContent: 'space-between',
-					alignItems: 'center',
-					borderBottom: 1,
-					borderColor: 'divider',
-					flexWrap: 'wrap',
-					py: { xs: 2, sm: 1 },
-				} }
-			>
-				<Stack direction="row" gap={ 2 }>
-					<Stack alignItems="center" justifyContent="center">
-						<IconButton
-							size="small"
-							onClick={ onBack }
-							aria-label={ __( 'Back', 'rest-api-firewall' ) }
-						>
-							<ArrowBackIcon />
-						</IconButton>
-					</Stack>
-
-					<Stack
-						spacing={ 0 }
-						direction={ { xs: 'column', sm: 'row' } }
-						alignItems={ { xs: 'flex-start', sm: 'center' } }
-						gap={ { xs: 0, sm: 2 } }
-					>
-						<Typography variant="h6" fontWeight={ 600 } sx={ { flex: 1, minWidth: 0 } } noWrap>
-							{ isNew
-								? __( 'New Webhook', 'rest-api-firewall' )
-								: title }
-						</Typography>
-
-						{ ! isNew && (
-							<Stack
-								direction={ { xs: 'column', sm: 'row' } }
-								gap={ { xs: 0, xl: 2 } }
-								flexWrap="wrap"
-							>
-								<FormControlLabel
-									control={
-										<Switch
-											checked={ active }
-											onChange={ ( e ) =>
-												setActive( e.target.checked )
-											}
-											size="small"
-										/>
-									}
-									label={ __(
-										'Active',
-										'rest-api-firewall'
-									) }
-								/>
-								{ type && type !== 'general' && (
-									<Chip
-										label={ type }
-										size="small"
-										variant="outlined"
-									/>
-								) }
-								{ ( dateCreated || dateModified ) && (
-									<Typography
-										variant="caption"
-										color="text.secondary"
-									>
-										{ dateCreated && (
-											<span>{ dateCreated }</span>
-										) }
-										{ dateModified && (
-											<>
-												<br />
-												<span>
-													{ __(
-														'Mod.',
-														'rest-api-firewall'
-													) }{ ' ' }
-													{ dateModified }
-												</span>
-											</>
-										) }
-									</Typography>
-								) }
-							</Stack>
-						) }
-					</Stack>
-				</Stack>
-
-				<Stack direction="row" gap={ 2 }>
-					<Button
-						variant="contained"
-						size="small"
-						disableElevation
-						disabled={ saving || ( isNew && ! title ) }
-						onClick={ handleSave }
-					>
-						{ isNew
-							? __( 'Create Webhook', 'rest-api-firewall' )
-							: __( 'Save', 'rest-api-firewall' ) }
-					</Button>
-
-					{ ! isNew && (
-						<Button
-							variant="outlined"
-							color="error"
-							size="small"
-							startIcon={ <DeleteOutlineIcon /> }
-							onClick={ handleDelete }
-						>
-							{ __( 'Delete', 'rest-api-firewall' ) }
-						</Button>
-					) }
-				</Stack>
-			</Toolbar>
+			<EntryToolbar
+				isNew={ isNew }
+				title={ title }
+				dateCreated={ dateCreated }
+				dateModified={ dateModified }
+				handleBack={ onBack }
+				handleSave={ handleSave }
+				handleDelete={ handleDelete }
+				saving={ saving }
+				enabled={ enabled }
+				setEnabled={ setEnabled }
+				saveLabel={ isNew ? __( 'Create Webhook', 'rest-api-firewall' ) : null }
+			/>
 
 			{ loadError && <Alert severity="error">{ loadError }</Alert> }
 
@@ -455,20 +352,6 @@ export default function WebhookEditor( { webhook, onBack } ) {
 				spacing={ 3 }
 				sx={ { maxWidth: 760 } }
 			>
-				{ isNew && (
-					<FormControlLabel
-						control={
-							<Switch
-								checked={ active }
-								onChange={ ( e ) =>
-									setActive( e.target.checked )
-								}
-								size="small"
-							/>
-						}
-						label={ __( 'Active', 'rest-api-firewall' ) }
-					/>
-				) }
 
 				<Stack spacing={ 2 }>
 					<SectionHeader
@@ -487,9 +370,6 @@ export default function WebhookEditor( { webhook, onBack } ) {
 						required
 						sx={ { 
 							maxWidth: 340,
-							'& .MuiInputLabel-root:not(.Mui-focused)': {
-								transform: 'translate(14px, 16px) scale(1)',
-							}
 						}}
 					/>
 
@@ -504,10 +384,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 							onChange={ ( e ) => setEndpoint( e.target.value ) }
 							placeholder="https://api.example.com/webhook"
 							sx={ { 
-								flex: 1,
-								'& .MuiInputLabel-root:not(.Mui-focused)': {
-									transform: 'translate(14px, 16px) scale(1)',
-								}
+								flex: 1
 							}}
 							helperText={ __(
 								'The URL to send the webhook request to.',
@@ -646,7 +523,6 @@ export default function WebhookEditor( { webhook, onBack } ) {
 							onChange={ ( e ) =>
 								setTimeoutSeconds( e.target.value )
 							}
-							inputProps={ { min: 1, max: 60 } }
 							sx={ { maxWidth: 180 } }
 							helperText={ __(
 								'Request timeout',
@@ -661,7 +537,6 @@ export default function WebhookEditor( { webhook, onBack } ) {
 							onChange={ ( e ) =>
 								setRetryCount( e.target.value )
 							}
-							inputProps={ { min: 0, max: 10 } }
 							sx={ { maxWidth: 160 } }
 							helperText={ __(
 								'Retries on failure',

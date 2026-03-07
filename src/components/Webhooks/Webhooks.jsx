@@ -42,7 +42,7 @@ export default function Webhooks() {
 
 	const [ fetchError, setFetchError ] = useState( '' );
 
-	const [ editingWebhook, setEditingWebook ] = useState( null );
+	const [ editing, setEditing ] = useState( null );
 
 	const handleDeleteOne = useCallback(
 		( id, title ) => {
@@ -76,7 +76,7 @@ export default function Webhooks() {
 	const columns = useMemo(
 		() => [
 			{
-				field: 'actions',
+				field: '_actions',
 				headerName: __( 'Actions', 'rest-api-firewall' ),
 				width: 80,
 				sortable: false,
@@ -94,7 +94,7 @@ export default function Webhooks() {
 				),
 			},
 			{
-				field: 'active',
+				field: 'enabled',
 				headerName: __( 'Active', 'rest-api-firewall' ),
 				width: 100,
 				renderCell: ( params ) =>
@@ -117,29 +117,24 @@ export default function Webhooks() {
 				field: 'title',
 				headerName: __( 'Title', 'rest-api-firewall' ),
 				flex: 1,
-				minWidth: 150,
+				minWidth: 140,
 				renderCell: ( params ) => (
-					<Stack
-						direction="row"
-						spacing={ 0.5 }
-						alignItems="center"
-						sx={ { cursor: 'pointer' } }
-						onClick={ () => setEditingWebook( params.row ) }
+					<a
+					href="#"
+					style={ {
+						display: 'flex',
+						alignItems: 'center',
+						gap: '4px',
+						fontFamily: 'monospace',
+						color: 'primary.main',
+					} }
+					onClick={ () => setEditing( params.row ) }
 					>
-						<Typography
-							variant="body2"
-							sx={ {
-								fontFamily: 'monospace',
-								color: 'primary.main',
-								'&:hover': { textDecoration: 'underline' },
-							} }
-						>
-							{ params.value }
-						</Typography>
+					{ params.value }
 						<OpenInNewIcon
-							sx={ { fontSize: 13, color: 'text.disabled' } }
+							sx={ { fontSize: 13, color: 'primary.main' } }
 						/>
-					</Stack>
+					</a>
 				),
 			},
 			{
@@ -343,12 +338,12 @@ export default function Webhooks() {
 		);
 	};
 
-	if ( editingWebhook ) {
+	if ( editing ) {
 		return (
 			<WebhookEditor
-				webhook={ editingWebhook }
+				webhook={ editing }
 				onBack={ () => {
-					setEditingWebook( null );
+					setEditing( null );
 					fetchEntries();
 				} }
 			/>
@@ -363,10 +358,10 @@ export default function Webhooks() {
 					size="small"
 					disableElevation
 					onClick={ () =>
-						setEditingWebook( {
+						setEditing( {
 							id: null,
 							title: '',
-							active: true,
+							enabled: true,
 							method: 'POST',
 							type: 'general',
 							headers: [],

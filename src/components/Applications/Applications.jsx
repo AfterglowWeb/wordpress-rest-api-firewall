@@ -42,7 +42,7 @@ export default function Applications() {
 
 	const [ fetchError, setFetchError ] = useState( '' );
 
-	const [ editingApp, setEditingApp ] = useState( null );
+	const [ editingApp, setEditing ] = useState( null );
 
 	const handleDeleteOne = useCallback(
 		( id, title ) => {
@@ -79,7 +79,7 @@ export default function Applications() {
 	const columns = useMemo(
 		() => [
 			{
-				field: 'actions',
+				field: '_actions',
 				headerName: __( 'Actions', 'rest-api-firewall' ),
 				width: 80,
 				sortable: false,
@@ -97,7 +97,7 @@ export default function Applications() {
 				),
 			},
 			{
-				field: 'active',
+				field: 'enabled',
 				headerName: __( 'Active', 'rest-api-firewall' ),
 				width: 100,
 				renderCell: ( params ) =>
@@ -122,27 +122,22 @@ export default function Applications() {
 				flex: 1,
 				minWidth: 150,
 				renderCell: ( params ) => (
-					<Stack
-						direction="row"
-						spacing={ 0.5 }
-						alignItems="center"
-						sx={ { cursor: 'pointer' } }
-						onClick={ () => setEditingApp( params.row ) }
-					>
-						<Typography
-							variant="body2"
-							sx={ {
-								fontFamily: 'monospace',
-								color: 'primary.main',
-								'&:hover': { textDecoration: 'underline' },
-							} }
-						>
-							{ params.value }
-						</Typography>
-						<OpenInNewIcon
-							sx={ { fontSize: 13, color: 'text.disabled' } }
-						/>
-					</Stack>
+					<a
+					href="#"
+					style={ {
+						display: 'flex',
+						alignItems: 'center',
+						gap: '4px',
+						fontFamily: 'monospace',
+						color: 'primary.main',
+					} }
+					onClick={ () => setEditing( params.row ) }
+				>
+					{ params.value }
+					<OpenInNewIcon
+						sx={ { fontSize: 13, color: 'primary.main' } }
+					/>
+				</a>
 				),
 			},
 			{
@@ -263,7 +258,7 @@ export default function Applications() {
 			<ApplicationEditor
 				application={ editingApp }
 				onBack={ () => {
-					setEditingApp( null );
+					setEditing( null );
 					fetchEntries();
 				} }
 			/>
@@ -278,10 +273,10 @@ export default function Applications() {
 					size="small"
 					disableElevation
 					onClick={ () =>
-						setEditingApp( {
+						setEditing( {
 							id: null,
 							title: '',
-							active: false,
+							enabled: false,
 							policy: false,
 						} )
 					}
