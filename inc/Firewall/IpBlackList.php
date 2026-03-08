@@ -414,8 +414,9 @@ class IpBlackList {
 
 		wp_send_json_success(
 			array(
-				'countries' => self::get_all_countries(),
-				'stats'     => $stats,
+				'countries'        => self::get_all_countries(),
+				'stats'            => $stats,
+				'blocked_countries' => array(),
 			),
 			200
 		);

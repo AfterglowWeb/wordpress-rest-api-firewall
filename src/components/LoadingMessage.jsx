@@ -2,7 +2,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 
-export default function LoadingMessage() {
+export default function LoadingMessage({ message = null }) {
 	const { __ } = wp.i18n || {};
 	return (
 		<Stack
@@ -13,7 +13,7 @@ export default function LoadingMessage() {
 			spacing={ 1 }
 		>
 			<Typography color="text.secondary">
-				{ __( 'Loading…', 'rest-api-firewall' ) }
+				{ message || __( 'Loading…', 'rest-api-firewall' ) }
 			</Typography>
 			<LinearProgress sx={ { width: '100%', maxWidth: 360 } } />
 		</Stack>

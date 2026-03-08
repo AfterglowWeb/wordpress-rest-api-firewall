@@ -172,6 +172,22 @@ class AdminPage {
 			padding-top: 1px;
 			padding: 8.5px 14px;
 		}
+		#rest-api-firewall-admin-page input[type=checkbox], 
+		#rest-api-firewall-admin-page input[type=radio] {
+			cursor: inherit;
+			position: absolute;
+			opacity: 0;
+			width: 100%;
+			height: 100%;
+			top: 0;
+			left: 0;
+			margin: 0;
+			padding: 0!important;
+			z-index: 1;
+			min-width: unset;
+			box-shadow: unset;
+
+		}
 		#rest-api-firewall-admin-page input[type=checkbox]:disabled,
 		body.toplevel_page_rest-api-firewall-admin input[type=checkbox]:disabled {
 			opacity:0;
