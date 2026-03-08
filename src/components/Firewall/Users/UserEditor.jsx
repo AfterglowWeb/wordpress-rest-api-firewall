@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useLicense } from '../../../contexts/LicenseContext';
+import { useApplication } from '../../../contexts/ApplicationContext';
+
 import useProActions from '../../../hooks/useProActions';
 import formatDate from '../../../utils/formatDate';
 
@@ -47,6 +49,8 @@ const HTTP_METHODS = [ 'get', 'post', 'put', 'patch', 'delete' ];
 export default function UserEditor( { user, onBack } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
+	const { selectedApplicationId } = useApplication();
+	
 	const nonce = proNonce || adminData.nonce;
 	const { __, sprintf } = wp.i18n || {};
 
@@ -58,12 +62,13 @@ export default function UserEditor( { user, onBack } ) {
 	const [ loadError, setLoadError ] = useState( '' );
 
 	const [ wpUserId, setWpUserId ] = useState( '' );
-	const [ displayName, setDisplayName ] = useState( user.display_name || '' );
+	const [ title, setTitle ] = useState( user.display_name || '' );
+	const [ author, setAuthor ] = useState( user.author_name || '' );
 	const [ appTitle, setAppTitle ] = useState( user.app_title || '' );
 	const [ dateCreated, setDateCreated ] = useState( '' );
 	const [ dateModified, setDateModified ] = useState( '' );
 
-	const [ status, setStatus ] = useState( user.status === 'active' );
+	const [ enabled, setEnabled ] = useState( user.status === 'active' );
 	const [ authMethod, setAuthMethod ] = useState( user.auth_method || 'any' );
 	const [ authConfig, setAuthConfig ] = useState( user.auth_config || {} );
 	const [ allowedMethods, setAllowedMethods ] = useState(
@@ -99,15 +104,9 @@ export default function UserEditor( { user, onBack } ) {
 
 			if ( result?.success && result?.data?.entry ) {
 				const e = result.data.entry;
-				setDisplayName( e.display_name || '' );
-				setAppTitle( e.app_title || '' );
-				setStatus( e.status === 'active' );
-				setAuthMethod( e.auth_method || 'any' );
-				setAuthConfig( e.auth_config || {} );
-				setAllowedMethods( e.allowed_methods || [ 'get' ] );
-				setRateLimitRequests( e.rate_limit_max_requests ?? 100 );
-				setRateLimitWindow( e.rate_limit_window_seconds ?? 60 );
-				setRateLimitRelease( e.rate_limit_release_seconds ?? 300 );
+				setTitle( e.display_name || '' );
+				setAuthor( e.author_name || '' );
+				setEnabled( e.status === 'active' );
 				setDateCreated(
 					formatDate(
 						e.date_created,
@@ -122,6 +121,15 @@ export default function UserEditor( { user, onBack } ) {
 						adminData.time_format
 					)
 				);
+
+				setAppTitle( e.app_title || '' );
+				setAuthMethod( e.auth_method || 'any' );
+				setAuthConfig( e.auth_config || {} );
+				setAllowedMethods( e.allowed_methods || [ 'get' ] );
+				setRateLimitRequests( e.rate_limit_max_requests ?? 100 );
+				setRateLimitWindow( e.rate_limit_window_seconds ?? 60 );
+				setRateLimitRelease( e.rate_limit_release_seconds ?? 300 );
+				
 			} else {
 				setLoadError(
 					result?.data?.message ||
@@ -151,7 +159,8 @@ export default function UserEditor( { user, onBack } ) {
 	};
 
 	const commonPayload = {
-		status: status ? 'active' : 'inactive',
+		application_id: selectedApplicationId,
+		status: enabled ? 'active' : 'inactive',
 		auth_method: authMethod,
 		auth_config: JSON.stringify( authConfig ),
 		allowed_methods: JSON.stringify( allowedMethods ),
@@ -229,134 +238,39 @@ export default function UserEditor( { user, onBack } ) {
 
 	return (
 		<Stack spacing={ 0 }>
-			<Toolbar
-				sx={ {
-					gap: 2,
-					justifyContent: 'space-between',
-					alignItems: 'center',
-					borderBottom: 1,
-					borderColor: 'divider',
-					flexWrap: 'wrap',
-					py: { xs: 2, sm: 1 },
-				} }
+			<EntryToolbar
+				isNew={ isNew }
+				title={ title }
+				author={ author }
+				dateCreated={ dateCreated }
+				dateModified={ dateModified }
+				handleBack={ onBack }
+				handleSave={ handleSave }
+				handleDelete={ handleDelete }
+				saving={ saving }
+				enabled={ isNew ? null : enabled }
+				setEnabled={ isNew ? null : ( checked ) => { setEnabled( checked ); setDirty( true ); } }
 			>
-				<Stack direction="row" gap={ 2 }>
-					<Stack alignItems="center" justifyContent="center">
-						<IconButton
-							size="small"
-							onClick={ onBack }
-							aria-label={ __( 'Back', 'rest-api-firewall' ) }
-						>
-							<ArrowBackIcon />
-						</IconButton>
-					</Stack>
-					<Stack
-						spacing={ 0 }
-						direction={ { xs: 'column', sm: 'row' } }
-						alignItems={ { xs: 'flex-start', sm: 'center' } }
-						gap={ { xs: 0, sm: 2 } }
-					>
-						<Typography variant="h6" fontWeight={ 600 } noWrap>
-							{ isNew
-								? __( 'New User', 'rest-api-firewall' )
-								: displayName }
-						</Typography>
-						{ ! isNew && (
-							<Stack
-								direction={ { xs: 'column', sm: 'row' } }
-								gap={ { xs: 0, xl: 2 } }
-								flexWrap="wrap"
-							>
-								<FormControlLabel
-									control={
-										<Switch
-											checked={ status }
-											onChange={ ( e ) =>
-												setStatus( e.target.checked )
-											}
-											size="small"
-										/>
-									}
-									label={ __(
-										'Active',
-										'rest-api-firewall'
-									) }
-								/>
-								{ ( appTitle ||
-									dateCreated ||
-									dateModified ) && (
-									<Typography
-										variant="caption"
-										color="text.secondary"
-										sx={ { textAlign: 'left' } }
-									>
-										{ appTitle && (
-											<span>
-												{ sprintf(
-													__(
-														'Added to %s',
-														'rest-api-firewall'
-													),
-													appTitle
-												) }
-											</span>
-										) }
-										{ dateCreated && (
-											<span>
-												{ sprintf(
-													__(
-														'@ %s',
-														'rest-api-firewall'
-													),
-													dateCreated
-												) }
-											</span>
-										) }
-										{ dateModified && (
-											<>
-												<br />
-												<span>
-													{ __(
-														'Modified @',
-														'rest-api-firewall'
-													) }{ ' ' }
-													{ dateModified }
-												</span>
-											</>
-										) }
-									</Typography>
-								) }
-							</Stack>
-						) }
-					</Stack>
-				</Stack>
-
-				<Stack direction="row" gap={ 2 }>
-					<Button
-						variant="contained"
-						size="small"
-						disableElevation
-						disabled={ saving || ( isNew && ! wpUserId ) }
-						onClick={ handleSave }
-					>
-						{ isNew
-							? __( 'Add User', 'rest-api-firewall' )
-							: __( 'Save', 'rest-api-firewall' ) }
-					</Button>
-
-					{ ! isNew && (
-						<Button
-							variant="outlined"
-							color="error"
-							size="small"
-							startIcon={ <DeleteOutlineIcon /> }
-							onClick={ handleDelete }
-						>
-							{ __( 'Delete', 'rest-api-firewall' ) }
-						</Button>
+			{ appTitle && (
+				<Typography
+					variant="caption"
+					color="text.secondary"
+					sx={ { textAlign: 'left' } }
+				>
+					{ appTitle && (
+						<span>
+							{ sprintf(
+								__(
+									'Added to %s',
+									'rest-api-firewall'
+								),
+								appTitle
+							) }
+						</span>
 					) }
-				</Stack>
-			</Toolbar>
+				</Typography>
+			) }
+			</EntryToolbar>
 
 			{ loadError && <Alert severity="error">{ loadError }</Alert> }
 
@@ -402,19 +316,6 @@ export default function UserEditor( { user, onBack } ) {
 								) ) }
 							</Select>
 						</FormControl>
-
-						<FormControlLabel
-							control={
-								<Switch
-									checked={ status }
-									onChange={ ( e ) =>
-										setStatus( e.target.checked )
-									}
-									size="small"
-								/>
-							}
-							label={ __( 'Active', 'rest-api-firewall' ) }
-						/>
 
 						<Divider />
 					</Stack>

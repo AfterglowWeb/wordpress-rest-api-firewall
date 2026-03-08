@@ -14,7 +14,6 @@ import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SendIcon from '@mui/icons-material/Send';
 
 import useProActions from '../../hooks/useProActions';
@@ -226,7 +225,6 @@ export default function MailEditor( { mail, onBack } ) {
 				saving={ saving }
 				enabled={ isNew ? null : enabled }
 				setEnabled={ isNew ? null : ( checked ) => { setEnabled( checked ); setDirty( true ); } }
-				saveLabel={ isNew ? __( 'Create', 'rest-api-firewall' ) : null }
 			>
 				<Tooltip
 					title={

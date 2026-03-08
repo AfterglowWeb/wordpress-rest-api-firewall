@@ -3,7 +3,6 @@ import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useDialog, DIALOG_TYPES } from '../../../contexts/DialogContext';
 import { useLicense } from '../../../contexts/LicenseContext';
 
-import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -15,7 +14,6 @@ import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import Typography from '@mui/material/Typography';
 
 import PublicIcon from '@mui/icons-material/Public';
 import TableViewIcon from '@mui/icons-material/TableView';
@@ -35,7 +33,8 @@ export default function IpFilter() {
 		mode: 'blacklist',
 	} );
 	const [ currentTab, setCurrentTab ] = useState( 0 );
-	const { hasValidLicense } = useLicense();
+	const { hasValidLicense, proNonce } = useLicense();
+	const nonce = proNonce || adminData.nonce;
 	const { openDialog, updateDialog } = useDialog();
 	const isIpFilterDisabled = ! settings.enabled;
 	const isDisabled = ! hasValidLicense || isIpFilterDisabled;
@@ -54,7 +53,7 @@ export default function IpFilter() {
 				},
 				body: new URLSearchParams( {
 					action: 'get_ip_filter',
-					nonce: adminData.nonce,
+					nonce,
 				} ),
 			} );
 
@@ -90,7 +89,7 @@ export default function IpFilter() {
 					},
 					body: new URLSearchParams( {
 						action: 'save_ip_filter',
-						nonce: adminData.nonce,
+						nonce,
 						...updates,
 					} ),
 				} );

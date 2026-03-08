@@ -330,7 +330,6 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 	return (
 		<Stack spacing={ 0 }>
-			{ /* Toolbar */ }
 			<EntryToolbar
 				isNew={ isNew }
 				title={ title }
@@ -342,7 +341,6 @@ export default function WebhookEditor( { webhook, onBack } ) {
 				saving={ saving }
 				enabled={ enabled }
 				setEnabled={ setEnabled }
-				saveLabel={ isNew ? __( 'Create Webhook', 'rest-api-firewall' ) : null }
 			/>
 
 			{ loadError && <Alert severity="error">{ loadError }</Alert> }

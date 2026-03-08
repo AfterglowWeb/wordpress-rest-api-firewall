@@ -292,7 +292,7 @@ export default function Users() {
 	}
 
 	return (
-		<Stack spacing={ 2 } p={ { xs: 2, sm: 4 } }>
+		<Stack spacing={ 2 } flexGrow={ 1 } p={ { xs: 2, sm: 4 } }>
 			<Toolbar disableGutters sx={ { gap: 2, mb: 2, flexWrap: 'wrap' } }>
 				<Button
 					variant="contained"
