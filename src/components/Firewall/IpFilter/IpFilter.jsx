@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useDialog, DIALOG_TYPES } from '../../../contexts/DialogContext';
 import { useLicense } from '../../../contexts/LicenseContext';
+import { useApplication } from '../../../contexts/ApplicationContext';
 
 import Alert from '@mui/material/Alert';
 import FormControl from '@mui/material/FormControl';
@@ -14,7 +15,6 @@ import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-
 import PublicIcon from '@mui/icons-material/Public';
 import TableViewIcon from '@mui/icons-material/TableView';
 import LockOutlineIcon from '@mui/icons-material/LockOutline';
@@ -22,6 +22,7 @@ import LockOutlineIcon from '@mui/icons-material/LockOutline';
 import IpDataGrid from './IpDataGrid';
 import CountryBlockList from './CountryBlockList';
 import LoadingMessage from '../../LoadingMessage';
+import AllowedOrigins from '../Users/AllowedOrigins';
 
 export default function IpFilter() {
 	const { adminData } = useAdminData();
@@ -36,6 +37,7 @@ export default function IpFilter() {
 	const { hasValidLicense, proNonce } = useLicense();
 	const nonce = proNonce || adminData.nonce;
 	const { openDialog, updateDialog } = useDialog();
+	const { selectedApplicationId } = useApplication();
 	const isIpFilterDisabled = ! settings.enabled;
 	const isDisabled = ! hasValidLicense || isIpFilterDisabled;
 
@@ -230,11 +232,17 @@ export default function IpFilter() {
 							  ) }
 					</FormHelperText>
 				</FormControl>
+
+				{ selectedApplicationId && (
+				<AllowedOrigins disabled={ settings.mode === 'blacklist' } />
+		) }
 			</Stack>
 
-			<Tabs
-				value={ currentTab }
-				onChange={ ( e, newValue ) => setCurrentTab( newValue ) }
+		
+
+		<Tabs
+			value={ currentTab }
+			onChange={ ( e, newValue ) => setCurrentTab( newValue ) }
 				sx={ {
 					mb: 2,
 					borderBottom: 1,

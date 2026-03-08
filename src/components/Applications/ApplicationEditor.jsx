@@ -8,15 +8,24 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
+import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
 import SecurityOutlined from '@mui/icons-material/SecurityOutlined';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import VpnLockOutlinedIcon from '@mui/icons-material/VpnLockOutlined';
 import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined';
+import ApiIcon from '@mui/icons-material/Api';
+import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
+import WebhookIcon from '@mui/icons-material/Webhook';
+import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
+import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
+import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
 import formatDate from '../../utils/formatDate';
@@ -38,34 +47,72 @@ function SectionHeader( { title, description } ) {
 	);
 }
 
-function PanelCard( { title, Icon, panel, onNavigate, children } ) {
+function PanelCard( { title, Icon, panel, onNavigate, enabled, onToggleEnabled, children } ) {
+	const handleToggle = ( e ) => {
+		e.stopPropagation();
+		onToggleEnabled?.( panel, ! enabled );
+	};
+
 	return (
 		<Paper
 			variant="outlined"
 			sx={ {
-				p: 2,
-				cursor: onNavigate ? 'pointer' : 'default',
+				borderRadius: 2,
 				display: 'flex',
 				flexDirection: 'column',
-				gap: 1.5,
-				minHeight: 130,
+				aspectRatio: '1 / 1',
+				overflow: 'hidden',
 				transition: 'border-color 0.15s, background-color 0.15s',
 				'&:hover': onNavigate
 					? { borderColor: 'primary.main', bgcolor: 'action.hover' }
 					: {},
 			} }
-			onClick={ () => onNavigate?.( panel ) }
 		>
-			<Stack direction="row" justifyContent="space-between" alignItems="center">
-				<Stack direction="row" spacing={ 1 } alignItems="center">
-					{ Icon && <Icon sx={ { fontSize: 16, color: 'text.secondary' } } /> }
-					<Typography variant="subtitle2" fontWeight={ 600 }>{ title }</Typography>
+			{ /* Clickable body */ }
+			<Box
+				sx={ { flex: 1, p: 2, cursor: onNavigate ? 'pointer' : 'default', display: 'flex', flexDirection: 'column', gap: 1, minHeight: 0 } }
+				onClick={ () => onNavigate?.( panel ) }
+			>
+				<Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+					<Stack direction="row" spacing={ 0.75 } alignItems="center">
+						{ Icon && <Icon sx={ { fontSize: 15, color: 'text.secondary' } } /> }
+						<Typography variant="subtitle2" fontWeight={ 600 } sx={ { lineHeight: 1.2 } }>
+							{ title }
+						</Typography>
+					</Stack>
+					{ onNavigate && (
+						<ArrowForwardIosIcon sx={ { fontSize: 10, color: 'text.disabled', flexShrink: 0, mt: 0.25 } } />
+					) }
 				</Stack>
-				{ onNavigate && (
-					<ArrowForwardIosIcon sx={ { fontSize: 11, color: 'text.disabled' } } />
-				) }
-			</Stack>
-			{ children }
+
+				<Box sx={ { flex: 1, overflow: 'hidden' } }>
+					{ children }
+				</Box>
+			</Box>
+
+			{ /* Footer with enable toggle */ }
+			{ onToggleEnabled !== undefined && (
+				<Box
+					sx={ { px: 1.5, py: 0.5, borderTop: 1, borderColor: 'divider', bgcolor: 'grey.50' } }
+					onClick={ ( e ) => e.stopPropagation() }
+				>
+					<FormControlLabel
+						control={
+							<Switch
+								size="small"
+								checked={ !! enabled }
+								onChange={ handleToggle }
+							/>
+						}
+						label={
+							<Typography variant="caption" color="text.secondary">
+								{ enabled ? wp.i18n.__( 'On', 'rest-api-firewall' ) : wp.i18n.__( 'Off', 'rest-api-firewall' ) }
+							</Typography>
+						}
+						sx={ { m: 0 } }
+					/>
+				</Box>
+			) }
 		</Paper>
 	);
 }
@@ -289,6 +336,15 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 		return <LoadingMessage />;
 	}
 
+	const InfoRow = ( { label, children } ) => (
+		<Stack direction="row" spacing={ 0.5 } alignItems="baseline" flexWrap="wrap">
+			<Typography variant="caption" color="text.disabled" sx={ { flexShrink: 0 } }>
+				{ label }
+			</Typography>
+			{ children }
+		</Stack>
+	);
+
 	return (
 		<Stack spacing={ 0 }>
 			<EntryToolbar
@@ -307,7 +363,7 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 
 			{ loadError && <Alert severity="error">{ loadError }</Alert> }
 
-			<Stack p={ { xs: 2, sm: 4 } } spacing={ 3 } sx={ { maxWidth: 560 } }>
+			<Stack p={ { xs: 2, sm: 4 } } spacing={ 2 } sx={ { maxWidth: 560 } }>
 				<TextField
 					label={ __( 'Title', 'rest-api-firewall' ) }
 					value={ title }
@@ -337,10 +393,12 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 						sx={ {
 							p: { xs: 2, sm: 4 },
 							display: 'grid',
-							gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+							gridTemplateColumns: 'repeat(3, 1fr)',
 							gap: 2,
+							maxWidth: 900,
 						} }
 					>
+						{ /* Auth & Rate Limit */ }
 						<PanelCard
 							title={ __( 'Auth & Rate Limit', 'rest-api-firewall' ) }
 							Icon={ SecurityOutlined }
@@ -348,114 +406,130 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 							onNavigate={ onNavigate }
 						>
 							{ appUsers.length > 0 ? (
-								<Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.5 } }>
-									{ appUsers.slice( 0, 3 ).map( ( u ) => (
-										<Chip
-											key={ u.id }
-											label={ u.display_name }
-											size="small"
-											variant="outlined"
-											sx={ {
-												maxWidth: 140,
-												'& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' },
-											} }
-										/>
-									) ) }
-									{ appUsers.length > 3 && (
-										<Chip label={ `+${ appUsers.length - 3 }` } size="small" />
-									) }
-								</Box>
+								<>
+									<InfoRow label={ __( 'Users:', 'rest-api-firewall' ) }>
+										<Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.5 } }>
+											{ appUsers.slice( 0, 2 ).map( ( u ) => (
+												<Chip
+													key={ u.id }
+													label={ u.display_name }
+													size="small"
+													variant="outlined"
+													sx={ {
+														maxWidth: 110,
+														fontSize: '0.65rem',
+														height: 18,
+														'& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis', px: 0.75 },
+													} }
+												/>
+											) ) }
+											{ appUsers.length > 2 && (
+												<Chip label={ `+${ appUsers.length - 2 }` } size="small" sx={ { height: 18, fontSize: '0.65rem' } } />
+											) }
+										</Box>
+									</InfoRow>
+								</>
 							) : (
 								<Typography variant="caption" color="text.secondary" fontStyle="italic">
 									{ __( 'No users linked', 'rest-api-firewall' ) }
 								</Typography>
 							) }
 							{ ( rateLimitRequests || rateLimitWindow ) && (
-								<Typography variant="caption" color="text.secondary" sx={ { fontFamily: 'monospace' } }>
-									{ rateLimitRequests } req / { rateLimitWindow }s
-								</Typography>
+								<InfoRow label={ __( 'Rate limit:', 'rest-api-firewall' ) }>
+									<Typography variant="caption" sx={ { fontFamily: 'monospace' } }>
+										{ rateLimitRequests } req / { rateLimitWindow }s
+									</Typography>
+								</InfoRow>
 							) }
 						</PanelCard>
 
+						{ /* Routes */ }
 						<PanelCard
 							title={ __( 'Routes', 'rest-api-firewall' ) }
 							Icon={ AccountTreeIcon }
 							panel={ 2 }
 							onNavigate={ onNavigate }
 						>
-							<Chip
-								label={
-									policyActive
-										? __( 'Policy active', 'rest-api-firewall' )
-										: __( 'No policy', 'rest-api-firewall' )
-								}
-								color={ policyActive ? 'success' : 'default' }
-								size="small"
-								variant="outlined"
-							/>
+							<InfoRow label={ __( 'Policy:', 'rest-api-firewall' ) }>
+								<Chip
+									label={
+										policyActive
+											? __( 'Active', 'rest-api-firewall' )
+											: __( 'None', 'rest-api-firewall' )
+									}
+									color={ policyActive ? 'success' : 'default' }
+									size="small"
+									variant="outlined"
+									sx={ { height: 18, fontSize: '0.65rem', '& .MuiChip-label': { px: 0.75 } } }
+								/>
+							</InfoRow>
 						</PanelCard>
 
+						{ /* IP Filtering */ }
 						<PanelCard
 							title={ __( 'IP Filtering', 'rest-api-firewall' ) }
 							Icon={ VpnLockOutlinedIcon }
 							panel={ 3 }
 							onNavigate={ onNavigate }
 						>
-							<Chip
-								size="small"
-								variant="outlined"
-								label={
-									! ipFilter.enabled
-										? __( 'Disabled', 'rest-api-firewall' )
-										: ipFilter.mode === 'whitelist'
-										? __( 'Whitelist', 'rest-api-firewall' )
-										: __( 'Blacklist', 'rest-api-firewall' )
-								}
-								color={
-									! ipFilter.enabled
-										? 'default'
-										: ipFilter.mode === 'whitelist'
-										? 'success'
-										: 'warning'
-								}
-							/>
+							<InfoRow label={ __( 'Mode:', 'rest-api-firewall' ) }>
+								<Chip
+									size="small"
+									variant="outlined"
+									label={
+										! ipFilter.enabled
+											? __( 'Disabled', 'rest-api-firewall' )
+											: ipFilter.mode === 'whitelist'
+											? __( 'Whitelist', 'rest-api-firewall' )
+											: __( 'Blacklist', 'rest-api-firewall' )
+									}
+									color={
+										! ipFilter.enabled
+											? 'default'
+											: ipFilter.mode === 'whitelist'
+											? 'success'
+											: 'warning'
+									}
+									sx={ { height: 18, fontSize: '0.65rem', '& .MuiChip-label': { px: 0.75 } } }
+								/>
+							</InfoRow>
 							{ allowedOrigins.length > 0 && (
-								<Box>
-									<Typography variant="caption" color="text.secondary" sx={ { display: 'block' } }>
-										{ __( 'Origins:', 'rest-api-firewall' ) }
-									</Typography>
+								<InfoRow label={ __( 'Origins:', 'rest-api-firewall' ) }>
 									<Typography
 										variant="caption"
-										sx={ {
-											fontFamily: 'monospace',
-											display: 'block',
-											overflow: 'hidden',
-											textOverflow: 'ellipsis',
-											whiteSpace: 'nowrap',
-										} }
+										sx={ { fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: '100%' } }
 									>
 										{ allowedOrigins.slice( 0, 2 ).join( ', ' ) }
 										{ allowedOrigins.length > 2 ? ` +${ allowedOrigins.length - 2 }` : '' }
 									</Typography>
-								</Box>
+								</InfoRow>
 							) }
 							{ ipFilter.enabled && ipFilter.mode === 'whitelist' && ipFilterIps.length > 0 && (
-								<Typography
-									variant="caption"
-									sx={ {
-										fontFamily: 'monospace',
-										display: 'block',
-										overflow: 'hidden',
-										textOverflow: 'ellipsis',
-										whiteSpace: 'nowrap',
-									} }
-								>
-									{ ipFilterIps.slice( 0, 2 ).join( ', ' ) }
-									{ ipFilterIps.length > 2 ? ` +${ ipFilterIps.length - 2 }` : '' }
-								</Typography>
+								<InfoRow label={ __( 'IPs:', 'rest-api-firewall' ) }>
+									<Typography
+										variant="caption"
+										sx={ { fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: '100%' } }
+									>
+										{ ipFilterIps.slice( 0, 2 ).join( ', ' ) }
+										{ ipFilterIps.length > 2 ? ` +${ ipFilterIps.length - 2 }` : '' }
+									</Typography>
+								</InfoRow>
 							) }
 						</PanelCard>
 
+						{ /* Collections */ }
+						<PanelCard
+							title={ __( 'Collections', 'rest-api-firewall' ) }
+							Icon={ ApiIcon }
+							panel={ 4 }
+							onNavigate={ onNavigate }
+						>
+							<Typography variant="caption" color="text.secondary">
+								{ __( 'REST endpoint grouping & access rules', 'rest-api-firewall' ) }
+							</Typography>
+						</PanelCard>
+
+						{ /* Properties & Models */ }
 						<PanelCard
 							title={ __( 'Properties & Models', 'rest-api-firewall' ) }
 							Icon={ RuleOutlinedIcon }
@@ -466,6 +540,70 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 								{ __( 'REST output filtering, custom models', 'rest-api-firewall' ) }
 							</Typography>
 						</PanelCard>
+
+						{ /* Settings Route */ }
+						<PanelCard
+							title={ __( 'Settings Route', 'rest-api-firewall' ) }
+							Icon={ BusinessOutlinedIcon }
+							panel={ 6 }
+							onNavigate={ onNavigate }
+						>
+							<Typography variant="caption" color="text.secondary" sx={ { fontFamily: 'monospace' } }>
+								wp/v2/settings
+							</Typography>
+						</PanelCard>
+
+						{ /* Automations */ }
+						<PanelCard
+							title={ __( 'Automations', 'rest-api-firewall' ) }
+							Icon={ AutoFixHighOutlinedIcon }
+							panel={ 13 }
+							onNavigate={ onNavigate }
+						>
+							<Typography variant="caption" color="text.secondary">
+								{ __( 'Triggers & automated actions', 'rest-api-firewall' ) }
+							</Typography>
+						</PanelCard>
+
+						{ /* Webhooks */ }
+						<PanelCard
+							title={ __( 'Webhooks', 'rest-api-firewall' ) }
+							Icon={ WebhookIcon }
+							panel={ 7 }
+							onNavigate={ onNavigate }
+						>
+							<Typography variant="caption" color="text.secondary">
+								{ __( 'Outbound event notifications', 'rest-api-firewall' ) }
+							</Typography>
+						</PanelCard>
+
+						{ /* Emails */ }
+						<PanelCard
+							title={ __( 'Emails', 'rest-api-firewall' ) }
+							Icon={ EmailOutlinedIcon }
+							panel={ 8 }
+							onNavigate={ onNavigate }
+						>
+							<Typography variant="caption" color="text.secondary">
+								{ __( 'Email notifications & templates', 'rest-api-firewall' ) }
+							</Typography>
+						</PanelCard>
+
+						{ /* Logs */ }
+						<Tooltip title={ __( 'Logs are global across all applications', 'rest-api-firewall' ) } placement="top">
+							<span>
+								<PanelCard
+									title={ __( 'Logs', 'rest-api-firewall' ) }
+									Icon={ AssessmentOutlinedIcon }
+									panel={ 12 }
+									onNavigate={ onNavigate }
+								>
+									<Typography variant="caption" color="text.secondary">
+										{ __( 'Request history & audit trail', 'rest-api-firewall' ) }
+									</Typography>
+								</PanelCard>
+							</span>
+						</Tooltip>
 					</Box>
 				</>
 			) }

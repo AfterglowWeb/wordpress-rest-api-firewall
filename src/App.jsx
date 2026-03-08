@@ -254,7 +254,7 @@ function AppContent() {
 						bgcolor: 'background.paper',
 					} }
 				>
-					{ hasValidLicense && panelGroup === 0 && <Applications /> }
+					{ hasValidLicense && panelGroup === 0 && <Applications onNavigate={ navigateTo } /> }
 
 					{ panelGroup === 1 && (
 						<>

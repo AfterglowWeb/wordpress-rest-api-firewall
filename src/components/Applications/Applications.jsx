@@ -18,7 +18,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import ApplicationEditor from './ApplicationEditor';
 import useProActions from '../../hooks/useProActions';
 
-export default function Applications() {
+export default function Applications( { onNavigate } ) {
 	const { adminData } = useAdminData();
 	const { hasValidLicense, proNonce } = useLicense();
 	const nonce = proNonce || adminData.nonce;
@@ -261,6 +261,7 @@ export default function Applications() {
 					setEditing( null );
 					fetchEntries();
 				} }
+				onNavigate={ onNavigate }
 			/>
 		);
 	}
