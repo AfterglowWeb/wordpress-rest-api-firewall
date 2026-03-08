@@ -239,9 +239,18 @@ export default function AutomationEditor( { automation, onBack } ) {
 
 	const { save, remove, saving } = useProActions();
 	const { selectedApplicationId, setDirtyFlag } = useApplication();
-	
 
 	const isNew = ! automation.id;
+
+	useEffect( () => {
+		setDirtyFlag( { has: true, message: __( 'You are editing an automation. Unsaved changes will be lost.', 'rest-api-firewall' ) } );
+		return () => setDirtyFlag( { has: false, message: '' } );
+	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps
+
+	const clearDirty = useCallback(
+		() => setDirtyFlag( { has: false, message: '' } ),
+		[ setDirtyFlag ]
+	);
 
 	const [ title, setTitle ] = useState( automation.title || '' );
 	const [ event, setEvent ] = useState( automation.event || '' );
@@ -415,10 +424,10 @@ export default function AutomationEditor( { automation, onBack } ) {
 					'rest-api-firewall'
 				) }`,
 				confirmLabel: __( 'Delete', 'rest-api-firewall' ),
-				onSuccess: onBack,
+				onSuccess: () => { clearDirty(); onBack(); },
 			}
 		);
-	}, [ remove, automation.id, onBack, __ ] );
+	}, [ remove, automation.id, onBack, clearDirty, __ ] );
 
 	const handleAddAnd = () => {
 		setConditions( ( prev ) => [
@@ -457,7 +466,7 @@ export default function AutomationEditor( { automation, onBack } ) {
 				isNew={ isNew }
 				title={ title }
 				dateModified={ automation.date_modified ? formatDate( automation.date_modified ) : '' }
-				handleBack={ onBack }
+				handleBack={ () => { clearDirty(); onBack(); } }
 				handleSave={ handleSave }
 				handleDelete={ handleDelete }
 				saving={ saving }

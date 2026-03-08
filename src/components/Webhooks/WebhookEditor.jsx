@@ -147,6 +147,16 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 	const isNew = ! webhook.id;
 
+	useEffect( () => {
+		setDirtyFlag( { has: true, message: __( 'You are editing a webhook. Unsaved changes will be lost.', 'rest-api-firewall' ) } );
+		return () => setDirtyFlag( { has: false, message: '' } );
+	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps
+
+	const clearDirty = useCallback(
+		() => setDirtyFlag( { has: false, message: '' } ),
+		[ setDirtyFlag ]
+	);
+
 	const [ loading, setLoading ] = useState( ! isNew );
 	const [ loadError, setLoadError ] = useState( '' );
 
@@ -267,7 +277,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 						'Webhook created successfully.',
 						'rest-api-firewall'
 					),
-					onSuccess: onBack,
+					onSuccess: () => { clearDirty(); onBack(); },
 				}
 			);
 		} else {
@@ -284,7 +294,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 						'Webhook settings saved successfully.',
 						'rest-api-firewall'
 					),
-					onSuccess: () => setPendingSecret( undefined ),
+					onSuccess: () => { clearDirty(); setPendingSecret( undefined ); },
 				}
 			);
 		}
@@ -313,7 +323,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 					'The webhook has been removed.',
 					'rest-api-firewall'
 				),
-				onSuccess: onBack,
+				onSuccess: () => { clearDirty(); onBack(); },
 			}
 		);
 	};
@@ -335,7 +345,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 				title={ title }
 				dateCreated={ dateCreated }
 				dateModified={ dateModified }
-				handleBack={ onBack }
+				handleBack={ () => { clearDirty(); onBack(); } }
 				handleSave={ handleSave }
 				handleDelete={ handleDelete }
 				saving={ saving }

@@ -34,12 +34,22 @@ export default function MailEditor( { mail, onBack } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
 	const nonce = proNonce || adminData.nonce;
-	const { selectedApplicationId } = useApplication();
+	const { selectedApplicationId, setDirtyFlag } = useApplication();
 	const { __ } = wp.i18n || {};
 
 	const { save, remove, saving } = useProActions();
 
 	const isNew = ! mail.id;
+
+	useEffect( () => {
+		setDirtyFlag( { has: true, message: __( 'You are editing a mail template. Unsaved changes will be lost.', 'rest-api-firewall' ) } );
+		return () => setDirtyFlag( { has: false, message: '' } );
+	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps
+
+	const clearDirty = useCallback(
+		() => setDirtyFlag( { has: false, message: '' } ),
+		[ setDirtyFlag ]
+	);
 
 	const [ title, setTitle ] = useState( mail.title || '' );
 	const [ recipient, setRecipient ] = useState( mail.recipient || '' );
@@ -133,7 +143,7 @@ export default function MailEditor( { mail, onBack } ) {
 		} else {
 			save(
 				{ action: 'update_mail_entry', id: mail.id, ...buildPayload() },
-				{ onSuccess: () => setDirty( false ) }
+				{ onSuccess: () => { clearDirty(); setDirty( false ); } }
 			);
 		}
 	}, [
@@ -162,10 +172,10 @@ export default function MailEditor( { mail, onBack } ) {
 					'rest-api-firewall'
 				) }`,
 				confirmLabel: __( 'Delete', 'rest-api-firewall' ),
-				onSuccess: onBack,
+				onSuccess: () => { clearDirty(); onBack(); },
 			}
 		);
-	}, [ remove, mail.id, title, onBack, __ ] );
+	}, [ remove, mail.id, title, onBack, clearDirty, __ ] );
 
 	const handleTest = useCallback( async () => {
 		if ( ! mail.id ) {
@@ -219,7 +229,7 @@ export default function MailEditor( { mail, onBack } ) {
 				author={ author }
 				dateCreated={ dateCreated }
 				dateModified={ dateModified }
-				handleBack={ onBack }
+				handleBack={ () => { clearDirty(); onBack(); } }
 				handleSave={ handleSave }
 				handleDelete={ handleDelete }
 				saving={ saving }

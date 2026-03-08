@@ -28,6 +28,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import AuthManager from './AuthManager';
 import LoadingMessage from '../../LoadingMessage';
+import EntryToolbar from '../../shared/EntryToolbar';
 
 function SectionHeader( { title, description } ) {
 	return (
@@ -49,7 +50,7 @@ const HTTP_METHODS = [ 'get', 'post', 'put', 'patch', 'delete' ];
 export default function UserEditor( { user, onBack } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
-	const { selectedApplicationId } = useApplication();
+	const { selectedApplicationId, setDirtyFlag } = useApplication();
 	
 	const nonce = proNonce || adminData.nonce;
 	const { __, sprintf } = wp.i18n || {};
@@ -57,6 +58,16 @@ export default function UserEditor( { user, onBack } ) {
 	const { save, remove, saving } = useProActions();
 
 	const isNew = ! user.id;
+
+	useEffect( () => {
+		setDirtyFlag( { has: true, message: __( 'You are editing a user. Unsaved changes will be lost.', 'rest-api-firewall' ) } );
+		return () => setDirtyFlag( { has: false, message: '' } );
+	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps
+
+	const clearDirty = useCallback(
+		() => setDirtyFlag( { has: false, message: '' } ),
+		[ setDirtyFlag ]
+	);
 
 	const [ loading, setLoading ] = useState( ! isNew );
 	const [ loadError, setLoadError ] = useState( '' );
@@ -68,7 +79,7 @@ export default function UserEditor( { user, onBack } ) {
 	const [ dateCreated, setDateCreated ] = useState( '' );
 	const [ dateModified, setDateModified ] = useState( '' );
 
-	const [ enabled, setEnabled ] = useState( user.status === 'active' );
+	const [ enabled, setEnabled ] = useState( !! user.enabled );
 	const [ authMethod, setAuthMethod ] = useState( user.auth_method || 'any' );
 	const [ authConfig, setAuthConfig ] = useState( user.auth_config || {} );
 	const [ allowedMethods, setAllowedMethods ] = useState(
@@ -106,7 +117,7 @@ export default function UserEditor( { user, onBack } ) {
 				const e = result.data.entry;
 				setTitle( e.display_name || '' );
 				setAuthor( e.author_name || '' );
-				setEnabled( e.status === 'active' );
+				setEnabled( !! e.enabled );
 				setDateCreated(
 					formatDate(
 						e.date_created,
@@ -160,7 +171,7 @@ export default function UserEditor( { user, onBack } ) {
 
 	const commonPayload = {
 		application_id: selectedApplicationId,
-		status: enabled ? 'active' : 'inactive',
+		enabled: enabled ? '1' : '0',
 		auth_method: authMethod,
 		auth_config: JSON.stringify( authConfig ),
 		allowed_methods: JSON.stringify( allowedMethods ),
@@ -194,7 +205,7 @@ export default function UserEditor( { user, onBack } ) {
 						'User added successfully.',
 						'rest-api-firewall'
 					),
-					onSuccess: onBack,
+					onSuccess: () => { clearDirty(); onBack(); },
 				}
 			);
 		} else {
@@ -227,7 +238,7 @@ export default function UserEditor( { user, onBack } ) {
 					'The user has been removed.',
 					'rest-api-firewall'
 				),
-				onSuccess: onBack,
+				onSuccess: () => { clearDirty(); onBack(); },
 			}
 		);
 	};
@@ -244,12 +255,12 @@ export default function UserEditor( { user, onBack } ) {
 				author={ author }
 				dateCreated={ dateCreated }
 				dateModified={ dateModified }
-				handleBack={ onBack }
+				handleBack={ () => { clearDirty(); onBack(); } }
 				handleSave={ handleSave }
 				handleDelete={ handleDelete }
 				saving={ saving }
 				enabled={ isNew ? null : enabled }
-				setEnabled={ isNew ? null : ( checked ) => { setEnabled( checked ); setDirty( true ); } }
+				setEnabled={ isNew ? null : ( checked ) => setEnabled( checked ) }
 			>
 			{ appTitle && (
 				<Typography
@@ -301,9 +312,11 @@ export default function UserEditor( { user, onBack } ) {
 							</InputLabel>
 							<Select
 								value={ wpUserId }
-								onChange={ ( e ) =>
-									setWpUserId( e.target.value )
-								}
+								onChange={ ( e ) => {
+									const selected = ( adminData?.users || [] ).find( ( u ) => u.value === e.target.value );
+									setWpUserId( e.target.value );
+									if ( selected ) setTitle( selected.label );
+								} }
 								label={ __(
 									'WordPress User',
 									'rest-api-firewall'

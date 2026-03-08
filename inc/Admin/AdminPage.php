@@ -192,6 +192,7 @@ class AdminPage {
 		body.toplevel_page_rest-api-firewall-admin input[type=checkbox]:disabled {
 			opacity:0;
 		}
+		#rest-api-firewall-admin-page input[type="search"]:focus,
 		#rest-api-firewall-admin-page textarea:focus {
 			border: unset;
 			box-shadow: unset;
