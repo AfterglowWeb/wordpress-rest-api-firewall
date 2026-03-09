@@ -53,6 +53,7 @@ export default function ConfirmDialog() {
 	};
 
 	const handleConfirm = () => {
+		closeDialog();
 		if ( onConfirm ) {
 			onConfirm();
 		}
@@ -165,6 +166,7 @@ export default function ConfirmDialog() {
 					onClick={ handleConfirm }
 					color="primary"
 					variant="contained"
+					disableElevation
 				>
 					{ confirmLabel || __( 'Confirm', 'rest-api-firewall' ) }
 				</Button>

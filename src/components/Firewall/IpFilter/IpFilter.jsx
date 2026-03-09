@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useDialog, DIALOG_TYPES } from '../../../contexts/DialogContext';
 import { useLicense } from '../../../contexts/LicenseContext';
+import { useApplication } from '../../../contexts/ApplicationContext';
 
-import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -15,7 +15,7 @@ import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import Typography from '@mui/material/Typography';
+import Divider from '@mui/material/Divider';
 
 import PublicIcon from '@mui/icons-material/Public';
 import TableViewIcon from '@mui/icons-material/TableView';
@@ -24,6 +24,7 @@ import LockOutlineIcon from '@mui/icons-material/LockOutline';
 import IpDataGrid from './IpDataGrid';
 import CountryBlockList from './CountryBlockList';
 import LoadingMessage from '../../LoadingMessage';
+import AllowedOrigins from './AllowedOrigins';
 
 export default function IpFilter() {
 	const { adminData } = useAdminData();
@@ -35,8 +36,10 @@ export default function IpFilter() {
 		mode: 'blacklist',
 	} );
 	const [ currentTab, setCurrentTab ] = useState( 0 );
-	const { hasValidLicense } = useLicense();
+	const { hasValidLicense, proNonce } = useLicense();
+	const nonce = proNonce || adminData.nonce;
 	const { openDialog, updateDialog } = useDialog();
+	const { selectedApplicationId } = useApplication();
 	const isIpFilterDisabled = ! settings.enabled;
 	const isDisabled = ! hasValidLicense || isIpFilterDisabled;
 
@@ -54,7 +57,7 @@ export default function IpFilter() {
 				},
 				body: new URLSearchParams( {
 					action: 'get_ip_filter',
-					nonce: adminData.nonce,
+					nonce,
 				} ),
 			} );
 
@@ -90,7 +93,7 @@ export default function IpFilter() {
 					},
 					body: new URLSearchParams( {
 						action: 'save_ip_filter',
-						nonce: adminData.nonce,
+						nonce,
 						...updates,
 					} ),
 				} );
@@ -176,8 +179,9 @@ export default function IpFilter() {
 				direction={ { xs: 'column', sm: 'row' } }
 				justifyContent="space-between"
 				spacing={ 3 }
+				alignItems={ { xs: 'stretch', sm: 'flex-start' } }
 			>
-				<FormControl sx={ { flex: 1 } }>
+				<FormControl>
 					<FormControlLabel
 						control={
 							<Switch
@@ -193,15 +197,17 @@ export default function IpFilter() {
 					/>
 					<FormHelperText>
 						{ __(
-							'Block or allow REST API requests based on IP address',
+							'Block or allow REST API requests based on IP address.',
 							'rest-api-firewall'
 						) }
 					</FormHelperText>
 				</FormControl>
 
+				<Stack flex={ 1 } />
+
 				<FormControl
-					sx={ { flex: 1, maxWidth: 240, position: 'relative' } }
-					disabled={ isDisabled }
+				sx={ { flex: 1, maxWidth: 240, position: 'relative' } }
+				disabled={ isDisabled }
 				>
 					<InputLabel id="ip-mode-label">
 						{ __( 'Filter Mode', 'rest-api-firewall' ) }
@@ -231,11 +237,18 @@ export default function IpFilter() {
 							  ) }
 					</FormHelperText>
 				</FormControl>
+
+
+				{ selectedApplicationId && (
+				<AllowedOrigins disabled={ settings.mode === 'blacklist' } />
+		) }
 			</Stack>
 
-			<Tabs
-				value={ currentTab }
-				onChange={ ( e, newValue ) => setCurrentTab( newValue ) }
+		
+
+		<Tabs
+			value={ currentTab }
+			onChange={ ( e, newValue ) => setCurrentTab( newValue ) }
 				sx={ {
 					mb: 2,
 					borderBottom: 1,

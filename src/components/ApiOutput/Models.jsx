@@ -3,12 +3,19 @@ import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
 
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Toolbar from '@mui/material/Toolbar';
-import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
 import { DataGrid } from '@mui/x-data-grid';
+
+import useSettingsForm from '../../hooks/useSettingsForm';
+import useSaveOptions from '../../hooks/useSaveOptions';
+import GlobalProperties from './GlobalProperties';
 
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
@@ -26,6 +33,9 @@ export default function Models() {
 	const { __ } = wp.i18n || {};
 
 	const { remove } = useProActions();
+
+	const { form: outputForm, setField: setOutputField, pickGroup: pickOutputGroup } = useSettingsForm( { adminData } );
+	const { save: saveOutput, saving: savingOutput } = useSaveOptions();
 
 	const [ models, setModels ] = useState( [] );
 	const [ loading, setLoading ] = useState( false );
@@ -255,7 +265,34 @@ export default function Models() {
 
 	return (
 		<Stack p={4} spacing={ 2 } sx={ { height: '100%', flexGrow: 1 } }>
-			
+			<Stack spacing={ 2 } sx={ { maxWidth: 720 } }>
+				<Stack direction="row" alignItems="center" justifyContent="space-between">
+					<Box>
+						<Typography variant="subtitle1" fontWeight={ 600 }>
+							{ __( 'Output Settings', 'rest-api-firewall' ) }
+						</Typography>
+						<Typography variant="body2" color="text.secondary">
+							{ __( 'Global output transformations applied to REST API responses.', 'rest-api-firewall' ) }
+						</Typography>
+					</Box>
+					<Button
+						size="small"
+						variant="outlined"
+						disabled={ savingOutput }
+						onClick={ () => saveOutput( pickOutputGroup( 'models_properties' ), {
+							successTitle: __( 'Properties Saved', 'rest-api-firewall' ),
+							successMessage: __( 'Properties settings saved successfully.', 'rest-api-firewall' ),
+							confirmMessage: __( 'Save properties settings?', 'rest-api-firewall' ),
+						} ) }
+					>
+						{ __( 'Save Output Settings', 'rest-api-firewall' ) }
+					</Button>
+				</Stack>
+				<GlobalProperties form={ outputForm } setField={ setOutputField } />
+			</Stack>
+
+			<Divider />
+
 			<Toolbar
 				disableGutters
 				sx={ { gap: 2, flexWrap: 'wrap' } }

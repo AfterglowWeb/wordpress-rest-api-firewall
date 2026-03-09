@@ -67,24 +67,21 @@ export default function HookDiscovery() {
 			const json = await res.json();
 			if ( json.success ) {
 				setGroupedHooks( json.data.grouped_hooks || {} );
-				// Restore active phase if another tab started discovery.
 				if ( json.data.discovery_enabled && phase === 'idle' ) {
 					setPhase( 'active' );
 				}
 			}
 		} catch {
-			// network error — silently ignore polling failures
+			// Silently fail.
 		}
 	}, [ adminData, nonce, phase ] );
 
-	// On open, load the current hook list (includes $wp_filter hooks immediately).
 	useEffect( () => {
 		if ( open ) {
 			fetchGroupedHooks();
 		}
 	}, [ open ] );
 
-	// Cleanup on unmount.
 	useEffect( () => {
 		return () => stopIntervals();
 	}, [] );
@@ -111,7 +108,6 @@ export default function HookDiscovery() {
 			setGroupedHooks( {} );
 			setShowAllGroups( false );
 
-			// Countdown timer.
 			timerRef.current = setInterval( () => {
 				setCountdown( ( prev ) => {
 					if ( prev <= 1 ) {
@@ -122,7 +118,6 @@ export default function HookDiscovery() {
 				} );
 			}, 1000 );
 
-			// Poll for newly captured hooks.
 			pollRef.current = setInterval( fetchGroupedHooks, POLL_INTERVAL_MS );
 			fetchGroupedHooks();
 		} finally {
@@ -132,7 +127,6 @@ export default function HookDiscovery() {
 
 	const handleAutoStop = () => {
 		stopIntervals();
-		// No need to call disable — the transient expires on its own.
 		fetchGroupedHooks();
 		setPhase( 'done' );
 	};
@@ -179,7 +173,6 @@ export default function HookDiscovery() {
 				overflow: 'hidden',
 			} }
 		>
-			{ /* Header / toggle row */ }
 			<Stack
 				direction="row"
 				alignItems="center"
@@ -235,7 +228,6 @@ export default function HookDiscovery() {
 
 			<Collapse in={ open }>
 				<Stack spacing={ 2 } sx={ { p: 2 } }>
-					{ /* Controls */ }
 					<Stack direction="row" gap={ 2 } alignItems="center" flexWrap="wrap">
 						{ phase !== 'active' ? (
 							<>
@@ -309,7 +301,6 @@ export default function HookDiscovery() {
 						) }
 					</Stack>
 
-					{ /* Instructions shown while recording */ }
 					{ phase === 'active' && (
 						<Alert severity="info" sx={ { py: 0.5 } }>
 							{ __(
@@ -319,7 +310,6 @@ export default function HookDiscovery() {
 						</Alert>
 					) }
 
-					{ /* Description shown when idle */ }
 					{ phase === 'idle' && hookCount === 0 && (
 						<Typography variant="body2" color="text.secondary">
 							{ __(
@@ -329,7 +319,6 @@ export default function HookDiscovery() {
 						</Typography>
 					) }
 
-					{ /* Results */ }
 					{ hookCount > 0 && (
 						<Stack spacing={ 1 }>
 							{ phase === 'done' && (

@@ -8,7 +8,7 @@ import Typography from '@mui/material/Typography';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-export default function EntryToolbar( { isNew, title, author, dateCreated, dateModified, handleBack, handleSave, handleDelete, saving, enabled = null, setEnabled = null, saveLabel = null, children } ) {
+export default function EntryToolbar( { isNew, title, author, dateCreated, dateModified, handleBack, handleSave, handleDelete, saving, enabled = null, setEnabled = null, children } ) {
     const { __ } = wp.i18n || {};
 
     return (
@@ -105,7 +105,7 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
                         disabled={ saving || ! title.trim() }
                         onClick={ handleSave }
                     >
-                        { saveLabel || __( 'Save', 'rest-api-firewall' ) }
+                        { isNew ? __( 'Create', 'rest-api-firewall' ) : __( 'Save', 'rest-api-firewall' ) }
                     </Button>
 
                     { ! isNew && (

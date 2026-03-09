@@ -26,6 +26,8 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import LockIcon from '@mui/icons-material/Lock';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
+import * as Flags from 'country-flag-icons/react/3x2';
+
 import { isValidIpOrCidr } from '../../../utils/sanitizeIp';
 
 export default function IpDataGrid( { listType = 'blacklist' } ) {
@@ -237,8 +239,24 @@ export default function IpDataGrid( { listType = 'blacklist' } ) {
 			{
 				field: 'country_name',
 				headerName: __( 'Country', 'rest-api-firewall' ),
-				width: 150,
-				renderCell: ( params ) => params.value || '-',
+				width: 160,
+				renderCell: ( params ) => {
+					if ( ! params.value ) return '-';
+					const FlagIcon = Flags[ params.row.country_code ];
+					return (
+						<Stack direction="row" spacing={ 0.75 } alignItems="center">
+							{ FlagIcon && (
+								<FlagIcon
+									title={ params.value }
+									style={ { width: 20, height: 'auto', borderRadius: 2, flexShrink: 0 } }
+								/>
+							) }
+							<Typography variant="body2" noWrap>
+								{ params.value }
+							</Typography>
+						</Stack>
+					);
+				},
 			},
 			{
 				field: 'blocked_at',

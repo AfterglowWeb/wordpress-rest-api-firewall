@@ -68,26 +68,26 @@ export default function SettingsRoute( { form, setField } ) {
 						: ''
 				}
 			>
-				<Stack spacing={ 3 }>
-					<Stack maxWidth={ 320 } pl={ 3.5 }>
-						<TextField
-							label={ __(
-								'Custom ACF Options Pages Route',
-								'rest-api-firewall'
-							) }
-							helperText={ __(
-								'Register a custom ACF options pages route.',
-								'rest-api-firewall'
-							) }
-							name="rest_models_acf_options_page_endpoint"
-							value={ form.rest_models_acf_options_page_endpoint }
-							onChange={ setField }
-							disabled={
-								! hasValidLicense ||
-								! form.rest_models_acf_options_page_enabled
-							}
-						/>
-					</Stack>
+				<Stack maxWidth={ 320 } pl={ 3.5 }>
+					<TextField
+						label={ __(
+							'Custom ACF Options Pages Route',
+							'rest-api-firewall'
+						) }
+						helperText={ __(
+							'Register a custom ACF options pages route.',
+							'rest-api-firewall'
+						) }
+						size="small"
+						fullWidth
+						name="rest_models_acf_options_page_endpoint"
+						value={ form.rest_models_acf_options_page_endpoint }
+						onChange={ setField }
+						disabled={
+							! hasValidLicense ||
+							! form.rest_models_acf_options_page_enabled
+						}
+					/>
 				</Stack>
 			</Tooltip>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from '@wordpress/element';
-import { useAdminData } from '../../contexts/AdminDataContext';
+import { useAdminData } from '../../../contexts/AdminDataContext';
 
 import Stack from '@mui/material/Stack';
 import FormControl from '@mui/material/FormControl';
@@ -11,7 +11,7 @@ import Typography from '@mui/material/Typography';
 
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
-export default function RestApiUser( { form, setField } ) {
+export default function RestApiSingleUser( { form, setField } ) {
 	const { __, sprintf } = wp.i18n || {};
 	const { adminData } = useAdminData();
 	const [ restApiUser, setRestApiUser ] = useState( [] );
