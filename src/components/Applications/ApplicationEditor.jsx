@@ -234,7 +234,7 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 				}
 			}
 		} catch {
-			// IP filter info is supplementary — fail silently
+			// Fail silently.
 		}
 	}, [ adminData, nonce ] );
 
@@ -276,7 +276,6 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 			return;
 		}
 
-		// Re-fetch current settings to avoid overwriting changes made in other panels.
 		let existingSettings = {};
 		if ( ! isNew ) {
 			try {

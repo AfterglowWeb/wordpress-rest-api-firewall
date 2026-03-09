@@ -444,7 +444,6 @@ export default function AutomationEditor( { automation, onBack } ) {
 		] );
 	};
 
-	// Build grouped options for the event Select.
 	const groupedEventOptions = eventOptions.reduce( ( acc, opt ) => {
 		const g = opt.group || 'other';
 		if ( ! acc[ g ] ) {

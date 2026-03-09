@@ -15,6 +15,8 @@ import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
+import Divider from '@mui/material/Divider';
+
 import PublicIcon from '@mui/icons-material/Public';
 import TableViewIcon from '@mui/icons-material/TableView';
 import LockOutlineIcon from '@mui/icons-material/LockOutline';
@@ -22,7 +24,7 @@ import LockOutlineIcon from '@mui/icons-material/LockOutline';
 import IpDataGrid from './IpDataGrid';
 import CountryBlockList from './CountryBlockList';
 import LoadingMessage from '../../LoadingMessage';
-import AllowedOrigins from '../Users/AllowedOrigins';
+import AllowedOrigins from './AllowedOrigins';
 
 export default function IpFilter() {
 	const { adminData } = useAdminData();
@@ -177,8 +179,9 @@ export default function IpFilter() {
 				direction={ { xs: 'column', sm: 'row' } }
 				justifyContent="space-between"
 				spacing={ 3 }
+				alignItems={ { xs: 'stretch', sm: 'flex-start' } }
 			>
-				<FormControl sx={ { flex: 1 } }>
+				<FormControl>
 					<FormControlLabel
 						control={
 							<Switch
@@ -194,15 +197,17 @@ export default function IpFilter() {
 					/>
 					<FormHelperText>
 						{ __(
-							'Block or allow REST API requests based on IP address',
+							'Block or allow REST API requests based on IP address.',
 							'rest-api-firewall'
 						) }
 					</FormHelperText>
 				</FormControl>
 
+				<Stack flex={ 1 } />
+
 				<FormControl
-					sx={ { flex: 1, maxWidth: 240, position: 'relative' } }
-					disabled={ isDisabled }
+				sx={ { flex: 1, maxWidth: 240, position: 'relative' } }
+				disabled={ isDisabled }
 				>
 					<InputLabel id="ip-mode-label">
 						{ __( 'Filter Mode', 'rest-api-firewall' ) }
@@ -232,6 +237,7 @@ export default function IpFilter() {
 							  ) }
 					</FormHelperText>
 				</FormControl>
+
 
 				{ selectedApplicationId && (
 				<AllowedOrigins disabled={ settings.mode === 'blacklist' } />

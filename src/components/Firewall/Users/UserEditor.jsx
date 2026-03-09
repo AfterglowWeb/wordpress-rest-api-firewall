@@ -416,7 +416,7 @@ export default function UserEditor( { user, onBack } ) {
 					<SectionHeader
 						title={ __( 'Rate Limiting', 'rest-api-firewall' ) }
 						description={ __(
-							'Per-user request cap. Overrides the application-level rate limit when stricter limits are needed.',
+							'Per-user request cap. Overrides the application-level rate limit.',
 							'rest-api-firewall'
 						) }
 					/>

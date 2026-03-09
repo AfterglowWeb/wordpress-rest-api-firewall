@@ -38,7 +38,6 @@ export default function HookRegistry() {
 	const [ saving, setSaving ] = useState( false );
 	const [ dirty, setDirty ] = useState( false );
 
-	// Ephemeral drafts for the arg text inputs (keyed by row index).
 	const [ argDrafts, setArgDrafts ] = useState( {} );
 
 	useEffect( () => {
