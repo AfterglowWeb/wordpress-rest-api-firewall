@@ -6,6 +6,7 @@ use cmk\RestApiFirewall\Core\CoreOptions;
 use cmk\RestApiFirewall\Core\Permissions;
 use cmk\RestApiFirewall\Firewall\GeoIpService;
 use cmk\RestApiFirewall\Firewall\IpFilter\IpEntryRepository;
+use League\ISO3166\ISO3166;
 use WP_Error;
 use Exception;
 
@@ -13,7 +14,7 @@ class IpBlackList {
 
 	protected static $instance = null;
 
-	private const OPTION_KEY                = 'rest_firewall_ip_filter';
+	private const OPTION_KEY               = 'rest_firewall_ip_filter';
 	private const AUTO_BLACKLIST_KEY_PREFIX = 'rest_firewall_auto_blacklist_';
 
 	public static function get_instance() {
@@ -30,8 +31,7 @@ class IpBlackList {
 		add_action( 'wp_ajax_add_ip_entry', array( $this, 'ajax_add_ip_entry' ) );
 		add_action( 'wp_ajax_delete_ip_entry', array( $this, 'ajax_delete_ip_entry' ) );
 		add_action( 'wp_ajax_delete_ip_entries', array( $this, 'ajax_delete_ip_entries' ) );
-		add_action( 'wp_ajax_get_country_stats', array( $this, 'ajax_get_country_stats' ) );
-		add_action( 'wp_ajax_update_entries_expiry', array( $this, 'ajax_update_entries_expiry' ) );
+			add_action( 'wp_ajax_get_country_stats', array( $this, 'ajax_get_country_stats' ) );
 	}
 
 	public static function default_options(): array {
@@ -251,19 +251,10 @@ class IpBlackList {
 
 		$options = array();
 
-		// phpcs:disable WordPress.Security.NonceVerification.Missing
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		if ( isset( $_POST['enabled'] ) ) {
 			$options['enabled'] = rest_sanitize_boolean( wp_unslash( $_POST['enabled'] ) );
 		}
-
-		if ( isset( $_POST['mode'] ) ) {
-			$options['mode'] = sanitize_text_field( wp_unslash( $_POST['mode'] ) );
-		}
-
-		if ( isset( $_POST['expiry_seconds'] ) ) {
-			$options['expiry_seconds'] = absint( wp_unslash( $_POST['expiry_seconds'] ) );
-		}
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		$updated = self::update_options( $options );
 
@@ -379,34 +370,39 @@ class IpBlackList {
 		wp_send_json_success( array( 'deleted' => $count ), 200 );
 	}
 
-	public function ajax_update_entries_expiry(): void {
-		do_action( 'rest_api_firewall_ajax_update_entries_expiry' );
+	public static function get_all_countries(): array {
+		$custom_names = array(
+			'XC' => 'Northern Cyprus',
+			'XO' => 'South Ossetia',
+		);
 
-		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
-			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
+		$iso3166   = new ISO3166();
+		$countries = array();
+
+		foreach ( $iso3166->all() as $entry ) {
+			$code        = $entry['alpha2'];
+			$countries[] = array(
+				'country_code' => $code,
+				'country_name' => $custom_names[ $code ] ?? $entry['name'],
+			);
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Missing
-		$list_type = isset( $_POST['list_type'] ) ? sanitize_text_field( wp_unslash( $_POST['list_type'] ) ) : 'blacklist';
-		$ids_raw   = isset( $_POST['ids'] ) ? sanitize_text_field( wp_unslash( $_POST['ids'] ) ) : null;
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
-
-		$ids = $ids_raw ? json_decode( $ids_raw, true ) : null;
-
-		$expiry_seconds = (int) self::get_options()['expiry_seconds'];
-
-		if ( is_array( $ids ) && ! empty( $ids ) ) {
-			IpEntryRepository::update_expiry_for_ids( $ids, $expiry_seconds );
-		} else {
-			IpEntryRepository::update_expiry_for_list( $list_type, $expiry_seconds );
+		// XC and XO are not in the ISO standard — append them.
+		foreach ( $custom_names as $code => $name ) {
+			if ( ! in_array( $code, array_column( $countries, 'country_code' ), true ) ) {
+				$countries[] = array(
+					'country_code' => $code,
+					'country_name' => $name,
+				);
+			}
 		}
 
-		wp_send_json_success( array( 'updated' => true ), 200 );
+		usort( $countries, fn( $a, $b ) => strcmp( $a['country_name'], $b['country_name'] ) );
+
+		return $countries;
 	}
 
 	public function ajax_get_country_stats(): void {
-		do_action( 'rest_api_firewall_ajax_get_country_stats' );
-
 		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
@@ -416,6 +412,14 @@ class IpBlackList {
 
 		$stats = IpEntryRepository::get_country_stats( $list_type );
 
-		wp_send_json_success( array( 'stats' => $stats ), 200 );
+		wp_send_json_success(
+			array(
+				'countries'        => self::get_all_countries(),
+				'stats'            => $stats,
+				'blocked_countries' => array(),
+			),
+			200
+		);
 	}
+
 }

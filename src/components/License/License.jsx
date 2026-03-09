@@ -417,6 +417,7 @@ export default function License() {
 										'rest-api-firewall'
 									) }
 									type="password"
+									size="small"
 									value={ licenseKey }
 									onChange={ ( e ) =>
 										setLicenseKey( e.target.value )
@@ -434,6 +435,7 @@ export default function License() {
 									onClick={ handleActivate }
 									disabled={ loading || ! licenseKey.trim() }
 									variant="contained"
+									disableElevation
 									color="primary"
 									fullWidth
 								>

@@ -26,6 +26,7 @@
     "@wordpress/i18n": "^5.18.0",
     "@wordpress/scripts": "^31.1.0",
     "babel-loader": "^9.2.1",
+    "country-flag-icons": "^1.6.15",
     "dayjs": "^1.11.18",
     "dompurify": "^3.2.7"
   },

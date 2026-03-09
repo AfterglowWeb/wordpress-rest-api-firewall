@@ -18,6 +18,7 @@ import { PropertyRow } from './Properties';
 import JsonSchemaBuilder from '../shared/JsonSchemaBuilder';
 import EntryToolbar from '../shared/EntryToolbar';
 import ObjectTypeSelect from '../ObjectTypeSelect';
+import LoadingMessage from '../LoadingMessage';
 
 const FALLBACK_BINDINGS = [
 	{ key: 'id', label: 'ID', type: 'integer' },
@@ -221,13 +222,7 @@ export default function ModelEditor( { model, onBack } ) {
 
 	if ( ! loaded ) {
 		return (
-			<Stack
-				alignItems="center"
-				justifyContent="center"
-				sx={ { height: 200 } }
-			>
-				<CircularProgress size={ 32 } />
-			</Stack>
+			<LoadingMessage message={ __( 'Loading model…', 'rest-api-firewall' ) } />
 		);
 	}
 

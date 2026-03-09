@@ -8,8 +8,10 @@ import { DataGrid } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 
@@ -43,6 +45,82 @@ export default function Users() {
 	} );
 	const [ fetchError, setFetchError ] = useState( '' );
 	const [ editingUser, setEditingUser ] = useState( null );
+
+	const [ rlMax, setRlMax ] = useState( '' );
+	const [ rlWindow, setRlWindow ] = useState( '' );
+	const [ rlRelease, setRlRelease ] = useState( '' );
+	const [ rlBlacklistAfter, setRlBlacklistAfter ] = useState( '' );
+	const [ rlBlacklistWindow, setRlBlacklistWindow ] = useState( '' );
+	const [ rateLimitSaving, setRateLimitSaving ] = useState( false );
+
+	const loadAppRateLimit = useCallback( async () => {
+		if ( ! selectedApplicationId ) return;
+		try {
+			const res = await fetch( adminData.ajaxurl, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+				body: new URLSearchParams( {
+					action: 'get_application_entry',
+					nonce,
+					id: selectedApplicationId,
+				} ),
+			} );
+			const result = await res.json();
+			if ( result?.success && result?.data?.entry ) {
+				const rl = result.data.entry.settings?.rate_limit || {};
+				setRlMax( rl.max_requests ?? '' );
+				setRlWindow( rl.window_seconds ?? '' );
+				setRlRelease( rl.release_seconds ?? '' );
+				setRlBlacklistAfter( rl.blacklist_after ?? '' );
+				setRlBlacklistWindow( rl.blacklist_window ?? '' );
+			}
+		} catch {}
+	}, [ adminData, nonce, selectedApplicationId ] );
+
+	const saveAppRateLimit = useCallback( async () => {
+		if ( ! selectedApplicationId ) return;
+		setRateLimitSaving( true );
+		try {
+			const res = await fetch( adminData.ajaxurl, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+				body: new URLSearchParams( {
+					action: 'get_application_entry',
+					nonce,
+					id: selectedApplicationId,
+				} ),
+			} );
+			const result = await res.json();
+			const entry = result?.success ? result.data.entry : {};
+			const existingSettings = entry.settings || {};
+			await fetch( adminData.ajaxurl, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+				body: new URLSearchParams( {
+					action: 'update_application_entry',
+					nonce,
+					id: selectedApplicationId,
+					title: entry.title || '',
+					settings: JSON.stringify( {
+						...existingSettings,
+						rate_limit: {
+							max_requests: Number( rlMax ) || 0,
+							window_seconds: Number( rlWindow ) || 0,
+							release_seconds: Number( rlRelease ) || 0,
+							blacklist_after: Number( rlBlacklistAfter ) || 0,
+							blacklist_window: Number( rlBlacklistWindow ) || 0,
+						},
+					} ),
+				} ),
+			} );
+		} catch {} finally {
+			setRateLimitSaving( false );
+		}
+	}, [ adminData, nonce, selectedApplicationId, rlMax, rlWindow, rlRelease, rlBlacklistAfter, rlBlacklistWindow ] );
+
+	useEffect( () => {
+		loadAppRateLimit();
+	}, [ loadAppRateLimit ] );
 
 	const handleDeleteOne = useCallback(
 		( id, displayName ) => {
@@ -97,11 +175,11 @@ export default function Users() {
 				),
 			},
 			{
-				field: 'status',
+				field: 'enabled',
 				headerName: __( 'Status', 'rest-api-firewall' ),
 				width: 100,
 				renderCell: ( params ) =>
-					params.value === 'active' ? (
+					!! params.value ? (
 						<Chip
 							label={ __( 'Active', 'rest-api-firewall' ) }
 							size="small"
@@ -292,7 +370,76 @@ export default function Users() {
 	}
 
 	return (
-		<Stack spacing={ 2 } p={ { xs: 2, sm: 4 } }>
+		<Stack spacing={ 2 } flexGrow={ 1 } p={ { xs: 2, sm: 4 } }>
+			{ selectedApplicationId && (
+				<>
+					<Stack spacing={ 2 }>
+						<Box>
+							<Typography variant="subtitle1" fontWeight={ 600 }>
+								{ __( 'App Rate Limit', 'rest-api-firewall' ) }
+							</Typography>
+							<Typography variant="body2" color="text.secondary">
+								{ __( 'Default rate limit for all users of this application.', 'rest-api-firewall' ) }
+							</Typography>
+						</Box>
+						<Stack direction={ { xs: 'column', sm: 'row' } } spacing={ 2 } sx={ { maxWidth: 700 } }>
+							<TextField
+								size="small"
+								label={ __( 'Max Requests', 'rest-api-firewall' ) }
+								type="number"
+								value={ rlMax }
+								onChange={ ( e ) => setRlMax( e.target.value ) }
+								sx={ { flex: 1 } }
+							/>
+							<TextField
+								size="small"
+								label={ __( 'Window (s)', 'rest-api-firewall' ) }
+								type="number"
+								value={ rlWindow }
+								onChange={ ( e ) => setRlWindow( e.target.value ) }
+								sx={ { flex: 1 } }
+							/>
+							<TextField
+								size="small"
+								label={ __( 'Release (s)', 'rest-api-firewall' ) }
+								type="number"
+								value={ rlRelease }
+								onChange={ ( e ) => setRlRelease( e.target.value ) }
+								sx={ { flex: 1 } }
+							/>
+						</Stack>
+						<Stack direction={ { xs: 'column', sm: 'row' } } spacing={ 2 } sx={ { maxWidth: 700 } }>
+							<TextField
+								size="small"
+								label={ __( 'Blacklist After (violations)', 'rest-api-firewall' ) }
+								type="number"
+								value={ rlBlacklistAfter }
+								onChange={ ( e ) => setRlBlacklistAfter( e.target.value ) }
+								sx={ { flex: 1 } }
+							/>
+							<TextField
+								size="small"
+								label={ __( 'Blacklist Window (s)', 'rest-api-firewall' ) }
+								type="number"
+								value={ rlBlacklistWindow }
+								onChange={ ( e ) => setRlBlacklistWindow( e.target.value ) }
+								sx={ { flex: 1 } }
+							/>
+							<Box sx={ { flex: 1, display: 'flex', alignItems: 'flex-end' } }>
+								<Button
+									variant="outlined"
+									size="small"
+									onClick={ saveAppRateLimit }
+									disabled={ rateLimitSaving }
+								>
+									{ __( 'Save Rate Limit', 'rest-api-firewall' ) }
+								</Button>
+							</Box>
+						</Stack>
+					</Stack>
+					<Divider />
+				</>
+			) }
 			<Toolbar disableGutters sx={ { gap: 2, mb: 2, flexWrap: 'wrap' } }>
 				<Button
 					variant="contained"

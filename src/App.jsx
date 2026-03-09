@@ -26,8 +26,8 @@ import ConfigurationPanel from './components/ConfigurationDialog';
 import RoutesPolicyTree from './components/Firewall/Routes/RoutesPolicyTree';
 import GlobalRoutesPolicy from './components/Firewall/Routes/GlobalRoutesPolicy';
 import IpFilter from './components/Firewall/IpFilter/IpFilter';
-import RateLimit from './components/Firewall/RateLimit';
-import RestApiUser from './components/Firewall/RestApiUser';
+import RateLimit from './components/Firewall/Users/RateLimit';
+import RestApiUser from './components/Firewall/Users/RestApiSingleUser';
 
 import Properties from './components/ApiOutput/Properties';
 import SettingsRoute from './components/ApiOutput/SettingsRoute';
@@ -254,7 +254,7 @@ function AppContent() {
 						bgcolor: 'background.paper',
 					} }
 				>
-					{ hasValidLicense && panelGroup === 0 && <Applications /> }
+					{ hasValidLicense && panelGroup === 0 && <Applications onNavigate={ navigateTo } /> }
 
 					{ panelGroup === 1 && (
 						<>

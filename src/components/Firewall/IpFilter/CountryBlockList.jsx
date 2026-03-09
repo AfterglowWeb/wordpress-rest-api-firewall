@@ -1,283 +1,325 @@
-import { useState, useEffect, useCallback } from '@wordpress/element';
+import { useState, useEffect, useCallback, useMemo, useRef } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useLicense } from '../../../contexts/LicenseContext';
+import useProActions from '../../../hooks/useProActions';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
-import CircularProgress from '@mui/material/CircularProgress';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Grid from '@mui/material/Grid';
+import LoadingMessage from '../../LoadingMessage';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
-import BlockIcon from '@mui/icons-material/Block';
-import LockIcon from '@mui/icons-material/Lock';
+import { DataGrid, useGridApiRef, gridFilteredSortedRowIdsSelector } from '@mui/x-data-grid';
+import * as Flags from 'country-flag-icons/react/3x2';
 
-/**
- * CountryBlockList component
- * @param {Object} props
- * @param {string} props.listType - 'whitelist' or 'blacklist'
- */
 export default function CountryBlockList( { listType = 'blacklist' } ) {
 	const { adminData } = useAdminData();
 	const { hasValidLicense, proNonce } = useLicense();
-	const nonce = ( hasValidLicense && proNonce ) ? proNonce : adminData.nonce;
+	const { save, saving } = useProActions();
 	const { __ } = wp.i18n || {};
 
 	const [ loading, setLoading ] = useState( true );
-	const [ saving, setSaving ] = useState( false );
+	const [ allCountries, setAllCountries ] = useState( [] );
 	const [ stats, setStats ] = useState( [] );
-	const [ blockedCountries, setBlockedCountries ] = useState( [] );
-	const [ selectedCountries, setSelectedCountries ] = useState( [] );
+	const [ savedBlockedCountries, setSavedBlockedCountries ] = useState( [] );
+	const [ rowSelectionModel, setRowSelectionModel ] = useState( {
+		type: 'include',
+		ids: new Set(),
+	} );
+	const blockedFetchedRef = useRef( false );
+	const apiRef = useGridApiRef();
 
-	const fetchStats = useCallback( async () => {
+	const fetchCountries = useCallback( async () => {
 		setLoading( true );
 		try {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
-				headers: {
-					'Content-Type':
-						'application/x-www-form-urlencoded; charset=UTF-8',
-				},
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
 				body: new URLSearchParams( {
 					action: 'get_country_stats',
-					nonce,
+					nonce: adminData.nonce,
 					list_type: listType,
 				} ),
 			} );
-
 			const result = await response.json();
-
 			if ( result?.success && result?.data ) {
-				setStats( result.data.stats || [] );
-				// blocked_countries is only present in the pro response.
-				if ( result.data.blocked_countries !== undefined ) {
-					setBlockedCountries( result.data.blocked_countries );
-					setSelectedCountries( result.data.blocked_countries );
+				if ( Array.isArray( result.data.countries ) ) {
+					setAllCountries( result.data.countries );
 				}
+				setStats( result.data.stats || [] );
 			}
-		} catch ( error ) {
-			// Handle error silently.
+		} catch {
+			// Silent.
 		} finally {
 			setLoading( false );
 		}
-	}, [ adminData, nonce, listType ] );
+	}, [ adminData, listType ] );
 
-	useEffect( () => {
-		fetchStats();
-	}, [ fetchStats ] );
-
-	const handleToggleCountry = ( countryCode ) => {
-		if ( ! hasValidLicense ) {
-			return;
-		}
-
-		setSelectedCountries( ( prev ) => {
-			if ( prev.includes( countryCode ) ) {
-				return prev.filter( ( c ) => c !== countryCode );
-			}
-			return [ ...prev, countryCode ];
-		} );
-	};
-
-	const handleSaveBlockedCountries = async () => {
-		if ( ! hasValidLicense ) {
-			return;
-		}
-
-		setSaving( true );
+	const fetchBlockedCountries = useCallback( async () => {
+		if ( ! proNonce ) return;
 		try {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
-				headers: {
-					'Content-Type':
-						'application/x-www-form-urlencoded; charset=UTF-8',
-				},
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
 				body: new URLSearchParams( {
-					action: 'update_blocked_countries',
-					nonce,
-					countries: JSON.stringify( selectedCountries ),
+					action: 'get_country_stats_pro',
+					nonce: proNonce,
+					list_type: listType,
 				} ),
 			} );
-
 			const result = await response.json();
-
-			if ( result?.success ) {
-				setBlockedCountries( result.data.blocked_countries || [] );
+			if ( result?.success && result?.data?.blocked_countries !== undefined ) {
+				const blocked = result.data.blocked_countries;
+				setSavedBlockedCountries( blocked );
+				setRowSelectionModel( { type: 'include', ids: new Set( blocked ) } );
 			}
-		} catch ( error ) {
-			// Handle error silently.
-		} finally {
-			setSaving( false );
+		} catch {
+			// Silent.
 		}
+	}, [ adminData, proNonce, listType ] );
+
+	useEffect( () => {
+		if ( ! allCountries?.length ) {
+			fetchCountries();
+		}
+	}, [ fetchCountries, allCountries?.length ] );
+
+	useEffect( () => {
+		if ( ! blockedFetchedRef.current && hasValidLicense && proNonce ) {
+			blockedFetchedRef.current = true;
+			fetchBlockedCountries();
+		}
+	}, [ hasValidLicense, proNonce, fetchBlockedCountries ] );
+
+	const hasChanges = useMemo( () => {
+		const saved = new Set( savedBlockedCountries );
+		if ( saved.size !== rowSelectionModel.ids.size ) return true;
+		for ( const id of rowSelectionModel.ids ) {
+			if ( ! saved.has( id ) ) return true;
+		}
+		return false;
+	}, [ rowSelectionModel.ids, savedBlockedCountries ] );
+
+	const handleSave = () => {
+		save(
+			{
+				action: 'update_blocked_countries',
+				countries: JSON.stringify( [ ...rowSelectionModel.ids ] ),
+			},
+			{
+				confirmTitle: __( 'Confirm Country Block', 'rest-api-firewall' ),
+				confirmMessage: __(
+					'Are you sure you want to update the blocked countries? This will affect all traffic from the selected countries.',
+					'rest-api-firewall'
+				),
+				successTitle: __( 'Saved', 'rest-api-firewall' ),
+				successMessage: __( 'Blocked countries updated.', 'rest-api-firewall' ),
+				onSuccess: ( data ) => {
+					const updated = data?.blocked_countries || [];
+					setSavedBlockedCountries( updated );
+				},
+			}
+		);
 	};
 
-	const hasChanges =
-		JSON.stringify( [ ...selectedCountries ].sort() ) !==
-		JSON.stringify( [ ...blockedCountries ].sort() );
+	const countryMap = useMemo(
+		() => new Map( allCountries.map( ( c ) => [ c.country_code, c.country_name ] ) ),
+		[ allCountries ]
+	);
+
+	const rows = useMemo( () => {
+		const statsMap = new Map(
+			stats.map( ( s ) => [ s.country_code, parseInt( s.count, 10 ) ] )
+		);
+		return allCountries.map( ( c ) => ( {
+			...c,
+			count: statsMap.get( c.country_code ) ?? null,
+		} ) );
+	}, [ allCountries, stats ] );
+
+	const columns = useMemo( () => [
+		{
+			field: 'flag',
+			headerName: '',
+			width: 44,
+			sortable: false,
+			filterable: false,
+			renderCell: ( params ) => {
+				const FlagIcon = Flags[ params.row.country_code ];
+				return FlagIcon ? (
+					<FlagIcon
+						title={ params.row.country_name }
+						style={ { width: 20, height: 'auto', borderRadius: 2 } }
+					/>
+				) : null;
+			},
+		},
+		{
+			field: 'country_name',
+			headerName: __( 'Country', 'rest-api-firewall' ),
+			flex: 1,
+			width: 170,
+		},
+		{
+			field: 'country_code',
+			headerName: __( 'Code', 'rest-api-firewall' ),
+			width: 80,
+		},
+		{
+			field: 'count',
+			headerName: __( 'Blocked IPs', 'rest-api-firewall' ),
+			width: 130,
+			type: 'number',
+		},
+	], [ __ ] );
 
 	if ( loading ) {
 		return (
-			<Box sx={ { display: 'flex', justifyContent: 'center', py: 4 } }>
-				<CircularProgress size={ 24 } />
-			</Box>
-		);
-	}
-
-	if ( stats.length === 0 ) {
-		return (
-			<Box sx={ { py: 2, textAlign: 'center' } }>
-				<Typography color="text.secondary">
-					{ __(
-						'No country data available yet. IPs will be tagged with country info when blocked.',
-						'rest-api-firewall'
-					) }
-				</Typography>
-			</Box>
+			<LoadingMessage message={ __( 'Loading country stats…', 'rest-api-firewall' ) } />
 		);
 	}
 
 	return (
-		<Box>
+		<Stack maxWidth={ 800 } flexGrow={ 1 } spacing={ 3 }>
 			<Stack
 				direction="row"
 				justifyContent="space-between"
 				alignItems="center"
-				sx={ { mb: 2 } }
 			>
-				<Typography variant="subtitle2">
-					{ __( 'Blocked IPs by Country', 'rest-api-firewall' ) }
-					<Chip
-						label={ stats.length }
-						size="small"
-						sx={ { ml: 1 } }
-					/>
-				</Typography>
+				<Stack direction="row" alignItems="center" spacing={ 1 }>
+					<Typography variant="h6" fontWeight={600}>
+						{ __( 'Block by Country', 'rest-api-firewall' ) }
+					</Typography>
+				</Stack>
 
-				{ hasValidLicense && hasChanges && (
+				{ hasValidLicense && (
 					<Button
 						variant="contained"
 						size="small"
-						onClick={ handleSaveBlockedCountries }
-						disabled={ saving }
-						startIcon={ <BlockIcon /> }
+						disableElevation
+						onClick={ handleSave }
+						disabled={ saving || ! hasChanges }
 					>
-						{ saving
-							? __( 'Saving…', 'rest-api-firewall' )
-							: __( 'Save Country Blocks', 'rest-api-firewall' ) }
+						{ __( 'Save', 'rest-api-firewall' ) }
 					</Button>
 				) }
 			</Stack>
 
-			{ ! hasValidLicense && (
-				<Box
-					sx={ {
-						mb: 2,
-						p: 1.5,
-						bgcolor: 'action.hover',
-						borderRadius: 1,
-					} }
-				>
-					<Stack direction="row" spacing={ 1 } alignItems="center">
-						<LockIcon fontSize="small" color="action" />
-						<Typography variant="body2" color="text.secondary">
-							{ __(
-								'Upgrade to Pro to block entire countries',
-								'rest-api-firewall'
-							) }
+			{ hasValidLicense && savedBlockedCountries.length > 0 && (
+				<Stack spacing={ 1 }>
+					<Stack direction="row" gap={ 1 } alignItems="center">
+						<Typography variant="body2">
+							{ __( 'Blocked countries', 'rest-api-firewall' ) }
 						</Typography>
+						<Chip
+							label={ savedBlockedCountries.length }
+							size="small"
+							color="primary"
+							variant="outlined"
+						/>
 					</Stack>
+					<Stack direction="row" flexWrap="wrap" gap={ 1 }>
+						{ savedBlockedCountries.map( ( code ) => {
+							const FlagIcon = Flags[ code ];
+							return (
+								<Chip
+									key={ code }
+									size="small"
+									color="primary"
+									variant="outlined"
+									disabled
+									label={
+										<Stack component="span" direction="row" spacing={ 0.5 } alignItems="center">
+											{ FlagIcon && <FlagIcon style={ { width: 14, height: 'auto', borderRadius: 1 } } /> }
+											<span>{ countryMap.get( code ) || code }</span>
+										</Stack>
+									}
+								/>
+							);
+						} ) }
+					</Stack>
+				</Stack>
+			) }
+
+			{ hasValidLicense && rowSelectionModel.ids.size > 0 && (
+				<Stack spacing={ 1 }>
+					<Stack direction="row" gap={ 1 } alignItems="center">
+						<Typography variant="body2">
+							{ __( 'Selected countries', 'rest-api-firewall' ) }
+						</Typography>
+						<Chip
+							label={ rowSelectionModel.ids.size }
+							size="small"
+							color="default"
+						/>
+					</Stack>
+					<Stack direction="row" flexWrap="wrap" gap={ 1 }>
+						{ [ ...rowSelectionModel.ids ].map( ( code ) => {
+							const FlagIcon = Flags[ code ];
+							return (
+								<Chip
+									key={ code }
+									size="small"
+									color={ savedBlockedCountries.includes( code ) ? 'primary' : 'default' }
+									variant="outlined"
+									onDelete={ () => {
+										const next = new Set( rowSelectionModel.ids );
+										next.delete( code );
+										setRowSelectionModel( { type: 'include', ids: next } );
+									} }
+									label={
+										<Stack component="span" direction="row" spacing={ 0.5 } alignItems="center">
+											{ FlagIcon && <FlagIcon style={ { width: 14, height: 'auto', borderRadius: 1 } } /> }
+											<span>{ countryMap.get( code ) || code }</span>
+										</Stack>
+									}
+								/>
+							);
+						} ) }
+					</Stack>
+				</Stack>
+			) }
+
+			{ ! hasValidLicense && (
+				<Box sx={ { p: 1.5, bgcolor: 'action.hover', borderRadius: 1 } }>
+					<Typography variant="body2" color="text.secondary">
+						{ __(
+							'License required to block countries',
+							'rest-api-firewall'
+						) }
+					</Typography>
 				</Box>
 			) }
 
-			<Grid container spacing={ 1 }>
-				{ stats.map( ( country ) => {
-					const isBlocked = selectedCountries.includes(
-						country.country_code
-					);
-
-					return (
-						<Grid
-							item
-							xs={ 6 }
-							sm={ 4 }
-							md={ 3 }
-							key={ country.country_code }
-						>
-							<Box
-								sx={ {
-									p: 1,
-									border: '1px solid',
-									borderColor: isBlocked
-										? 'error.main'
-										: 'divider',
-									borderRadius: 1,
-									bgcolor: isBlocked
-										? 'error.lighter'
-										: 'background.paper',
-									opacity: hasValidLicense ? 1 : 0.7,
-									cursor: hasValidLicense
-										? 'pointer'
-										: 'default',
-									transition: 'all 0.2s',
-									'&:hover': hasValidLicense
-										? {
-												borderColor: 'primary.main',
-												bgcolor: isBlocked
-													? 'error.light'
-													: 'action.hover',
-										  }
-										: {},
-								} }
-								onClick={ () =>
-									handleToggleCountry( country.country_code )
-								}
-							>
-								<FormControlLabel
-									control={
-										<Checkbox
-											checked={ isBlocked }
-											disabled={ ! hasValidLicense }
-											size="small"
-											sx={ { p: 0.5 } }
-										/>
-									}
-									label={
-										<Stack
-											direction="row"
-											spacing={ 0.5 }
-											alignItems="center"
-											sx={ { ml: 0.5 } }
-										>
-											<Typography
-												variant="body2"
-												noWrap
-												sx={ { maxWidth: 100 } }
-											>
-												{ country.country_name ||
-													country.country_code }
-											</Typography>
-											<Chip
-												label={ country.count }
-												size="small"
-												color={
-													isBlocked
-														? 'error'
-														: 'default'
-												}
-												variant="outlined"
-											/>
-										</Stack>
-									}
-									sx={ { m: 0, width: '100%' } }
-								/>
-							</Box>
-						</Grid>
-					);
-				} ) }
-			</Grid>
-		</Box>
+			<DataGrid
+				apiRef={ apiRef }
+				showToolbar
+				rows={ rows }
+				columns={ columns }
+				getRowId={ ( row ) => row.country_code }
+				checkboxSelection={ hasValidLicense }
+				rowSelectionModel={ rowSelectionModel }
+				onRowSelectionModelChange={ ( model ) => {
+					if ( ! hasValidLicense ) return;
+					const visibleIds = new Set( gridFilteredSortedRowIdsSelector( apiRef ) );
+					const hiddenSelected = [ ...rowSelectionModel.ids ].filter( ( id ) => ! visibleIds.has( id ) );
+					setRowSelectionModel( {
+						type: 'include',
+						ids: new Set( [ ...hiddenSelected, ...model.ids ] ),
+					} );
+				} }
+				pageSizeOptions={ [ 25, 50, 100 ] }
+				initialState={ {
+					pagination: { paginationModel: { pageSize: 100 } },
+				} }
+				sx={ {
+					'& .MuiDataGrid-cell': {
+						display: 'flex',
+						alignItems: 'center',
+					},
+				} }
+			/>
+		</Stack>
 	);
 }

@@ -1,26 +1,3 @@
-/**
- * useProActions
- *
- * Generic AJAX action hook for Pro panels — mirrors the useSaveOptions pattern
- * from the free plugin but uses the Pro nonce and exposes both save() and
- * remove() so every Pro editor (Applications, Routes, …) can reuse it.
- *
- * Usage:
- *   const { save, remove, saving } = useProActions();
- *
- *   // Save (skips the confirm dialog by default for saves)
- *   save( { action: 'update_application_entry', id, title, settings }, {
- *       skipConfirm: true,
- *       successTitle: __( 'Saved', '…' ),
- *   } );
- *
- *   // Delete (always shows a confirm dialog)
- *   remove( { action: 'delete_application_entry', id }, {
- *       confirmMessage: __( 'Delete this application?', '…' ),
- *       onSuccess: () => onBack(),
- *   } );
- */
-
 import { useCallback, useState } from '@wordpress/element';
 import { useAdminData } from '../contexts/AdminDataContext';
 import { useLicense } from '../contexts/LicenseContext';
@@ -35,9 +12,6 @@ export default function useProActions() {
 
 	const [ saving, setSaving ] = useState( false );
 
-	// -------------------------------------------------------------------------
-	// Internal fetch wrapper
-	// -------------------------------------------------------------------------
 	const request = useCallback(
 		async ( payload ) => {
 			const response = await fetch( adminData.ajaxurl, {
@@ -53,9 +27,6 @@ export default function useProActions() {
 		[ adminData, nonce ]
 	);
 
-	// -------------------------------------------------------------------------
-	// save( payload, config )
-	// -------------------------------------------------------------------------
 	const save = useCallback(
 		async ( payload, config = {} ) => {
 			const {
@@ -71,8 +42,6 @@ export default function useProActions() {
 			} = config;
 
 			const doSave = async () => {
-				// openDialog (not updateDialog) so the dialog opens even when
-				// skipConfirm:true bypassed the initial openDialog(CONFIRM) call.
 				openDialog( {
 					type: DIALOG_TYPES.LOADING,
 					title: __( 'Saving', 'rest-api-firewall' ),
@@ -132,10 +101,6 @@ export default function useProActions() {
 		[ request, openDialog, updateDialog, __ ]
 	);
 
-	// -------------------------------------------------------------------------
-	// remove( payload, config )
-	// Always shows a confirm dialog before proceeding.
-	// -------------------------------------------------------------------------
 	const remove = useCallback(
 		async ( payload, config = {} ) => {
 			const {
