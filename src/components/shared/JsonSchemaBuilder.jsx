@@ -33,6 +33,8 @@ const TYPE_COLORS = {
     null: 'default',
 };
 
+const MAX_DEPTH = 3;
+
 function PropertyRow( {
     propKey,
     propDef,
@@ -41,9 +43,12 @@ function PropertyRow( {
     availableBindings,
     readOnly,
     depth,
+    maxDepth = MAX_DEPTH,
 } ) {
     const { __ } = wp.i18n || {};
-    const [ expanded, setExpanded ] = useState( false );
+    const [ expanded, setExpanded ] = useState(
+        () => propDef.type === 'object' && ! propDef.bind && ! propDef.isStatic
+    );
     const [ localKey, setLocalKey ] = useState( propDef._autoKey ? '' : propKey );
 
     const type = propDef.type || 'string';
@@ -67,19 +72,20 @@ function PropertyRow( {
         }
     };
 
-    const handleAddSubProp = () => {
+    const handleAddSub = ( addType = 'string' ) => {
         let subIdx = Object.keys( properties ).length + 1;
         let subKey = `property_${ subIdx }`;
         while ( properties[ subKey ] !== undefined ) {
             subIdx++;
             subKey = `property_${ subIdx }`;
         }
-        update( {
-            properties: {
-                ...properties,
-                [ subKey ]: { type: 'string', bind: '', _autoKey: true },
-            },
-        } );
+        const def =
+            addType === 'object'
+                ? { type: 'object', _autoKey: true }
+                : addType === 'static'
+                ? { type: 'string', isStatic: true, _autoKey: true }
+                : { type: 'string', bind: '', _autoKey: true };
+        update( { properties: { ...properties, [ subKey ]: def } } );
         setExpanded( true );
     };
 
@@ -219,7 +225,7 @@ function PropertyRow( {
                     onChange={ ( e ) => setLocalKey( e.target.value ) }
                     onBlur={ handleKeyBlur }
                     disabled={ readOnly }
-                    placeholder={ __( 'my_property_name', 'rest-api-firewall' ) }
+                    placeholder={ isManualObject ? __( 'my_object_name', 'rest-api-firewall' ) : __( 'my_property_name', 'rest-api-firewall' ) }
                     sx={ {
                         flex: 1,
                         maxWidth: 300,
@@ -328,25 +334,36 @@ function PropertyRow( {
                                     availableBindings={ availableBindings }
                                     readOnly={ readOnly }
                                     depth={ depth + 1 }
+                                    maxDepth={ maxDepth }
                                 />
                             )
                         ) }
                         { ! readOnly && (
-                            <Button
-                                size="small"
-                                startIcon={ <AddIcon /> }
-                                onClick={ handleAddSubProp }
-                                sx={ {
-                                    alignSelf: 'flex-start',
-                                    ml: 4,
-                                    mt: 0.5,
-                                } }
-                            >
-                                { __(
-                                    'Add sub-property',
-                                    'rest-api-firewall'
+                            <Stack direction="row" gap={ 1 } mt={ 0.5 } ml={ 4 }>
+                                <Button
+                                    size="small"
+                                    startIcon={ <AddIcon /> }
+                                    onClick={ () => handleAddSub( 'string' ) }
+                                >
+                                    { __( 'Add property', 'rest-api-firewall' ) }
+                                </Button>
+                                { depth + 1 < maxDepth && (
+                                    <Button
+                                        size="small"
+                                        startIcon={ <AddIcon /> }
+                                        onClick={ () => handleAddSub( 'object' ) }
+                                    >
+                                        { __( 'New object', 'rest-api-firewall' ) }
+                                    </Button>
                                 ) }
-                            </Button>
+                                <Button
+                                    size="small"
+                                    startIcon={ <AddIcon /> }
+                                    onClick={ () => handleAddSub( 'static' ) }
+                                >
+                                    { __( 'Static value', 'rest-api-firewall' ) }
+                                </Button>
+                            </Stack>
                         ) }
                     </Stack>
                 </Collapse>
@@ -360,6 +377,7 @@ export default function JsonSchemaBuilder( {
     onChange,
     availableBindings = [],
     readOnly = false,
+    maxDepth = MAX_DEPTH,
 } ) {
     const { __ } = wp.i18n || {};
 
@@ -424,6 +442,7 @@ export default function JsonSchemaBuilder( {
                     availableBindings={ availableBindings }
                     readOnly={ readOnly }
                     depth={ 0 }
+                    maxDepth={ maxDepth }
                 />
             ) ) }
 
