@@ -29,10 +29,10 @@ import IpFilter from './components/Firewall/IpFilter/IpFilter';
 import RateLimit from './components/Firewall/Users/RateLimit';
 import RestApiUser from './components/Firewall/Users/RestApiSingleUser';
 
-import Properties from './components/ApiOutput/Properties';
-import SettingsRoute from './components/ApiOutput/SettingsRoute';
-import Collections from './components/ApiOutput/Collections';
-import Models from './components/ApiOutput/Models';
+import Properties from './components/Models/Properties';
+import SettingsRoute from './components/Models/SettingsRoute';
+import Collections from './components/Models/Collections';
+import Models from './components/Models/Models';
 
 import Webhook from './components/Webhooks/Webhook';
 import Webhooks from './components/Webhooks/Webhooks';

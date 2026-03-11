@@ -59,7 +59,6 @@ class ModelsPropertiesRepository {
 			return $props;
 		}
 
-		// Fallback: schema approach when no real items exist for this type.
 		$controller = self::get_rest_controller( $post_type );
 
 		if ( ! $controller || ! method_exists( $controller, 'get_item_schema' ) ) {
@@ -87,7 +86,6 @@ class ModelsPropertiesRepository {
 			);
 		}
 
-		// Inject ACF sub-properties into the schema-fallback path as well.
 		if ( isset( $properties['acf'] ) && function_exists( 'acf_get_field_groups' ) ) {
 			$all_fields   = array();
 			$field_groups = acf_get_field_groups( array( 'post_type' => $post_type ) );
