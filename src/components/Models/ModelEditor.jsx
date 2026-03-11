@@ -434,7 +434,10 @@ export default function ModelEditor( { model, onBack } ) {
 															const next = { ...prev };
 															if ( ! next[ propKey ] ) {
 																next[ propKey ] = {
-																	settings: { disable: false, filters: [] },
+																	settings: {
+																		disable: false,
+																		filters: ( propConfig.settings?.filters || [] ).map( ( f ) => ( { ...f } ) ),
+																	},
 																};
 															}
 															if ( isSubProp ) {
@@ -445,8 +448,13 @@ export default function ModelEditor( { model, onBack } ) {
 																	};
 																}
 																if ( ! next[ propKey ].properties[ subPropKey ] ) {
+																	const subCfgInit =
+																		schemaProps?.[ propKey ]?.properties?.[ subPropKey ];
 																	next[ propKey ].properties[ subPropKey ] = {
-																		settings: { disable: false, filters: [] },
+																		settings: {
+																			disable: false,
+																			filters: ( subCfgInit?.settings?.filters || [] ).map( ( f ) => ( { ...f } ) ),
+																		},
 																	};
 																}
 																if ( setting === 'settings' ) {
@@ -461,7 +469,7 @@ export default function ModelEditor( { model, onBack } ) {
 																		next[ propKey ].properties[
 																			subPropKey
 																		].settings?.filters ||
-																		subCfg?.filters ||
+																		subCfg?.settings?.filters ||
 																		[];
 																	next[ propKey ].properties[ subPropKey ].settings = {
 																		...next[ propKey ].properties[ subPropKey ].settings,
@@ -482,7 +490,7 @@ export default function ModelEditor( { model, onBack } ) {
 																} else if ( setting === 'filters' ) {
 																	const currentFilters =
 																		next[ propKey ].settings?.filters ||
-																		propConfig.filters ||
+																		propConfig.settings?.filters ||
 																		[];
 																	next[ propKey ].settings = {
 																		...next[ propKey ].settings,
