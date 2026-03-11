@@ -352,7 +352,7 @@ export function PropertyRow( {
 										size="small"
 										checked={ localDisable }
 										onChange={ ( e ) => {
-											const next = ! e.target.checked;
+											const next = e.target.checked;
 											setLocalDisable( next );
 											setField( {
 												target: {

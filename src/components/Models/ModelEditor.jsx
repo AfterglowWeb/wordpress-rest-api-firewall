@@ -232,8 +232,11 @@ export default function ModelEditor( { model, onBack } ) {
 	const availableBindings = schemaProps
 		? Object.entries( schemaProps ).flatMap( ( [ key, cfg ] ) => {
 				const type = Array.isArray( cfg.type ) ? cfg.type[ 0 ] : cfg.type;
+				const topFilters = ( cfg.settings?.filters || [] ).filter(
+					( f ) => f.key !== 'rendered'
+				);
 				const bindings = [
-					{ key, label: cfg.description || key, type },
+					{ key, label: cfg.description || key, type, filters: topFilters },
 				];
 				if (
 					cfg.properties &&
@@ -246,6 +249,9 @@ export default function ModelEditor( { model, onBack } ) {
 								typeof subCfg === 'object' &&
 								subCfg !== null
 							) {
+								const subFilters = (
+									subCfg.settings?.filters || []
+								).filter( ( f ) => f.key !== 'rendered' );
 								bindings.push( {
 									key: `${ key }.${ subKey }`,
 									label:
@@ -254,6 +260,7 @@ export default function ModelEditor( { model, onBack } ) {
 									type: Array.isArray( subCfg.type )
 										? subCfg.type[ 0 ]
 										: subCfg.type,
+									filters: subFilters,
 								} );
 							}
 						}
@@ -361,20 +368,13 @@ export default function ModelEditor( { model, onBack } ) {
 										'rest-api-firewall'
 									) }
 								</Typography>
-								<Box
-									sx={ {
-										border: 1,
-										borderColor: 'divider',
-										borderRadius: 1,
-										p: 1.5,
-									} }
-								>
+								
 									<JsonSchemaBuilder
 										value={ properties }
 										onChange={ setProperties }
 										availableBindings={ availableBindings }
 									/>
-								</Box>
+								
 							</Stack>
 						) : (
 							<Stack>
@@ -434,7 +434,10 @@ export default function ModelEditor( { model, onBack } ) {
 															const next = { ...prev };
 															if ( ! next[ propKey ] ) {
 																next[ propKey ] = {
-																	settings: { disable: false, filters: [] },
+																	settings: {
+																		disable: false,
+																		filters: ( propConfig.settings?.filters || [] ).map( ( f ) => ( { ...f } ) ),
+																	},
 																};
 															}
 															if ( isSubProp ) {
@@ -445,8 +448,13 @@ export default function ModelEditor( { model, onBack } ) {
 																	};
 																}
 																if ( ! next[ propKey ].properties[ subPropKey ] ) {
+																	const subCfgInit =
+																		schemaProps?.[ propKey ]?.properties?.[ subPropKey ];
 																	next[ propKey ].properties[ subPropKey ] = {
-																		settings: { disable: false, filters: [] },
+																		settings: {
+																			disable: false,
+																			filters: ( subCfgInit?.settings?.filters || [] ).map( ( f ) => ( { ...f } ) ),
+																		},
 																	};
 																}
 																if ( setting === 'settings' ) {
@@ -461,7 +469,7 @@ export default function ModelEditor( { model, onBack } ) {
 																		next[ propKey ].properties[
 																			subPropKey
 																		].settings?.filters ||
-																		subCfg?.filters ||
+																		subCfg?.settings?.filters ||
 																		[];
 																	next[ propKey ].properties[ subPropKey ].settings = {
 																		...next[ propKey ].properties[ subPropKey ].settings,
@@ -482,7 +490,7 @@ export default function ModelEditor( { model, onBack } ) {
 																} else if ( setting === 'filters' ) {
 																	const currentFilters =
 																		next[ propKey ].settings?.filters ||
-																		propConfig.filters ||
+																		propConfig.settings?.filters ||
 																		[];
 																	next[ propKey ].settings = {
 																		...next[ propKey ].settings,
