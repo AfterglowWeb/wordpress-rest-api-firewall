@@ -243,8 +243,6 @@ export default function Models() {
 							: __( 'WP Schema', 'rest-api-firewall' )
 					}
 					size="small"
-					color={ value ? 'secondary' : 'default' }
-					icon={ value ? <BuildOutlinedIcon /> : undefined }
 					sx={ { fontSize: '0.7rem' } }
 				/>
 			),

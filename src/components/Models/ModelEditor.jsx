@@ -232,8 +232,11 @@ export default function ModelEditor( { model, onBack } ) {
 	const availableBindings = schemaProps
 		? Object.entries( schemaProps ).flatMap( ( [ key, cfg ] ) => {
 				const type = Array.isArray( cfg.type ) ? cfg.type[ 0 ] : cfg.type;
+				const topFilters = ( cfg.settings?.filters || [] ).filter(
+					( f ) => f.key !== 'rendered'
+				);
 				const bindings = [
-					{ key, label: cfg.description || key, type },
+					{ key, label: cfg.description || key, type, filters: topFilters },
 				];
 				if (
 					cfg.properties &&
@@ -246,6 +249,9 @@ export default function ModelEditor( { model, onBack } ) {
 								typeof subCfg === 'object' &&
 								subCfg !== null
 							) {
+								const subFilters = (
+									subCfg.settings?.filters || []
+								).filter( ( f ) => f.key !== 'rendered' );
 								bindings.push( {
 									key: `${ key }.${ subKey }`,
 									label:
@@ -254,6 +260,7 @@ export default function ModelEditor( { model, onBack } ) {
 									type: Array.isArray( subCfg.type )
 										? subCfg.type[ 0 ]
 										: subCfg.type,
+									filters: subFilters,
 								} );
 							}
 						}
@@ -361,20 +368,13 @@ export default function ModelEditor( { model, onBack } ) {
 										'rest-api-firewall'
 									) }
 								</Typography>
-								<Box
-									sx={ {
-										border: 1,
-										borderColor: 'divider',
-										borderRadius: 1,
-										p: 1.5,
-									} }
-								>
+								
 									<JsonSchemaBuilder
 										value={ properties }
 										onChange={ setProperties }
 										availableBindings={ availableBindings }
 									/>
-								</Box>
+								
 							</Stack>
 						) : (
 							<Stack>

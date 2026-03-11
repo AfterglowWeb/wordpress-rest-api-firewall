@@ -13,6 +13,10 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Tooltip from '@mui/material/Tooltip';
+
 import AddIcon from '@mui/icons-material/Add';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -48,6 +52,10 @@ function PropertyRow( {
     const properties = propDef.properties || {};
 
     const isManualObject = type === 'object' && ! bind && ! propDef.isStatic;
+
+    const bindingFilters = bind
+        ? ( availableBindings.find( ( b ) => b.key === bind )?.filters || [] )
+        : [];
 
     const update = ( patch ) => onUpdate( propKey, { ...propDef, ...patch } );
 
@@ -234,6 +242,35 @@ function PropertyRow( {
                     />
                 ) }
 
+                { bindingFilters.map( ( filter ) => (
+                    <Tooltip key={ filter.key } title={ filter.tooltip || filter.label }>
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    size="small"
+                                    checked={ propDef.filters?.[ filter.key ] ?? false }
+                                    onChange={ ( e ) =>
+                                        update( {
+                                            filters: {
+                                                ...propDef.filters,
+                                                [ filter.key ]: e.target.checked,
+                                            },
+                                        } )
+                                    }
+                                    disabled={ readOnly }
+                                    sx={ { p: 0.5 } }
+                                />
+                            }
+                            label={
+                                <Typography variant="caption">
+                                    { filter.label }
+                                </Typography>
+                            }
+                            sx={ { m: 0, gap: 0.25, flexShrink: 0 } }
+                        />
+                    </Tooltip>
+                ) ) }
+
                 { propDef.isStatic && (
                     <TextField
                         size="small"
@@ -372,30 +409,6 @@ export default function JsonSchemaBuilder( {
 
     return (
         <Stack spacing={ 0 }>
-            <Stack
-                direction="row"
-                spacing={ 1 }
-                sx={ { px: 0.5, pb: 0.5 } }
-                alignItems="center"
-            >
-                <Box sx={ { width: 28 } } />
-                <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={ { flex: 1, fontWeight: 600 } }
-                >
-                    { __( 'Name', 'rest-api-firewall' ) }
-                </Typography>
-                <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={ { flex: 1 } }
-                >
-                    { availableBindings.length > 0
-                        ? __( 'Source / Value', 'rest-api-firewall' )
-                        : __( 'Value', 'rest-api-firewall' ) }
-                </Typography>
-            </Stack>
 
             { Object.entries( value ).map( ( [ key, def ] ) => (
                 <PropertyRow
