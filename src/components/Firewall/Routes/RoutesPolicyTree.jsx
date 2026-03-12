@@ -11,6 +11,7 @@ import { useLicense } from '../../../contexts/LicenseContext';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
+import Button from '@mui/material/Button';
 import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
@@ -301,26 +302,27 @@ export default function RoutesPolicyTree( { form, setField } ) {
 							sx={ { fontSize: '0.65rem', height: 18, px: 0.5 } }
 						/>
 					) }
-				</Stack>
-
-				<Stack direction="row" alignItems="center">
 					{ customCount > 0 && (
 						<Tooltip
 							title={ __(
-								'Reset all custom settings',
+								'Reset per-route settings',
 								'rest-api-firewall'
 							) }
-							placement="left"
+							placement="right"
 						>
-							<IconButton
+							<Button
 								onClick={ () =>
 									dispatch( { type: 'RESET_ALL_OVERRIDES' } )
 								}
+								size="small"
 							>
-								<ReplayIcon />
-							</IconButton>
+								{ __('Reset', 'rest-api-firewall')}
+							</Button>
 						</Tooltip>
 					) }
+				</Stack>
+
+				<Stack direction="row" alignItems="center">
 					<Tooltip
 						title={ __( 'Refresh Routes', 'rest-api-firewall' ) }
 						placement="left"
