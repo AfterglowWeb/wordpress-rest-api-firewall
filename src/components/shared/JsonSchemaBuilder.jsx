@@ -1,4 +1,5 @@
 import { useCallback } from '@wordpress/element';
+import { alpha } from '@mui/material/styles';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -33,6 +34,8 @@ const TYPE_COLORS = {
     null: 'default',
 };
 
+const MAX_DEPTH = 3;
+
 function PropertyRow( {
     propKey,
     propDef,
@@ -41,9 +44,12 @@ function PropertyRow( {
     availableBindings,
     readOnly,
     depth,
+    maxDepth = MAX_DEPTH,
 } ) {
     const { __ } = wp.i18n || {};
-    const [ expanded, setExpanded ] = useState( false );
+    const [ expanded, setExpanded ] = useState(
+        () => propDef.type === 'object' && ! propDef.bind && ! propDef.isStatic
+    );
     const [ localKey, setLocalKey ] = useState( propDef._autoKey ? '' : propKey );
 
     const type = propDef.type || 'string';
@@ -67,19 +73,20 @@ function PropertyRow( {
         }
     };
 
-    const handleAddSubProp = () => {
+    const handleAddSub = ( addType = 'string' ) => {
         let subIdx = Object.keys( properties ).length + 1;
         let subKey = `property_${ subIdx }`;
         while ( properties[ subKey ] !== undefined ) {
             subIdx++;
             subKey = `property_${ subIdx }`;
         }
-        update( {
-            properties: {
-                ...properties,
-                [ subKey ]: { type: 'string', bind: '', _autoKey: true },
-            },
-        } );
+        const def =
+            addType === 'object'
+                ? { type: 'object', _autoKey: true }
+                : addType === 'static'
+                ? { type: 'string', isStatic: true, _autoKey: true }
+                : { type: 'string', bind: '', _autoKey: true };
+        update( { properties: { ...properties, [ subKey ]: def } } );
         setExpanded( true );
     };
 
@@ -113,8 +120,18 @@ function PropertyRow( {
             <Stack
                 direction="row"
                 gap={ 1 }
-                py={ 1 }
+                py={ 0.75 }
                 alignItems="center"
+                sx={ ( theme ) => ( {
+                    borderRadius: 0.75,
+                    px: 0.5,
+                    mx: -0.5,
+                    bgcolor: alpha( theme.palette.text.primary, 0.025 + depth * 0.02 ),
+                    transition: 'background-color 0.15s',
+                    '&:hover': {
+                        bgcolor: alpha( theme.palette.text.primary, 0.055 + depth * 0.02 ),
+                    },
+                } ) }
             >
                 { isManualObject ? (
                     <IconButton
@@ -219,7 +236,7 @@ function PropertyRow( {
                     onChange={ ( e ) => setLocalKey( e.target.value ) }
                     onBlur={ handleKeyBlur }
                     disabled={ readOnly }
-                    placeholder={ __( 'my_property_name', 'rest-api-firewall' ) }
+                    placeholder={ isManualObject ? __( 'my_object_name', 'rest-api-firewall' ) : __( 'my_property_name', 'rest-api-firewall' ) }
                     sx={ {
                         flex: 1,
                         maxWidth: 300,
@@ -233,14 +250,35 @@ function PropertyRow( {
                     } }
                 />
 
-                { ( bind || propDef.isStatic || isManualObject ) && (
+                { propDef.isStatic ? (
+                    <Select
+                        size="small"
+                        value={ type || 'string' }
+                        onChange={ ( e ) => update( { type: e.target.value, staticValue: '' } ) }
+                        disabled={ readOnly }
+                        sx={ {
+                            fontSize: '0.75rem',
+                            height: 30,
+                            minWidth: 95,
+                            flexShrink: 0,
+                            fontFamily: 'monospace',
+                            '.MuiSelect-select': { py: '4px' },
+                        } }
+                    >
+                        { [ 'string', 'integer', 'boolean' ].map( ( t ) => (
+                            <MenuItem key={ t } value={ t } sx={ { fontFamily: 'monospace', fontSize: '0.8rem' } }>
+                                { t }
+                            </MenuItem>
+                        ) ) }
+                    </Select>
+                ) : ( bind || isManualObject ) ? (
                     <Chip
                         label={ type || 'string' }
                         size="small"
                         color={ TYPE_COLORS[ type ] || 'default' }
                         sx={ { height: 20, fontSize: '0.7rem', flexShrink: 0 } }
                     />
-                ) }
+                ) : null }
 
                 { bindingFilters.map( ( filter ) => (
                     <Tooltip key={ filter.key } title={ filter.tooltip || filter.label }>
@@ -272,29 +310,52 @@ function PropertyRow( {
                 ) ) }
 
                 { propDef.isStatic && (
-                    <TextField
-                        size="small"
-                        value={ staticVal }
-                        onChange={ ( e ) =>
-                            update( { staticValue: e.target.value } )
-                        }
-                        disabled={ readOnly }
-                        placeholder={ __(
-                            'static value',
-                            'rest-api-firewall'
-                        ) }
-                        sx={ {
-                            flex: 1,
-                            maxWidth: 300,
-                            '.MuiInputBase-input': {
-                                padding: '10.5px 14px!important',
-                                minHeight: 'unset!important',
-                                height: '25px!important',
-                                fontFamily: 'monospace',
+                    type === 'boolean' ? (
+                        <Select
+                            size="small"
+                            value={ staticVal }
+                            onChange={ ( e ) => update( { staticValue: e.target.value } ) }
+                            disabled={ readOnly }
+                            displayEmpty
+                            sx={ {
+                                flex: 1,
+                                maxWidth: 300,
+                                height: 30,
                                 fontSize: '0.82rem',
-                            },
-                        } }
-                    />
+                                fontFamily: 'monospace',
+                                '.MuiSelect-select': { py: '4px' },
+                            } }
+                        >
+                            <MenuItem value="" disabled sx={ { fontStyle: 'italic', fontSize: '0.8rem' } }>
+                                { __( 'select value', 'rest-api-firewall' ) }
+                            </MenuItem>
+                            { [ 'true', 'false' ].map( ( v ) => (
+                                <MenuItem key={ v } value={ v } sx={ { fontFamily: 'monospace', fontSize: '0.8rem' } }>
+                                    { v }
+                                </MenuItem>
+                            ) ) }
+                        </Select>
+                    ) : (
+                        <TextField
+                            size="small"
+                            type={ type === 'integer' ? 'number' : 'text' }
+                            value={ staticVal }
+                            onChange={ ( e ) => update( { staticValue: e.target.value } ) }
+                            disabled={ readOnly }
+                            placeholder={ type === 'integer' ? '0' : __( 'static value', 'rest-api-firewall' ) }
+                            sx={ {
+                                flex: 1,
+                                maxWidth: 300,
+                                '.MuiInputBase-input': {
+                                    padding: '10.5px 14px!important',
+                                    minHeight: 'unset!important',
+                                    height: '25px!important',
+                                    fontFamily: 'monospace',
+                                    fontSize: '0.82rem',
+                                },
+                            } }
+                        />
+                    )
                 ) }
 
                 { ! readOnly && (
@@ -311,7 +372,7 @@ function PropertyRow( {
 
             { isManualObject && (
                 <Collapse in={ expanded }>
-                    <Stack spacing={ 0 } sx={ { mt: 0.25 } }>
+                    <Stack spacing={ 0 } sx={ { mt: 0.5, borderRadius: 1, py: 0.5, px: 0.5 } }>
                         { Object.entries( properties ).map(
                             ( [ subKey, subDef ] ) => (
                                 <PropertyRow
@@ -328,25 +389,26 @@ function PropertyRow( {
                                     availableBindings={ availableBindings }
                                     readOnly={ readOnly }
                                     depth={ depth + 1 }
+                                    maxDepth={ maxDepth }
                                 />
                             )
                         ) }
                         { ! readOnly && (
-                            <Button
-                                size="small"
-                                startIcon={ <AddIcon /> }
-                                onClick={ handleAddSubProp }
-                                sx={ {
-                                    alignSelf: 'flex-start',
-                                    ml: 4,
-                                    mt: 0.5,
-                                } }
-                            >
-                                { __(
-                                    'Add sub-property',
-                                    'rest-api-firewall'
+                            <Stack direction="row" gap={ 0.5 } mt={ 0.5 } ml={ 4 } flexWrap="wrap">
+                        <>
+                                <Button size="small" startIcon={ <AddIcon sx={ { fontSize: '14px !important' } } /> } onClick={ () => handleAddSub( 'string' ) } sx={ { textTransform: 'none', fontSize: '0.72rem', py: 0.25, px: 0.75, minHeight: 0 } }>
+                                    { __( 'Add property', 'rest-api-firewall' ) }
+                                </Button>
+                                { depth + 1 < maxDepth && (
+                                    <Button size="small" startIcon={ <AddIcon sx={ { fontSize: '14px !important' } } /> } onClick={ () => handleAddSub( 'object' ) } sx={ { textTransform: 'none', fontSize: '0.72rem', py: 0.25, px: 0.75, minHeight: 0 } }>
+                                        { __( 'New object', 'rest-api-firewall' ) }
+                                    </Button>
                                 ) }
-                            </Button>
+                                <Button size="small" startIcon={ <AddIcon sx={ { fontSize: '14px !important' } } /> } onClick={ () => handleAddSub( 'static' ) } sx={ { textTransform: 'none', fontSize: '0.72rem', py: 0.25, px: 0.75, minHeight: 0 } }>
+                                    { __( 'Static value', 'rest-api-firewall' ) }
+                                </Button>
+                            </>
+                            </Stack>
                         ) }
                     </Stack>
                 </Collapse>
@@ -360,6 +422,7 @@ export default function JsonSchemaBuilder( {
     onChange,
     availableBindings = [],
     readOnly = false,
+    maxDepth = MAX_DEPTH,
 } ) {
     const { __ } = wp.i18n || {};
 
@@ -424,34 +487,31 @@ export default function JsonSchemaBuilder( {
                     availableBindings={ availableBindings }
                     readOnly={ readOnly }
                     depth={ 0 }
+                    maxDepth={ maxDepth }
                 />
             ) ) }
 
-            { ! readOnly && (
-                <Stack direction="row" gap={ 1 } mt={ 1 }>
-                    <Button
-                        size="small"
-                        startIcon={ <AddIcon /> }
-                        onClick={ () => handleAdd( 'string' ) }
-                    >
-                        { __( 'Add property', 'rest-api-firewall' ) }
-                    </Button>
-                    <Button
-                        size="small"
-                        startIcon={ <AddIcon /> }
-                        onClick={ () => handleAdd( 'object' ) }
-                    >
-                        { __( 'New object', 'rest-api-firewall' ) }
-                    </Button>
-                    <Button
-                        size="small"
-                        startIcon={ <AddIcon /> }
-                        onClick={ () => handleAdd( 'static' ) }
-                    >
-                        { __( 'Static value', 'rest-api-firewall' ) }
-                    </Button>
-                </Stack>
-            ) }
+            { ! readOnly && ( () => {
+                const compact = Object.keys( value ).length > 0;
+                const btnSx = compact
+                    ? { textTransform: 'none', fontSize: '0.72rem', py: 0.25, px: 0.75, minHeight: 0 }
+                    : {};
+                const btnSize = compact ? 'small' : 'medium';
+                const iconSx = compact ? { fontSize: '14px !important' } : {};
+                return (
+                    <Stack direction="row" gap={ 0.5 } mt={ 1 } flexWrap="wrap">
+                        <Button size={ btnSize } startIcon={ <AddIcon sx={ iconSx } /> } onClick={ () => handleAdd( 'string' ) } sx={ btnSx }>
+                            { __( 'Add property', 'rest-api-firewall' ) }
+                        </Button>
+                        <Button size={ btnSize } startIcon={ <AddIcon sx={ iconSx } /> } onClick={ () => handleAdd( 'object' ) } sx={ btnSx }>
+                            { __( 'New object', 'rest-api-firewall' ) }
+                        </Button>
+                        <Button size={ btnSize } startIcon={ <AddIcon sx={ iconSx } /> } onClick={ () => handleAdd( 'static' ) } sx={ btnSx }>
+                            { __( 'Static value', 'rest-api-firewall' ) }
+                        </Button>
+                    </Stack>
+                );
+            } )() }
         </Stack>
     );
 }

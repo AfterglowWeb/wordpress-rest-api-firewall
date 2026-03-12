@@ -13,6 +13,13 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { DataGrid } from '@mui/x-data-grid';
 
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import Switch from '@mui/material/Switch';
+
 import useSettingsForm from '../../hooks/useSettingsForm';
 import useSaveOptions from '../../hooks/useSaveOptions';
 import GlobalProperties from './GlobalProperties';
@@ -24,6 +31,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import useProActions from '../../hooks/useProActions';
 import formatDate from '../../utils/formatDate';
 import ModelEditor from './ModelEditor';
+import ObjectTypeSelect from '../ObjectTypeSelect';
 
 export default function Models() {
 	const { adminData } = useAdminData();
@@ -44,6 +52,8 @@ export default function Models() {
 		ids: new Set(),
 	} );
 	const [ editing, setEditing ] = useState( null ); // null = list, object = editor
+	const [ newModelObjectType, setNewModelObjectType ] = useState( '' );
+	const [ pendingToggle, setPendingToggle ] = useState( null );
 
 	const fetchModels = useCallback( async () => {
 		if ( ! selectedApplicationId ) {
@@ -156,19 +166,30 @@ export default function Models() {
 		{
 			field: '_actions',
 			headerName: __( 'Actions', 'rest-api-firewall' ),
-			width: 80,
+			width: 120,
 			sortable: false,
 			filterable: false,
 			renderCell: ( params ) => (
-				<IconButton
-					size="small"
-					color="default"
-					onClick={ () =>
-						handleDeleteOne( params.row.id, params.row.title )
-					}
-				>
-					<DeleteOutlineIcon fontSize="small" />
-				</IconButton>
+				<Stack direction="row" alignItems="center" gap={ 0.5 }>
+					<Switch
+						size="small"
+						checked={ !! params.row.enabled }
+						onChange={ () => setPendingToggle( {
+							id: params.row.id,
+							enabled: ! params.row.enabled,
+							title: params.row.title,
+						} ) }
+					/>
+					<IconButton
+						size="small"
+						color="default"
+						onClick={ () =>
+							handleDeleteOne( params.row.id, params.row.title )
+						}
+					>
+						<DeleteOutlineIcon fontSize="small" />
+					</IconButton>
+				</Stack>
 			),
 		},
 		{
@@ -295,7 +316,15 @@ export default function Models() {
 				disableGutters
 				sx={ { gap: 2, flexWrap: 'wrap' } }
 			>
-				
+				<ObjectTypeSelect
+					types={ [ 'post_type', 'taxonomy', 'author' ] }
+					value={ newModelObjectType }
+					defaultValue=""
+					label={ __( 'Object Type', 'rest-api-firewall' ) }
+					onChange={ ( e ) => setNewModelObjectType( e.target.value ) }
+					sx={ { width: 220 } }
+					isSingle
+				/>
 				<Button
 					size="small"
 					variant="contained"
@@ -304,16 +333,16 @@ export default function Models() {
 						setEditing( {
 							id: null,
 							label: '',
-							object_type: '',
+							object_type: newModelObjectType,
 							is_custom: false,
 							enabled: false,
 							properties: {},
 							application_id: selectedApplicationId,
 						} )
 					}
-					disabled={ ! selectedApplicationId }
+					disabled={ ! selectedApplicationId || ! newModelObjectType }
 				>
-					{ __( 'New Model', 'rest-api-firewall' ) }
+					{ __( 'Create Model', 'rest-api-firewall' ) }
 				</Button>
 
 				{ rowSelectionModel.ids.size > 0 && (
@@ -348,6 +377,41 @@ export default function Models() {
 					},
 				} }
 			/>
+
+			<Dialog
+				open={ !! pendingToggle }
+				onClose={ () => setPendingToggle( null ) }
+				maxWidth="xs"
+				fullWidth
+			>
+				<DialogTitle>
+					{ pendingToggle?.enabled
+						? __( 'Activate Model', 'rest-api-firewall' )
+						: __( 'Deactivate Model', 'rest-api-firewall' ) }
+				</DialogTitle>
+				<DialogContent>
+					<DialogContentText>
+						{ pendingToggle?.enabled
+							? `${ __( 'Activate', 'rest-api-firewall' ) } "${ pendingToggle?.title }"? ${ __( 'Only one model can be active per object type.', 'rest-api-firewall' ) }`
+							: `${ __( 'Deactivate', 'rest-api-firewall' ) } "${ pendingToggle?.title }"?` }
+					</DialogContentText>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={ () => setPendingToggle( null ) }>
+						{ __( 'Cancel', 'rest-api-firewall' ) }
+					</Button>
+					<Button
+						variant="contained"
+						disableElevation
+						onClick={ () => {
+							handleToggle( pendingToggle.id, pendingToggle.enabled );
+							setPendingToggle( null );
+						} }
+					>
+						{ __( 'Confirm', 'rest-api-firewall' ) }
+					</Button>
+				</DialogActions>
+			</Dialog>
 		</Stack>
 	);
 }
