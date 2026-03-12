@@ -14,7 +14,7 @@ class IpBlackList {
 
 	protected static $instance = null;
 
-	private const OPTION_KEY               = 'rest_firewall_ip_filter';
+	private const OPTION_KEY                = 'rest_firewall_ip_filter';
 	private const AUTO_BLACKLIST_KEY_PREFIX = 'rest_firewall_auto_blacklist_';
 
 	public static function get_instance() {
@@ -253,6 +253,7 @@ class IpBlackList {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		if ( isset( $_POST['enabled'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$options['enabled'] = rest_sanitize_boolean( wp_unslash( $_POST['enabled'] ) );
 		}
 
@@ -414,12 +415,11 @@ class IpBlackList {
 
 		wp_send_json_success(
 			array(
-				'countries'        => self::get_all_countries(),
-				'stats'            => $stats,
+				'countries'         => self::get_all_countries(),
+				'stats'             => $stats,
 				'blocked_countries' => array(),
 			),
 			200
 		);
 	}
-
 }

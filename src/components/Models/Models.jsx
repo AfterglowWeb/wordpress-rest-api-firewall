@@ -3,7 +3,6 @@ import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
 
-import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
@@ -284,30 +283,43 @@ export default function Models() {
 
 	return (
 		<Stack p={4} spacing={ 2 } sx={ { height: '100%', flexGrow: 1 } }>
+			
 			<Stack spacing={ 2 } sx={ { maxWidth: 720 } }>
-				<Stack direction="row" alignItems="center" justifyContent="space-between">
-					<Box>
-						<Typography variant="subtitle1" fontWeight={ 600 }>
-							{ __( 'Output Settings', 'rest-api-firewall' ) }
-						</Typography>
-						<Typography variant="body2" color="text.secondary">
-							{ __( 'Global output transformations applied to REST API responses.', 'rest-api-firewall' ) }
-						</Typography>
-					</Box>
+				
+				<Stack>
+					<Typography variant="subtitle1" fontWeight={ 600 }>
+						{ __( 'Global Settings', 'rest-api-firewall' ) }
+					</Typography>
+					<Typography variant="body2" color="text.secondary">
+						{ __( 'Global output transformations applied to REST API responses.', 'rest-api-firewall' ) }
+					</Typography>
+				</Stack>
+			
+				<GlobalProperties form={ outputForm } setField={ setOutputField } />
+
+				<Stack direction="row" justifyContent="flex-end">
 					<Button
 						size="small"
-						variant="outlined"
+						variant="contained"
+						disableElevation
 						disabled={ savingOutput }
-						onClick={ () => saveOutput( pickOutputGroup( 'models_properties' ), {
-							successTitle: __( 'Properties Saved', 'rest-api-firewall' ),
-							successMessage: __( 'Properties settings saved successfully.', 'rest-api-firewall' ),
-							confirmMessage: __( 'Save properties settings?', 'rest-api-firewall' ),
-						} ) }
+						onClick={ () => {
+							const { rest_models_enabled: _ignored, ...applyOpts } = pickOutputGroup( 'models_properties' );
+							saveOutput( applyOpts, {
+								confirmTitle: __( 'Apply to all models', 'rest-api-firewall' ),
+								confirmMessage: __(
+									'This will apply the selected output filters as defaults across all your models. Each model can then override these settings individually.',
+									'rest-api-firewall'
+								),
+								confirmLabel: __( 'Apply', 'rest-api-firewall' ),
+								successTitle: __( 'Settings Applied', 'rest-api-firewall' ),
+								successMessage: __( 'Global output settings have been applied.', 'rest-api-firewall' ),
+							} );
+						} }
 					>
-						{ __( 'Save Output Settings', 'rest-api-firewall' ) }
+						{ __( 'Apply to all models', 'rest-api-firewall' ) }
 					</Button>
 				</Stack>
-				<GlobalProperties form={ outputForm } setField={ setOutputField } />
 			</Stack>
 
 			<Divider />
@@ -412,6 +424,6 @@ export default function Models() {
 					</Button>
 				</DialogActions>
 			</Dialog>
-		</Stack>
+	</Stack>
 	);
 }

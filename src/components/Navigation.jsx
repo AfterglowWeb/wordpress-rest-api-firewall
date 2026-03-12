@@ -1,5 +1,8 @@
-import { useState } from '@wordpress/element';
+import { useState, useCallback } from '@wordpress/element';
 import { useLicense } from '../contexts/LicenseContext';
+import { useAdminData } from '../contexts/AdminDataContext';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -61,11 +64,61 @@ export default function Navigation( {
 	needsLicense,
 } ) {
 	const { hasValidLicense } = useLicense();
+	const { adminData, updateAdminData } = useAdminData();
 	const { __ } = wp.i18n || {};
 	const theme = useTheme();
 	const isMobile = useMediaQuery( theme.breakpoints.down( 'md' ) );
 
 	const [ mobileOpen, setMobileOpen ] = useState( false );
+
+	// Per-panel module enabled states (driven from adminData.admin_options + IpFilter's own option).
+	const moduleKey = {
+		2: { module: 'routes_policy', optionKey: 'firewall_routes_policy_enabled', label: __( 'Active', 'rest-api-firewall' ) },
+		3: { module: 'ip_filter', optionKey: null, label: __( 'Active', 'rest-api-firewall' ) },
+		5: { module: 'models', optionKey: 'rest_models_enabled', label: __( 'Active', 'rest-api-firewall' ) },
+	};
+
+	// IpFilter reads from its own REST option; store it in local state hydrated on mount.
+	const [ ipFilterEnabled, setIpFilterEnabled ] = useState(
+		() => !! adminData?.ip_filter_enabled
+	);
+
+	const getModuleEnabled = ( pg ) => {
+		if ( pg === 3 ) return ipFilterEnabled;
+		const key = moduleKey[ pg ]?.optionKey;
+		return key ? !! adminData?.admin_options?.[ key ] : null;
+	};
+
+	const handleModuleToggle = useCallback(
+		async ( pg, checked ) => {
+			const info = moduleKey[ pg ];
+			if ( ! info ) return;
+			const nonce = adminData?.nonce;
+
+			// Optimistic update
+			if ( pg === 3 ) {
+				setIpFilterEnabled( checked );
+			} else {
+				updateAdminData( {
+					admin_options: {
+						...adminData?.admin_options,
+						[ info.optionKey ]: checked,
+					},
+				} );
+			}
+
+			await fetch( adminData?.ajaxurl, {
+				method: 'POST',
+				body: new URLSearchParams( {
+					action: 'rest_api_firewall_activate_module',
+					nonce,
+					module: info.module,
+					enabled: checked ? '1' : '0',
+				} ),
+			} );
+		},
+		[ adminData, updateAdminData, moduleKey ] // eslint-disable-line react-hooks/exhaustive-deps
+	);
 
 	const menuItems = [
 		{
@@ -354,7 +407,6 @@ export default function Navigation( {
 				</List>
 			</Drawer>
 
-			{ /* Top AppBar */ }
 			<AppBar
 				elevation={ 0 }
 				sx={ {
@@ -403,38 +455,63 @@ export default function Navigation( {
 							<ApplicationSelector />
 						) }
 
-					<Box sx={ { flex: 1, minWidth: 0 } }>
-						{ activeMenuItem?.breadcrumbPrefix && (
-							<Typography
-								variant="caption"
-								color="text.secondary"
-								sx={ {
-									display: 'block',
-									textTransform: 'uppercase',
-									letterSpacing: 0.5,
-								} }
-							>
-								{ activeMenuItem.breadcrumbPrefix }
-							</Typography>
-						) }
-						<Typography
-							variant="h6"
-							fontWeight={ 600 }
-							color="text.primary"
-							sx={ { lineHeight: 1.2 } }
-						>
-							{ activeMenuItem?.label || '' }
-							{ activeMenuItem?.secondary && (
+					
+					<Stack direction="row" alignItems="center" gap={ 2 }>
+
+						<Stack>
+							{ activeMenuItem?.breadcrumbPrefix && (
 								<Typography
 									variant="caption"
 									color="text.secondary"
-									sx={ { ml: 1 } }
+									sx={ {
+										display: 'block',
+										textTransform: 'uppercase',
+										letterSpacing: 0.5,
+									} }
 								>
-									{ activeMenuItem.secondary }
+									{ activeMenuItem.breadcrumbPrefix }
 								</Typography>
 							) }
-						</Typography>
-					</Box>
+							<Typography
+								variant="h6"
+								fontWeight={ 600 }
+								color="text.primary"
+								sx={ { lineHeight: 1.2 } }
+							>
+								{ activeMenuItem?.label || '' }
+								{ activeMenuItem?.secondary && (
+									<Typography
+										variant="caption"
+										color="text.secondary"
+										sx={ { ml: 1 } }
+									>
+										{ activeMenuItem.secondary }
+									</Typography>
+								) }
+							</Typography>
+						</Stack>
+
+						<Divider variant="middle" flexItem orientation="vertical" />
+
+						{ hasValidLicense && moduleKey[ panelGroup ] !== undefined && (
+							<FormControlLabel
+							control={
+								<Switch
+									size="small"
+									checked={ !! getModuleEnabled( panelGroup ) }
+									onChange={ ( e ) => handleModuleToggle( panelGroup, e.target.checked ) }
+								/>
+							}
+							sx={{ 
+								flex: 0,
+								'.MuiFormControlLabel-label': { color: 'text.primary' } }}
+							label={ 'Enable' }
+							/>
+						) }
+						
+					</Stack>
+
+					<Stack flex={ 1 }/>
 
 					<Stack direction="row" gap={ 2 } alignItems="center">
 						<Documentation
