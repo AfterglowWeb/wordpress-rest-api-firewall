@@ -16,7 +16,6 @@ dist/
 *.zip
 **/*.tgz
 **/*.zip
-!rest-api-firewall.zip
 **/*.tar
 **/*.tar.gz
 **/.DS_Store

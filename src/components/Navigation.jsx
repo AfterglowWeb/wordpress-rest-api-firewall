@@ -78,12 +78,15 @@ export default function Navigation( {
 
 	// Per-panel module enabled states (driven from adminData.admin_options + IpFilter's own option).
 	const moduleKey = {
-		1: { module: 'users', optionKey: 'user_rate_limit_enabled', label: __( 'Active', 'rest-api-firewall' ) },
-		2: { module: 'routes_policy', optionKey: 'firewall_routes_policy_enabled', label: __( 'Active', 'rest-api-firewall' ) },
-		3: { module: 'ip_filter', optionKey: null, label: __( 'Active', 'rest-api-firewall' ) },
-		4: { module: 'collections', optionKey: 'rest_collections_enabled', label: __( 'Active', 'rest-api-firewall' ) },
-		5: { module: 'models', optionKey: 'rest_models_enabled', label: __( 'Active', 'rest-api-firewall' ) },
-		6: { module: 'settings_route', optionKey: 'rest_settings_route_enabled', label: __( 'Active', 'rest-api-firewall' ) },
+		1:  { module: 'users', optionKey: 'user_rate_limit_enabled', label: __( 'Active', 'rest-api-firewall' ) },
+		2:  { module: 'routes_policy', optionKey: 'firewall_routes_policy_enabled', label: __( 'Active', 'rest-api-firewall' ) },
+		3:  { module: 'ip_filter', optionKey: null, label: __( 'Active', 'rest-api-firewall' ) },
+		4:  { module: 'collections', optionKey: 'rest_collections_enabled', label: __( 'Active', 'rest-api-firewall' ) },
+		5:  { module: 'models', optionKey: 'rest_models_enabled', label: __( 'Active', 'rest-api-firewall' ) },
+		6:  { module: 'settings_route', optionKey: 'rest_settings_route_enabled', label: __( 'Active', 'rest-api-firewall' ) },
+		7:  { module: 'webhooks', optionKey: 'webhooks_enabled', label: __( 'Active', 'rest-api-firewall' ) },
+		8:  { module: 'mails', optionKey: 'mails_enabled', label: __( 'Active', 'rest-api-firewall' ) },
+		13: { module: 'automations', optionKey: 'automations_enabled', label: __( 'Active', 'rest-api-firewall' ) },
 	};
 
 	// IpFilter reads from its own REST option; store it in local state hydrated on mount.

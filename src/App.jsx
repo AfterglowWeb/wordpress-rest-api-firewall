@@ -240,16 +240,20 @@ function AppContent() {
 						pl: { xs: 0, md: DRAWER_WIDTH + 'px' },
 					pt: dirtyFlag.has ? 0 : APP_BAR_HEIGHT + 'px',
 						minHeight: {
-							xs: `calc(100svh - ${
-								APP_FOOTER_HEIGHT +
-								APP_BAR_HEIGHT +
-								WP_ADMIN_BAR_HEIGHT_MOBILE
-							}px)`,
-							md: `calc(100svh - ${
-								APP_FOOTER_HEIGHT +
-								APP_BAR_HEIGHT +
-								WP_ADMIN_BAR_HEIGHT_DESKTOP
-							}px)`,
+							xs: dirtyFlag.has
+								? `calc(100svh - ${ APP_FOOTER_HEIGHT + WP_ADMIN_BAR_HEIGHT_MOBILE }px)`
+								: `calc(100svh - ${
+										APP_FOOTER_HEIGHT +
+										APP_BAR_HEIGHT +
+										WP_ADMIN_BAR_HEIGHT_MOBILE
+								  }px)`,
+							md: dirtyFlag.has
+								? `calc(100svh - ${ APP_FOOTER_HEIGHT + WP_ADMIN_BAR_HEIGHT_DESKTOP }px)`
+								: `calc(100svh - ${
+										APP_FOOTER_HEIGHT +
+										APP_BAR_HEIGHT +
+										WP_ADMIN_BAR_HEIGHT_DESKTOP
+								  }px)`,
 						},
 						bgcolor: 'background.paper',
 					} }

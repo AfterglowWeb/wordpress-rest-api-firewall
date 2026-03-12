@@ -455,7 +455,7 @@ export default function AutomationEditor( { automation, onBack } ) {
 
 	if ( ! loaded ) {
 		return (
-			<LoadingMessage />
+			<LoadingMessage message={ isNew ? __( 'Creating new automation...', 'rest-api-firewall' ) : __( 'Loading automation...', 'rest-api-firewall' ) } />
 		);
 	}
 

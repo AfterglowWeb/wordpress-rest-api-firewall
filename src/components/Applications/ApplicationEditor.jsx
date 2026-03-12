@@ -317,7 +317,7 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 	};
 
 	if ( loading ) {
-		return <LoadingMessage />;
+		return <LoadingMessage message={ isNew ? __( 'Creating new application...', 'rest-api-firewall' ) : __( 'Loading application...', 'rest-api-firewall' ) } />;
 	}
 
 	const InfoRow = ( { label, children } ) => (
