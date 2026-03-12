@@ -1,4 +1,5 @@
 import { useCallback } from '@wordpress/element';
+import { alpha } from '@mui/material/styles';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -121,13 +122,16 @@ function PropertyRow( {
                 gap={ 1 }
                 py={ 0.75 }
                 alignItems="center"
-                sx={ {
+                sx={ ( theme ) => ( {
                     borderRadius: 0.75,
                     px: 0.5,
                     mx: -0.5,
+                    bgcolor: alpha( theme.palette.text.primary, 0.025 + depth * 0.02 ),
                     transition: 'background-color 0.15s',
-                    '&:hover': { bgcolor: 'action.hover' },
-                } }
+                    '&:hover': {
+                        bgcolor: alpha( theme.palette.text.primary, 0.055 + depth * 0.02 ),
+                    },
+                } ) }
             >
                 { isManualObject ? (
                     <IconButton
@@ -334,6 +338,7 @@ function PropertyRow( {
                     ) : (
                         <TextField
                             size="small"
+                            type={ type === 'integer' ? 'number' : 'text' }
                             value={ staticVal }
                             onChange={ ( e ) => update( { staticValue: e.target.value } ) }
                             disabled={ readOnly }
@@ -367,7 +372,7 @@ function PropertyRow( {
 
             { isManualObject && (
                 <Collapse in={ expanded }>
-                    <Stack spacing={ 0 } sx={ { mt: 0.25, bgcolor: 'action.hover', borderRadius: 1, py: 0.5, px: 0.5 } }>
+                    <Stack spacing={ 0 } sx={ { mt: 0.5, borderRadius: 1, py: 0.5, px: 0.5 } }>
                         { Object.entries( properties ).map(
                             ( [ subKey, subDef ] ) => (
                                 <PropertyRow
@@ -390,32 +395,19 @@ function PropertyRow( {
                         ) }
                         { ! readOnly && (
                             <Stack direction="row" gap={ 0.5 } mt={ 0.5 } ml={ 4 } flexWrap="wrap">
-                                <Button
-                                    size="small"
-                                    startIcon={ <AddIcon sx={ { fontSize: '14px !important' } } /> }
-                                    onClick={ () => handleAddSub( 'string' ) }
-                                    sx={ { textTransform: 'none', fontSize: '0.72rem', py: 0.25, px: 0.75, minHeight: 0 } }
-                                >
+                        <>
+                                <Button size="small" startIcon={ <AddIcon sx={ { fontSize: '14px !important' } } /> } onClick={ () => handleAddSub( 'string' ) } sx={ { textTransform: 'none', fontSize: '0.72rem', py: 0.25, px: 0.75, minHeight: 0 } }>
                                     { __( 'Add property', 'rest-api-firewall' ) }
                                 </Button>
                                 { depth + 1 < maxDepth && (
-                                    <Button
-                                        size="small"
-                                        startIcon={ <AddIcon sx={ { fontSize: '14px !important' } } /> }
-                                        onClick={ () => handleAddSub( 'object' ) }
-                                        sx={ { textTransform: 'none', fontSize: '0.72rem', py: 0.25, px: 0.75, minHeight: 0 } }
-                                    >
+                                    <Button size="small" startIcon={ <AddIcon sx={ { fontSize: '14px !important' } } /> } onClick={ () => handleAddSub( 'object' ) } sx={ { textTransform: 'none', fontSize: '0.72rem', py: 0.25, px: 0.75, minHeight: 0 } }>
                                         { __( 'New object', 'rest-api-firewall' ) }
                                     </Button>
                                 ) }
-                                <Button
-                                    size="small"
-                                    startIcon={ <AddIcon sx={ { fontSize: '14px !important' } } /> }
-                                    onClick={ () => handleAddSub( 'static' ) }
-                                    sx={ { textTransform: 'none', fontSize: '0.72rem', py: 0.25, px: 0.75, minHeight: 0 } }
-                                >
+                                <Button size="small" startIcon={ <AddIcon sx={ { fontSize: '14px !important' } } /> } onClick={ () => handleAddSub( 'static' ) } sx={ { textTransform: 'none', fontSize: '0.72rem', py: 0.25, px: 0.75, minHeight: 0 } }>
                                     { __( 'Static value', 'rest-api-firewall' ) }
                                 </Button>
+                            </>
                             </Stack>
                         ) }
                     </Stack>
@@ -499,34 +491,27 @@ export default function JsonSchemaBuilder( {
                 />
             ) ) }
 
-            { ! readOnly && (
-                <Stack direction="row" gap={ 0.5 } mt={ 1 } flexWrap="wrap">
-                    <Button
-                        size="small"
-                        startIcon={ <AddIcon sx={ { fontSize: '14px !important' } } /> }
-                        onClick={ () => handleAdd( 'string' ) }
-                        sx={ { textTransform: 'none', fontSize: '0.72rem', py: 0.25, px: 0.75, minHeight: 0 } }
-                    >
-                        { __( 'Add property', 'rest-api-firewall' ) }
-                    </Button>
-                    <Button
-                        size="small"
-                        startIcon={ <AddIcon sx={ { fontSize: '14px !important' } } /> }
-                        onClick={ () => handleAdd( 'object' ) }
-                        sx={ { textTransform: 'none', fontSize: '0.72rem', py: 0.25, px: 0.75, minHeight: 0 } }
-                    >
-                        { __( 'New object', 'rest-api-firewall' ) }
-                    </Button>
-                    <Button
-                        size="small"
-                        startIcon={ <AddIcon sx={ { fontSize: '14px !important' } } /> }
-                        onClick={ () => handleAdd( 'static' ) }
-                        sx={ { textTransform: 'none', fontSize: '0.72rem', py: 0.25, px: 0.75, minHeight: 0 } }
-                    >
-                        { __( 'Static value', 'rest-api-firewall' ) }
-                    </Button>
-                </Stack>
-            ) }
+            { ! readOnly && ( () => {
+                const compact = Object.keys( value ).length > 0;
+                const btnSx = compact
+                    ? { textTransform: 'none', fontSize: '0.72rem', py: 0.25, px: 0.75, minHeight: 0 }
+                    : {};
+                const btnSize = compact ? 'small' : 'medium';
+                const iconSx = compact ? { fontSize: '14px !important' } : {};
+                return (
+                    <Stack direction="row" gap={ 0.5 } mt={ 1 } flexWrap="wrap">
+                        <Button size={ btnSize } startIcon={ <AddIcon sx={ iconSx } /> } onClick={ () => handleAdd( 'string' ) } sx={ btnSx }>
+                            { __( 'Add property', 'rest-api-firewall' ) }
+                        </Button>
+                        <Button size={ btnSize } startIcon={ <AddIcon sx={ iconSx } /> } onClick={ () => handleAdd( 'object' ) } sx={ btnSx }>
+                            { __( 'New object', 'rest-api-firewall' ) }
+                        </Button>
+                        <Button size={ btnSize } startIcon={ <AddIcon sx={ iconSx } /> } onClick={ () => handleAdd( 'static' ) } sx={ btnSx }>
+                            { __( 'Static value', 'rest-api-firewall' ) }
+                        </Button>
+                    </Stack>
+                );
+            } )() }
         </Stack>
     );
 }

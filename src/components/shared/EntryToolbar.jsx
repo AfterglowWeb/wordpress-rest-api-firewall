@@ -1,4 +1,5 @@
 import Button from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
@@ -7,9 +8,25 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
 
-export default function EntryToolbar( { isNew, title, author, dateCreated, dateModified, handleBack, handleSave, handleDelete, saving, enabled = null, setEnabled = null, children } ) {
+export default function EntryToolbar( { isNew, title, author, dateCreated, dateModified, handleBack, handleSave, handleDelete, saving, enabled = null, setEnabled = null, dirtyFlag = null, children } ) {
     const { __ } = wp.i18n || {};
+    const { openDialog } = useDialog();
+
+    const handleBackClick = () => {
+        if ( dirtyFlag?.has ) {
+            openDialog( {
+                type: DIALOG_TYPES.CONFIRM,
+                title: __( 'Unsaved Changes', 'rest-api-firewall' ),
+                content: dirtyFlag.message || __( 'You have unsaved changes. Are you sure you want to go back?', 'rest-api-firewall' ),
+                confirmLabel: __( 'Go Back', 'rest-api-firewall' ),
+                onConfirm: handleBack,
+            } );
+        } else {
+            handleBack();
+        }
+    };
 
     return (
             <Toolbar
@@ -23,16 +40,32 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
                     py: { xs: 2, sm: 1 },
                 } }
             >
-                <Stack direction="row" gap={ 2 }>
-                    <Stack alignItems="center" justifyContent="center">
-                        <IconButton
-                            size="small"
-                            onClick={ handleBack }
-                            aria-label={ __( 'Back', 'rest-api-firewall' ) }
-                        >
-                            <ArrowBackIcon />
-                        </IconButton>
-                    </Stack>
+                <Stack direction="row" gap={ 2 } alignItems="center">
+                    <IconButton
+                        size="small"
+                        onClick={ handleBackClick }
+                        aria-label={ __( 'Back', 'rest-api-firewall' ) }
+                    >
+                        <ArrowBackIcon />
+                    </IconButton>
+                    <Divider orientation="vertical" flexItem />
+                    { typeof enabled === 'boolean' && setEnabled && (
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    checked={ enabled }
+                                    onChange={ ( e ) =>
+                                        setEnabled( e.target.checked )
+                                    }
+                                    size="small"
+                                />
+                            }
+                            label={ __(
+                                'Active',
+                                'rest-api-firewall'
+                            ) }
+                        />
+                    ) }
                     <Stack
                         spacing={ 0 }
                         direction={ { xs: 'column', sm: 'row' } }
@@ -47,53 +80,31 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
                         >
                             { title || __( 'New Entry', 'rest-api-firewall' ) }
                         </Typography>
-                            <Stack
-                                direction={ { xs: 'column', sm: 'row' } }
-                                gap={ { xs: 0, xl: 2 } }
-                                flexWrap="wrap"
+                        { ( author || dateCreated || dateModified ) && (
+                            <Typography
+                                variant="caption"
+                                color="text.secondary"
                             >
-
-                                {typeof enabled === 'boolean' && setEnabled && <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={ enabled }
-                                            onChange={ ( e ) =>
-                                                setEnabled( e.target.checked )
-                                            }
-                                            size="small"
-                                        />
-                                    }
-                                    label={ __(
-                                        'Active',
-                                        'rest-api-firewall'
-                                    ) }
-                                />}
-
-                                { ( author || dateCreated || dateModified ) && (
-                                <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                >
-                                    { ( author || dateCreated )  && (
+                                { ( author || dateCreated ) && (
+                                    <span>
+                                        { author && author }
+                                        { dateCreated && ` @ ${ dateCreated }` }
+                                    </span>
+                                ) }
+                                { dateModified && (
+                                    <>
+                                        <br />
                                         <span>
-                                            { author && author }
-                                            { dateCreated && ` @ ${ dateCreated }` }
+                                            { __(
+                                                'Mod.',
+                                                'rest-api-firewall'
+                                            ) }{ ' ' }
+                                            { dateModified }
                                         </span>
-                                    ) }
-                                    { dateModified && (
-                                        <>
-                                            <br />
-                                            <span>
-                                                { __(
-                                                    'Mod.',
-                                                    'rest-api-firewall'
-                                                ) }{ ' ' }
-                                                { dateModified }
-                                            </span>
-                                        </>
-                                    ) }
-                                </Typography>) }
-                            </Stack>
+                                    </>
+                                ) }
+                            </Typography>
+                        ) }
                     </Stack>
                 </Stack>
                 <Stack direction="row" gap={ 2 }>
