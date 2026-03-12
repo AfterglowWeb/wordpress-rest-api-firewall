@@ -244,6 +244,24 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
+			'theme_redirect_templates_free_url_enabled'   => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'theme',
+			),
+
+			'theme_redirect_templates_free_url'           => array(
+				'default_value'     => '',
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_url',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'theme',
+			),
+
 			'theme_disable_xmlrpc'                      => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
@@ -341,6 +359,70 @@ class CoreOptions {
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
 				'group'             => 'theme',
+			),
+
+			// Module enable toggles — visible in free (as locked), functional with PRO licence.
+			'user_rate_limit_enabled'                   => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'user_rate_limit',
+			),
+
+			'rest_models_enabled'                       => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'models_properties',
+			),
+
+			'rest_settings_route_enabled'               => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'settings_route',
+			),
+
+			'rest_collections_enabled'                  => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'collections',
+			),
+
+			'automations_enabled'                       => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'automations',
+			),
+
+			'webhooks_enabled'                          => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'webhook',
+			),
+
+			'mails_enabled'                             => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'email',
 			),
 
 		);

@@ -349,6 +349,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 				enabled={ enabled }
 				setEnabled={ setEnabled }
 				breadcrumb={ [__( 'Webhooks', 'rest-api-firewall' ), __( 'Webhook', 'rest-api-firewall' ) ] }
+				docPage="webhooks"
 			/>
 
 			{ loadError && <Alert severity="error">{ loadError }</Alert> }

@@ -2,6 +2,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
+use cmk\RestApiFirewall\Core\DeployTheme;
+use cmk\RestApiFirewall\Core\CoreOptions;
+use cmk\RestApiFirewall\Core\CoreOptionsService;
 use cmk\RestApiFirewall\Admin\AdminPage;
 use cmk\RestApiFirewall\Admin\Documentation;
 use cmk\RestApiFirewall\Routes\Routes;

@@ -344,6 +344,7 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 				enabled={ enabled }
 				setEnabled={ setEnabled }
 				breadcrumb={ [ __( 'Applications', 'rest-api-firewall' ), __( 'Application', 'rest-api-firewall' ) ] }
+				docPage="applications"
 			/>
 
 			{ loadError && <Alert severity="error">{ loadError }</Alert> }

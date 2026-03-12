@@ -31,16 +31,13 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
         }
     };
 
-    // Keep a ref to handleBackClick so the popstate listener always calls the latest version
     const handleBackClickRef = useRef( handleBackClick );
     handleBackClickRef.current = handleBackClick;
 
     useEffect( () => {
-        // Push a new history entry when the editor opens so browser back can trigger our handler
         window.history.pushState( { entryEditor: true }, '' );
 
         const onPopState = () => {
-            // Re-push immediately so if the user cancels the dialog, history is preserved
             window.history.pushState( { entryEditor: true }, '' );
             handleBackClickRef.current();
         };
@@ -112,7 +109,7 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
                                         letterSpacing: 0.5,
                                     } }
                                 >
-                                    { breadcrumb.join( ' › ' ) }
+                                    { breadcrumb.join( '/' ) }
                                 </Typography>
                             ) }
                         <Typography

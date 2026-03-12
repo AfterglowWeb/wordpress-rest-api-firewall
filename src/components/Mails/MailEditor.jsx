@@ -236,6 +236,7 @@ export default function MailEditor( { mail, onBack } ) {
 				enabled={ isNew ? null : enabled }
 				setEnabled={ isNew ? null : ( checked ) => { setEnabled( checked ); setDirty( true ); } }
 				breadcrumb={ [ __( 'Emails', 'rest-api-firewall' ), __( 'Email', 'rest-api-firewall' ) ] }
+				docPage="mails"
 			>
 				<Tooltip
 					title={

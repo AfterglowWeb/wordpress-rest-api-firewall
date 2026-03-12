@@ -472,6 +472,7 @@ export default function AutomationEditor( { automation, onBack } ) {
 				enabled={ isNew ? null : enabled }
 				setEnabled={ isNew ? null : setEnabled }
 				breadcrumb={ [ __( 'Automations', 'rest-api-firewall' ), __( 'Automation', 'rest-api-firewall' ) ] }
+				docPage="automations"
 			/>
 
 			<Stack spacing={ 3 } sx={ { overflowY: 'auto', flex: 1, p: 4 } }>
