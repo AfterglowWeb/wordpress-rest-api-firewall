@@ -29,6 +29,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import * as Flags from 'country-flag-icons/react/3x2';
 
 import { isValidIpOrCidr } from '../../../utils/sanitizeIp';
+import AllowedOrigins from './AllowedOrigins';
 
 export default function IpDataGrid( { listType = 'blacklist' } ) {
 	const { adminData } = useAdminData();
@@ -529,7 +530,7 @@ export default function IpDataGrid( { listType = 'blacklist' } ) {
 					</Button>
 				) }
 
-				{ listType === 'blacklist' && (
+				{ listType === 'blacklist' ? (
 					<>
 					<Tooltip
 						title={
@@ -558,7 +559,7 @@ export default function IpDataGrid( { listType = 'blacklist' } ) {
 						anchorOrigin={ { vertical: 'bottom', horizontal: 'right' } }
 						transformOrigin={ { vertical: 'top', horizontal: 'right' } }
 					>
-						<Paper sx={ { p: 2, maxWidth: 300 } }>
+						<Paper sx={ { p: 2, maxWidth: 400 } }>
 							<Stack spacing={ 1 }>
 								<Typography variant="subtitle2" gutterBottom>
 									{ __( 'Release Time', 'rest-api-firewall' ) }
@@ -649,7 +650,9 @@ export default function IpDataGrid( { listType = 'blacklist' } ) {
 						</Paper>
 					</Popover>
 					</>
-				)}
+				) : (
+					<AllowedOrigins />
+				) }
 
 				<IconButton onClick={ fetchEntries } disabled={ loading }>
 					<RefreshIcon />
