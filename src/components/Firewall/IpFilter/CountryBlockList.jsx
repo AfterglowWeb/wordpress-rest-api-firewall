@@ -101,20 +101,32 @@ export default function CountryBlockList( { listType = 'blacklist' } ) {
 		return false;
 	}, [ rowSelectionModel.ids, savedBlockedCountries ] );
 
+	const isWhitelist = listType === 'whitelist';
+
 	const handleSave = () => {
 		save(
 			{
 				action: 'update_blocked_countries',
+				list_type: listType,
 				countries: JSON.stringify( [ ...rowSelectionModel.ids ] ),
 			},
 			{
-				confirmTitle: __( 'Confirm Country Block', 'rest-api-firewall' ),
-				confirmMessage: __(
-					'Are you sure you want to update the blocked countries? This will affect all traffic from the selected countries.',
-					'rest-api-firewall'
-				),
+				confirmTitle: isWhitelist
+					? __( 'Confirm Country Allowlist', 'rest-api-firewall' )
+					: __( 'Confirm Country Block', 'rest-api-firewall' ),
+				confirmMessage: isWhitelist
+					? __(
+							'Are you sure you want to update the allowed countries? Only IPs from selected countries (and explicitly whitelisted IPs) will be permitted.',
+							'rest-api-firewall'
+					  )
+					: __(
+							'Are you sure you want to update the blocked countries? This will affect all traffic from the selected countries.',
+							'rest-api-firewall'
+					  ),
 				successTitle: __( 'Saved', 'rest-api-firewall' ),
-				successMessage: __( 'Blocked countries updated.', 'rest-api-firewall' ),
+				successMessage: isWhitelist
+					? __( 'Allowed countries updated.', 'rest-api-firewall' )
+					: __( 'Blocked countries updated.', 'rest-api-firewall' ),
 				onSuccess: ( data ) => {
 					const updated = data?.blocked_countries || [];
 					setSavedBlockedCountries( updated );
@@ -168,11 +180,13 @@ export default function CountryBlockList( { listType = 'blacklist' } ) {
 		},
 		{
 			field: 'count',
-			headerName: __( 'Blocked IPs', 'rest-api-firewall' ),
+			headerName: isWhitelist
+				? __( 'Allowed IPs', 'rest-api-firewall' )
+				: __( 'Blocked IPs', 'rest-api-firewall' ),
 			width: 130,
 			type: 'number',
 		},
-	], [ __ ] );
+	], [ isWhitelist, __ ] );
 
 	if ( loading ) {
 		return (
@@ -189,7 +203,9 @@ export default function CountryBlockList( { listType = 'blacklist' } ) {
 			>
 				<Stack direction="row" alignItems="center" spacing={ 1 }>
 					<Typography variant="h6" fontWeight={600}>
-						{ __( 'Block by Country', 'rest-api-firewall' ) }
+						{ isWhitelist
+							? __( 'Allow by Country', 'rest-api-firewall' )
+							: __( 'Block by Country', 'rest-api-firewall' ) }
 					</Typography>
 				</Stack>
 
@@ -210,7 +226,9 @@ export default function CountryBlockList( { listType = 'blacklist' } ) {
 				<Stack spacing={ 1 }>
 					<Stack direction="row" gap={ 1 } alignItems="center">
 						<Typography variant="body2">
-							{ __( 'Blocked countries', 'rest-api-firewall' ) }
+							{ isWhitelist
+								? __( 'Allowed countries', 'rest-api-firewall' )
+								: __( 'Blocked countries', 'rest-api-firewall' ) }
 						</Typography>
 						<Chip
 							label={ savedBlockedCountries.length }
@@ -284,10 +302,9 @@ export default function CountryBlockList( { listType = 'blacklist' } ) {
 			{ ! hasValidLicense && (
 				<Box sx={ { p: 1.5, bgcolor: 'action.hover', borderRadius: 1 } }>
 					<Typography variant="body2" color="text.secondary">
-						{ __(
-							'License required to block countries',
-							'rest-api-firewall'
-						) }
+						{ isWhitelist
+							? __( 'License required to allow countries', 'rest-api-firewall' )
+							: __( 'License required to block countries', 'rest-api-firewall' ) }
 					</Typography>
 				</Box>
 			) }

@@ -2,17 +2,13 @@ import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useDialog, DIALOG_TYPES } from '../../../contexts/DialogContext';
 import { useLicense } from '../../../contexts/LicenseContext';
-import { useApplication } from '../../../contexts/ApplicationContext';
-
 import Alert from '@mui/material/Alert';
 import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import FormHelperText from '@mui/material/FormHelperText';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import Divider from '@mui/material/Divider';
@@ -24,8 +20,6 @@ import LockOutlineIcon from '@mui/icons-material/LockOutline';
 import IpDataGrid from './IpDataGrid';
 import CountryBlockList from './CountryBlockList';
 import LoadingMessage from '../../LoadingMessage';
-import AllowedOrigins from './AllowedOrigins';
-
 export default function IpFilter() {
 	const { adminData } = useAdminData();
 	const { __ } = wp.i18n || {};
@@ -39,7 +33,6 @@ export default function IpFilter() {
 	const { hasValidLicense, proNonce } = useLicense();
 	const nonce = proNonce || adminData.nonce;
 	const { openDialog, updateDialog } = useDialog();
-	const { selectedApplicationId } = useApplication();
 	const isIpFilterDisabled = ! settings.enabled;
 	const isDisabled = ! hasValidLicense || isIpFilterDisabled;
 
@@ -105,12 +98,6 @@ export default function IpFilter() {
 		},
 		[ adminData ]
 	);
-
-	const handleToggleEnabled = async ( e ) => {
-		const newEnabled = e.target.checked;
-		setSettings( ( prev ) => ( { ...prev, enabled: newEnabled } ) );
-		await saveIpFilter( { enabled: newEnabled ? '1' : '0' } );
-	};
 
 	const handleModeChange = ( e ) => {
 		const newMode = e.target.value;
@@ -181,29 +168,6 @@ export default function IpFilter() {
 				spacing={ 3 }
 				alignItems={ { xs: 'stretch', sm: 'flex-start' } }
 			>
-				<FormControl>
-					<FormControlLabel
-						control={
-							<Switch
-								checked={ settings.enabled }
-								onChange={ handleToggleEnabled }
-								size="small"
-							/>
-						}
-						label={ __(
-							'Enable IP Filtering',
-							'rest-api-firewall'
-						) }
-					/>
-					<FormHelperText>
-						{ __(
-							'Block or allow REST API requests based on IP address.',
-							'rest-api-firewall'
-						) }
-					</FormHelperText>
-				</FormControl>
-
-				<Stack flex={ 1 } />
 
 				<FormControl
 				sx={ { flex: 1, maxWidth: 240, position: 'relative' } }
@@ -239,9 +203,6 @@ export default function IpFilter() {
 				</FormControl>
 
 
-				{ selectedApplicationId && (
-				<AllowedOrigins disabled={ settings.mode === 'blacklist' } />
-		) }
 			</Stack>
 
 		
@@ -258,12 +219,12 @@ export default function IpFilter() {
 				<Tab
 					icon={ <TableViewIcon /> }
 					iconPosition="start"
-					label={ __( 'All IPs', 'rest-api-firewall' ) }
+					label={ settings.mode === 'blacklist' ? __( 'Block IPs', 'rest-api-firewall' ) : __('Allow IPs', 'rest-api-firewall') }
 				/>
 				<Tab
 					icon={ <PublicIcon /> }
 					iconPosition="start"
-					label={ __( 'By Country', 'rest-api-firewall' ) }
+					label={ settings.mode === 'blacklist' ? __( 'Block Country', 'rest-api-firewall' ) : __( 'Allow Country', 'rest-api-firewall' ) }
 				/>
 			</Tabs>
 			{ currentTab === 0 && <IpDataGrid listType={ activeListKey } /> }

@@ -1,4 +1,5 @@
 import { useLicense } from '../../../contexts/LicenseContext';
+import { useAdminData } from '../../../contexts/AdminDataContext';
 
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
@@ -13,6 +14,8 @@ const HTTP_METHODS = [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ];
 
 export default function GlobalRoutesPolicy( { form, setField } ) {
 	const { hasValidLicense } = useLicense();
+	const { adminData } = useAdminData();
+	const isModuleEnabled = !! adminData?.admin_options?.firewall_routes_policy_enabled;
 	const { __ } = wp.i18n || {};
 
 	const handleMethodToggle = ( method ) => ( e ) => {
@@ -42,6 +45,7 @@ export default function GlobalRoutesPolicy( { form, setField } ) {
 
 			<FormControl>
 				<FormControlLabel
+					disabled={ ! isModuleEnabled }
 					control={
 						<Switch
 							checked={ !! form.enforce_auth }
@@ -59,6 +63,7 @@ export default function GlobalRoutesPolicy( { form, setField } ) {
 
 			<FormControl>
 				<FormControlLabel
+					disabled={ ! isModuleEnabled }
 					control={
 						<Switch
 							checked={ !! form.enforce_rate_limit }
@@ -76,6 +81,7 @@ export default function GlobalRoutesPolicy( { form, setField } ) {
 
 			<FormControl>
 				<FormControlLabel
+					disabled={ ! isModuleEnabled }
 					control={
 						<Switch
 							checked={ !! form.hide_user_routes }
@@ -123,7 +129,7 @@ export default function GlobalRoutesPolicy( { form, setField } ) {
 							{ HTTP_METHODS.map( ( method ) => (
 								<FormControlLabel
 									key={ method }
-									disabled={ ! hasValidLicense }
+								disabled={ ! hasValidLicense || ! isModuleEnabled }
 									control={
 										<Switch
 											size="small"
@@ -165,7 +171,7 @@ export default function GlobalRoutesPolicy( { form, setField } ) {
 				>
 					<Stack>
 						<ObjectTypeSelect
-							disabled={ ! hasValidLicense }
+							disabled={ ! hasValidLicense || ! isModuleEnabled }
 							name="disabled_post_types"
 							label={ __(
 								'Disable Object Types',

@@ -15,6 +15,7 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import Divider from '@mui/material/Divider';
 
 import AddIcon from '@mui/icons-material/Add';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
@@ -146,16 +147,11 @@ export default function AllowedOrigins( { disabled = false } ) {
                 transformOrigin={ { vertical: 'top', horizontal: 'right' } }
             >
                 <Paper sx={ { p: 2, maxWidth: 400 } }>
+                    
                     <Stack spacing={ 1.5 }>
-                        <Typography variant="subtitle2" gutterBottom>
-                            { __( 'Allowed Origins', 'rest-api-firewall' ) }
+                        <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                            { __( 'Set Allowed Origins', 'rest-api-firewall' ) }
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            { __( 'Use in conjunction with IP whitelisting — on shared hosting or behind a CDN, this ensures only requests from known origins are accepted alongside whitelisted IPs.', 'rest-api-firewall' ) }
-                        </Typography>
-                        <Alert severity="warning" icon={ <WarningAmberOutlinedIcon fontSize="small" /> }>
-                            { __( 'The Origin header is client-controlled and can be spoofed. Always combine with IP whitelisting and user authentication.', 'rest-api-firewall' ) }
-                        </Alert>
                         <Stack direction="row" spacing={ 1 } alignItems="flex-start">
                             <TextField
                                 size="small"
@@ -209,7 +205,17 @@ export default function AllowedOrigins( { disabled = false } ) {
                                 { originsSaving ? __( 'Saving…', 'rest-api-firewall' ) : __( 'Save', 'rest-api-firewall' ) }
                             </Button>
                         </Stack>
+
+                        <Divider />
+
+                        <Typography variant="body2" color="text.secondary">
+                            { __( 'Use in conjunction with IP whitelisting — on shared hosting or behind a CDN, this ensures only requests from known origins are accepted alongside whitelisted IPs.', 'rest-api-firewall' ) }
+                        </Typography>
+                        <Alert severity="warning" icon={ <WarningAmberOutlinedIcon fontSize="small" /> }>
+                            { __( 'The Origin header is client-controlled and can be spoofed. Always combine with IP whitelisting and user authentication.', 'rest-api-firewall' ) }
+                        </Alert>
                     </Stack>
+                    
                 </Paper>
             </Popover>
         </>
