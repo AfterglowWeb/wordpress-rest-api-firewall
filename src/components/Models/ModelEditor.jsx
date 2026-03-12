@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
+import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
 import useProActions from '../../hooks/useProActions';
 
 import Alert from '@mui/material/Alert';
@@ -17,7 +18,6 @@ import formatDate from '../../utils/formatDate';
 import { PropertyRow } from './Properties';
 import JsonSchemaBuilder from '../shared/JsonSchemaBuilder';
 import EntryToolbar from '../shared/EntryToolbar';
-import ObjectTypeSelect from '../ObjectTypeSelect';
 import LoadingMessage from '../LoadingMessage';
 
 const FALLBACK_BINDINGS = [
@@ -40,11 +40,12 @@ const FALLBACK_BINDINGS = [
 export default function ModelEditor( { model, onBack } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
-	const { selectedApplicationId, setDirtyFlag } = useApplication();
+	const { selectedApplicationId, setDirtyFlag, dirtyFlag } = useApplication();
 	const nonce = proNonce || adminData.nonce;
 	const { __ } = wp.i18n || {};
 
 	const { save, remove, saving } = useProActions();
+	const { openDialog } = useDialog();
 
 	const isNew = ! model.id;
 
@@ -207,17 +208,24 @@ export default function ModelEditor( { model, onBack } ) {
 		);
 	}, [ remove, model.id, title, nonce, onBack, clearDirty, __ ] );
 
-	const handleObjectTypeChange = ( e ) => {
-		setObjectType( e.target.value );
-		setWpProperties( {} );
-		setCustomProperties( {} );
-	};
-
 	const handleModeChange = ( _, newMode ) => {
 		if ( newMode === null ) {
 			return;
 		}
-		setIsCustom( newMode === 'custom' );
+		if ( ! isNew && enabled ) {
+			openDialog( {
+				type: DIALOG_TYPES.CONFIRM,
+				title: __( 'Change Schema Mode', 'rest-api-firewall' ),
+				content: __(
+					'This model is currently active. Changing the schema mode may affect the REST API output. Are you sure?',
+					'rest-api-firewall'
+				),
+				confirmLabel: __( 'Change Mode', 'rest-api-firewall' ),
+				onConfirm: () => setIsCustom( newMode === 'custom' ),
+			} );
+		} else {
+			setIsCustom( newMode === 'custom' );
+		}
 	};
 
 	if ( ! loaded ) {
@@ -284,6 +292,7 @@ export default function ModelEditor( { model, onBack } ) {
 				saving={ saving }
 				enabled={ enabled }
 				setEnabled={ setEnabled }
+				dirtyFlag={ dirtyFlag }
 			/>
 			
 			<Stack p={ 4 } spacing={ 3 } sx={ { overflowY: 'auto', flex: 1} }>
@@ -310,26 +319,12 @@ export default function ModelEditor( { model, onBack } ) {
 						}}
 					/>
 
-					<ObjectTypeSelect
-						types={ [ 'post_type', 'taxonomy', 'author' ] }
-						value={ objectType }
-						defaultValue=""
-						label={ __(
-							'WordPress Object Type',
-							'rest-api-firewall'
-						) }
-						onChange={ handleObjectTypeChange }
-						sx={ { width: 270 } }
-						isSingle
-					/>
-
-				</Stack>
-
-				<ToggleButtonGroup
+					<ToggleButtonGroup
 					value={ isCustom ? 'custom' : 'wp' }
 					exclusive
 					onChange={ handleModeChange }
-				>
+					size="small"
+					>
 					<ToggleButton
 						value="wp"
 					>
@@ -345,6 +340,10 @@ export default function ModelEditor( { model, onBack } ) {
 						</Typography>
 					</ToggleButton>
 				</ToggleButtonGroup>
+
+				</Stack>
+
+				
 
 				{ objectType && (
 					<>
