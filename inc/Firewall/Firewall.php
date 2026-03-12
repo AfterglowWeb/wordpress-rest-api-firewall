@@ -72,6 +72,10 @@ class Firewall {
 			return $result;
 		}
 
+		if ( false === CoreOptions::read_option( 'firewall_routes_policy_enabled' ) ) {
+			return $result;
+		}
+
 		if ( false === CoreOptions::read_option( 'enforce_auth' ) ) {
 			return $result;
 		}

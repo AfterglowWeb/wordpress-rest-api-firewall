@@ -1,4 +1,4 @@
-import { useState } from '@wordpress/element';
+import { useState, useEffect } from '@wordpress/element';
 
 import Alert from '@mui/material/Alert';
 import FormControl from '@mui/material/FormControl';
@@ -290,27 +290,57 @@ export default function AuthManager( {
 } ) {
 	const { __ } = wp.i18n || {};
 
-	// When allowedAuthMethods is set, only show 'any' + the allowed concrete methods.
-	const visibleMethods = allowedAuthMethods.length === 0
-		? AUTH_METHODS
-		: AUTH_METHODS.filter(
-			( opt ) => opt.value === 'any' || allowedAuthMethods.includes( opt.value )
-		);
+	const noEnforcement = allowedAuthMethods.length === 0;
+	const singleEnforcement = allowedAuthMethods.length === 1;
+	const multiEnforcement = allowedAuthMethods.length > 1;
+
+	// Auto-select the only allowed method when exactly one is enforced
+	useEffect( () => {
+		if ( singleEnforcement && authMethod !== allowedAuthMethods[ 0 ] ) {
+			onAuthMethodChange( allowedAuthMethods[ 0 ] );
+		}
+	}, [ allowedAuthMethods.join( ',' ) ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
+	// Build visible options
+	const visibleMethods = noEnforcement
+		? AUTH_METHODS.map( ( m ) =>
+				m.value === 'any'
+					? { ...m, label: __( 'No Authentication', 'rest-api-firewall' ) }
+					: m
+		  )
+		: AUTH_METHODS.filter( ( m ) => allowedAuthMethods.includes( m.value ) );
+
+	// When multiple methods are enforced and current value is not in the list, treat as unset
+	const selectValue =
+		multiEnforcement && ( authMethod === 'any' || ! allowedAuthMethods.includes( authMethod ) )
+			? ''
+			: authMethod;
 
 	const updateConfig = ( key, value ) => {
 		onAuthConfigChange( { ...authConfig, [ key ]: value } );
 	};
 
+	const renderValue = ( value ) => {
+		if ( multiEnforcement ) {
+			const method = visibleMethods.find( ( m ) => m.value === value );
+			return method ? method.label : value;
+		}
+		return value;
+	}
+
 	return (
 		<Stack spacing={ 2 }>
 			<FormControl size="small" sx={ { maxWidth: 280 } }>
 				<InputLabel>
-					{ __( 'Auth Method', 'rest-api-firewall' ) }
+					{ __( 'Select Authentication Method', 'rest-api-firewall' ) }
 				</InputLabel>
 				<Select
-					value={ authMethod }
-					onChange={ ( e ) => onAuthMethodChange( e.target.value ) }
-					label={ __( 'Auth Method', 'rest-api-firewall' ) }
+				value={ selectValue }
+				onChange={ ( e ) => onAuthMethodChange( e.target.value ) }
+				label={ __( 'Select Authentication Method', 'rest-api-firewall' ) }
+				disabled={ singleEnforcement }
+				//displayEmpty={ multiEnforcement }
+				
 				>
 					{ visibleMethods.map( ( opt ) => (
 						<MenuItem key={ opt.value } value={ opt.value }>

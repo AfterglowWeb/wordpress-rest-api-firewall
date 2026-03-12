@@ -85,10 +85,10 @@ export default function UserEditor( { user, onBack, appAllowedAuthMethods = [] }
 		user.rate_limit_release_seconds ?? 300
 	);
 	const [ rateLimitBlacklistAfter, setRateLimitBlacklistAfter ] = useState(
-		user.rate_limit_blacklist_after ?? 0
+		user.rate_limit_blacklist_after ?? 5
 	);
 	const [ rateLimitBlacklistWindow, setRateLimitBlacklistWindow ] = useState(
-		user.rate_limit_blacklist_window ?? 0
+		user.rate_limit_blacklist_window ?? 3600
 	);
 
 	const loadEntry = useCallback( async () => {
@@ -256,27 +256,8 @@ export default function UserEditor( { user, onBack, appAllowedAuthMethods = [] }
 				saving={ saving }
 				enabled={ isNew ? null : enabled }
 				setEnabled={ isNew ? null : ( checked ) => setEnabled( checked ) }
-			>
-			{ appTitle && (
-				<Typography
-					variant="caption"
-					color="text.secondary"
-					sx={ { textAlign: 'left' } }
-				>
-					{ appTitle && (
-						<span>
-							{ sprintf(
-								__(
-									'Added to %s',
-									'rest-api-firewall'
-								),
-								appTitle
-							) }
-						</span>
-					) }
-				</Typography>
-			) }
-			</EntryToolbar>
+				breadcrumb={ [ appTitle, __( 'Auth. & Rate Limit', 'rest-api-firewall' ), __( 'User', 'rest-api-firewall' ) ] }
+			/>
 
 			{ loadError && <Alert severity="error">{ loadError }</Alert> }
 
@@ -333,10 +314,6 @@ export default function UserEditor( { user, onBack, appAllowedAuthMethods = [] }
 					<SectionHeader
 						title={ __(
 							'Authentication Method',
-							'rest-api-firewall'
-						) }
-						description={ __(
-							'Restrict which authentication mechanism this user must use. "Any" allows all configured methods.',
 							'rest-api-firewall'
 						) }
 					/>

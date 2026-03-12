@@ -293,6 +293,7 @@ export default function ModelEditor( { model, onBack } ) {
 				enabled={ enabled }
 				setEnabled={ setEnabled }
 				dirtyFlag={ dirtyFlag }
+				breadcrumb={ [ __( 'Properties', 'rest-api-firewall' ), __( 'Model', 'rest-api-firewall' ) ] }
 			/>
 			
 			<Stack p={ 4 } spacing={ 3 } sx={ { overflowY: 'auto', flex: 1} }>

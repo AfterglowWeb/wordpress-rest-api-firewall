@@ -1,6 +1,8 @@
 import { useState, useCallback } from '@wordpress/element';
 import { useLicense } from '../contexts/LicenseContext';
 import { useAdminData } from '../contexts/AdminDataContext';
+import { useApplication } from '../contexts/ApplicationContext';
+import useProActions from '../hooks/useProActions';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 
@@ -8,6 +10,7 @@ import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import AppBar from '@mui/material/AppBar';
 import Badge from '@mui/material/Badge';
+import Slide from '@mui/material/Slide';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
@@ -65,6 +68,8 @@ export default function Navigation( {
 } ) {
 	const { hasValidLicense } = useLicense();
 	const { adminData, updateAdminData } = useAdminData();
+	const { dirtyFlag } = useApplication();
+	const { save } = useProActions();
 	const { __ } = wp.i18n || {};
 	const theme = useTheme();
 	const isMobile = useMediaQuery( theme.breakpoints.down( 'md' ) );
@@ -73,9 +78,12 @@ export default function Navigation( {
 
 	// Per-panel module enabled states (driven from adminData.admin_options + IpFilter's own option).
 	const moduleKey = {
+		1: { module: 'users', optionKey: 'user_rate_limit_enabled', label: __( 'Active', 'rest-api-firewall' ) },
 		2: { module: 'routes_policy', optionKey: 'firewall_routes_policy_enabled', label: __( 'Active', 'rest-api-firewall' ) },
 		3: { module: 'ip_filter', optionKey: null, label: __( 'Active', 'rest-api-firewall' ) },
+		4: { module: 'collections', optionKey: 'rest_collections_enabled', label: __( 'Active', 'rest-api-firewall' ) },
 		5: { module: 'models', optionKey: 'rest_models_enabled', label: __( 'Active', 'rest-api-firewall' ) },
+		6: { module: 'settings_route', optionKey: 'rest_settings_route_enabled', label: __( 'Active', 'rest-api-firewall' ) },
 	};
 
 	// IpFilter reads from its own REST option; store it in local state hydrated on mount.
@@ -90,34 +98,46 @@ export default function Navigation( {
 	};
 
 	const handleModuleToggle = useCallback(
-		async ( pg, checked ) => {
+		( pg, checked ) => {
 			const info = moduleKey[ pg ];
 			if ( ! info ) return;
-			const nonce = adminData?.nonce;
 
-			// Optimistic update
-			if ( pg === 3 ) {
-				setIpFilterEnabled( checked );
-			} else {
-				updateAdminData( {
-					admin_options: {
-						...adminData?.admin_options,
-						[ info.optionKey ]: checked,
-					},
-				} );
-			}
-
-			await fetch( adminData?.ajaxurl, {
-				method: 'POST',
-				body: new URLSearchParams( {
+			save(
+				{
 					action: 'rest_api_firewall_activate_module',
-					nonce,
 					module: info.module,
 					enabled: checked ? '1' : '0',
-				} ),
-			} );
+				},
+				{
+					confirmTitle: checked
+						? __( 'Enable Module', 'rest-api-firewall' )
+						: __( 'Disable Module', 'rest-api-firewall' ),
+					confirmMessage: checked
+						? __( 'Enable this module?', 'rest-api-firewall' )
+						: __( 'Disable this module?', 'rest-api-firewall' ),
+					confirmLabel: checked
+						? __( 'Enable', 'rest-api-firewall' )
+						: __( 'Disable', 'rest-api-firewall' ),
+					successTitle: __( 'Module Updated', 'rest-api-firewall' ),
+					successMessage: checked
+						? __( 'Module enabled successfully.', 'rest-api-firewall' )
+						: __( 'Module disabled successfully.', 'rest-api-firewall' ),
+					onSuccess: () => {
+						if ( pg === 3 ) {
+							setIpFilterEnabled( checked );
+						} else {
+							updateAdminData( {
+								admin_options: {
+									...adminData?.admin_options,
+									[ info.optionKey ]: checked,
+								},
+							} );
+						}
+					},
+				}
+			);
 		},
-		[ adminData, updateAdminData, moduleKey ] // eslint-disable-line react-hooks/exhaustive-deps
+		[ adminData, updateAdminData, save, __ ] // eslint-disable-line react-hooks/exhaustive-deps
 	);
 
 	const menuItems = [
@@ -407,146 +427,148 @@ export default function Navigation( {
 				</List>
 			</Drawer>
 
-			<AppBar
-				elevation={ 0 }
-				sx={ {
-					'&.MuiAppBar-positionFixed': {
-						top: {
-							xs: WP_ADMIN_BAR_HEIGHT_MOBILE,
-							md: WP_ADMIN_BAR_HEIGHT_DESKTOP,
-						},
-						left: {
-							xs: 0,
-							md: DRAWER_WIDTH + WP_MENU_WIDTH_MD,
-							lg: DRAWER_WIDTH + WP_MENU_WIDTH_LG,
-						},
-						width: {
-							xs: '100%',
-							md: `calc(100% - ${ DRAWER_WIDTH + WP_MENU_WIDTH_MD }px)`,
-							lg: `calc(100% - ${ DRAWER_WIDTH + WP_MENU_WIDTH_LG }px)`,
-						},
-					},
-				} }
-			>
-				<Toolbar
-					variant="dense"
+			<Slide in={ !dirtyFlag.has } direction="down">
+				<AppBar
+					elevation={ 0 }
 					sx={ {
-						bgcolor: 'background.paper',
-						borderBottom: 1,
-						borderColor: 'divider',
-						px: 2,
-						height: APP_BAR_HEIGHT,
-						overflow: 'hidden',
-						gap: 2,
+						'&.MuiAppBar-positionFixed': {
+							top: {
+								xs: WP_ADMIN_BAR_HEIGHT_MOBILE,
+								md: WP_ADMIN_BAR_HEIGHT_DESKTOP,
+							},
+							left: {
+								xs: 0,
+								md: DRAWER_WIDTH + WP_MENU_WIDTH_MD,
+								lg: DRAWER_WIDTH + WP_MENU_WIDTH_LG,
+							},
+							width: {
+								xs: '100%',
+								md: `calc(100% - ${ DRAWER_WIDTH + WP_MENU_WIDTH_MD }px)`,
+								lg: `calc(100% - ${ DRAWER_WIDTH + WP_MENU_WIDTH_LG }px)`,
+							},
+						},
 					} }
 				>
-					{ isMobile && (
-						<IconButton
-							edge="start"
-							onClick={ () => setMobileOpen( true ) }
-							sx={ { mr: 1, color: 'text.primary' } }
-						>
-							<MenuIcon />
-						</IconButton>
-					) }
-
-					{ hasValidLicense &&
-						( panelGroup < 9 || panelGroup === 13 ) && (
-							<ApplicationSelector />
+					<Toolbar
+						variant="dense"
+						sx={ {
+							bgcolor: 'background.paper',
+							borderBottom: 1,
+							borderColor: 'divider',
+							px: 2,
+							height: APP_BAR_HEIGHT,
+							overflow: 'hidden',
+							gap: 2,
+						} }
+					>
+						{ isMobile && (
+							<IconButton
+								edge="start"
+								onClick={ () => setMobileOpen( true ) }
+								sx={ { mr: 1, color: 'text.primary' } }
+							>
+								<MenuIcon />
+							</IconButton>
 						) }
 
-					
-					<Stack direction="row" alignItems="center" gap={ 2 }>
-
-						<Stack>
-							{ activeMenuItem?.breadcrumbPrefix && (
-								<Typography
-									variant="caption"
-									color="text.secondary"
-									sx={ {
-										display: 'block',
-										textTransform: 'uppercase',
-										letterSpacing: 0.5,
-									} }
-								>
-									{ activeMenuItem.breadcrumbPrefix }
-								</Typography>
+						{ hasValidLicense &&
+							( panelGroup < 9 || panelGroup === 13 ) && (
+								<ApplicationSelector />
 							) }
-							<Typography
-								variant="h6"
-								fontWeight={ 600 }
-								color="text.primary"
-								sx={ { lineHeight: 1.2 } }
-							>
-								{ activeMenuItem?.label || '' }
-								{ activeMenuItem?.secondary && (
+
+						
+						<Stack direction="row" alignItems="center" gap={ 2 }>
+
+							<Stack>
+								{ activeMenuItem?.breadcrumbPrefix && (
 									<Typography
 										variant="caption"
 										color="text.secondary"
-										sx={ { ml: 1 } }
+										sx={ {
+											display: 'block',
+											textTransform: 'uppercase',
+											letterSpacing: 0.5,
+										} }
 									>
-										{ activeMenuItem.secondary }
+										{ activeMenuItem.breadcrumbPrefix }
 									</Typography>
 								) }
-							</Typography>
+								<Typography
+									variant="h6"
+									fontWeight={ 600 }
+									color="text.primary"
+									sx={ { lineHeight: 1.2 } }
+								>
+									{ activeMenuItem?.label || '' }
+									{ activeMenuItem?.secondary && (
+										<Typography
+											variant="caption"
+											color="text.secondary"
+											sx={ { ml: 1 } }
+										>
+											{ activeMenuItem.secondary }
+										</Typography>
+									) }
+								</Typography>
+							</Stack>
+
+							<Divider variant="middle" flexItem orientation="vertical" />
+
+							{ hasValidLicense && moduleKey[ panelGroup ] !== undefined && (
+								<FormControlLabel
+								control={
+									<Switch
+										size="small"
+										checked={ !! getModuleEnabled( panelGroup ) }
+										onChange={ ( e ) => handleModuleToggle( panelGroup, e.target.checked ) }
+									/>
+								}
+								sx={{ 
+									flex: 0,
+									'.MuiFormControlLabel-label': { color: 'text.primary' } }}
+								label={ 'Enable' }
+								/>
+							) }
+							
 						</Stack>
 
-						<Divider variant="middle" flexItem orientation="vertical" />
+						<Stack flex={ 1 }/>
 
-						{ hasValidLicense && moduleKey[ panelGroup ] !== undefined && (
-							<FormControlLabel
-							control={
-								<Switch
-									size="small"
-									checked={ !! getModuleEnabled( panelGroup ) }
-									onChange={ ( e ) => handleModuleToggle( panelGroup, e.target.checked ) }
-								/>
-							}
-							sx={{ 
-								flex: 0,
-								'.MuiFormControlLabel-label': { color: 'text.primary' } }}
-							label={ 'Enable' }
+						<Stack direction="row" gap={ 2 } alignItems="center">
+							<Documentation
+								page="getting-started"
+								buttonText="Doc."
 							/>
-						) }
-						
-					</Stack>
 
-					<Stack flex={ 1 }/>
-
-					<Stack direction="row" gap={ 2 } alignItems="center">
-						<Documentation
-							page="getting-started"
-							buttonText="Doc."
-						/>
-
-						{ showSaveButton && (
-							<Tooltip
-								followCursor
-								title={
-									needsLicense
-										? __(
-												'Licence required',
-												'rest-api-firewall'
-										  )
-										: ''
-								}
-							>
-								<Box>
-									<Button
-										variant="contained"
-										disableElevation
-										size="small"
-										onClick={ onSave }
-										disabled={ needsLicense || saving }
-									>
-										{ __( 'Save', 'rest-api-firewall' ) }
-									</Button>
-								</Box>
-							</Tooltip>
-						) }
-					</Stack>
-				</Toolbar>
-			</AppBar>
+							{ showSaveButton && (
+								<Tooltip
+									followCursor
+									title={
+										needsLicense
+											? __(
+													'Licence required',
+													'rest-api-firewall'
+											)
+											: ''
+									}
+								>
+									<Box>
+										<Button
+											variant="contained"
+											disableElevation
+											size="small"
+											onClick={ onSave }
+											disabled={ needsLicense || saving }
+										>
+											{ __( 'Save', 'rest-api-firewall' ) }
+										</Button>
+									</Box>
+								</Tooltip>
+							) }
+						</Stack>
+					</Toolbar>
+				</AppBar>
+			</Slide>
 		</>
 	);
 }

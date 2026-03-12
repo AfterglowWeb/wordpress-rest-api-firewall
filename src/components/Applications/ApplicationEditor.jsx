@@ -32,21 +32,6 @@ import formatDate from '../../utils/formatDate';
 import LoadingMessage from '../LoadingMessage';
 import EntryToolbar from '../shared/EntryToolbar';
 
-function SectionHeader( { title, description } ) {
-	return (
-		<Box>
-			<Typography variant="subtitle1" fontWeight={ 600 }>
-				{ title }
-			</Typography>
-			{ description && (
-				<Typography variant="body2" color="text.secondary">
-					{ description }
-				</Typography>
-			) }
-		</Box>
-	);
-}
-
 function PanelCard( { title, Icon, panel, onNavigate, enabled, onToggleEnabled, children } ) {
 	const handleToggle = ( e ) => {
 		e.stopPropagation();
@@ -358,6 +343,7 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 				saving={ saving }
 				enabled={ enabled }
 				setEnabled={ setEnabled }
+				breadcrumb={ [ __( 'Applications', 'rest-api-firewall' ), __( 'Application', 'rest-api-firewall' ) ] }
 			/>
 
 			{ loadError && <Alert severity="error">{ loadError }</Alert> }

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useLicense } from '../../../contexts/LicenseContext';
 import { useApplication } from '../../../contexts/ApplicationContext';
+import useProActions from '../../../hooks/useProActions';
 
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
@@ -110,12 +111,14 @@ export function DefaultRateLimit( { form, setField } ) {
 	const { __ } = wp.i18n || {};
 	const { selectedApplicationId } = useApplication();
 
+	const { save } = useProActions();
+
 	const [ rlMax, setRlMax ] = useState( '' );
 	const [ rlWindow, setRlWindow ] = useState( '' );
 	const [ rlRelease, setRlRelease ] = useState( '' );
 	const [ rlBlacklistAfter, setRlBlacklistAfter ] = useState( '' );
 	const [ rlBlacklistWindow, setRlBlacklistWindow ] = useState( '' );
-	const [ rateLimitSaving, setRateLimitSaving ] = useState( false );
+	const [ appEntry, setAppEntry ] = useState( null );
 
 	const loadAppRateLimit = useCallback( async () => {
 		if ( ! selectedApplicationId ) return;
@@ -131,7 +134,9 @@ export function DefaultRateLimit( { form, setField } ) {
 			} );
 			const result = await res.json();
 			if ( result?.success && result?.data?.entry ) {
-				const rl = result.data.entry.settings?.rate_limit || {};
+				const entry = result.data.entry;
+				setAppEntry( entry );
+				const rl = entry.settings?.rate_limit || {};
 				setRlMax( rl.max_requests ?? '' );
 				setRlWindow( rl.window_seconds ?? '' );
 				setRlRelease( rl.release_seconds ?? '' );
@@ -141,46 +146,34 @@ export function DefaultRateLimit( { form, setField } ) {
 		} catch {}
 	}, [ adminData, nonce, selectedApplicationId ] );
 
-	const saveAppRateLimit = useCallback( async () => {
-		if ( ! selectedApplicationId ) return;
-		setRateLimitSaving( true );
-		try {
-			const res = await fetch( adminData.ajaxurl, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-				body: new URLSearchParams( {
-					action: 'get_application_entry',
-					nonce,
-					id: selectedApplicationId,
+	const saveAppRateLimit = useCallback( () => {
+		if ( ! selectedApplicationId || ! appEntry ) return;
+		const existingSettings = appEntry.settings || {};
+		save(
+			{
+				action: 'update_application_entry',
+				id: selectedApplicationId,
+				title: appEntry.title || '',
+				settings: JSON.stringify( {
+					...existingSettings,
+					rate_limit: {
+						max_requests: Number( rlMax ) || 0,
+						window_seconds: Number( rlWindow ) || 0,
+						release_seconds: Number( rlRelease ) || 0,
+						blacklist_after: Number( rlBlacklistAfter ) || 0,
+						blacklist_window: Number( rlBlacklistWindow ) || 0,
+					},
 				} ),
-			} );
-			const result = await res.json();
-			const entry = result?.success ? result.data.entry : {};
-			const existingSettings = entry.settings || {};
-			await fetch( adminData.ajaxurl, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-				body: new URLSearchParams( {
-					action: 'update_application_entry',
-					nonce,
-					id: selectedApplicationId,
-					title: entry.title || '',
-					settings: JSON.stringify( {
-						...existingSettings,
-						rate_limit: {
-							max_requests: Number( rlMax ) || 0,
-							window_seconds: Number( rlWindow ) || 0,
-							release_seconds: Number( rlRelease ) || 0,
-							blacklist_after: Number( rlBlacklistAfter ) || 0,
-							blacklist_window: Number( rlBlacklistWindow ) || 0,
-						},
-					} ),
-				} ),
-			} );
-		} catch {} finally {
-			setRateLimitSaving( false );
-		}
-	}, [ adminData, nonce, selectedApplicationId, rlMax, rlWindow, rlRelease, rlBlacklistAfter, rlBlacklistWindow ] );
+			},
+			{
+				confirmTitle: __( 'Save Rate Limit', 'rest-api-firewall' ),
+				confirmMessage: __( 'This will update the default rate limit for this application. Existing users with a custom rate limit will not be affected.', 'rest-api-firewall' ),
+				successTitle: __( 'Rate Limit Saved', 'rest-api-firewall' ),
+				successMessage: __( 'Application rate limit updated successfully.', 'rest-api-firewall' ),
+				onSuccess: loadAppRateLimit,
+			}
+		);
+	}, [ selectedApplicationId, appEntry, rlMax, rlWindow, rlRelease, rlBlacklistAfter, rlBlacklistWindow, save, loadAppRateLimit, __ ] );
 
 	useEffect( () => {
 		loadAppRateLimit();
@@ -236,7 +229,6 @@ export function DefaultRateLimit( { form, setField } ) {
 					disableElevation
 					size="small"
 					onClick={ saveAppRateLimit }
-					disabled={ rateLimitSaving }
 				>
 					{ __( 'Save', 'rest-api-firewall' ) }
 				</Button>

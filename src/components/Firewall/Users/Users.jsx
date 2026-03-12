@@ -9,6 +9,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
+import Switch from '@mui/material/Switch';
 import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
@@ -32,7 +33,7 @@ export default function Users() {
 	const { __ } = wp.i18n || {};
 
 	const { selectedApplicationId } = useApplication();
-	const { remove } = useProActions();
+	const { save, remove } = useProActions();
 
 	const [ rows, setRows ] = useState( [] );
 	const [ loading, setLoading ] = useState( true );
@@ -53,8 +54,6 @@ export default function Users() {
 	const [ appDefaultMethods, setAppDefaultMethods ] = useState( [] );
 	const [ appAllowedAuthMethods, setAppAllowedAuthMethods ] = useState( [] );
 	const [ appEntry, setAppEntry ] = useState( null );
-	const [ defaultMethodsSaving, setDefaultMethodsSaving ] = useState( false );
-	const [ appSettingsSaving, setAppSettingsSaving ] = useState( false );
 
 	const loadAppSettings = useCallback( async () => {
 		if ( ! selectedApplicationId ) return;
@@ -78,59 +77,91 @@ export default function Users() {
 		} catch {}
 	}, [ adminData, nonce, selectedApplicationId ] );
 
-	const saveDefaultMethods = useCallback( async () => {
+	const saveDefaultMethods = useCallback( () => {
 		if ( ! selectedApplicationId || ! appEntry ) return;
-		setDefaultMethodsSaving( true );
-		try {
-			const existingSettings = appEntry.settings || {};
-			await fetch( adminData.ajaxurl, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-				body: new URLSearchParams( {
-					action: 'update_application_entry',
-					nonce,
-					id: selectedApplicationId,
-					title: appEntry.title || '',
-					settings: JSON.stringify( {
-						...existingSettings,
-						default_http_methods: appDefaultMethods,
-					} ),
+		const existingSettings = appEntry.settings || {};
+		save(
+			{
+				action: 'update_application_entry',
+				id: selectedApplicationId,
+				title: appEntry.title || '',
+				settings: JSON.stringify( {
+					...existingSettings,
+					default_http_methods: appDefaultMethods,
 				} ),
-			} );
-			await loadAppSettings();
-		} catch {} finally {
-			setDefaultMethodsSaving( false );
-		}
-	}, [ adminData, nonce, selectedApplicationId, appEntry, appDefaultMethods, loadAppSettings ] );
+			},
+			{
+				confirmTitle: __( 'Save Default HTTP Methods', 'rest-api-firewall' ),
+				confirmMessage: __( 'This will update the default HTTP methods pre-selected when creating new users. Existing users will not be affected.', 'rest-api-firewall' ),
+				successTitle: __( 'Default HTTP Methods Saved', 'rest-api-firewall' ),
+				successMessage: __( 'Default HTTP methods updated successfully.', 'rest-api-firewall' ),
+				onSuccess: loadAppSettings,
+			}
+		);
+	}, [ selectedApplicationId, appEntry, appDefaultMethods, save, loadAppSettings, __ ] );
 
-	const saveAppSettings = useCallback( async () => {
+	const saveAppSettings = useCallback( () => {
 		if ( ! selectedApplicationId || ! appEntry ) return;
-		setAppSettingsSaving( true );
-		try {
-			const existingSettings = appEntry.settings || {};
-			await fetch( adminData.ajaxurl, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-				body: new URLSearchParams( {
-					action: 'update_application_entry',
-					nonce,
-					id: selectedApplicationId,
-					title: appEntry.title || '',
-					settings: JSON.stringify( {
-						...existingSettings,
-						allowed_auth_methods: appAllowedAuthMethods,
-					} ),
+		const existingSettings = appEntry.settings || {};
+		save(
+			{
+				action: 'update_application_entry',
+				id: selectedApplicationId,
+				title: appEntry.title || '',
+				settings: JSON.stringify( {
+					...existingSettings,
+					allowed_auth_methods: appAllowedAuthMethods,
 				} ),
-			} );
-			await loadAppSettings();
-		} catch {} finally {
-			setAppSettingsSaving( false );
-		}
-	}, [ adminData, nonce, selectedApplicationId, appEntry, appAllowedAuthMethods, loadAppSettings ] );
+			},
+			{
+				confirmTitle: __( 'Enforce Authentication Methods', 'rest-api-firewall' ),
+				confirmMessage: __( 'This setting will immediately cascade to all existing users of this application and restrict their available authentication methods.', 'rest-api-firewall' ),
+				confirmLabel: __( 'Save & Enforce', 'rest-api-firewall' ),
+				successTitle: __( 'Authentication Methods Enforced', 'rest-api-firewall' ),
+				successMessage: __( 'Allowed authentication methods updated and applied to all users.', 'rest-api-firewall' ),
+				onSuccess: loadAppSettings,
+			}
+		);
+	}, [ selectedApplicationId, appEntry, appAllowedAuthMethods, save, loadAppSettings, __ ] );
 
 	useEffect( () => {
 		loadAppSettings();
 	}, [ loadAppSettings ] );
+
+	const handleToggleEnabled = useCallback(
+		async ( row ) => {
+			const newEnabled = ! row.enabled;
+			setRows( ( prev ) =>
+				prev.map( ( r ) => ( r.id === row.id ? { ...r, enabled: newEnabled } : r ) )
+			);
+			try {
+				await fetch( adminData.ajaxurl, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+					body: new URLSearchParams( {
+						action: 'update_user_entry',
+						nonce,
+						id: row.id,
+						application_id: selectedApplicationId,
+						enabled: newEnabled ? '1' : '0',
+						auth_method: row.auth_method || 'any',
+						auth_config: JSON.stringify( row.auth_config || {} ),
+						allowed_methods: JSON.stringify( row.allowed_methods || [] ),
+						rate_limit_max_requests: String( row.rate_limit_max_requests ?? 100 ),
+						rate_limit_window_seconds: String( row.rate_limit_window_seconds ?? 60 ),
+						rate_limit_release: String( row.rate_limit_release_seconds ?? 300 ),
+						rate_limit_blacklist_after: String( row.rate_limit_blacklist_after ?? 0 ),
+						rate_limit_blacklist_window: String( row.rate_limit_blacklist_window ?? 0 ),
+					} ),
+				} );
+			} catch {
+				setRows( ( prev ) =>
+					prev.map( ( r ) => ( r.id === row.id ? { ...r, enabled: row.enabled } : r ) )
+				);
+			}
+		},
+		[ adminData, nonce, selectedApplicationId ]
+	);
 
 	const handleDeleteOne = useCallback(
 		( id, displayName ) => {
@@ -187,22 +218,15 @@ export default function Users() {
 			{
 				field: 'enabled',
 				headerName: __( 'Status', 'rest-api-firewall' ),
-				width: 100,
-				renderCell: ( params ) =>
-					!! params.value ? (
-						<Chip
-							label={ __( 'Active', 'rest-api-firewall' ) }
-							size="small"
-							color="success"
-							variant="outlined"
-						/>
-					) : (
-						<Chip
-							label={ __( 'Inactive', 'rest-api-firewall' ) }
-							size="small"
-							variant="outlined"
-						/>
-					),
+				width: 90,
+				sortable: false,
+				renderCell: ( params ) => (
+					<Switch
+						size="small"
+						checked={ !! params.value }
+						onChange={ () => handleToggleEnabled( params.row ) }
+					/>
+				),
 			},
 			{
 				field: 'display_name',
@@ -293,7 +317,7 @@ export default function Users() {
 				renderCell: ( params ) => params.value || '-',
 			},
 		],
-		[ hasValidLicense, handleDeleteOne, __ ]
+		[ hasValidLicense, handleDeleteOne, handleToggleEnabled, __ ]
 	);
 
 	const fetchEntries = useCallback( async () => {
@@ -390,7 +414,7 @@ export default function Users() {
 								{ __( 'App Rate Limit', 'rest-api-firewall' ) }
 							</Typography>
 							<Typography variant="body2" color="text.secondary">
-								{ __( 'Default rate limit for all users of this application.', 'rest-api-firewall' ) }
+								{ __( 'Default rate limit for all users of this application. Can be overlapped on per user basis.', 'rest-api-firewall' ) }
 							</Typography>
 						</Box>
 						<DefaultRateLimit />
@@ -411,7 +435,7 @@ export default function Users() {
 							value={ appDefaultMethods }
 							onChange={ setAppDefaultMethods }
 							onSave={ saveDefaultMethods }
-							saving={ defaultMethodsSaving }
+
 						/>
 					</Stack>
 
@@ -452,7 +476,6 @@ export default function Users() {
 									disableElevation
 									size="small"
 									onClick={ saveAppSettings }
-									disabled={ appSettingsSaving }
 								>
 									{ __( 'Save', 'rest-api-firewall' ) }
 								</Button>

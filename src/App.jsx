@@ -238,7 +238,7 @@ function AppContent() {
 						flexGrow: 1,
 						minWidth: 0,
 						pl: { xs: 0, md: DRAWER_WIDTH + 'px' },
-						pt: APP_BAR_HEIGHT + 'px',
+					pt: dirtyFlag.has ? 0 : APP_BAR_HEIGHT + 'px',
 						minHeight: {
 							xs: `calc(100svh - ${
 								APP_FOOTER_HEIGHT +
