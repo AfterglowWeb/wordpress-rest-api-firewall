@@ -529,123 +529,127 @@ export default function IpDataGrid( { listType = 'blacklist' } ) {
 					</Button>
 				) }
 
-				<Tooltip
-					title={
-						! hasValidLicense
-							? __( 'Release time is a Pro feature', 'rest-api-firewall' )
-							: ''
-					}
-				>
-					<Stack spacing={ 0.5 } direction="row" alignItems="center" gap={1}>
-						<Chip size="small" variant="outlined" label={ expiryLabel } />
-						<Button
-							size="small"
-							variant="text"
-							onClick={ handleOpenExpiryPopover }
-						>
-							{ __( 'Set Release Time', 'rest-api-firewall' ) }
-						</Button>
-						
-					</Stack>
-				</Tooltip>
-
-				<Popover
-					open={ expiryPopoverOpen }
-					anchorEl={ anchorEl }
-					onClose={ handleCloseExpiryPopover }
-					anchorOrigin={ { vertical: 'bottom', horizontal: 'right' } }
-					transformOrigin={ { vertical: 'top', horizontal: 'right' } }
-				>
-					<Paper sx={ { p: 2, maxWidth: 300 } }>
-						<Stack spacing={ 1 }>
-							<Typography variant="subtitle2" gutterBottom>
-								{ __( 'Release Time', 'rest-api-firewall' ) }
-							</Typography>
-							<Typography variant="body2" color="text.secondary">
-								{ __(
-									'New entries will be automatically released after this delay. Leave empty for no expiry.',
-									'rest-api-firewall'
-								) }
-							</Typography>
-
-							<Stack>
-								<Stack pt={ 1 } direction="row" gap={ 1 } alignItems="flex-start">
-									<TextField
-										type="number"
-										value={ pendingExpiryValue }
-										onChange={ ( e ) => setPendingExpiryValue( e.target.value ) }
-										placeholder={ __( 'Never', 'rest-api-firewall' ) }
-										label={ __( 'Duration', 'rest-api-firewall' ) }
-										size="small"
-										disabled={ ! hasValidLicense }
-										sx={ { width: 110 } }
-									/>
-									<Select
-										value={ pendingExpiryUnit }
-										onChange={ ( e ) => setPendingExpiryUnit( e.target.value ) }
-										size="small"
-										disabled={ ! hasValidLicense }
-										sx={ { minWidth: 100 } }
-									>
-										<MenuItem value="hours">{ __( 'Hours', 'rest-api-firewall' ) }</MenuItem>
-										<MenuItem value="days">{ __( 'Days', 'rest-api-firewall' ) }</MenuItem>
-										<MenuItem value="weeks">{ __( 'Weeks', 'rest-api-firewall' ) }</MenuItem>
-										<MenuItem value="months">{ __( 'Months', 'rest-api-firewall' ) }</MenuItem>
-									</Select>
-									
-								</Stack>
-								{ ! hasValidLicense && (
-									<Typography variant="caption" color="text.secondary" sx={{ display: 'flex', pl: 1 }}>
-										{ __( 'Configure release time needs a license.', 'rest-api-firewall' ) }
-									</Typography>
-								) }
-							</Stack>
-
-							<Divider />
-
-							<Stack spacing={ 1 }>
-								{ rowSelectionModel.ids.size > 0 ? (
-									<Typography variant="body2" color="primary">
-										{ rowSelectionModel.ids.size }{ ' ' }
-										{ __( 'Selected entries will be updated.', 'rest-api-firewall' ) }
-									</Typography>
-								) : (
-									<FormControlLabel disabled={ !hasValidLicense || !pendingExpiryValue }
-										control={
-											<Checkbox
-												checked={ applyToAll }
-												onChange={ ( e ) => setApplyToAll( e.target.checked ) }
-												size="small"
-											/>
-										}
-										label={
-											<Typography variant="body2" color={ hasValidLicense ? 'text.primary' : 'text.disabled' }>
-												{ __( 'Apply to all existing entries', 'rest-api-firewall' ) }
-											</Typography>
-										}
-									/>
-								) }
-							</Stack>
-					
-							<Stack direction="row" justifyContent="flex-end" spacing={ 1 }>
-								<Button size="small" onClick={ handleCloseExpiryPopover }>
-									{ __( 'Cancel', 'rest-api-firewall' ) }
-								</Button>
-								<Button
-									size="small"
-									variant="contained"
-									disableElevation
-									onClick={ handleSaveExpiry }
-									disabled={ ! hasValidLicense || savingExpiry }
-								>
-									{ savingExpiry
-										? __( 'Saving…', 'rest-api-firewall' )
-										: __( 'Save', 'rest-api-firewall' ) }
-								</Button>
-							</Stack>
+				{ listType === 'blacklist' && (
+					<>
+					<Tooltip
+						title={
+							! hasValidLicense
+								? __( 'Release time is a Pro feature', 'rest-api-firewall' )
+								: ''
+						}
+					>
+						<Stack spacing={ 0.5 } direction="row" alignItems="center" gap={1}>
+							<Chip size="small" variant="outlined" label={ expiryLabel } />
+							<Button
+								size="small"
+								variant="text"
+								onClick={ handleOpenExpiryPopover }
+							>
+								{ __( 'Set Release Time', 'rest-api-firewall' ) }
+							</Button>
+							
 						</Stack>
-					</Paper>
-				</Popover>
+					</Tooltip> 
+
+					<Popover
+						open={ expiryPopoverOpen }
+						anchorEl={ anchorEl }
+						onClose={ handleCloseExpiryPopover }
+						anchorOrigin={ { vertical: 'bottom', horizontal: 'right' } }
+						transformOrigin={ { vertical: 'top', horizontal: 'right' } }
+					>
+						<Paper sx={ { p: 2, maxWidth: 300 } }>
+							<Stack spacing={ 1 }>
+								<Typography variant="subtitle2" gutterBottom>
+									{ __( 'Release Time', 'rest-api-firewall' ) }
+								</Typography>
+								<Typography variant="body2" color="text.secondary">
+									{ __(
+										'New entries will be automatically released after this delay. Leave empty for no expiry.',
+										'rest-api-firewall'
+									) }
+								</Typography>
+
+								<Stack>
+									<Stack pt={ 1 } direction="row" gap={ 1 } alignItems="flex-start">
+										<TextField
+											type="number"
+											value={ pendingExpiryValue }
+											onChange={ ( e ) => setPendingExpiryValue( e.target.value ) }
+											placeholder={ __( 'Never', 'rest-api-firewall' ) }
+											label={ __( 'Duration', 'rest-api-firewall' ) }
+											size="small"
+											disabled={ ! hasValidLicense }
+											sx={ { width: 110 } }
+										/>
+										<Select
+											value={ pendingExpiryUnit }
+											onChange={ ( e ) => setPendingExpiryUnit( e.target.value ) }
+											size="small"
+											disabled={ ! hasValidLicense }
+											sx={ { minWidth: 100 } }
+										>
+											<MenuItem value="hours">{ __( 'Hours', 'rest-api-firewall' ) }</MenuItem>
+											<MenuItem value="days">{ __( 'Days', 'rest-api-firewall' ) }</MenuItem>
+											<MenuItem value="weeks">{ __( 'Weeks', 'rest-api-firewall' ) }</MenuItem>
+											<MenuItem value="months">{ __( 'Months', 'rest-api-firewall' ) }</MenuItem>
+										</Select>
+										
+									</Stack>
+									{ ! hasValidLicense && (
+										<Typography variant="caption" color="text.secondary" sx={{ display: 'flex', pl: 1 }}>
+											{ __( 'Configure release time needs a license.', 'rest-api-firewall' ) }
+										</Typography>
+									) }
+								</Stack>
+
+								<Divider />
+
+								<Stack spacing={ 1 }>
+									{ rowSelectionModel.ids.size > 0 ? (
+										<Typography variant="body2" color="primary">
+											{ rowSelectionModel.ids.size }{ ' ' }
+											{ __( 'Selected entries will be updated.', 'rest-api-firewall' ) }
+										</Typography>
+									) : (
+										<FormControlLabel disabled={ !hasValidLicense || !pendingExpiryValue }
+											control={
+												<Checkbox
+													checked={ applyToAll }
+													onChange={ ( e ) => setApplyToAll( e.target.checked ) }
+													size="small"
+												/>
+											}
+											label={
+												<Typography variant="body2" color={ hasValidLicense ? 'text.primary' : 'text.disabled' }>
+													{ __( 'Apply to all existing entries', 'rest-api-firewall' ) }
+												</Typography>
+											}
+										/>
+									) }
+								</Stack>
+						
+								<Stack direction="row" justifyContent="flex-end" spacing={ 1 }>
+									<Button size="small" onClick={ handleCloseExpiryPopover }>
+										{ __( 'Cancel', 'rest-api-firewall' ) }
+									</Button>
+									<Button
+										size="small"
+										variant="contained"
+										disableElevation
+										onClick={ handleSaveExpiry }
+										disabled={ ! hasValidLicense || savingExpiry }
+									>
+										{ savingExpiry
+											? __( 'Saving…', 'rest-api-firewall' )
+											: __( 'Save', 'rest-api-firewall' ) }
+									</Button>
+								</Stack>
+							</Stack>
+						</Paper>
+					</Popover>
+					</>
+				)}
 
 				<IconButton onClick={ fetchEntries } disabled={ loading }>
 					<RefreshIcon />

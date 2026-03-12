@@ -91,6 +91,15 @@ class CoreOptions {
 			),
 
 			// Firewall - Routes & Policies.
+			'firewall_routes_policy_enabled'            => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_routes_policy',
+			),
+
 			'enforce_auth'                              => array(
 				'default_value'     => false,
 				'type'              => 'boolean',

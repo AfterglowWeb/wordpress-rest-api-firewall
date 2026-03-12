@@ -6,13 +6,11 @@ import { useApplication } from '../../../contexts/ApplicationContext';
 
 import Alert from '@mui/material/Alert';
 import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import FormHelperText from '@mui/material/FormHelperText';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import Divider from '@mui/material/Divider';
@@ -106,12 +104,6 @@ export default function IpFilter() {
 		[ adminData ]
 	);
 
-	const handleToggleEnabled = async ( e ) => {
-		const newEnabled = e.target.checked;
-		setSettings( ( prev ) => ( { ...prev, enabled: newEnabled } ) );
-		await saveIpFilter( { enabled: newEnabled ? '1' : '0' } );
-	};
-
 	const handleModeChange = ( e ) => {
 		const newMode = e.target.value;
 
@@ -181,28 +173,6 @@ export default function IpFilter() {
 				spacing={ 3 }
 				alignItems={ { xs: 'stretch', sm: 'flex-start' } }
 			>
-				<FormControl>
-					<FormControlLabel
-						control={
-							<Switch
-								checked={ settings.enabled }
-								onChange={ handleToggleEnabled }
-								size="small"
-							/>
-						}
-						label={ __(
-							'Enable IP Filtering',
-							'rest-api-firewall'
-						) }
-					/>
-					<FormHelperText>
-						{ __(
-							'Block or allow REST API requests based on IP address.',
-							'rest-api-firewall'
-						) }
-					</FormHelperText>
-				</FormControl>
-
 				<Stack flex={ 1 } />
 
 				<FormControl
