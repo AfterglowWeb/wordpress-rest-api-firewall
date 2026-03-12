@@ -8,27 +8,19 @@ import formatDate from '../../../utils/formatDate';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
 import Divider from '@mui/material/Divider';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
-import IconButton from '@mui/material/IconButton';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
-import TextField from '@mui/material/TextField';
-import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import AuthManager from './AuthManager';
 import LoadingMessage from '../../LoadingMessage';
 import EntryToolbar from '../../shared/EntryToolbar';
+import HttpMethodsSelector from './HttpMethodsSelector';
+import { UserRateLimitFields } from './RateLimit';
 
 function SectionHeader( { title, description } ) {
 	return (
@@ -45,9 +37,7 @@ function SectionHeader( { title, description } ) {
 	);
 }
 
-const HTTP_METHODS = [ 'get', 'post', 'put', 'patch', 'delete' ];
-
-export default function UserEditor( { user, onBack } ) {
+export default function UserEditor( { user, onBack, appAllowedAuthMethods = [] } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
 	const { selectedApplicationId, setDirtyFlag } = useApplication();
@@ -91,9 +81,14 @@ export default function UserEditor( { user, onBack } ) {
 	const [ rateLimitWindow, setRateLimitWindow ] = useState(
 		user.rate_limit_window_seconds ?? 60
 	);
-
-	const [ rateLimitRelease, setRateLimitRelease] = useState(
+	const [ rateLimitRelease, setRateLimitRelease ] = useState(
 		user.rate_limit_release_seconds ?? 300
+	);
+	const [ rateLimitBlacklistAfter, setRateLimitBlacklistAfter ] = useState(
+		user.rate_limit_blacklist_after ?? 0
+	);
+	const [ rateLimitBlacklistWindow, setRateLimitBlacklistWindow ] = useState(
+		user.rate_limit_blacklist_window ?? 0
 	);
 
 	const loadEntry = useCallback( async () => {
@@ -140,6 +135,8 @@ export default function UserEditor( { user, onBack } ) {
 				setRateLimitRequests( e.rate_limit_max_requests ?? 100 );
 				setRateLimitWindow( e.rate_limit_window_seconds ?? 60 );
 				setRateLimitRelease( e.rate_limit_release_seconds ?? 300 );
+				setRateLimitBlacklistAfter( e.rate_limit_blacklist_after ?? 0 );
+				setRateLimitBlacklistWindow( e.rate_limit_blacklist_window ?? 0 );
 				
 			} else {
 				setLoadError(
@@ -161,14 +158,6 @@ export default function UserEditor( { user, onBack } ) {
 		loadEntry();
 	}, [ isNew, loadEntry ] );
 
-	const toggleMethod = ( method ) => {
-		setAllowedMethods( ( prev ) =>
-			prev.includes( method )
-				? prev.filter( ( m ) => m !== method )
-				: [ ...prev, method ]
-		);
-	};
-
 	const commonPayload = {
 		application_id: selectedApplicationId,
 		enabled: enabled ? '1' : '0',
@@ -183,6 +172,12 @@ export default function UserEditor( { user, onBack } ) {
 		),
 		rate_limit_release: String(
 			parseInt( rateLimitRelease, 10 ) || 300
+		),
+		rate_limit_blacklist_after: String(
+			parseInt( rateLimitBlacklistAfter, 10 ) || 0
+		),
+		rate_limit_blacklist_window: String(
+			parseInt( rateLimitBlacklistWindow, 10 ) || 0
 		),
 	};
 
@@ -350,6 +345,7 @@ export default function UserEditor( { user, onBack } ) {
 						onAuthMethodChange={ setAuthMethod }
 						authConfig={ authConfig }
 						onAuthConfigChange={ setAuthConfig }
+						allowedAuthMethods={ appAllowedAuthMethods }
 					/>
 				</Stack>
 
@@ -366,48 +362,10 @@ export default function UserEditor( { user, onBack } ) {
 							'rest-api-firewall'
 						) }
 					/>
-					<Stack direction="row" flexWrap="wrap" gap={ 1 }>
-						{ HTTP_METHODS.map( ( method ) => (
-							<FormControlLabel
-								key={ method }
-								label={
-									<Typography
-										variant="body2"
-										sx={ {
-											fontFamily: 'monospace',
-											fontWeight: 600,
-										} }
-									>
-										{ method.toUpperCase() }
-									</Typography>
-								}
-								control={
-									<Checkbox
-										checked={ allowedMethods.includes(
-											method
-										) }
-										onChange={ () =>
-											toggleMethod( method )
-										}
-										size="small"
-									/>
-								}
-								sx={ {
-									m: 0,
-									px: 1.5,
-									py: 0.5,
-									border: 1,
-									borderColor: allowedMethods.includes(
-										method
-									)
-										? 'primary.main'
-										: 'divider',
-									borderRadius: 1,
-									userSelect: 'none',
-								} }
-							/>
-						) ) }
-					</Stack>
+					<HttpMethodsSelector
+						value={ allowedMethods }
+						onChange={ setAllowedMethods }
+					/>
 				</Stack>
 
 				<Divider />
@@ -420,58 +378,25 @@ export default function UserEditor( { user, onBack } ) {
 							'rest-api-firewall'
 						) }
 					/>
-					<Stack
-						direction={ { xs: 'column', sm: 'row' } }
-						spacing={ 2 }
-					>
-						<TextField
-							label={ __( 'Max Requests', 'rest-api-firewall' ) }
-							type="number"
-							size="small"
-							value={ rateLimitRequests }
-							onChange={ ( e ) =>
-								setRateLimitRequests( e.target.value )
-							}
-							helperText={ __(
-								'Requests allowed per window',
-								'rest-api-firewall'
-							) }
-							sx={ { maxWidth: 200 } }
-						/>
-						<TextField
-							label={ __(
-								'Window (seconds)',
-								'rest-api-firewall'
-							) }
-							type="number"
-							size="small"
-							value={ rateLimitWindow }
-							onChange={ ( e ) =>
-								setRateLimitWindow( e.target.value )
-							}
-							helperText={ __(
-								'Rolling time window',
-								'rest-api-firewall'
-							) }
-							sx={ { maxWidth: 200 } }
-						/>
-						<TextField
-							label={ __(
-								'Release (seconds)',
-								'rest-api-firewall'
-							) }
-							type="number"
-							size="small"
-							helperText={ __(
-								'Wait time before limitation resets',
-								'rest-api-firewall'
-							) }
-							value={ rateLimitRelease }
-							onChange={ ( e ) =>
-								setRateLimitRelease( e.target.value ) }
-							sx={ {  maxWidth: 200 } }
-						/>
-					</Stack>
+					<UserRateLimitFields
+						values={ {
+							max_requests: rateLimitRequests,
+							window_seconds: rateLimitWindow,
+							release_seconds: rateLimitRelease,
+							blacklist_after: rateLimitBlacklistAfter,
+							blacklist_window: rateLimitBlacklistWindow,
+						} }
+						onChange={ ( key, val ) => {
+							const setters = {
+								max_requests: setRateLimitRequests,
+								window_seconds: setRateLimitWindow,
+								release_seconds: setRateLimitRelease,
+								blacklist_after: setRateLimitBlacklistAfter,
+								blacklist_window: setRateLimitBlacklistWindow,
+							};
+							setters[ key ]?.( val );
+						} }
+					/>
 				</Stack>
 			</Stack>
 		</Stack>

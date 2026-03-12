@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
+import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useLicense } from '../../../contexts/LicenseContext';
 import { useApplication } from '../../../contexts/ApplicationContext';
@@ -6,9 +6,6 @@ import { useApplication } from '../../../contexts/ApplicationContext';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-
-import UserEditor from './UserEditor';
-import useProActions from '../../../hooks/useProActions';
 
 export default function RateLimit( { form, setField } ) {
 	const { __ } = wp.i18n || {};
@@ -233,17 +230,87 @@ export function DefaultRateLimit( { form, setField } ) {
 				onChange={ ( e ) => setRlBlacklistWindow( e.target.value ) }
 				sx={ { flex: 1 } }
 			/>
-			<Stack direction="row" justifyContent="flex-end" alignItems="center" sx={ { flex: 1 } }>
+			<Stack pl={ 2 } direction="column" justifyContent="flex-end" alignItems="flex-end" sx={ { flex: 1 } }>
 				<Button
-					variant="outlined"
+					variant="contained"
+					disableElevation
 					size="small"
 					onClick={ saveAppRateLimit }
 					disabled={ rateLimitSaving }
 				>
-					{ __( 'Save Rate Limit', 'rest-api-firewall' ) }
+					{ __( 'Save', 'rest-api-firewall' ) }
 				</Button>
 			</Stack>
 		</Stack>
 	</Stack>
 );
+}
+
+/**
+ * Controlled per-user rate limit fields (no AJAX — save handled by parent).
+ * values: { max_requests, window_seconds, release_seconds, blacklist_after, blacklist_window }
+ */
+export function UserRateLimitFields( { values = {}, onChange } ) {
+	const { __ } = wp.i18n || {};
+	const {
+		max_requests = '',
+		window_seconds = '',
+		release_seconds = '',
+		blacklist_after = '',
+		blacklist_window = '',
+	} = values;
+
+	return (
+		<Stack spacing={ 2 }>
+			<Stack direction={ { xs: 'column', sm: 'row' } } spacing={ 2 }>
+				<TextField
+					label={ __( 'Max Requests', 'rest-api-firewall' ) }
+					type="number"
+					size="small"
+					value={ max_requests }
+					onChange={ ( e ) => onChange( 'max_requests', e.target.value ) }
+					helperText={ __( 'Requests allowed per window', 'rest-api-firewall' ) }
+					sx={ { maxWidth: 200 } }
+				/>
+				<TextField
+					label={ __( 'Window (seconds)', 'rest-api-firewall' ) }
+					type="number"
+					size="small"
+					value={ window_seconds }
+					onChange={ ( e ) => onChange( 'window_seconds', e.target.value ) }
+					helperText={ __( 'Rolling time window', 'rest-api-firewall' ) }
+					sx={ { maxWidth: 200 } }
+				/>
+				<TextField
+					label={ __( 'Release (seconds)', 'rest-api-firewall' ) }
+					type="number"
+					size="small"
+					value={ release_seconds }
+					onChange={ ( e ) => onChange( 'release_seconds', e.target.value ) }
+					helperText={ __( 'Wait time before limitation resets', 'rest-api-firewall' ) }
+					sx={ { maxWidth: 200 } }
+				/>
+			</Stack>
+			<Stack direction={ { xs: 'column', sm: 'row' } } spacing={ 2 }>
+				<TextField
+					label={ __( 'Blacklist After (violations)', 'rest-api-firewall' ) }
+					type="number"
+					size="small"
+					value={ blacklist_after }
+					onChange={ ( e ) => onChange( 'blacklist_after', e.target.value ) }
+					helperText={ __( 'Violations before blacklisted', 'rest-api-firewall' ) }
+					sx={ { maxWidth: 200 } }
+				/>
+				<TextField
+					label={ __( 'Blacklist Window (seconds)', 'rest-api-firewall' ) }
+					type="number"
+					size="small"
+					value={ blacklist_window }
+					onChange={ ( e ) => onChange( 'blacklist_window', e.target.value ) }
+					helperText={ __( 'Time window for violations count', 'rest-api-firewall' ) }
+					sx={ { maxWidth: 200 } }
+				/>
+			</Stack>
+		</Stack>
+	);
 }

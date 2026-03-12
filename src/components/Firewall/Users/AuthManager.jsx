@@ -13,7 +13,7 @@ import TextField from '@mui/material/TextField';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
-const AUTH_METHODS = [
+export const AUTH_METHODS = [
 	{ value: 'any', label: 'Any (no restriction)' },
 	{ value: 'jwt', label: 'JWT' },
 	{ value: 'oauth', label: 'oAuth' },
@@ -286,8 +286,16 @@ export default function AuthManager( {
 	onAuthMethodChange,
 	authConfig,
 	onAuthConfigChange,
+	allowedAuthMethods = [],
 } ) {
 	const { __ } = wp.i18n || {};
+
+	// When allowedAuthMethods is set, only show 'any' + the allowed concrete methods.
+	const visibleMethods = allowedAuthMethods.length === 0
+		? AUTH_METHODS
+		: AUTH_METHODS.filter(
+			( opt ) => opt.value === 'any' || allowedAuthMethods.includes( opt.value )
+		);
 
 	const updateConfig = ( key, value ) => {
 		onAuthConfigChange( { ...authConfig, [ key ]: value } );
@@ -304,7 +312,7 @@ export default function AuthManager( {
 					onChange={ ( e ) => onAuthMethodChange( e.target.value ) }
 					label={ __( 'Auth Method', 'rest-api-firewall' ) }
 				>
-					{ AUTH_METHODS.map( ( opt ) => (
+					{ visibleMethods.map( ( opt ) => (
 						<MenuItem key={ opt.value } value={ opt.value }>
 							{ opt.label }
 						</MenuItem>
