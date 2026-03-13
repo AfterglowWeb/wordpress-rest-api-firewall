@@ -19,7 +19,7 @@ const USECASES = [
 		desc: 'Reduce cloud infrastructure and maintenance costs and give your editorial teams a powerful tool to distribute content across all your applications.',
 	},
     {
-        desc: 'Selfhost you data easily by using WordPress without breaking your existing applications. Take back control on your business privacy.'
+        desc: 'Self-host your data easily by using WordPress without breaking your existing applications. Take back control of your business privacy.'
     },
 	{
 		desc: 'Serve content in multiple languages across separate websites or applications.',
@@ -31,7 +31,7 @@ const USECASES = [
 		desc: 'Map WordPress content structures to the exact schemas your existing applications expect.',
 	},
     {
-        desc: 'Reinforce global WordPress privacy and security: deactivate public APIs, apply security policies on HTML responses, reinforce WordPress login, secure your server files and more.'
+        desc: 'Reinforce global WordPress privacy and security.'
     }
 ];
 
@@ -101,6 +101,12 @@ const FEATURES = [
 		label: 'Logs',
 		desc: 'Full request history and audit trail.',
 		details: 'Track all incoming REST API requests with timestamps, response codes, matched application context and rule outcomes.',
+	},
+	{
+		Icon: SecurityOutlined,
+		label: 'WordPress Security',
+		desc: 'Global WordPress security features.',
+		details: 'Deactivate public APIs, apply security policies to HTML responses, reinforce WordPress login, secure your server files and more.'
 	},
 ];
 
