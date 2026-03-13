@@ -78,7 +78,7 @@ export default function ConfigurationPanel( {
 	};
 
 	return (
-		<Stack spacing={ 0 } sx={ { maxWidth: 640 } }>
+		<Stack spacing={ 0 } p={ 4 } flexGrow={ 1 } sx={ { maxWidth: 700 } }>
 			{ hasValidLicense && (
 				<>
 					<Stack spacing={ 2 } mb={ 4 }>

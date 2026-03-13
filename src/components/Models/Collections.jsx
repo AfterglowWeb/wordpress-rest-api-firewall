@@ -17,6 +17,9 @@ export default function Collections( { form, setField, postTypes } ) {
 	const isProActive =
 		hasValidLicense && form.rest_collections_sortable_enabled;
 
+	const postTypeOptions = postTypes ? postTypes.filter( ( pt ) => pt.type === 'post_type' ) : [];
+	const taxonomyOptions = postTypes ? postTypes.filter( ( pt ) => pt.type === 'taxonomy' ) : [];
+
 	return (
 		<Stack spacing={ 3 } maxWidth={ 600 } sx={{ p: 4, pt: 6}}>
 			<Stack
@@ -117,25 +120,40 @@ export default function Collections( { form, setField, postTypes } ) {
 					</FormControl>
 
 					<Box sx={ { flex: 1 } }>
-						{ postTypes && (
-							<MultipleSelect
-								name="rest_collections_sortable_post_types"
-								label={ __(
-									'Choose Post Types',
-									'rest-api-firewall'
-								) }
-								value={
-									form.rest_collections_sortable_post_types
-								}
-								helperText={ __(
-									'Enable sorting on the selected post types.',
-									'rest-api-firewall'
-								) }
-								disabled={ ! isProActive }
-								options={ postTypes }
-								onChange={ setField }
-							/>
-						) }
+						<MultipleSelect
+							name="rest_collections_sortable_post_types"
+							label={ __(
+								'Choose Post Types',
+								'rest-api-firewall'
+							) }
+							value={
+								form.rest_collections_sortable_post_types
+							}
+							helperText={ __(
+								'Enable sorting on the selected post types.',
+								'rest-api-firewall'
+							) }
+							disabled={ ! isProActive }
+							options={ postTypeOptions }
+							onChange={ setField }
+						/>
+						<MultipleSelect
+							name="rest_collections_sortable_taxonomies"
+							label={ __(
+								'Choose Taxonomies',
+								'rest-api-firewall'
+							) }
+							value={
+								form.rest_collections_sortable_taxonomies
+							}
+							helperText={ __(
+								'Enable term ordering via REST for the selected taxonomies.',
+								'rest-api-firewall'
+							) }
+							disabled={ ! isProActive }
+							options={ taxonomyOptions }
+							onChange={ setField }
+						/>
 					</Box>
 				</Stack>
 

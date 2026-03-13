@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from '@wordpress/element';
+import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
@@ -7,6 +7,7 @@ import useProActions from '../../hooks/useProActions';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
@@ -66,6 +67,12 @@ export default function ModelEditor( { model, onBack } ) {
 	);
 
 	const [ loaded, setLoaded ] = useState( isNew );
+
+	// Test tab state.
+	const [ testMode, setTestMode ] = useState( false );
+	const [ testStatus, setTestStatus ] = useState( 'idle' ); // 'idle' | 'running' | 'done' | 'error'
+	const [ testResult, setTestResult ] = useState( null );
+	const testAbortRef = useRef( null );
 
 	const properties = isCustom ? customProperties : wpProperties;
 	const setProperties = isCustom ? setCustomProperties : setWpProperties;
@@ -208,10 +215,52 @@ export default function ModelEditor( { model, onBack } ) {
 		);
 	}, [ remove, model.id, title, nonce, onBack, clearDirty, __ ] );
 
+	const runTest = useCallback( async () => {
+		if ( isNew || ! model.id ) {
+			return;
+		}
+		setTestStatus( 'running' );
+		setTestResult( null );
+		const controller = new AbortController();
+		testAbortRef.current = controller;
+		try {
+			const res = await fetch( adminData.ajaxurl, {
+				method: 'POST',
+				signal: controller.signal,
+				body: new URLSearchParams( {
+					action: 'test_model_entry',
+					nonce,
+					id: model.id,
+				} ),
+			} );
+			const json = await res.json();
+			if ( json.success ) {
+				setTestResult( json.data );
+				setTestStatus( 'done' );
+			} else {
+				setTestResult( { error: json.data?.message || __( 'Test failed.', 'rest-api-firewall' ) } );
+				setTestStatus( 'error' );
+			}
+		} catch ( err ) {
+			if ( err.name !== 'AbortError' ) {
+				setTestResult( { error: __( 'Network error.', 'rest-api-firewall' ) } );
+				setTestStatus( 'error' );
+			}
+		}
+	}, [ isNew, model.id, adminData, nonce, __ ] );
+
 	const handleModeChange = ( _, newMode ) => {
 		if ( newMode === null ) {
 			return;
 		}
+		if ( newMode === 'test' ) {
+			setTestMode( true );
+			setTestStatus( 'idle' );
+			setTestResult( null );
+			runTest();
+			return;
+		}
+		setTestMode( false );
 		if ( ! isNew && enabled ) {
 			openDialog( {
 				type: DIALOG_TYPES.CONFIRM,
@@ -293,6 +342,8 @@ export default function ModelEditor( { model, onBack } ) {
 				enabled={ enabled }
 				setEnabled={ setEnabled }
 				dirtyFlag={ dirtyFlag }
+				breadcrumb={ [ __( 'Properties', 'rest-api-firewall' ), __( 'Model', 'rest-api-firewall' ) ] }
+				docPage="models"
 			/>
 			
 			<Stack p={ 4 } spacing={ 3 } sx={ { overflowY: 'auto', flex: 1} }>
@@ -319,64 +370,96 @@ export default function ModelEditor( { model, onBack } ) {
 						}}
 					/>
 
+				<Stack direction="row" alignItems="center" gap={ 1 } flexWrap="wrap">
+					{ objectType && (
+						<Chip label={ objectType } size="small" variant="outlined" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }} />
+					) }
+
 					<ToggleButtonGroup
-					value={ isCustom ? 'custom' : 'wp' }
-					exclusive
-					onChange={ handleModeChange }
-					size="small"
+						value={ testMode ? 'test' : ( isCustom ? 'custom' : 'wp' ) }
+						exclusive
+						onChange={ handleModeChange }
+						size="small"
 					>
-					<ToggleButton
-						value="wp"
-					>
-						<Typography variant="caption">
-							{ __( 'WordPress Schema', 'rest-api-firewall' ) }
-						</Typography>
-					</ToggleButton>
-					<ToggleButton
-						value="custom"
-					>
-						<Typography variant="caption">
-							{ __( 'Custom Schema', 'rest-api-firewall' ) }
-						</Typography>
-					</ToggleButton>
-				</ToggleButtonGroup>
-
+						<ToggleButton value="wp">
+							<Typography variant="caption">
+								{ __( 'WordPress Schema', 'rest-api-firewall' ) }
+							</Typography>
+						</ToggleButton>
+						<ToggleButton value="custom">
+							<Typography variant="caption">
+								{ __( 'Custom Schema', 'rest-api-firewall' ) }
+							</Typography>
+						</ToggleButton>
+						{ ! isNew && (
+							<ToggleButton value="test" disabled={ testStatus === 'running' }>
+								<Typography variant="caption">
+									{ testStatus === 'running'
+										? __( 'Testing…', 'rest-api-firewall' )
+										: testStatus === 'done'
+											? __( 'Test ✓', 'rest-api-firewall' )
+											: testStatus === 'error'
+												? __( 'Test ✗', 'rest-api-firewall' )
+												: __( 'Test', 'rest-api-firewall' ) }
+								</Typography>
+							</ToggleButton>
+						) }
+					</ToggleButtonGroup>
 				</Stack>
+			</Stack>
 
-				
-
-				{ objectType && (
-					<>
-						{ isCustom ? (
-							<Stack spacing={ 1 }>
-								<Typography
-									variant="subtitle2"
-									fontWeight={ 600 }
-								>
-									{ __(
-										'Custom Schema',
-										'rest-api-firewall'
-									) }
-								</Typography>
-								<Typography
-									variant="caption"
-									color="text.secondary"
-								>
-									{ __(
-										'Define the exact JSON shape your REST endpoint will return for this object type.',
-										'rest-api-firewall'
-									) }
-								</Typography>
-								
-									<JsonSchemaBuilder
-										value={ properties }
-										onChange={ setProperties }
-										availableBindings={ availableBindings }
-									/>
-								
-							</Stack>
-						) : (
-							<Stack>
+			{ objectType && (
+				<>
+					{ testMode ? (
+						<Stack spacing={ 2 } p={ 4 } pt={ 0 }>
+							{ testStatus === 'running' && (
+								<Stack direction="row" alignItems="center" gap={ 1 }>
+									<CircularProgress size={ 16 } />
+									<Typography variant="body2" color="text.secondary">{ __( 'Fetching live data and applying model…', 'rest-api-firewall' ) }</Typography>
+								</Stack>
+							) }
+							{ testStatus === 'error' && testResult?.error && (
+								<Alert severity="warning">{ testResult.error }</Alert>
+							) }
+							{ testStatus === 'done' && testResult && (
+								<Stack direction={ { xs: 'column', md: 'row' } } spacing={ 2 } alignItems="flex-start">
+									<Stack flex={ 1 } spacing={ 1 } sx={{ minWidth: 0 }}>
+										<Typography variant="subtitle2" fontWeight={ 600 } color="text.secondary">{ __( 'Raw', 'rest-api-firewall' ) }</Typography>
+										<Box
+											component="pre"
+											sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1, overflowX: 'auto', fontSize: '0.72rem', lineHeight: 1.5, m: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}
+										>
+											{ JSON.stringify( testResult.raw, null, 2 ) }
+										</Box>
+									</Stack>
+									<Stack flex={ 1 } spacing={ 1 } sx={{ minWidth: 0 }}>
+										<Typography variant="subtitle2" fontWeight={ 600 } color="primary.main">{ __( 'Transformed', 'rest-api-firewall' ) }</Typography>
+										<Box
+											component="pre"
+											sx={{ p: 2, bgcolor: 'primary.50', borderRadius: 1, overflowX: 'auto', fontSize: '0.72rem', lineHeight: 1.5, m: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}
+										>
+											{ JSON.stringify( testResult.transformed, null, 2 ) }
+										</Box>
+									</Stack>
+								</Stack>
+							) }
+						</Stack>
+					) : isCustom ? (
+						<Stack spacing={ 1 } p={ 4 } pt={ 0 }>
+							<Typography variant="subtitle2" fontWeight={ 600 }>
+								{ __( 'Custom Schema', 'rest-api-firewall' ) }
+							</Typography>
+							<Typography variant="caption" color="text.secondary">
+								{ __( 'Define the exact JSON shape your REST endpoint will return for this object type.', 'rest-api-firewall' ) }
+							</Typography>
+							<JsonSchemaBuilder
+								value={ properties }
+								onChange={ setProperties }
+								availableBindings={ availableBindings }
+							/>
+						</Stack>
+					) : (
+						<Stack p={ 4 } pt={ 0 }>
 								{ schemaProps ? (
 									<Stack spacing={ 0 }>
 										{ Object.entries( schemaProps ).map(

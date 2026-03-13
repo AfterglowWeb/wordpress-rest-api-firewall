@@ -58,6 +58,41 @@ class Documentation {
 				'title' => __( 'Hooks', 'rest-api-firewall' ),
 				'html'  => '',
 			),
+			array(
+				'slug'  => 'applications',
+				'title' => __( 'Applications', 'rest-api-firewall' ),
+				'html'  => '',
+			),
+			array(
+				'slug'  => 'users',
+				'title' => __( 'Auth. & Rate Limit', 'rest-api-firewall' ),
+				'html'  => '',
+			),
+			array(
+				'slug'  => 'models',
+				'title' => __( 'Properties', 'rest-api-firewall' ),
+				'html'  => '',
+			),
+			array(
+				'slug'  => 'collections',
+				'title' => __( 'Collections', 'rest-api-firewall' ),
+				'html'  => '',
+			),
+			array(
+				'slug'  => 'automations',
+				'title' => __( 'Automations', 'rest-api-firewall' ),
+				'html'  => '',
+			),
+			array(
+				'slug'  => 'webhooks',
+				'title' => __( 'Webhooks', 'rest-api-firewall' ),
+				'html'  => '',
+			),
+			array(
+				'slug'  => 'mails',
+				'title' => __( 'Emails', 'rest-api-firewall' ),
+				'html'  => '',
+			),
 		);
 
 		$config = array(
@@ -86,6 +121,9 @@ class Documentation {
 		foreach ( $pages as $page ) {
 
 			$file = realpath( $docs_dir . '/' . $page['slug'] . '.md' );
+			if ( ! $file ) {
+				$file = realpath( $docs_dir . '/' . $page['slug'] . '/' . $page['slug'] . '.md' );
+			}
 
 			if ( false === FileUtils::is_readable( $file ) ) {
 				continue;

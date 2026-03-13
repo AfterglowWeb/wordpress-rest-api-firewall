@@ -1,3 +1,4 @@
+import { useEffect, useRef } from '@wordpress/element';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -9,8 +10,10 @@ import Typography from '@mui/material/Typography';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
+import { WP_ADMIN_BAR_HEIGHT_DESKTOP, WP_ADMIN_BAR_HEIGHT_MOBILE } from '../Navigation';
+import Documentation from '../Documentation/Documentation';
 
-export default function EntryToolbar( { isNew, title, author, dateCreated, dateModified, handleBack, handleSave, handleDelete, saving, enabled = null, setEnabled = null, dirtyFlag = null, children } ) {
+export default function EntryToolbar( { isNew, title, author, dateCreated, dateModified, handleBack, handleSave, handleDelete, saving, enabled = null, setEnabled = null, dirtyFlag = null, breadcrumb = null, docPage = null, children } ) {
     const { __ } = wp.i18n || {};
     const { openDialog } = useDialog();
 
@@ -28,6 +31,21 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
         }
     };
 
+    const handleBackClickRef = useRef( handleBackClick );
+    handleBackClickRef.current = handleBackClick;
+
+    useEffect( () => {
+        window.history.pushState( { entryEditor: true }, '' );
+
+        const onPopState = () => {
+            window.history.pushState( { entryEditor: true }, '' );
+            handleBackClickRef.current();
+        };
+
+        window.addEventListener( 'popstate', onPopState );
+        return () => window.removeEventListener( 'popstate', onPopState );
+    }, [] ); // eslint-disable-line react-hooks/exhaustive-deps
+
     return (
             <Toolbar
                 sx={ {
@@ -38,6 +56,10 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
                     borderColor: 'divider',
                     flexWrap: 'wrap',
                     py: { xs: 2, sm: 1 },
+                    position: 'sticky',
+                    top: { xs: WP_ADMIN_BAR_HEIGHT_MOBILE, md: WP_ADMIN_BAR_HEIGHT_DESKTOP },
+                    bgcolor: 'background.paper',
+                    zIndex: 'appBar',
                 } }
             >
                 <Stack direction="row" gap={ 2 } alignItems="center">
@@ -48,7 +70,9 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
                     >
                         <ArrowBackIcon />
                     </IconButton>
+
                     <Divider orientation="vertical" flexItem />
+
                     { typeof enabled === 'boolean' && setEnabled && (
                         <FormControlLabel
                             control={
@@ -66,20 +90,40 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
                             ) }
                         />
                     ) }
+
+                    
                     <Stack
                         spacing={ 0 }
                         direction={ { xs: 'column', sm: 'row' } }
                         alignItems={ { xs: 'flex-start', sm: 'center' } }
                         gap={ { xs: 0, sm: 2 } }
                     >
+                        <Stack>
+                            { breadcrumb && breadcrumb.length > 0 && (
+                                <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    sx={ {
+                                        display: 'block',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: 0.5,
+                                    } }
+                                >
+                                    { breadcrumb.join( '/' ) }
+                                </Typography>
+                            ) }
                         <Typography
                             variant="h6"
                             fontWeight={ 600 }
-                            sx={ { flex: 1, minWidth: 0 } }
-                            noWrap
+                            color="text.primary"
+                            sx={ { lineHeight: 1.2 } }
                         >
-                            { title || __( 'New Entry', 'rest-api-firewall' ) }
+                            { title || ( isNew ? `${ __( 'New', 'rest-api-firewall' ) } ${ breadcrumb?.at( -1 ) ?? __( 'Entry', 'rest-api-firewall' ) }` : __( 'Entry', 'rest-api-firewall' ) ) }
                         </Typography>
+                        </Stack>
+
+                        <Divider orientation="vertical" flexItem />
+
                         { ( author || dateCreated || dateModified ) && (
                             <Typography
                                 variant="caption"
@@ -109,6 +153,7 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
                 </Stack>
                 <Stack direction="row" gap={ 2 }>
                     { children }
+                    { docPage && <Documentation page={ docPage } /> }
                     <Button
                         variant="contained"
                         size="small"

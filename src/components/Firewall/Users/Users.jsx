@@ -7,11 +7,13 @@ import { DataGrid } from '@mui/x-data-grid';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
+import Switch from '@mui/material/Switch';
 import Divider from '@mui/material/Divider';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 
@@ -20,6 +22,9 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import UserEditor from './UserEditor';
 import useProActions from '../../../hooks/useProActions';
+import { DefaultRateLimit } from './RateLimit';
+import { AUTH_METHODS } from './AuthManager';
+import HttpMethodsSelector from './HttpMethodsSelector';
 
 export default function Users() {
 	const { adminData } = useAdminData();
@@ -28,7 +33,7 @@ export default function Users() {
 	const { __ } = wp.i18n || {};
 
 	const { selectedApplicationId } = useApplication();
-	const { remove } = useProActions();
+	const { save, remove } = useProActions();
 
 	const [ rows, setRows ] = useState( [] );
 	const [ loading, setLoading ] = useState( true );
@@ -46,14 +51,11 @@ export default function Users() {
 	const [ fetchError, setFetchError ] = useState( '' );
 	const [ editingUser, setEditingUser ] = useState( null );
 
-	const [ rlMax, setRlMax ] = useState( '' );
-	const [ rlWindow, setRlWindow ] = useState( '' );
-	const [ rlRelease, setRlRelease ] = useState( '' );
-	const [ rlBlacklistAfter, setRlBlacklistAfter ] = useState( '' );
-	const [ rlBlacklistWindow, setRlBlacklistWindow ] = useState( '' );
-	const [ rateLimitSaving, setRateLimitSaving ] = useState( false );
+	const [ appDefaultMethods, setAppDefaultMethods ] = useState( [] );
+	const [ appAllowedAuthMethods, setAppAllowedAuthMethods ] = useState( [] );
+	const [ appEntry, setAppEntry ] = useState( null );
 
-	const loadAppRateLimit = useCallback( async () => {
+	const loadAppSettings = useCallback( async () => {
 		if ( ! selectedApplicationId ) return;
 		try {
 			const res = await fetch( adminData.ajaxurl, {
@@ -67,60 +69,99 @@ export default function Users() {
 			} );
 			const result = await res.json();
 			if ( result?.success && result?.data?.entry ) {
-				const rl = result.data.entry.settings?.rate_limit || {};
-				setRlMax( rl.max_requests ?? '' );
-				setRlWindow( rl.window_seconds ?? '' );
-				setRlRelease( rl.release_seconds ?? '' );
-				setRlBlacklistAfter( rl.blacklist_after ?? '' );
-				setRlBlacklistWindow( rl.blacklist_window ?? '' );
+				const s = result.data.entry.settings || {};
+				setAppDefaultMethods( s.default_http_methods || [] );
+				setAppAllowedAuthMethods( s.allowed_auth_methods || [] );
+				setAppEntry( result.data.entry );
 			}
 		} catch {}
 	}, [ adminData, nonce, selectedApplicationId ] );
 
-	const saveAppRateLimit = useCallback( async () => {
-		if ( ! selectedApplicationId ) return;
-		setRateLimitSaving( true );
-		try {
-			const res = await fetch( adminData.ajaxurl, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-				body: new URLSearchParams( {
-					action: 'get_application_entry',
-					nonce,
-					id: selectedApplicationId,
+	const saveDefaultMethods = useCallback( () => {
+		if ( ! selectedApplicationId || ! appEntry ) return;
+		const existingSettings = appEntry.settings || {};
+		save(
+			{
+				action: 'update_application_entry',
+				id: selectedApplicationId,
+				title: appEntry.title || '',
+				settings: JSON.stringify( {
+					...existingSettings,
+					default_http_methods: appDefaultMethods,
 				} ),
-			} );
-			const result = await res.json();
-			const entry = result?.success ? result.data.entry : {};
-			const existingSettings = entry.settings || {};
-			await fetch( adminData.ajaxurl, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-				body: new URLSearchParams( {
-					action: 'update_application_entry',
-					nonce,
-					id: selectedApplicationId,
-					title: entry.title || '',
-					settings: JSON.stringify( {
-						...existingSettings,
-						rate_limit: {
-							max_requests: Number( rlMax ) || 0,
-							window_seconds: Number( rlWindow ) || 0,
-							release_seconds: Number( rlRelease ) || 0,
-							blacklist_after: Number( rlBlacklistAfter ) || 0,
-							blacklist_window: Number( rlBlacklistWindow ) || 0,
-						},
-					} ),
+			},
+			{
+				confirmTitle: __( 'Save Default HTTP Methods', 'rest-api-firewall' ),
+				confirmMessage: __( 'This will update the default HTTP methods pre-selected when creating new users. Existing users will not be affected.', 'rest-api-firewall' ),
+				successTitle: __( 'Default HTTP Methods Saved', 'rest-api-firewall' ),
+				successMessage: __( 'Default HTTP methods updated successfully.', 'rest-api-firewall' ),
+				onSuccess: loadAppSettings,
+			}
+		);
+	}, [ selectedApplicationId, appEntry, appDefaultMethods, save, loadAppSettings, __ ] );
+
+	const saveAppSettings = useCallback( () => {
+		if ( ! selectedApplicationId || ! appEntry ) return;
+		const existingSettings = appEntry.settings || {};
+		save(
+			{
+				action: 'update_application_entry',
+				id: selectedApplicationId,
+				title: appEntry.title || '',
+				settings: JSON.stringify( {
+					...existingSettings,
+					allowed_auth_methods: appAllowedAuthMethods,
 				} ),
-			} );
-		} catch {} finally {
-			setRateLimitSaving( false );
-		}
-	}, [ adminData, nonce, selectedApplicationId, rlMax, rlWindow, rlRelease, rlBlacklistAfter, rlBlacklistWindow ] );
+			},
+			{
+				confirmTitle: __( 'Enforce Authentication Methods', 'rest-api-firewall' ),
+				confirmMessage: __( 'This setting will immediately cascade to all existing users of this application and restrict their available authentication methods.', 'rest-api-firewall' ),
+				confirmLabel: __( 'Save & Enforce', 'rest-api-firewall' ),
+				successTitle: __( 'Authentication Methods Enforced', 'rest-api-firewall' ),
+				successMessage: __( 'Allowed authentication methods updated and applied to all users.', 'rest-api-firewall' ),
+				onSuccess: loadAppSettings,
+			}
+		);
+	}, [ selectedApplicationId, appEntry, appAllowedAuthMethods, save, loadAppSettings, __ ] );
 
 	useEffect( () => {
-		loadAppRateLimit();
-	}, [ loadAppRateLimit ] );
+		loadAppSettings();
+	}, [ loadAppSettings ] );
+
+	const handleToggleEnabled = useCallback(
+		async ( row ) => {
+			const newEnabled = ! row.enabled;
+			setRows( ( prev ) =>
+				prev.map( ( r ) => ( r.id === row.id ? { ...r, enabled: newEnabled } : r ) )
+			);
+			try {
+				await fetch( adminData.ajaxurl, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+					body: new URLSearchParams( {
+						action: 'update_user_entry',
+						nonce,
+						id: row.id,
+						application_id: selectedApplicationId,
+						enabled: newEnabled ? '1' : '0',
+						auth_method: row.auth_method || 'any',
+						auth_config: JSON.stringify( row.auth_config || {} ),
+						allowed_methods: JSON.stringify( row.allowed_methods || [] ),
+						rate_limit_max_requests: String( row.rate_limit_max_requests ?? 100 ),
+						rate_limit_window_seconds: String( row.rate_limit_window_seconds ?? 60 ),
+						rate_limit_release: String( row.rate_limit_release_seconds ?? 300 ),
+						rate_limit_blacklist_after: String( row.rate_limit_blacklist_after ?? 0 ),
+						rate_limit_blacklist_window: String( row.rate_limit_blacklist_window ?? 0 ),
+					} ),
+				} );
+			} catch {
+				setRows( ( prev ) =>
+					prev.map( ( r ) => ( r.id === row.id ? { ...r, enabled: row.enabled } : r ) )
+				);
+			}
+		},
+		[ adminData, nonce, selectedApplicationId ]
+	);
 
 	const handleDeleteOne = useCallback(
 		( id, displayName ) => {
@@ -177,22 +218,15 @@ export default function Users() {
 			{
 				field: 'enabled',
 				headerName: __( 'Status', 'rest-api-firewall' ),
-				width: 100,
-				renderCell: ( params ) =>
-					!! params.value ? (
-						<Chip
-							label={ __( 'Active', 'rest-api-firewall' ) }
-							size="small"
-							color="success"
-							variant="outlined"
-						/>
-					) : (
-						<Chip
-							label={ __( 'Inactive', 'rest-api-firewall' ) }
-							size="small"
-							variant="outlined"
-						/>
-					),
+				width: 90,
+				sortable: false,
+				renderCell: ( params ) => (
+					<Switch
+						size="small"
+						checked={ !! params.value }
+						onChange={ () => handleToggleEnabled( params.row ) }
+					/>
+				),
 			},
 			{
 				field: 'display_name',
@@ -283,7 +317,7 @@ export default function Users() {
 				renderCell: ( params ) => params.value || '-',
 			},
 		],
-		[ hasValidLicense, handleDeleteOne, __ ]
+		[ hasValidLicense, handleDeleteOne, handleToggleEnabled, __ ]
 	);
 
 	const fetchEntries = useCallback( async () => {
@@ -361,6 +395,7 @@ export default function Users() {
 		return (
 			<UserEditor
 				user={ editingUser }
+				appAllowedAuthMethods={ appAllowedAuthMethods }
 				onBack={ () => {
 					setEditingUser( null );
 					fetchEntries();
@@ -372,73 +407,84 @@ export default function Users() {
 	return (
 		<Stack spacing={ 2 } flexGrow={ 1 } p={ { xs: 2, sm: 4 } }>
 			{ selectedApplicationId && (
-				<>
+				<Stack spacing={ 2 }  maxWidth={640}>
 					<Stack spacing={ 2 }>
 						<Box>
 							<Typography variant="subtitle1" fontWeight={ 600 }>
 								{ __( 'App Rate Limit', 'rest-api-firewall' ) }
 							</Typography>
 							<Typography variant="body2" color="text.secondary">
-								{ __( 'Default rate limit for all users of this application.', 'rest-api-firewall' ) }
+								{ __( 'Default rate limit for all users of this application. Can be overlapped on per user basis.', 'rest-api-firewall' ) }
 							</Typography>
 						</Box>
-						<Stack direction={ { xs: 'column', sm: 'row' } } spacing={ 2 } sx={ { maxWidth: 700 } }>
-							<TextField
-								size="small"
-								label={ __( 'Max Requests', 'rest-api-firewall' ) }
-								type="number"
-								value={ rlMax }
-								onChange={ ( e ) => setRlMax( e.target.value ) }
-								sx={ { flex: 1 } }
-							/>
-							<TextField
-								size="small"
-								label={ __( 'Window (s)', 'rest-api-firewall' ) }
-								type="number"
-								value={ rlWindow }
-								onChange={ ( e ) => setRlWindow( e.target.value ) }
-								sx={ { flex: 1 } }
-							/>
-							<TextField
-								size="small"
-								label={ __( 'Release (s)', 'rest-api-firewall' ) }
-								type="number"
-								value={ rlRelease }
-								onChange={ ( e ) => setRlRelease( e.target.value ) }
-								sx={ { flex: 1 } }
-							/>
-						</Stack>
-						<Stack direction={ { xs: 'column', sm: 'row' } } spacing={ 2 } sx={ { maxWidth: 700 } }>
-							<TextField
-								size="small"
-								label={ __( 'Blacklist After (violations)', 'rest-api-firewall' ) }
-								type="number"
-								value={ rlBlacklistAfter }
-								onChange={ ( e ) => setRlBlacklistAfter( e.target.value ) }
-								sx={ { flex: 1 } }
-							/>
-							<TextField
-								size="small"
-								label={ __( 'Blacklist Window (s)', 'rest-api-firewall' ) }
-								type="number"
-								value={ rlBlacklistWindow }
-								onChange={ ( e ) => setRlBlacklistWindow( e.target.value ) }
-								sx={ { flex: 1 } }
-							/>
-							<Box sx={ { flex: 1, display: 'flex', alignItems: 'flex-end' } }>
+						<DefaultRateLimit />
+					</Stack>
+
+					<Divider />
+
+					<Stack spacing={ 2 }>
+						<Box>
+							<Typography variant="subtitle1" fontWeight={ 600 }>
+								{ __( 'Default HTTP Methods', 'rest-api-firewall' ) }
+							</Typography>
+							<Typography variant="body2" color="text.secondary">
+								{ __( 'Pre-selected HTTP methods when creating a new user. Can be overlapped on per user basis.', 'rest-api-firewall' ) }
+							</Typography>
+						</Box>
+						<HttpMethodsSelector
+							value={ appDefaultMethods }
+							onChange={ setAppDefaultMethods }
+							onSave={ saveDefaultMethods }
+
+						/>
+					</Stack>
+
+					<Divider />
+
+					<Stack spacing={ 2 }>
+						<Box>
+							<Typography variant="subtitle1" fontWeight={ 600 }>
+								{ __( 'Enforce Authentication Methods', 'rest-api-firewall' ) }
+							</Typography>
+							<Typography variant="body2" color="text.secondary">
+								{ __( 'Restrict which authentication methods users of this application may use. Cannot be overlapped on per user basis. Leave all unchecked to allow public requests.', 'rest-api-firewall' ) }
+							</Typography>
+						</Box>
+						<Stack direction="row" flexWrap="wrap" gap={ 1 }>
+							{ AUTH_METHODS.filter( ( m ) => m.value !== 'any' ).map( ( method ) => (
+								<FormControlLabel
+									key={ method.value }
+									label={ method.label }
+									control={
+										<Checkbox
+											size="small"
+											checked={ appAllowedAuthMethods.includes( method.value ) }
+											onChange={ ( e ) => {
+												setAppAllowedAuthMethods( ( prev ) =>
+													e.target.checked
+														? [ ...prev, method.value ]
+														: prev.filter( ( v ) => v !== method.value )
+												);
+											} }
+										/>
+									}
+								/>
+							) ) }
+							<Stack flex={ 1 } pt={1} direction="column" justifyContent="flex-end" alignItems="flex-end">
 								<Button
-									variant="outlined"
+									variant="contained"
+									disableElevation
 									size="small"
-									onClick={ saveAppRateLimit }
-									disabled={ rateLimitSaving }
+									onClick={ saveAppSettings }
 								>
-									{ __( 'Save Rate Limit', 'rest-api-firewall' ) }
+									{ __( 'Save', 'rest-api-firewall' ) }
 								</Button>
-							</Box>
+							</Stack>
 						</Stack>
 					</Stack>
+
 					<Divider />
-				</>
+				</Stack>
 			) }
 			<Toolbar disableGutters sx={ { gap: 2, mb: 2, flexWrap: 'wrap' } }>
 				<Button
@@ -451,7 +497,7 @@ export default function Users() {
 							application_id: selectedApplicationId,
 							status: 'inactive',
 							auth_method: 'any',
-							allowed_methods: [ 'get' ],
+							allowed_methods: appDefaultMethods.length ? appDefaultMethods : [ 'get' ],
 							rate_limit_max_requests: 100,
 							rate_limit_window_seconds: 60,
 						} )
