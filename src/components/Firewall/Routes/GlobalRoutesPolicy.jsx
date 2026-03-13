@@ -1,3 +1,4 @@
+import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useLicense } from '../../../contexts/LicenseContext';
 
 import Divider from '@mui/material/Divider';
@@ -17,6 +18,20 @@ const HTTP_METHODS = [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ];
 export default function GlobalRoutesPolicy( { form, setField, proSettings, onProChange, onMethodToggle, onSave, canSave, isModuleEnabled } ) {
 	const { hasValidLicense } = useLicense();
 	const { __ } = wp.i18n || {};
+	const [ wpPages, setWpPages ] = useState( { special_pages: [], wordpress_pages: [] } );
+	const [ appEntry, setAppEntry ] = useState( null );
+	const [ proSettings, setProSettings ] = useState( {
+		disable_behavior:         '404',
+		disable_redirect_url:     '',
+		disable_redirect_page_id: '',
+		disabled_methods:         [],
+		disabled_post_types:      [],
+	} );
+
+	const handleProChange = useCallback( ( e ) => {
+		const { name, value } = e.target;
+		setProSettings( ( prev ) => ( { ...prev, [ name ]: value } ) );
+	}, [] );
 
 	return (
 		<Stack spacing={ 2 } maxWidth={ 640 }>
