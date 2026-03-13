@@ -109,7 +109,7 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
                                         letterSpacing: 0.5,
                                     } }
                                 >
-                                    { breadcrumb.join( '/' ) }
+                                    { breadcrumb.join( ' / ' ) }
                                 </Typography>
                             ) }
                         <Typography
@@ -151,7 +151,7 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
                         ) }
                     </Stack>
                 </Stack>
-                <Stack direction="row" gap={ 2 }>
+                <Stack direction="row" alignItems="center" gap={ 2 }>
                     { children }
                     { docPage && <Documentation page={ docPage } /> }
                     <Button

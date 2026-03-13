@@ -98,6 +98,7 @@ class AdminPage {
 			'date_format'          => get_option( 'date_format' ),
 			'time_format'          => get_option( 'time_format' ),
 			'ip_filter_enabled'    => (bool) ( get_option( 'rest_firewall_ip_filter', array() )['enabled'] ?? false ),
+			'pro_plugin_installed' => file_exists( WP_PLUGIN_DIR . '/rest-api-firewall-pro/rest-api-firewall-pro.php' ),
 		);
 
 		if ( class_exists( '\cmk\RestApiFirewall\Theme\RedirectTemplates' ) ) {
