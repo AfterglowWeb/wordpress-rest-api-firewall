@@ -27,7 +27,7 @@ export default function GlobalProperties( { form, setField } ) {
 					/>
 				}
 				label={
-					<Typography sx={{color: isDisabled ? 'text.disabled' : 'text.primary'  }} variant="caption">{ label }</Typography>
+					<Typography variant="body2" color={ isDisabled ? 'text.disabled' : 'text.primary' }>{ label }</Typography>
 				}
 				sx={ {
 					width: '50%',
@@ -42,13 +42,9 @@ export default function GlobalProperties( { form, setField } ) {
 
 	const groupLabel = ( text ) => (
 		<Typography
-			variant="caption"
-			sx={ {
-				textTransform: 'uppercase',
-				letterSpacing: 0.5,
-				fontWeight: 600,
-				color: ! hasValidLicense ? 'text.disabled' : 'text.secondary',
-			} }
+			variant="subtitle1"
+			fontWeight={ 600 }
+			color={ ! hasValidLicense ? 'text.disabled' : 'text.primary' }
 		>
 			{ text }
 		</Typography>
@@ -57,12 +53,10 @@ export default function GlobalProperties( { form, setField } ) {
 	return (
 		<Stack spacing={ 2 }>
 
-			{ /* ── Group 1: applies to ALL object types ── */ }
 			<Stack spacing={ 0.5 }>
 				{ groupLabel( __( 'All Object Types', 'rest-api-firewall' ) ) }
 				<FormGroup sx={ { flexDirection: 'row', flexWrap: 'wrap' } }>
 					<Item
-
 						name="rest_models_relative_url_enabled"
 						label={ __( 'Relative URLs', 'rest-api-firewall' ) }
 						tip={ __( 'Remove the host from post and term URLs.', 'rest-api-firewall' ) }
@@ -97,7 +91,6 @@ export default function GlobalProperties( { form, setField } ) {
 				</FormGroup>
 			</Stack>
 
-			{ /* ── Group 2: post-type objects only ── */ }
 			<Stack spacing={ 0.5 }>
 				{ groupLabel( __( 'Post Types Only', 'rest-api-firewall' ) ) }
 				<FormGroup sx={ { flexDirection: 'row', flexWrap: 'wrap' } }>

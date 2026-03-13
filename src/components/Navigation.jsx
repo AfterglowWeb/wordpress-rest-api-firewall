@@ -459,7 +459,8 @@ export default function Navigation( {
 							borderBottom: 1,
 							borderColor: 'divider',
 							px: 2,
-							height: APP_BAR_HEIGHT,
+							height: { xs: 'auto', xl: APP_BAR_HEIGHT },
+                    		minHeight: APP_BAR_HEIGHT,
 							overflow: 'hidden',
 							gap: 2,
 						} }

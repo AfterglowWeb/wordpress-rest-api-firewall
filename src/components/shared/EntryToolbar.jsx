@@ -10,7 +10,7 @@ import Typography from '@mui/material/Typography';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
-import { WP_ADMIN_BAR_HEIGHT_DESKTOP, WP_ADMIN_BAR_HEIGHT_MOBILE } from '../Navigation';
+import { WP_ADMIN_BAR_HEIGHT_DESKTOP, WP_ADMIN_BAR_HEIGHT_MOBILE, APP_BAR_HEIGHT } from '../Navigation';
 import Documentation from '../Documentation/Documentation';
 
 export default function EntryToolbar( { isNew, title, author, dateCreated, dateModified, handleBack, handleSave, handleDelete, saving, enabled = null, setEnabled = null, dirtyFlag = null, breadcrumb = null, docPage = null, children } ) {
@@ -55,8 +55,9 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
                     borderBottom: 1,
                     borderColor: 'divider',
                     flexWrap: 'wrap',
-                    py: { xs: 2, sm: 1 },
                     position: 'sticky',
+                    height: { xs: 'auto', xl: APP_BAR_HEIGHT },
+                    minHeight: APP_BAR_HEIGHT,
                     top: { xs: WP_ADMIN_BAR_HEIGHT_MOBILE, md: WP_ADMIN_BAR_HEIGHT_DESKTOP },
                     bgcolor: 'background.paper',
                     zIndex: 'appBar',
