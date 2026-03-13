@@ -69,31 +69,6 @@ export default function GlobalRoutesPolicy( { form, setField } ) {
 	const behavior = proSettings.disable_behavior || '404';
 	const DISABLE_BEHAVIORS = getDisableBehaviors( __ );
 
-	const MenuItemStyled = ( { option } ) => {
-		return (
-			<MenuItem
-				key={ option.value }
-				value={ option.value }
-				sx={ { pl: 3} }
-			>
-			<ListItemText
-				primary={ option.label }
-				secondary={ option.secondary ?? null }
-				sx={{
-					'.MuiListItemText-root': {
-						maxWidth: 300,
-					},
-					'.MuiListItemText-primary, .MuiListItemText-secondary': {
-						overflow: 'hidden',
-						textOverflow: 'ellipsis',
-						whiteSpace: 'nowrap',
-					}
-				}}
-			/>
-			</MenuItem>
-		);
-	}
-
 	const loadAppSettings = useCallback( async () => {
 		if ( ! selectedApplicationId ) return;
 		try {
@@ -299,7 +274,12 @@ export default function GlobalRoutesPolicy( { form, setField } ) {
 									</ListSubheader>
 								) }
 								{ ( wpPages.special_pages || [] ).map( ( page ) => (
-									<MenuItemStyled key={ page.value } option={ page } />
+								<MenuItem key={ page.value } value={ page.value } sx={ { pl: 3 } }>
+									<ListItemText
+										primary={ page.label }
+										sx={ { '.MuiListItemText-primary': { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } } }
+									/>
+								</MenuItem>
 								) ) }
 								{ ( wpPages.wordpress_pages || [] ).length > 0 && (
 									<ListSubheader sx={ { fontWeight: 700, fontSize: '0.75rem', lineHeight: '28px', textTransform: 'uppercase', letterSpacing: 0.5 } }>
@@ -307,7 +287,12 @@ export default function GlobalRoutesPolicy( { form, setField } ) {
 									</ListSubheader>
 								) }
 								{ ( wpPages.wordpress_pages || [] ).map( ( page ) => (
-									<MenuItemStyled key={ page.value } option={ page } />
+								<MenuItem key={ page.value } value={ page.value } sx={ { pl: 3 } }>
+									<ListItemText
+										primary={ page.label }
+										sx={ { '.MuiListItemText-primary': { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } } }
+									/>
+								</MenuItem>
 								) ) }
 							</Select>
 						</FormControl>
