@@ -104,6 +104,8 @@ class AdminPage {
 			$args['redirect_preset_url_options'] = \cmk\RestApiFirewall\Theme\RedirectTemplates::redirect_preset_url_options();
 		}
 
+		$args = (array) apply_filters( 'rest_api_firewall_admin_localize_data', $args );
+
 		wp_localize_script(
 			'rest-api-firewall-admin',
 			'restApiFirewallAdminData',

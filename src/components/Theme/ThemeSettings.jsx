@@ -1,6 +1,5 @@
 import { useTheme } from '@mui/material/styles';
 import { useAdminData } from '../../contexts/AdminDataContext';
-import { useLicense } from '../../contexts/LicenseContext';
 
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -28,9 +27,7 @@ export default function ThemeSettings( {
 	const { __ } = wp.i18n || {};
 	const theme = useTheme();
 	const { adminData } = useAdminData();
-	const { hasValidLicense } = useLicense();
 	const disabled = ! themeStatus?.active;
-	const isProDisabled = ! hasValidLicense || disabled;
 	const redirectPresetUrlOptions =
 		adminData?.redirect_preset_url_options || [];
 
@@ -117,7 +114,7 @@ export default function ThemeSettings( {
 						</FormHelperText>
 					</FormControl>
 
-					<FormControl disabled={ isProDisabled }>
+					<FormControl disabled={ ! form.theme_redirect_templates_enabled }>
 						<FormControlLabel
 							control={
 								<Switch
@@ -127,10 +124,6 @@ export default function ThemeSettings( {
 									}
 									name="theme_redirect_templates_free_url_enabled"
 									onChange={ setField }
-									disabled={
-										isProDisabled ||
-										! form.theme_redirect_templates_enabled
-									}
 								/>
 							}
 							label={ __( 'Custom URL', 'rest-api-firewall' ) }
@@ -154,7 +147,6 @@ export default function ThemeSettings( {
 						value={ form.theme_redirect_templates_free_url }
 						onChange={ setField }
 						disabled={
-							isProDisabled ||
 							! form.theme_redirect_templates_enabled ||
 							! form.theme_redirect_templates_free_url_enabled
 						}

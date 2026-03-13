@@ -23,6 +23,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import WebhookEditorSecretManager from './WebhookEditorSecretManager';
+import LoadingMessage from '../LoadingMessage';
 
 const HTTP_METHODS = [ 'POST', 'PUT', 'PATCH' ];
 
@@ -330,11 +331,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 	if ( loading ) {
 		return (
-			<Box sx={ { py: 4 } }>
-				<Typography color="text.secondary">
-					{ __( 'Loading…', 'rest-api-firewall' ) }
-				</Typography>
-			</Box>
+			<LoadingMessage message={ isNew ? __( 'Creating new webhook...', 'rest-api-firewall' ) : __( 'Loading webhook...', 'rest-api-firewall' ) } />
 		);
 	}
 
@@ -351,6 +348,8 @@ export default function WebhookEditor( { webhook, onBack } ) {
 				saving={ saving }
 				enabled={ enabled }
 				setEnabled={ setEnabled }
+				breadcrumb={ [__( 'Webhooks', 'rest-api-firewall' ), __( 'Webhook', 'rest-api-firewall' ) ] }
+				docPage="webhooks"
 			/>
 
 			{ loadError && <Alert severity="error">{ loadError }</Alert> }

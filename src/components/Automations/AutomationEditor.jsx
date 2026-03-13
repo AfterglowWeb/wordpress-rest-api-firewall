@@ -455,7 +455,7 @@ export default function AutomationEditor( { automation, onBack } ) {
 
 	if ( ! loaded ) {
 		return (
-			<LoadingMessage />
+			<LoadingMessage message={ isNew ? __( 'Creating new automation...', 'rest-api-firewall' ) : __( 'Loading automation...', 'rest-api-firewall' ) } />
 		);
 	}
 
@@ -471,6 +471,8 @@ export default function AutomationEditor( { automation, onBack } ) {
 				saving={ saving }
 				enabled={ isNew ? null : enabled }
 				setEnabled={ isNew ? null : setEnabled }
+				breadcrumb={ [ __( 'Automations', 'rest-api-firewall' ), __( 'Automation', 'rest-api-firewall' ) ] }
+				docPage="automations"
 			/>
 
 			<Stack spacing={ 3 } sx={ { overflowY: 'auto', flex: 1, p: 4 } }>

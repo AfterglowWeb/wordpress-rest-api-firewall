@@ -1,14 +1,12 @@
-import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
+import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useLicense } from '../../../contexts/LicenseContext';
 import { useApplication } from '../../../contexts/ApplicationContext';
+import useProActions from '../../../hooks/useProActions';
 
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-
-import UserEditor from './UserEditor';
-import useProActions from '../../../hooks/useProActions';
 
 export default function RateLimit( { form, setField } ) {
 	const { __ } = wp.i18n || {};
@@ -113,12 +111,14 @@ export function DefaultRateLimit( { form, setField } ) {
 	const { __ } = wp.i18n || {};
 	const { selectedApplicationId } = useApplication();
 
+	const { save } = useProActions();
+
 	const [ rlMax, setRlMax ] = useState( '' );
 	const [ rlWindow, setRlWindow ] = useState( '' );
 	const [ rlRelease, setRlRelease ] = useState( '' );
 	const [ rlBlacklistAfter, setRlBlacklistAfter ] = useState( '' );
 	const [ rlBlacklistWindow, setRlBlacklistWindow ] = useState( '' );
-	const [ rateLimitSaving, setRateLimitSaving ] = useState( false );
+	const [ appEntry, setAppEntry ] = useState( null );
 
 	const loadAppRateLimit = useCallback( async () => {
 		if ( ! selectedApplicationId ) return;
@@ -134,7 +134,9 @@ export function DefaultRateLimit( { form, setField } ) {
 			} );
 			const result = await res.json();
 			if ( result?.success && result?.data?.entry ) {
-				const rl = result.data.entry.settings?.rate_limit || {};
+				const entry = result.data.entry;
+				setAppEntry( entry );
+				const rl = entry.settings?.rate_limit || {};
 				setRlMax( rl.max_requests ?? '' );
 				setRlWindow( rl.window_seconds ?? '' );
 				setRlRelease( rl.release_seconds ?? '' );
@@ -144,46 +146,34 @@ export function DefaultRateLimit( { form, setField } ) {
 		} catch {}
 	}, [ adminData, nonce, selectedApplicationId ] );
 
-	const saveAppRateLimit = useCallback( async () => {
-		if ( ! selectedApplicationId ) return;
-		setRateLimitSaving( true );
-		try {
-			const res = await fetch( adminData.ajaxurl, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-				body: new URLSearchParams( {
-					action: 'get_application_entry',
-					nonce,
-					id: selectedApplicationId,
+	const saveAppRateLimit = useCallback( () => {
+		if ( ! selectedApplicationId || ! appEntry ) return;
+		const existingSettings = appEntry.settings || {};
+		save(
+			{
+				action: 'update_application_entry',
+				id: selectedApplicationId,
+				title: appEntry.title || '',
+				settings: JSON.stringify( {
+					...existingSettings,
+					rate_limit: {
+						max_requests: Number( rlMax ) || 0,
+						window_seconds: Number( rlWindow ) || 0,
+						release_seconds: Number( rlRelease ) || 0,
+						blacklist_after: Number( rlBlacklistAfter ) || 0,
+						blacklist_window: Number( rlBlacklistWindow ) || 0,
+					},
 				} ),
-			} );
-			const result = await res.json();
-			const entry = result?.success ? result.data.entry : {};
-			const existingSettings = entry.settings || {};
-			await fetch( adminData.ajaxurl, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-				body: new URLSearchParams( {
-					action: 'update_application_entry',
-					nonce,
-					id: selectedApplicationId,
-					title: entry.title || '',
-					settings: JSON.stringify( {
-						...existingSettings,
-						rate_limit: {
-							max_requests: Number( rlMax ) || 0,
-							window_seconds: Number( rlWindow ) || 0,
-							release_seconds: Number( rlRelease ) || 0,
-							blacklist_after: Number( rlBlacklistAfter ) || 0,
-							blacklist_window: Number( rlBlacklistWindow ) || 0,
-						},
-					} ),
-				} ),
-			} );
-		} catch {} finally {
-			setRateLimitSaving( false );
-		}
-	}, [ adminData, nonce, selectedApplicationId, rlMax, rlWindow, rlRelease, rlBlacklistAfter, rlBlacklistWindow ] );
+			},
+			{
+				confirmTitle: __( 'Save Rate Limit', 'rest-api-firewall' ),
+				confirmMessage: __( 'This will update the default rate limit for this application. Existing users with a custom rate limit will not be affected.', 'rest-api-firewall' ),
+				successTitle: __( 'Rate Limit Saved', 'rest-api-firewall' ),
+				successMessage: __( 'Application rate limit updated successfully.', 'rest-api-firewall' ),
+				onSuccess: loadAppRateLimit,
+			}
+		);
+	}, [ selectedApplicationId, appEntry, rlMax, rlWindow, rlRelease, rlBlacklistAfter, rlBlacklistWindow, save, loadAppRateLimit, __ ] );
 
 	useEffect( () => {
 		loadAppRateLimit();
@@ -233,17 +223,86 @@ export function DefaultRateLimit( { form, setField } ) {
 				onChange={ ( e ) => setRlBlacklistWindow( e.target.value ) }
 				sx={ { flex: 1 } }
 			/>
-			<Stack direction="row" justifyContent="flex-end" alignItems="center" sx={ { flex: 1 } }>
+			<Stack pl={ 2 } direction="column" justifyContent="flex-end" alignItems="flex-end" sx={ { flex: 1 } }>
 				<Button
-					variant="outlined"
+					variant="contained"
+					disableElevation
 					size="small"
 					onClick={ saveAppRateLimit }
-					disabled={ rateLimitSaving }
 				>
-					{ __( 'Save Rate Limit', 'rest-api-firewall' ) }
+					{ __( 'Save', 'rest-api-firewall' ) }
 				</Button>
 			</Stack>
 		</Stack>
 	</Stack>
 );
+}
+
+/**
+ * Controlled per-user rate limit fields (no AJAX — save handled by parent).
+ * values: { max_requests, window_seconds, release_seconds, blacklist_after, blacklist_window }
+ */
+export function UserRateLimitFields( { values = {}, onChange } ) {
+	const { __ } = wp.i18n || {};
+	const {
+		max_requests = '',
+		window_seconds = '',
+		release_seconds = '',
+		blacklist_after = '',
+		blacklist_window = '',
+	} = values;
+
+	return (
+		<Stack spacing={ 2 }>
+			<Stack direction={ { xs: 'column', sm: 'row' } } spacing={ 2 }>
+				<TextField
+					label={ __( 'Max Requests', 'rest-api-firewall' ) }
+					type="number"
+					size="small"
+					value={ max_requests }
+					onChange={ ( e ) => onChange( 'max_requests', e.target.value ) }
+					helperText={ __( 'Requests allowed per window', 'rest-api-firewall' ) }
+					sx={ { maxWidth: 200 } }
+				/>
+				<TextField
+					label={ __( 'Window (seconds)', 'rest-api-firewall' ) }
+					type="number"
+					size="small"
+					value={ window_seconds }
+					onChange={ ( e ) => onChange( 'window_seconds', e.target.value ) }
+					helperText={ __( 'Rolling time window', 'rest-api-firewall' ) }
+					sx={ { maxWidth: 200 } }
+				/>
+				<TextField
+					label={ __( 'Release (seconds)', 'rest-api-firewall' ) }
+					type="number"
+					size="small"
+					value={ release_seconds }
+					onChange={ ( e ) => onChange( 'release_seconds', e.target.value ) }
+					helperText={ __( 'Wait time before limitation resets', 'rest-api-firewall' ) }
+					sx={ { maxWidth: 200 } }
+				/>
+			</Stack>
+			<Stack direction={ { xs: 'column', sm: 'row' } } spacing={ 2 }>
+				<TextField
+					label={ __( 'Blacklist After (violations)', 'rest-api-firewall' ) }
+					type="number"
+					size="small"
+					value={ blacklist_after }
+					onChange={ ( e ) => onChange( 'blacklist_after', e.target.value ) }
+					helperText={ __( 'Violations before blacklisted', 'rest-api-firewall' ) }
+					sx={ { maxWidth: 200 } }
+				/>
+				<TextField
+					label={ __( 'Blacklist Window (seconds)', 'rest-api-firewall' ) }
+					type="number"
+					size="small"
+					value={ blacklist_window }
+					onChange={ ( e ) => onChange( 'blacklist_window', e.target.value ) }
+					helperText={ __( 'Time window for violations count', 'rest-api-firewall' ) }
+					sx={ { maxWidth: 200 } }
+				/>
+			</Stack>
+		</Stack>
+	);
 }
