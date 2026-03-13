@@ -17,6 +17,10 @@ import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import InfoIcon from '@mui/icons-material/Info';
+import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
+import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
+
+import ProFeatures from './ProFeatures';
 
 const STORAGE_KEY = 'rest_api_firewall_licence_state';
 
@@ -30,6 +34,8 @@ export default function License() {
 	const [ error, setError ] = useState( '' );
 	const [ successMessage, setSuccessMessage ] = useState( '' );
 	const [ confirmOpen, setConfirmOpen ] = useState( false );
+	// 'not_installed' → pro plugin file absent; 'not_active' → installed but inactive
+	const [ proStatus, setProStatus ] = useState( null );
 	const { __ } = wp.i18n || {};
 
 	useEffect( () => {
@@ -77,17 +83,34 @@ export default function License() {
 				updateLicenseStatus( result.data );
 				setLicenseKey( '' );
 			} else {
-				setError(
-					result.data?.message ||
-						__(
-							'Failed to check license status',
-							'rest-api-firewall'
-						)
-				);
+				// WordPress returns -1 (number) when the AJAX action is not registered
+				// (i.e. the pro plugin is not active). Detect this to show a better message.
+				const isUnregisteredAction =
+					result === -1 ||
+					result === '-1' ||
+					result.success === undefined;
+
+				if ( isUnregisteredAction ) {
+					setProStatus(
+						adminData.pro_plugin_installed
+							? 'not_active'
+							: 'not_installed'
+					);
+				} else {
+					setError(
+						result.data?.message ||
+							__(
+								'Failed to check license status',
+								'rest-api-firewall'
+							)
+					);
+				}
 			}
 		} catch ( err ) {
-			setError(
-				__( 'Error checking license status', 'rest-api-firewall' )
+			// JSON parse failure can occur when WP outputs a non-JSON response
+			// (e.g. die(-1) for an unknown action). Treat the same way.
+			setProStatus(
+				adminData.pro_plugin_installed ? 'not_active' : 'not_installed'
 			);
 		} finally {
 			setCheckingStatus( false );
@@ -192,109 +215,126 @@ export default function License() {
 
 	return (
 		<>
-			<Stack p={ 4 } flexGrow={ 1 } spacing={ 3 } width={ 320 }>
-				<Stack direction="row" alignItems="center" gap={ 1 }>
-					{ isLicenseActive ? (
-						<CheckCircleIcon sx={ { color: 'success.main' } } />
-					) : (
-						<InfoIcon sx={ { color: 'info.main' } } />
+			<Stack direction={ { xs: 'column', lg: 'row' } } sx={ { alignItems: 'flex-start' } }>
+				<Stack p={ 4 } spacing={ 3 } maxWidth={ 400 }>
+					<Stack direction="row" alignItems="center" gap={ 1 }>
+						{ isLicenseActive ? (
+							<CheckCircleIcon sx={ { color: 'success.main' } } />
+						) : (
+							<InfoIcon sx={ { color: 'info.main' } } />
+						) }
+						<Typography variant="h6" sx={ { fontWeight: 600 } }>
+							{ __( 'License Management', 'rest-api-firewall' ) }
+						</Typography>
+					</Stack>
+
+					{ successMessage && (
+						<Alert severity="success">{ successMessage }</Alert>
 					) }
-					<Typography variant="h6" sx={ { fontWeight: 600 } }>
-						{ __( 'License Management', 'rest-api-firewall' ) }
-					</Typography>
-				</Stack>
 
-				{ successMessage && (
-					<Alert severity="success">{ successMessage }</Alert>
-				) }
+					{ error && <Alert severity="error">{ error }</Alert> }
 
-				{ error && <Alert severity="error">{ error }</Alert> }
-
-				{ checkingStatus ? (
-					<Box display="flex" justifyContent="center" py={ 3 }>
-						<CircularProgress />
-					</Box>
-				) : (
-					<Stack spacing={ 3 }>
-						{ isLicenseActive && status && (
-							<>
-								{ ! successMessage && (
-									<Alert severity="success">
-										{ __(
-											'Your license is active and valid',
-											'rest-api-firewall'
-										) }
-									</Alert>
+					{ checkingStatus ? (
+						<Box display="flex" justifyContent="center" py={ 3 }>
+							<CircularProgress />
+						</Box>
+					) : proStatus === 'not_installed' ? (
+						<Stack spacing={ 2 }>
+							<Alert severity="info" icon={ <ShoppingCartOutlinedIcon /> }>
+								{ __(
+									'The Application Layer Pro plugin is not installed.',
+									'rest-api-firewall'
 								) }
+							</Alert>
+							<Typography variant="body2" color="text.secondary">
+								{ __(
+									'Purchase a license to unlock per-application isolation, models, automations, webhooks, emails and more.',
+									'rest-api-firewall'
+								) }
+							</Typography>
+							<Button
+								variant="contained"
+								disableElevation
+								color="primary"
+								href="https://www.abc-plugins.com"
+								target="_blank"
+								rel="noopener noreferrer"
+								fullWidth
+							>
+								{ __( 'Buy Application Layer Pro License', 'rest-api-firewall' ) }
+							</Button>
+						</Stack>
+					) : proStatus === 'not_active' ? (
+						<Stack spacing={ 2 }>
+							<Alert severity="warning" icon={ <PowerSettingsNewIcon /> }>
+								{ __(
+									'The Application Layer Pro plugin is installed but not activated.',
+									'rest-api-firewall'
+								) }
+							</Alert>
+							<Typography variant="body2" color="text.secondary">
+								{ __(
+									'Activate the Application Layer Pro plugin in the WordPress plugin manager to manage your license.',
+									'rest-api-firewall'
+								) }
+							</Typography>
+							<Button
+								variant="outlined"
+								color="primary"
+								href="/wp-admin/plugins.php"
+								fullWidth
+							>
+								{ __( 'Go to Plugins page', 'rest-api-firewall' ) }
+							</Button>
+						</Stack>
+					) : (
+						<Stack spacing={ 3 }>
+							{ isLicenseActive && status && (
+								<>
+									{ ! successMessage && (
+										<Alert severity="success">
+											{ __(
+												'Your license is active and valid',
+												'rest-api-firewall'
+											) }
+										</Alert>
+									) }
 
-								<Box
-									sx={ {
-										bgcolor: 'background.paper',
-										p: 2,
-										mb: 1,
-										borderRadius: 1,
-										border: '1px solid',
-										borderColor: 'divider',
-									} }
-								>
-									<Typography
-										variant="subtitle2"
-										color="textSecondary"
-										mb={ 1 }
+									<Box
+										sx={ {
+											bgcolor: 'background.paper',
+											p: 2,
+											mb: 1,
+											borderRadius: 1,
+											border: '1px solid',
+											borderColor: 'divider',
+										} }
 									>
-										{ __(
-											'License Details',
-											'rest-api-firewall'
-										) }
-									</Typography>
-									<Stack gap={ 1 }>
-										<Box
-											display="flex"
-											justifyContent="space-between"
+										<Typography
+											variant="subtitle2"
+											color="textSecondary"
+											mb={ 1 }
 										>
-											<Typography
-												sx={ {
-													display: 'inline-block',
-													minWidth: 50,
-												} }
-												variant="body2"
-												color="textSecondary"
-											>
-												{ __(
-													'Key:',
-													'rest-api-firewall'
-												) }
-											</Typography>
-											<Typography
-												sx={ {
-													display: 'block',
-													flex: 1,
-													overflow: 'hidden',
-													textOverflow: 'ellipsis',
-													whiteSpace: 'nowrap',
-												} }
-												variant="body2"
-												fontFamily="monospace"
-											>
-												{ status.key_masked }
-											</Typography>
-										</Box>
-
-										{ status.email && (
+											{ __(
+												'License Details',
+												'rest-api-firewall'
+											) }
+										</Typography>
+										<Stack gap={ 1 }>
 											<Box
 												display="flex"
 												justifyContent="space-between"
 											>
 												<Typography
 													sx={ {
-														display: 'block',
+														display: 'inline-block',
 														minWidth: 50,
 													} }
 													variant="body2"
 													color="textSecondary"
 												>
 													{ __(
-														'Email:',
+														'Key:',
 														'rest-api-firewall'
 													) }
 												</Typography>
@@ -303,154 +343,190 @@ export default function License() {
 														display: 'block',
 														flex: 1,
 														overflow: 'hidden',
-														textOverflow:
-															'ellipsis',
+														textOverflow: 'ellipsis',
 														whiteSpace: 'nowrap',
 													} }
 													variant="body2"
+													fontFamily="monospace"
 												>
-													{ status.email }
+													{ status.key_masked }
 												</Typography>
 											</Box>
-										) }
 
-										<Divider sx={ { my: 1 } } />
-										<Box
-											display="flex"
-											justifyContent="space-between"
-										>
-											<Typography
-												variant="body2"
-												color="textSecondary"
-											>
-												{ __(
-													'Expires:',
-													'rest-api-firewall'
-												) }
-											</Typography>
-											<Typography
-												variant="body2"
-												sx={ {
-													color: 'info.main',
-												} }
-											>
-												{ formatDate( status.expires ) }
-											</Typography>
-										</Box>
-										<Box
-											display="flex"
-											justifyContent="space-between"
-										>
-											<Typography
-												variant="body2"
-												color="textSecondary"
-											>
-												{ __(
-													'Sites:',
-													'rest-api-firewall'
-												) }
-											</Typography>
-											<Typography variant="body2">
-												{ status.site_count } /{ ' ' }
-												{ status.site_limit }
-											</Typography>
-										</Box>
-										{ status.features &&
-											status.features.length > 0 && (
-												<>
-													<Divider sx={ { my: 1 } } />
+											{ status.email && (
+												<Box
+													display="flex"
+													justifyContent="space-between"
+												>
 													<Typography
+														sx={ {
+															display: 'block',
+															minWidth: 50,
+														} }
 														variant="body2"
 														color="textSecondary"
-														mb={ 1 }
 													>
 														{ __(
-															'Features:',
+															'Email:',
 															'rest-api-firewall'
 														) }
 													</Typography>
-													<Typography variant="body2">
-														{ status.features.join(
-															', '
-														) }
+													<Typography
+														sx={ {
+															display: 'block',
+															flex: 1,
+															overflow: 'hidden',
+															textOverflow:
+																'ellipsis',
+															whiteSpace: 'nowrap',
+														} }
+														variant="body2"
+													>
+														{ status.email }
 													</Typography>
-												</>
+												</Box>
 											) }
-									</Stack>
-								</Box>
 
-								<Button
-									onClick={ handleDeactivate }
-									disabled={ loading }
-									color="info"
-									variant="outlined"
-									fullWidth
-								>
-									{ loading ? (
-										<CircularProgress
-											size={ 20 }
-											sx={ { mr: 1 } }
-										/>
-									) : null }
-									{ __(
-										'Deactivate License',
-										'rest-api-firewall'
-									) }
-								</Button>
-							</>
-						) }
+											<Divider sx={ { my: 1 } } />
+											<Box
+												display="flex"
+												justifyContent="space-between"
+											>
+												<Typography
+													variant="body2"
+													color="textSecondary"
+												>
+													{ __(
+														'Expires:',
+														'rest-api-firewall'
+													) }
+												</Typography>
+												<Typography
+													variant="body2"
+													sx={ {
+														color: 'info.main',
+													} }
+												>
+													{ formatDate( status.expires ) }
+												</Typography>
+											</Box>
+											<Box
+												display="flex"
+												justifyContent="space-between"
+											>
+												<Typography
+													variant="body2"
+													color="textSecondary"
+												>
+													{ __(
+														'Sites:',
+														'rest-api-firewall'
+													) }
+												</Typography>
+												<Typography variant="body2">
+													{ status.site_count } /{ ' ' }
+													{ status.site_limit }
+												</Typography>
+											</Box>
+											{ status.features &&
+												status.features.length > 0 && (
+													<>
+														<Divider sx={ { my: 1 } } />
+														<Typography
+															variant="body2"
+															color="textSecondary"
+															mb={ 1 }
+														>
+															{ __(
+																'Features:',
+																'rest-api-firewall'
+															) }
+														</Typography>
+														<Typography variant="body2">
+															{ status.features.join(
+																', '
+															) }
+														</Typography>
+													</>
+												) }
+										</Stack>
+									</Box>
 
-						{ ! isLicenseActive && (
-							<>
-								{ ! successMessage && (
-									<Alert severity="info">
+									<Button
+										onClick={ handleDeactivate }
+										disabled={ loading }
+										color="info"
+										variant="outlined"
+										fullWidth
+									>
+										{ loading ? (
+											<CircularProgress
+												size={ 20 }
+												sx={ { mr: 1 } }
+											/>
+										) : null }
 										{ __(
-											'Enter your license key to activate Pro features.',
+											'Deactivate License',
 											'rest-api-firewall'
 										) }
-									</Alert>
-								) }
+									</Button>
+								</>
+							) }
 
-								<TextField
-									label={ __(
-										'License Key',
-										'rest-api-firewall'
+							{ ! isLicenseActive && (
+								<>
+									{ ! successMessage && (
+										<Alert severity="info">
+											{ __(
+												'Enter your license key to activate Pro features.',
+												'rest-api-firewall'
+											) }
+										</Alert>
 									) }
-									type="password"
-									size="small"
-									value={ licenseKey }
-									onChange={ ( e ) =>
-										setLicenseKey( e.target.value )
-									}
-									onKeyDown={ handleKeyDown }
-									fullWidth
-									disabled={ loading }
-									placeholder={ __(
-										'Enter your license key',
-										'rest-api-firewall'
-									) }
-								/>
 
-								<Button
-									onClick={ handleActivate }
-									disabled={ loading || ! licenseKey.trim() }
-									variant="contained"
-									disableElevation
-									color="primary"
-									fullWidth
-								>
-									{ loading ? (
-										<CircularProgress
-											size={ 20 }
-											sx={ { mr: 1 } }
-										/>
-									) : null }
-									{ __( 'Activate', 'rest-api-firewall' ) }
-								</Button>
-							</>
-						) }
-					</Stack>
-				) }
+									<TextField
+										label={ __(
+											'License Key',
+											'rest-api-firewall'
+										) }
+										type="password"
+										size="small"
+										value={ licenseKey }
+										onChange={ ( e ) =>
+											setLicenseKey( e.target.value )
+										}
+										onKeyDown={ handleKeyDown }
+										fullWidth
+										disabled={ loading }
+										placeholder={ __(
+											'Enter your license key',
+											'rest-api-firewall'
+										) }
+									/>
+
+									<Button
+										onClick={ handleActivate }
+										disabled={ loading || ! licenseKey.trim() }
+										variant="contained"
+										disableElevation
+										color="primary"
+										fullWidth
+									>
+										{ loading ? (
+											<CircularProgress
+												size={ 20 }
+												sx={ { mr: 1 } }
+											/>
+										) : null }
+										{ __( 'Activate', 'rest-api-firewall' ) }
+									</Button>
+								</>
+							) }
+						</Stack>
+					) }
+				</Stack>
+
+				<ProFeatures />
 			</Stack>
 
 			<Dialog
