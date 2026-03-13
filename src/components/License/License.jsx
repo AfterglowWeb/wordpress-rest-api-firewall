@@ -20,6 +20,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 
+
 import ProFeatures from './ProFeatures';
 
 const STORAGE_KEY = 'rest_api_firewall_licence_state';
@@ -34,7 +35,6 @@ export default function License() {
 	const [ error, setError ] = useState( '' );
 	const [ successMessage, setSuccessMessage ] = useState( '' );
 	const [ confirmOpen, setConfirmOpen ] = useState( false );
-	// 'not_installed' → pro plugin file absent; 'not_active' → installed but inactive
 	const [ proStatus, setProStatus ] = useState( null );
 	const { __ } = wp.i18n || {};
 
@@ -83,8 +83,6 @@ export default function License() {
 				updateLicenseStatus( result.data );
 				setLicenseKey( '' );
 			} else {
-				// WordPress returns -1 (number) when the AJAX action is not registered
-				// (i.e. the pro plugin is not active). Detect this to show a better message.
 				const isUnregisteredAction =
 					result === -1 ||
 					result === '-1' ||
@@ -107,8 +105,6 @@ export default function License() {
 				}
 			}
 		} catch ( err ) {
-			// JSON parse failure can occur when WP outputs a non-JSON response
-			// (e.g. die(-1) for an unknown action). Treat the same way.
 			setProStatus(
 				adminData.pro_plugin_installed ? 'not_active' : 'not_installed'
 			);
@@ -215,8 +211,8 @@ export default function License() {
 
 	return (
 		<>
-			<Stack direction={ { xs: 'column', lg: 'row' } } sx={ { alignItems: 'flex-start' } }>
-				<Stack p={ 4 } spacing={ 3 } maxWidth={ 400 }>
+			<Stack direction={ { xs: 'column', lg: 'row' } } alignItems="flex-start">
+				<Stack p={ 4 } spacing={ 3 } minWidth={260} flex={ 1 } maxWidth={ 400 }>
 					<Stack direction="row" alignItems="center" gap={ 1 }>
 						{ isLicenseActive ? (
 							<CheckCircleIcon sx={ { color: 'success.main' } } />
@@ -266,26 +262,28 @@ export default function License() {
 						</Stack>
 					) : proStatus === 'not_active' ? (
 						<Stack spacing={ 2 }>
-							<Alert severity="warning" icon={ <PowerSettingsNewIcon /> }>
+							<Alert severity="info" icon={ <PowerSettingsNewIcon /> }>
 								{ __(
 									'The Application Layer Pro plugin is installed but not activated.',
 									'rest-api-firewall'
 								) }
 							</Alert>
-							<Typography variant="body2" color="text.secondary">
-								{ __(
-									'Activate the Application Layer Pro plugin in the WordPress plugin manager to manage your license.',
-									'rest-api-firewall'
-								) }
-							</Typography>
 							<Button
 								variant="outlined"
+								size="small"
 								color="primary"
 								href="/wp-admin/plugins.php"
 								fullWidth
 							>
 								{ __( 'Go to Plugins page', 'rest-api-firewall' ) }
 							</Button>
+							<Divider/>
+							<Typography variant="body2" color="text.secondary">
+								{ __(
+									'Activate the Application Layer Pro plugin in the WordPress plugin manager to manage your license.',
+									'rest-api-firewall'
+								) }
+							</Typography>
 						</Stack>
 					) : (
 						<Stack spacing={ 3 }>
@@ -525,7 +523,6 @@ export default function License() {
 						</Stack>
 					) }
 				</Stack>
-
 				<ProFeatures />
 			</Stack>
 
