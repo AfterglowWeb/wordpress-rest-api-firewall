@@ -80,16 +80,13 @@ function renderGroupedChildren( options ) {
 		if ( option.groupLabel ) {
 			return (
 				<ListSubheader
-					disableSticky
 					key={ `group-${ option.groupLabel }` }
 					sx={ {
-						fontWeight: 700,
-						fontSize: '0.75rem',
-						lineHeight: '28px',
-						textTransform: 'uppercase',
-						letterSpacing: 0.5,
-						color: 'text.primary',
-						bgcolor: 'action.hover',
+						fontWeight: 700, 
+						fontSize: '0.75rem', 
+						lineHeight: '28px', 
+						textTransform: 'uppercase', 
+						letterSpacing: 0.5 
 					} }
 				>
 					{ option.groupLabel }
@@ -100,15 +97,12 @@ function renderGroupedChildren( options ) {
 		if ( option.subGroupLabel ) {
 			return (
 				<ListSubheader
-					disableSticky
 					key={ `subgroup-${ option.subGroupLabel }-${ index }` }
 					sx={ {
 						pl: 3,
-						fontSize: '0.7rem',
+						fontSize: '0.75rem',
 						lineHeight: '24px',
-						textTransform: 'uppercase',
 						letterSpacing: 0.4,
-						color: 'text.secondary',
 					} }
 				>
 					{ option.subGroupLabel }

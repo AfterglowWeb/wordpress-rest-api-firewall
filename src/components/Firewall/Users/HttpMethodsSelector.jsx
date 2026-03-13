@@ -39,9 +39,6 @@ export default function HttpMethodsSelector( { value = [], onChange, onSave, sav
 						m: 0,
 						px: 1.5,
 						py: 0.5,
-						border: 1,
-						borderColor: value.includes( method ) ? 'primary.main' : 'divider',
-						borderRadius: 1,
 						userSelect: 'none',
 					} }
 				/>

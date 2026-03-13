@@ -414,7 +414,7 @@ export default function Users() {
 								{ __( 'App Rate Limit', 'rest-api-firewall' ) }
 							</Typography>
 							<Typography variant="body2" color="text.secondary">
-								{ __( 'Default rate limit for all users of this application. Can be overlapped on per user basis.', 'rest-api-firewall' ) }
+								{ __( 'Default rate limit for all users of this application. Can be overridden per user.', 'rest-api-firewall' ) }
 							</Typography>
 						</Box>
 						<DefaultRateLimit />
@@ -428,7 +428,7 @@ export default function Users() {
 								{ __( 'Default HTTP Methods', 'rest-api-firewall' ) }
 							</Typography>
 							<Typography variant="body2" color="text.secondary">
-								{ __( 'Pre-selected HTTP methods when creating a new user. Can be overlapped on per user basis.', 'rest-api-firewall' ) }
+								{ __( 'Pre-selected HTTP methods when creating a new user. Can be overridden per user.', 'rest-api-firewall' ) }
 							</Typography>
 						</Box>
 						<HttpMethodsSelector
@@ -447,7 +447,7 @@ export default function Users() {
 								{ __( 'Enforce Authentication Methods', 'rest-api-firewall' ) }
 							</Typography>
 							<Typography variant="body2" color="text.secondary">
-								{ __( 'Restrict which authentication methods users of this application may use. Cannot be overlapped on per user basis. Leave all unchecked to allow public requests.', 'rest-api-firewall' ) }
+								{ __( 'Restrict which authentication methods users of this application may use. Cannot be overridden per user. Leave all unchecked to allow public access.', 'rest-api-firewall' ) }
 							</Typography>
 						</Box>
 						<Stack direction="row" flexWrap="wrap" gap={ 1 }>
