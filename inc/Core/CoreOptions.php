@@ -244,7 +244,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_redirect_templates_free_url_enabled'   => array(
+			'theme_redirect_templates_free_url_enabled' => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -253,7 +253,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_redirect_templates_free_url'           => array(
+			'theme_redirect_templates_free_url'         => array(
 				'default_value'     => '',
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_url',
