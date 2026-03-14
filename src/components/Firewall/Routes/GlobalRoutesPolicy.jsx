@@ -17,6 +17,20 @@ const HTTP_METHODS = [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ];
 export default function GlobalRoutesPolicy( { form, setField, proSettings, onProChange, onMethodToggle, onSave, canSave, isModuleEnabled } ) {
 	const { hasValidLicense } = useLicense();
 	const { __ } = wp.i18n || {};
+	const [ wpPages, setWpPages ] = useState( { special_pages: [], wordpress_pages: [] } );
+	const [ appEntry, setAppEntry ] = useState( null );
+	const [ proSettings, setProSettings ] = useState( {
+		disable_behavior:         '404',
+		disable_redirect_url:     '',
+		disable_redirect_page_id: '',
+		disabled_methods:         [],
+		disabled_post_types:      [],
+	} );
+
+	const handleProChange = useCallback( ( e ) => {
+		const { name, value } = e.target;
+		setProSettings( ( prev ) => ( { ...prev, [ name ]: value } ) );
+	}, [] );
 
 	return (
 		<Stack spacing={ 2 } maxWidth={ 640 }>
@@ -119,7 +133,7 @@ export default function GlobalRoutesPolicy( { form, setField, proSettings, onPro
 										onChange={ onProChange }
 									/>
 								}
-								label={ __( 'Disable /wp/v2/oembed/1.0/* Routes', 'rest-api-firewall' ) }
+								label={ __( 'Disable oembed/1.0/* Routes', 'rest-api-firewall' ) }
 							/>
 						</FormControl>
 
@@ -134,7 +148,7 @@ export default function GlobalRoutesPolicy( { form, setField, proSettings, onPro
 										onChange={ onProChange }
 									/>
 								}
-								label={ __( 'Disable /wp/v2/batch/v1 Routes', 'rest-api-firewall' ) }
+								label={ __( 'Disable batch/v1 Routes', 'rest-api-firewall' ) }
 							/>
 						</FormControl>
 					</Stack>

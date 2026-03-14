@@ -10,14 +10,15 @@ import { useLicense } from '../../../contexts/LicenseContext';
 
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
-import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
 import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
-import Tooltip from '@mui/material/Tooltip';
+import Toolbar from '@mui/material/Toolbar';
+
 import Typography from '@mui/material/Typography';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import ReplayIcon from '@mui/icons-material/Replay';
+import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
+import SettingsBackupRestoreOutlinedIcon from '@mui/icons-material/SettingsBackupRestoreOutlined';
 
 import { RichTreeView } from '@mui/x-tree-view/RichTreeView';
 
@@ -38,13 +39,15 @@ export default function RoutesPolicyTree( { form, setField } ) {
 		rate_limit,
 		rate_limit_time,
 		hide_user_routes,
+		hide_batch_routes,
+		hide_oembed_routes,
 		disabled_methods,
 		disabled_post_types,
 	} = form;
 
 	const { adminData } = useAdminData();
 	const { hasValidLicense } = useLicense();
-	const { __ } = wp.i18n || {};
+	const { __, sprintf } = wp.i18n || {};
 	const [ treeData, setTreeData ] = useState( null );
 	const [ loading, setLoading ] = useState( false );
 	const [ errorMessage, setErrorMessage ] = useState( '' );
@@ -55,9 +58,10 @@ export default function RoutesPolicyTree( { form, setField } ) {
 	const [ popoverAnchor, setPopoverAnchor ] = useState( null );
 	const [ popoverRouteIds, setPopoverRouteIds ] = useState( [] );
 	const [ popoverIsBulk, setPopoverIsBulk ] = useState( false );
+	const [ isDirty, setIsDirty ] = useState( false );
+	const [ saving, setSaving ] = useState( false );
 	const usersLoadedRef = useRef( false );
 	const treeLoadingRef = useRef( true );
-	const saveTimerRef = useRef( null );
 
 	const loadRoutes = useCallback( async () => {
 		setLoading( true );
@@ -205,6 +209,7 @@ export default function RoutesPolicyTree( { form, setField } ) {
 
 	const saveTree = useCallback(
 		async ( tree, users ) => {
+			setSaving( true );
 			try {
 				await fetch( adminData.ajaxurl, {
 					method: 'POST',
@@ -219,8 +224,11 @@ export default function RoutesPolicyTree( { form, setField } ) {
 						users: JSON.stringify( users || [] ),
 					} ),
 				} );
+				setIsDirty( false );
 			} catch {
 				// Silent fail.
+			} finally {
+				setSaving( false );
 			}
 		},
 		[ adminData ]
@@ -231,18 +239,8 @@ export default function RoutesPolicyTree( { form, setField } ) {
 			treeLoadingRef.current = false;
 			return;
 		}
-		if ( saveTimerRef.current ) {
-			clearTimeout( saveTimerRef.current );
-		}
-		saveTimerRef.current = setTimeout( () => {
-			saveTree( nodes, usersData );
-		}, 800 );
-		return () => {
-			if ( saveTimerRef.current ) {
-				clearTimeout( saveTimerRef.current );
-			}
-		};
-	}, [ nodes, usersData, saveTree ] );
+		setIsDirty( true );
+	}, [ nodes, usersData ] );
 
 	if ( loading || ( ! loading && ! treeData ) ) {
 		return (
@@ -274,69 +272,61 @@ export default function RoutesPolicyTree( { form, setField } ) {
 
 	return (
 		<Box sx={ { minHeight: 352, minWidth: '100%' } }>
-			<Stack
-				direction="row"
-				justifyContent="space-between"
-				alignItems="center"
-			>
-				<Stack direction="row" alignItems="center" gap={ 1 }>
-					<Typography
-						variant="caption"
-						sx={ {
-							display: 'block',
-							textTransform: 'uppercase',
-							letterSpacing: 0.5,
-							fontSize: '0.75rem',
-							color: 'text.secondary',
-						} }
-					>
-						{ __( 'Per-Route Settings', 'rest-api-firewall' ) }
-					</Typography>
+			<Toolbar disableGutters sx={ { gap: 1.5, mb: 2, flexWrap: 'wrap', minHeight: '0 !important' } }>
+				<Button
+					startIcon={ <RefreshIcon /> }
+					size="small"
+					onClick={ loadRoutes }
+					disabled={ loading }
+				>
+					{ __( 'Refresh From Server', 'rest-api-firewall' ) }
+				</Button>
 
+				<Stack flex={ 1 } />
+
+				<Stack direction="row" alignItems="center" gap={ 1 }>
 					{ customCount > 0 && (
 						<Chip
-							label={ `${ customCount } custom` }
+							label={ sprintf( __( '%d per-route settings', 'rest-api-firewall' ), customCount ) }
 							size="small"
-							color="info"
 							variant="outlined"
-							sx={ { fontSize: '0.65rem', height: 18, px: 0.5 } }
 						/>
 					) }
-					{ customCount > 0 && (
-						<Tooltip
-							title={ __(
-								'Reset per-route settings',
-								'rest-api-firewall'
-							) }
-							placement="right"
-						>
-							<Button
-								onClick={ () =>
-									dispatch( { type: 'RESET_ALL_OVERRIDES' } )
-								}
-								size="small"
-							>
-								{ __('Reset', 'rest-api-firewall')}
-							</Button>
-						</Tooltip>
-					) }
-				</Stack>
 
-				<Stack direction="row" alignItems="center">
-					<Tooltip
-						title={ __( 'Refresh Routes', 'rest-api-firewall' ) }
-						placement="left"
+					<Button
+						startIcon={ <SettingsBackupRestoreOutlinedIcon /> }
+						size="small"
+						disabled={ customCount === 0 }
+						onClick={ () => dispatch( { type: 'RESET_ALL_OVERRIDES' } ) }
 					>
-						<IconButton onClick={ loadRoutes }>
-							<RefreshIcon />
-						</IconButton>
-					</Tooltip>
+						{ __( 'Reset Per-route Settings', 'rest-api-firewall' ) }
+					</Button>
+
+					<Button
+						variant="contained"
+						size="small"
+						disableElevation
+						disabled={ ! isDirty || saving }
+						onClick={ () => saveTree( nodes, usersData ) }
+					>
+						{ saving
+							? __( 'Saving…', 'rest-api-firewall' )
+							: __( 'Save', 'rest-api-firewall' ) }
+					</Button>
 				</Stack>
-			</Stack>
+			</Toolbar>
 
 			<RichTreeView
 				items={ nodes }
 				slots={ { item: CustomTreeItem } }
+				sx={ {
+					'& .MuiTreeItem-group': {
+						ml: 2,
+						pl: 1,
+						borderLeft: '2px solid',
+						borderColor: 'divider',
+					},
+				} }
 				slotProps={ {
 					item: {
 						toggleNodeSetting: handleToggle,
@@ -351,6 +341,8 @@ export default function RoutesPolicyTree( { form, setField } ) {
 						rate_limit,
 						rate_limit_time,
 						hide_user_routes,
+						hide_batch_routes,
+						hide_oembed_routes,
 						disabled_methods: disabled_methods || [],
 						disabled_post_type_routes: disabledPostTypeRoutes,
 						expandedItems,
