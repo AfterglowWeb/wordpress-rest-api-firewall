@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useLicense } from '../../../contexts/LicenseContext';
 
 import Divider from '@mui/material/Divider';
