@@ -12,6 +12,8 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
+import SettingsBackupRestoreOutlinedIcon from '@mui/icons-material/SettingsBackupRestoreOutlined';
+
 import { TreeItem, TreeItemContent } from '@mui/x-tree-view/TreeItem';
 import { useTreeItem } from '@mui/x-tree-view/useTreeItem';
 
@@ -283,33 +285,7 @@ export function NodeContent( {
 								</Box>
 							) }
 
-							{ isDisabled && (
-								<Tooltip title={ __( 'Disabled in global options', 'rest-api-firewall' ) }>
-									<Box
-										component="span"
-										sx={ {
-											color: 'text.disabled',
-											borderRadius: '50%',
-											width: 18,
-											height: 18,
-											display: 'inline-flex',
-											alignItems: 'center',
-											justifyContent: 'center',
-											fontSize: '0.65rem',
-											fontWeight: 700,
-											lineHeight: 1,
-											flexShrink: 0,
-										} }
-									>
-										<RemoveCircleOutlineIcon
-											color="inherit"
-											sx={{
-												fontSize: 14,
-											}}
-										/>
-									</Box>
-								</Tooltip>
-							) }
+							
 						</Stack>
 
 						{ node.isMethod && node.route && (
@@ -339,7 +315,7 @@ export function NodeContent( {
 				</Stack>
 
 				{ ! node.isMethod && ( node.path || node.route ) && (
-					<Tooltip title={ __( 'Copy path', 'rest-api-firewall' ) }>
+					<Tooltip disableInteractive title={ __( 'Copy path', 'rest-api-firewall' ) }>
 						<CopyButton toCopy={ node.path || node.route } />
 					</Tooltip>
 				) }
@@ -353,6 +329,7 @@ export function NodeContent( {
 			>
 				{ isCustom ? (
 					<Tooltip
+						disableInteractive
 						title={
 							! hasValidLicense
 								? __(
@@ -360,7 +337,7 @@ export function NodeContent( {
 										'rest-api-firewall'
 								  )
 								: __(
-										'Custom settings active — click to remove and inherit from parent',
+										'Remove route settings and inherit from parent',
 										'rest-api-firewall'
 								  )
 						}
@@ -378,12 +355,13 @@ export function NodeContent( {
 								} }
 								sx={ { color: 'error.main' } }
 							>
-								<RemoveCircleOutlineIcon fontSize="small" />
+								<SettingsBackupRestoreOutlinedIcon fontSize="small" />
 							</IconButton>
 						</span>
 					</Tooltip>
 				) : (
 					<Tooltip
+						disableInteractive
 						title={
 							! hasValidLicense
 								? __(
@@ -391,7 +369,7 @@ export function NodeContent( {
 										'rest-api-firewall'
 								  )
 								: __(
-										'Pin custom settings for this row',
+										'Add settings on this route',
 										'rest-api-firewall'
 								  )
 						}
@@ -435,6 +413,7 @@ export function NodeContent( {
 				) }
 
 				<Tooltip
+					disableInteractive
 					title={
 						! hasValidLicense
 							? __( 'Pro version required', 'rest-api-firewall' )
@@ -489,6 +468,7 @@ export function NodeContent( {
 				</Tooltip>
 
 				<Tooltip
+					disableInteractive
 					title={
 						! hasValidLicense
 							? __( 'Pro version required', 'rest-api-firewall' )
@@ -540,6 +520,7 @@ export function NodeContent( {
 				</Tooltip>
 
 				<Tooltip
+					disableInteractive
 					title={
 						! hasValidLicense
 							? __( 'Pro version required', 'rest-api-firewall' )
