@@ -79,8 +79,8 @@ class PolicyRepository {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
-		$users_raw      = isset( $_POST['users'] ) ? sanitize_text_field( wp_unslash( $_POST['users'] ) ) : '[]';
-		$users          = json_decode( $users_raw, true );
+		$users_raw = isset( $_POST['users'] ) ? sanitize_text_field( wp_unslash( $_POST['users'] ) ) : '[]';
+		$users     = json_decode( $users_raw, true );
 		if ( ! is_array( $users ) ) {
 			$users = array();
 		}
