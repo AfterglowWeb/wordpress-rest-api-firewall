@@ -79,14 +79,17 @@ class PolicyRepository {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
-		$users_raw = isset( $_POST['users'] ) ? sanitize_text_field( wp_unslash( $_POST['users'] ) ) : '[]';
-		$users     = json_decode( $users_raw, true );
+		$users_raw      = isset( $_POST['users'] ) ? sanitize_text_field( wp_unslash( $_POST['users'] ) ) : '[]';
+		$users          = json_decode( $users_raw, true );
 		if ( ! is_array( $users ) ) {
 			$users = array();
 		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
+		$application_id = isset( $_POST['application_id'] ) ? sanitize_text_field( wp_unslash( $_POST['application_id'] ) ) : '';
 
-		$diff          = self::extract_diff_from_tree( $tree );
-		$diff['users'] = self::normalize_users( $users );
+		$diff                    = self::extract_diff_from_tree( $tree );
+		$diff['users']           = self::normalize_users( $users );
+		$diff['application_id'] = $application_id;
 		$saved         = self::save_diff( $diff );
 
 		if ( ! $saved ) {

@@ -57,6 +57,36 @@ class PolicyRuntime {
 			$route_settings
 		);
 
+		// Apply global disable flags (mirrors frontend NodeContent logic).
+		// Only applies when the route has no custom per-route settings override.
+		if ( $effective['state'] ) {
+			$is_custom = false;
+			foreach ( $node_settings as $ns ) {
+				if ( ! empty( $ns['custom'] ) ) {
+					$is_custom = true;
+					break;
+				}
+			}
+			if ( ! $is_custom && ! empty( $route_settings['custom'] ) ) {
+				$is_custom = true;
+			}
+
+			if ( ! $is_custom ) {
+				$opts        = CoreOptions::read_options();
+				$opts        = apply_filters( 'rest_api_firewall_runtime_options', $opts );
+				$dis_methods = isset( $opts['disabled_methods'] ) ? (array) $opts['disabled_methods'] : array();
+
+				if (
+					( ! empty( $opts['hide_oembed_routes'] ) && 0 === strpos( $route, '/oembed' ) ) ||
+					( ! empty( $opts['hide_user_routes'] )   && 0 === strpos( $route, '/wp/v2/users' ) ) ||
+					( ! empty( $opts['hide_batch_routes'] )  && ( 0 === strpos( $route, '/wp/v2/batch' ) || 0 === strpos( $route, '/batch/v1' ) ) ) ||
+					( ! empty( $dis_methods ) && in_array( strtolower( $method ), $dis_methods, true ) )
+				) {
+					$effective['state'] = false;
+				}
+			}
+		}
+
 		return $effective;
 	}
 

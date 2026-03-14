@@ -33,6 +33,7 @@ class TestPolicy {
 		$method          = isset( $_POST['method'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_POST['method'] ) ) ) : 'GET';
 		$test_sub_routes = isset( $_POST['test_sub_routes'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['test_sub_routes'] ) ) : false;
 		$bypass_users    = isset( $_POST['bypass_users'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['bypass_users'] ) ) : false;
+		$has_users       = isset( $_POST['has_users'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['has_users'] ) ) : false;
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		if ( empty( $route ) ) {
@@ -50,7 +51,7 @@ class TestPolicy {
 			wp_send_json_error( array( 'message' => 'No routes found to test' ), 404 );
 		}
 
-		$results = $this->run_tests( $routes_to_test, $bypass_users );
+		$results = $this->run_tests( $routes_to_test, $bypass_users, $has_users );
 
 		wp_send_json_success( $results, 200 );
 	}
@@ -115,7 +116,14 @@ class TestPolicy {
 	}
 
 
-	protected function run_tests( array $routes, bool $bypass_users ): array {
+	/**
+	 * Run tests for a list of routes.
+	 *
+	 * @param array $routes       Routes to test.
+	 * @param bool  $bypass_users When true, result_data uses auth regardless of user restrictions.
+	 * @param bool  $has_users    Whether the route has user-specific access configured.
+	 */
+	protected function run_tests( array $routes, bool $bypass_users, bool $has_users = false ): array {
 		$results = array();
 
 		foreach ( $routes as $route_info ) {
@@ -125,6 +133,11 @@ class TestPolicy {
 			PolicyRuntime::clear_cache();
 
 			$policy = $this->get_policy_for_route( $route, $method );
+
+			// When users are configured for this route and bypass is not requested,
+			// result_data is fetched without auth to show the 403 that a non-authorized
+			// user would receive. When bypass is true (or no users), use auth.
+			$use_auth_for_result = ! $has_users || $bypass_users;
 
 			$results[] = array(
 				'route'        => $route,
@@ -137,7 +150,7 @@ class TestPolicy {
 					'rate_limit' => $this->test_rate_limit( $route, $method, $policy ),
 				),
 				'raw_data'    => $this->fetch_data( $route, false ),
-				'result_data' => $this->fetch_data( $route, true ),
+				'result_data' => $this->fetch_data( $route, $use_auth_for_result ),
 			);
 		}
 

@@ -1,24 +1,24 @@
 import { useState } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
-import Chip from '@mui/material/Chip';
-import Divider from '@mui/material/Divider';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import Divider from '@mui/material/Divider';
+import Drawer from '@mui/material/Drawer';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import IconButton from '@mui/material/IconButton';
+import Stack from '@mui/material/Stack';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableRow from '@mui/material/TableRow';
+import Typography from '@mui/material/Typography';
+import CloseIcon from '@mui/icons-material/Close';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 
 const METHOD_COLOR = {
 	GET: 'primary',
@@ -153,21 +153,54 @@ export default function TestPolicy( {
 		}
 	};
 
-	const renderTestIcon = ( test ) => {
+	const getTestLabel = ( name ) => {
+		switch ( name ) {
+			case 'disabled':
+				return __( 'Disabled', 'rest-api-firewall' );
+			case 'auth':
+				return __( 'Auth', 'rest-api-firewall' );
+			case 'rate_limit':
+				return __( 'Rate limit', 'rest-api-firewall' );
+			default:
+				return name;
+		}
+	};
+
+	const renderTestStatus = ( test ) => {
 		if ( test?.skip ) {
-			return <RemoveCircleIcon color="disabled" fontSize="small" />;
+			return (
+				<Typography variant="caption" color="text.disabled">
+					{ __( 'N/A', 'rest-api-firewall' ) }
+				</Typography>
+			);
 		}
 		if ( test?.pass ) {
-			return <CheckCircleIcon color="success" fontSize="small" />;
+			return (
+				<Typography
+					variant="caption"
+					color="success.main"
+					fontWeight={ 600 }
+				>
+					{ __( 'Pass', 'rest-api-firewall' ) }
+				</Typography>
+			);
 		}
-		return <CancelIcon color="error" fontSize="small" />;
+		return (
+			<Typography
+				variant="caption"
+				color="error.main"
+				fontWeight={ 600 }
+			>
+				{ __( 'Fail', 'rest-api-firewall' ) }
+			</Typography>
+		);
 	};
 
 	const renderResults = () => {
 		if ( ! results || results.length === 0 ) return null;
 
 		return (
-			<Stack spacing={ 2 } sx={ { mt: 1 } }>
+			<Stack spacing={ 3 } sx={ { mt: 1 } }>
 				{ results.map( ( result, index ) => (
 					<Box key={ index }>
 						{ results.length > 1 && (
@@ -175,14 +208,13 @@ export default function TestPolicy( {
 								direction="row"
 								spacing={ 1 }
 								alignItems="center"
-								sx={ { mb: 1 } }
+								sx={ { mb: 1.5 } }
 							>
 								<Chip
 									label={ result.method }
 									size="small"
 									color={
-										METHOD_COLOR[ result.method ] ||
-										'default'
+										METHOD_COLOR[ result.method ] || 'default'
 									}
 								/>
 								<Typography
@@ -199,7 +231,7 @@ export default function TestPolicy( {
 							direction="row"
 							spacing={ 0.5 }
 							flexWrap="wrap"
-							sx={ { mb: 1 } }
+							sx={ { mb: 1.5 } }
 						>
 							<Chip
 								label={
@@ -218,9 +250,7 @@ export default function TestPolicy( {
 										: __( 'Public', 'rest-api-firewall' )
 								}
 								size="small"
-								color={
-									result.policy.protect ? 'warning' : 'default'
-								}
+								color={ result.policy.protect ? 'warning' : 'default' }
 								variant="outlined"
 							/>
 							{ result.policy.rate_limit && (
@@ -233,34 +263,44 @@ export default function TestPolicy( {
 							) }
 						</Stack>
 
-						{ /* Tests row */ }
-						<Stack direction="row" spacing={ 2 } sx={ { mb: 1.5 } }>
-							{ Object.entries( result.tests ).map(
-								( [ name, test ] ) => (
-									<Stack
-										key={ name }
-										direction="row"
-										spacing={ 0.5 }
-										alignItems="center"
-									>
-										{ renderTestIcon( test ) }
-										<Typography
-											variant="caption"
-											color="text.secondary"
-										>
-											{ name === 'auth'
-												? __( 'Auth', 'rest-api-firewall' )
-												: name === 'rate_limit'
-												? __( 'Rate', 'rest-api-firewall' )
-												: __(
-														'Disabled',
-														'rest-api-firewall'
-												  ) }
-										</Typography>
-									</Stack>
-								)
-							) }
-						</Stack>
+						{ /* Tests table — no vertical borders */ }
+						<Table
+							size="small"
+							sx={ {
+								mb: 2,
+								'& td, & th': {
+									borderLeft: 0,
+									borderRight: 0,
+									px: 1,
+								},
+							} }
+						>
+							<TableBody>
+								{ Object.entries( result.tests ).map(
+									( [ name, test ] ) => (
+										<TableRow key={ name }>
+											<TableCell sx={ { pl: 0 } }>
+												<Typography variant="caption" color="text.primary">
+													{ getTestLabel( name ) }
+												</Typography>
+											</TableCell>
+											<TableCell sx={ { width: 60 } }>
+												{ renderTestStatus( test ) }
+											</TableCell>
+											<TableCell
+												sx={ {
+													pr: 0,
+													color: 'text.secondary',
+													fontSize: '0.72rem',
+												} }
+											>
+												{ test?.skip ? test.reason : test?.message }
+											</TableCell>
+										</TableRow>
+									)
+								) }
+							</TableBody>
+						</Table>
 
 						{ /* Raw + Result panels */ }
 						<Stack direction="row" spacing={ 1.5 }>
@@ -272,7 +312,11 @@ export default function TestPolicy( {
 							<DataPanel
 								label={ __( 'Result', 'rest-api-firewall' ) }
 								data={ result.result_data }
-								bgcolor="primary.50"
+								bgcolor={ ( theme ) =>
+									theme.palette.mode === 'dark'
+										? 'rgba(99, 132, 255, 0.08)'
+										: 'rgba(25, 118, 210, 0.04)'
+								}
 							/>
 						</Stack>
 					</Box>
@@ -293,94 +337,125 @@ export default function TestPolicy( {
 				{ __( 'Test', 'rest-api-firewall' ) }
 			</Button>
 
-			<Dialog
+			<Drawer
+				anchor="right"
 				open={ open }
 				onClose={ handleClose }
-				maxWidth="md"
-				fullWidth
 				onClick={ ( e ) => e.stopPropagation() }
+				PaperProps={ {
+					sx: {
+						width: { xs: '100%', sm: 560, md: 680 },
+						display: 'flex',
+						flexDirection: 'column',
+					},
+				} }
 			>
-				<DialogTitle>
-					{ __( 'Test Policy', 'rest-api-firewall' ) }
-				</DialogTitle>
-
-				<DialogContent>
-					<Stack spacing={ 2 }>
-						{ /* Route header */ }
-						<Stack
-							direction="row"
-							spacing={ 1 }
-							alignItems="center"
+				{ /* Header */ }
+				<Stack
+					direction="row"
+					alignItems="center"
+					sx={ {
+						px: 2.5,
+						py: 1.5,
+						borderBottom: 1,
+						borderColor: 'divider',
+						flexShrink: 0,
+					} }
+				>
+					<Stack
+						direction="row"
+						spacing={ 1 }
+						alignItems="center"
+						sx={ { flex: 1, mr: 1, overflow: 'hidden' } }
+					>
+						<Chip
+							label={ method }
+							size="small"
+							color={ METHOD_COLOR[ method ] || 'default' }
+						/>
+						<Typography
+							variant="body2"
+							sx={ {
+								fontFamily: 'monospace',
+								overflow: 'hidden',
+								textOverflow: 'ellipsis',
+								whiteSpace: 'nowrap',
+							} }
 						>
-							<Chip
-								label={ method }
-								size="small"
-								color={ METHOD_COLOR[ method ] || 'default' }
-							/>
-							<Typography
-								variant="body1"
-								sx={ { fontFamily: 'monospace' } }
-							>
-								{ route }
-							</Typography>
-						</Stack>
+							{ route }
+						</Typography>
+					</Stack>
+					<IconButton size="small" onClick={ handleClose }>
+						<CloseIcon fontSize="small" />
+					</IconButton>
+				</Stack>
 
-						{ /* Options */ }
+				{ /* Scrollable content */ }
+				<Box sx={ { flex: 1, overflowY: 'auto', p: 2.5 } }>
+					<Stack spacing={ 2 }>
 						{ ( hasChildren || hasUsers ) && (
-							<>
-								<Divider />
-								<Stack spacing={ 0.5 }>
-									{ hasChildren && (
-										<FormControlLabel
-											control={
-												<Checkbox
-													checked={ testSubRoutes }
-													onChange={ ( e ) =>
-														setTestSubRoutes(
-															e.target.checked
-														)
-													}
-													size="small"
-												/>
-											}
-											label={ __(
-												'Include sub-routes',
-												'rest-api-firewall'
-											) }
-										/>
-									) }
-									{ hasUsers && (
-										<FormControlLabel
-											control={
-												<Checkbox
-													checked={ bypassUsers }
-													onChange={ ( e ) =>
-														setBypassUsers(
-															e.target.checked
-														)
-													}
-													size="small"
-												/>
-											}
-											label={ __(
-												'Bypass users settings',
-												'rest-api-firewall'
-											) }
-										/>
-									) }
-								</Stack>
-							</>
+							<Stack spacing={ 0.5 }>
+								{ hasChildren && (
+									<FormControlLabel
+										control={
+											<Checkbox
+												checked={ testSubRoutes }
+												onChange={ ( e ) =>
+													setTestSubRoutes(
+														e.target.checked
+													)
+												}
+												size="small"
+											/>
+										}
+										label={ __(
+											'Include sub-routes',
+											'rest-api-firewall'
+										) }
+									/>
+								) }
+								{ hasUsers && (
+									<FormControlLabel
+										control={
+											<Checkbox
+												checked={ bypassUsers }
+												onChange={ ( e ) =>
+													setBypassUsers(
+														e.target.checked
+													)
+												}
+												size="small"
+											/>
+										}
+										label={ __(
+											'Bypass users settings',
+											'rest-api-firewall'
+										) }
+									/>
+								) }
+								<Divider sx={ { mt: 0.5 } } />
+							</Stack>
 						) }
 
 						{ error && <Alert severity="error">{ error }</Alert> }
 
-						{ results && <Divider /> }
-
 						{ renderResults() }
 					</Stack>
-				</DialogContent>
+				</Box>
 
-				<DialogActions>
+				{ /* Footer */ }
+				<Stack
+					direction="row"
+					justifyContent="flex-end"
+					spacing={ 1 }
+					sx={ {
+						px: 2.5,
+						py: 1.5,
+						borderTop: 1,
+						borderColor: 'divider',
+						flexShrink: 0,
+					} }
+				>
 					<Button onClick={ handleClose } disabled={ loading }>
 						{ __( 'Close', 'rest-api-firewall' ) }
 					</Button>
@@ -400,8 +475,8 @@ export default function TestPolicy( {
 							? __( 'Running…', 'rest-api-firewall' )
 							: __( 'Run Test', 'rest-api-firewall' ) }
 					</Button>
-				</DialogActions>
-			</Dialog>
+				</Stack>
+			</Drawer>
 		</>
 	);
 }

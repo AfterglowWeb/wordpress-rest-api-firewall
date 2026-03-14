@@ -11,6 +11,11 @@ import { useLicense } from '../../../contexts/LicenseContext';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
 import Toolbar from '@mui/material/Toolbar';
@@ -60,6 +65,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 	const [ popoverIsBulk, setPopoverIsBulk ] = useState( false );
 	const [ isDirty, setIsDirty ] = useState( false );
 	const [ saving, setSaving ] = useState( false );
+	const [ confirmSaveOpen, setConfirmSaveOpen ] = useState( false );
 	const usersLoadedRef = useRef( false );
 	const treeLoadingRef = useRef( true );
 
@@ -163,7 +169,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 		} finally {
 			setUsersLoading( false );
 		}
-	}, [ adminData ] );
+	}, [ adminData, selectedApplicationId ] );
 
 	const handleOpenUsersPopover = useCallback(
 		( nodeId, anchorEl ) => {
@@ -224,6 +230,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 						nonce: adminData.nonce,
 						tree: JSON.stringify( tree ),
 						users: JSON.stringify( users || [] ),
+						application_id: selectedApplicationId || '',
 					} ),
 				} );
 				setIsDirty( false );
@@ -233,8 +240,13 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 				setSaving( false );
 			}
 		},
-		[ adminData ]
+		[ adminData, selectedApplicationId ]
 	);
+
+	useEffect( () => {
+		usersLoadedRef.current = false;
+		setUsersData( null );
+	}, [ selectedApplicationId ] );
 
 	useEffect( () => {
 		if ( treeLoadingRef.current ) {
@@ -309,7 +321,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 						size="small"
 						disableElevation
 						disabled={ ! isDirty || saving }
-						onClick={ () => saveTree( nodes, usersData ) }
+						onClick={ () => setConfirmSaveOpen( true ) }
 					>
 						{ saving
 							? __( 'Saving…', 'rest-api-firewall' )
@@ -359,6 +371,40 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 				isBulk={ popoverIsBulk }
 				onUserAccessChange={ handleUserAccessChange }
 			/>
+
+			<Dialog
+				open={ confirmSaveOpen }
+				onClose={ () => setConfirmSaveOpen( false ) }
+				maxWidth="xs"
+				fullWidth
+			>
+				<DialogTitle>
+					{ __( 'Save Route Policy', 'rest-api-firewall' ) }
+				</DialogTitle>
+				<DialogContent>
+					<DialogContentText>
+						{ __(
+							'Changing route policies can break your front-end application. Make sure you have tested your configuration before saving.',
+							'rest-api-firewall'
+						) }
+					</DialogContentText>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={ () => setConfirmSaveOpen( false ) }>
+						{ __( 'Cancel', 'rest-api-firewall' ) }
+					</Button>
+					<Button
+						variant="contained"
+						color="warning"
+						onClick={ () => {
+							setConfirmSaveOpen( false );
+							saveTree( nodes, usersData );
+						} }
+					>
+						{ __( 'Confirm Save', 'rest-api-firewall' ) }
+					</Button>
+				</DialogActions>
+			</Dialog>
 		</Box>
 	);
 }
