@@ -127,6 +127,24 @@ class CoreOptions {
 				'group'             => 'firewall_routes_policy',
 			),
 
+			'hide_oembed_routes'                        => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_routes_policy',
+			),
+
+			'hide_batch_routes'                         => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_routes_policy',
+			),
+
 			'firewall_policy'                           => array(
 				'default_value'     => array(
 					'nodes'  => array(),
