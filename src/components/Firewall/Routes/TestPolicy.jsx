@@ -439,6 +439,8 @@ export default function TestPolicy( {
 
 						{ error && <Alert severity="error">{ error }</Alert> }
 
+						{ results && <Divider /> }
+
 						{ renderResults() }
 					</Stack>
 				</Box>
