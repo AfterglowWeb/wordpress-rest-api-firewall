@@ -150,6 +150,7 @@ export default function IpFilter() {
 
 	return (
 		<Stack p={ 4 } flexGrow={ 1 } spacing={ 3 }>
+			
 			{ ! hasValidLicense && (
 				<Alert
 					severity="info"
@@ -205,16 +206,14 @@ export default function IpFilter() {
 
 			</Stack>
 
-		
-
-		<Tabs
+			<Tabs
 			value={ currentTab }
-			onChange={ ( e, newValue ) => setCurrentTab( newValue ) }
-				sx={ {
-					mb: 2,
-					borderBottom: 1,
-					borderColor: 'divider',
-				} }
+			onChange={ ( e, v ) => setCurrentTab( v ) }
+			sx={ {
+				mb: 2,
+				borderBottom: 1,
+				borderColor: 'divider',
+			} }
 			>
 				<Tab
 					icon={ <TableViewIcon /> }
@@ -227,6 +226,7 @@ export default function IpFilter() {
 					label={ settings.mode === 'blacklist' ? __( 'Block Country', 'rest-api-firewall' ) : __( 'Allow Country', 'rest-api-firewall' ) }
 				/>
 			</Tabs>
+
 			{ currentTab === 0 && <IpDataGrid listType={ activeListKey } /> }
 
 			{ currentTab === 1 && (

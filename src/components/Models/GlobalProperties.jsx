@@ -1,6 +1,7 @@
 import { useLicense } from '../../contexts/LicenseContext';
 
 import Checkbox from '@mui/material/Checkbox';
+import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
 import Stack from '@mui/material/Stack';
@@ -27,42 +28,38 @@ export default function GlobalProperties( { form, setField } ) {
 					/>
 				}
 				label={
-					<Typography sx={{color: isDisabled ? 'text.disabled' : 'text.primary'  }} variant="caption">{ label }</Typography>
+					<Typography variant="body2" color={ isDisabled ? 'text.disabled' : 'text.primary' }>{ label }</Typography>
 				}
 				sx={ {
 					width: '50%',
 					minWidth: 360,
 					mr: 0,
-					/*...( indent && { pl: 2 } ),*/
+					...( indent && { pl: 2 } ),
 				} }
 			/>
 		</Tooltip>
 		);
 	};
 
-	const groupLabel = ( text ) => (
-		<Typography
-			variant="caption"
-			sx={ {
-				textTransform: 'uppercase',
-				letterSpacing: 0.5,
-				fontWeight: 600,
-				color: ! hasValidLicense ? 'text.disabled' : 'text.secondary',
-			} }
-		>
-			{ text }
-		</Typography>
-	);
-
 	return (
-		<Stack spacing={ 2 }>
+		<Stack spacing={ 2 } maxWidth={ 640 }>
 
-			{ /* ── Group 1: applies to ALL object types ── */ }
-			<Stack spacing={ 0.5 }>
-				{ groupLabel( __( 'All Object Types', 'rest-api-firewall' ) ) }
+			<Stack spacing={ 2 }>
+				<Stack spacing={ 0 }>
+					<Typography
+						variant="subtitle1"
+						fontWeight={ 600 }
+						color={ ! hasValidLicense ? 'text.disabled' : 'text.primary' }
+					>
+						{ __( 'Post Types and Taxonomies', 'rest-api-firewall' ) }
+					</Typography>
+					<Typography variant="body2" color="text.secondary">
+						{ __( 'Output transformations applied to all post type and taxonomy responses.', 'rest-api-firewall' ) }
+						<br />{ __( 'Can be overridden per model.', 'rest-api-firewall' ) }
+					</Typography>
+				</Stack>
 				<FormGroup sx={ { flexDirection: 'row', flexWrap: 'wrap' } }>
 					<Item
-
 						name="rest_models_relative_url_enabled"
 						label={ __( 'Relative URLs', 'rest-api-firewall' ) }
 						tip={ __( 'Remove the host from post and term URLs.', 'rest-api-firewall' ) }
@@ -90,16 +87,29 @@ export default function GlobalProperties( { form, setField } ) {
 					<Item
 						disabled={ !form.rest_models_remove_empty_props }
 						name="rest_models_remove_empty_props_recursively"
-						label={ __( 'Apply to Sub Properties', 'rest-api-firewall' ) }
-						tip={ __( 'Also apply empty-property removal to nested properties.', 'rest-api-firewall' ) }
+						label={ __( 'Apply to Nested Properties', 'rest-api-firewall' ) }
+						tip={ __( 'Also remove empty properties from nested objects.', 'rest-api-firewall' ) }
 						indent
 					/>
 				</FormGroup>
 			</Stack>
 
-			{ /* ── Group 2: post-type objects only ── */ }
-			<Stack spacing={ 0.5 }>
-				{ groupLabel( __( 'Post Types Only', 'rest-api-firewall' ) ) }
+			<Divider />
+
+			<Stack spacing={ 2 }>
+				<Stack spacing={ 0 }>
+					<Typography
+						variant="subtitle1"
+						fontWeight={ 600 }
+						color={ ! hasValidLicense ? 'text.disabled' : 'text.primary' }
+					>
+						{ __( 'Post Types Only', 'rest-api-firewall' ) }
+					</Typography>
+					<Typography variant="body2" color="text.secondary">
+						{ __( 'Additional transformations applied to post type responses only.', 'rest-api-firewall' ) }
+						<br />{ __( 'Can be overridden per model.', 'rest-api-firewall' ) }
+					</Typography>
+				</Stack>
 				<FormGroup sx={ { flexDirection: 'row', flexWrap: 'wrap' } }>
 					<Item
 						name="rest_models_resolve_rendered_props"

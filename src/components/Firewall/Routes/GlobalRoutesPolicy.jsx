@@ -1,130 +1,205 @@
 import { useLicense } from '../../../contexts/LicenseContext';
-import { useAdminData } from '../../../contexts/AdminDataContext';
 
+import Divider from '@mui/material/Divider';
+import FormControl from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormControl from '@mui/material/FormControl';
-import Typography from '@mui/material/Typography';
 import Tooltip from '@mui/material/Tooltip';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
 
 import ObjectTypeSelect from '../../ObjectTypeSelect';
+import DisabledRouteResponse from './DisabledRouteResponse';
 
 const HTTP_METHODS = [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ];
 
-export default function GlobalRoutesPolicy( { form, setField } ) {
+export default function GlobalRoutesPolicy( { form, setField, proSettings, onProChange, onMethodToggle, onSave, canSave, isModuleEnabled } ) {
 	const { hasValidLicense } = useLicense();
-	const { adminData } = useAdminData();
-	const isModuleEnabled = !! adminData?.admin_options?.firewall_routes_policy_enabled;
 	const { __ } = wp.i18n || {};
 
-	const handleMethodToggle = ( method ) => ( e ) => {
-		const lower = method.toLowerCase();
-		const current = form.disabled_methods || [];
-		const next = e.target.checked
-			? [ ...new Set( [ ...current, lower ] ) ]
-			: current.filter( ( m ) => m !== lower );
-		setField( 'disabled_methods', next );
-	};
-
 	return (
-		<Stack spacing={ 3 } maxWidth={ 500 }>
-			<Typography
-				variant="caption"
-				sx={ {
-					display: 'block',
-					mt: 1,
-					textTransform: 'uppercase',
-					letterSpacing: 0.5,
-					fontSize: '0.75rem',
-					color: 'text.secondary',
-				} }
-			>
-				{ __( 'Global Settings', 'rest-api-firewall' ) }
-			</Typography>
+		<Stack spacing={ 2 } maxWidth={ 640 }>
 
-			<FormControl>
-				<FormControlLabel
-					disabled={ ! isModuleEnabled }
-					control={
-						<Switch
-							checked={ !! form.enforce_auth }
-							name="enforce_auth"
+			<Stack spacing={ 2 }>
+
+				<Stack spacing={ 0 }>
+					<Typography variant="subtitle1" fontWeight={ 600 }>
+						{ __( 'Auth. & Rate Limiting', 'rest-api-firewall' ) }
+					</Typography>
+				</Stack>
+
+				<FormControl>
+					<FormControlLabel
+						disabled={ ! isModuleEnabled }
+						control={
+							<Switch
+								checked={ hasValidLicense ? !! proSettings.enforce_auth : !! form.enforce_auth }
+								name="enforce_auth"
+								size="small"
+								onChange={ hasValidLicense ? onProChange : setField }
+							/>
+						}
+						label={ __( 'Enforce Authentication on All Routes', 'rest-api-firewall' ) }
+					/>
+				</FormControl>
+
+				<FormControl>
+					<FormControlLabel
+						disabled={ ! isModuleEnabled }
+						control={
+							<Switch
+								checked={ hasValidLicense ? !! proSettings.enforce_rate_limit : !! form.enforce_rate_limit }
+								name="enforce_rate_limit"
+								size="small"
+								onChange={ hasValidLicense ? onProChange : setField }
+							/>
+						}
+						label={ __( 'Enforce Rate Limiting on All Routes', 'rest-api-firewall' ) }
+					/>
+				</FormControl>
+
+				{ hasValidLicense && (
+					<Stack direction="row" justifyContent="flex-end">
+						<Button
+							variant="contained"
+							disableElevation
 							size="small"
-							onChange={ setField }
-						/>
-					}
-					label={ __(
-						'Enforce Authentication on All Routes',
-						'rest-api-firewall'
-					) }
-				/>
-			</FormControl>
+							disabled={ ! canSave }
+							onClick={ onSave }
+						>
+							{ __( 'Save', 'rest-api-firewall' ) }
+						</Button>
+					</Stack>
+				) }
 
-			<FormControl>
-				<FormControlLabel
-					disabled={ ! isModuleEnabled }
-					control={
-						<Switch
-							checked={ !! form.enforce_rate_limit }
-							onChange={ setField }
-							name="enforce_rate_limit"
+			</Stack>
+	
+			<Divider />
+
+			<Stack spacing={ 2 }>
+
+				<Stack spacing={ 0 }>
+					<Typography variant="subtitle1" fontWeight={ 600 }>
+						{ __( 'Disable Routes', 'rest-api-firewall' ) }
+					</Typography>
+					<Typography variant="body2" color="text.secondary">
+						{ __( 'WordPress Core routes require specific handling to be properly disabled.', 'rest-api-firewall' ) }
+					</Typography>
+				</Stack>
+
+				<FormControl>
+					<FormControlLabel
+						disabled={ ! isModuleEnabled }
+						control={
+							<Switch
+								checked={ hasValidLicense ? !! proSettings.hide_user_routes : !! form.hide_user_routes }
+								name="hide_user_routes"
+								size="small"
+								onChange={ hasValidLicense ? onProChange : setField }
+							/>
+						}
+						label={ __( 'Disable /wp/v2/users/* Routes', 'rest-api-firewall' ) }
+					/>
+				</FormControl>
+
+				<Tooltip
+					title={ ! hasValidLicense ? __( 'License required', 'rest-api-firewall' ) : '' }
+					followCursor
+				>
+					<Stack spacing={ 2 }>
+						<FormControl>
+							<FormControlLabel
+								disabled={ ! hasValidLicense || ! isModuleEnabled }
+								control={
+									<Switch
+										checked={ !! proSettings.hide_oembed_routes }
+										name="hide_oembed_routes"
+										size="small"
+										onChange={ onProChange }
+									/>
+								}
+								label={ __( 'Disable /wp/v2/oembed/1.0/* Routes', 'rest-api-firewall' ) }
+							/>
+						</FormControl>
+
+						<FormControl>
+							<FormControlLabel
+								disabled={ ! hasValidLicense || ! isModuleEnabled }
+								control={
+									<Switch
+										checked={ proSettings.hide_batch_routes }
+										name="hide_batch_routes"
+										size="small"
+										onChange={ onProChange }
+									/>
+								}
+								label={ __( 'Disable /wp/v2/batch/v1 Routes', 'rest-api-firewall' ) }
+							/>
+						</FormControl>
+					</Stack>
+				</Tooltip>
+
+				{ hasValidLicense && (
+					<Stack direction="row" justifyContent="flex-end">
+						<Button
+							variant="contained"
+							disableElevation
 							size="small"
-						/>
-					}
-					label={ __(
-						'Enforce Rate Limiting on All Routes',
-						'rest-api-firewall'
-					) }
-				/>
-			</FormControl>
+							disabled={ ! canSave }
+							onClick={ onSave }
+						>
+							{ __( 'Save', 'rest-api-firewall' ) }
+						</Button>
+					</Stack>
+				) }
 
-			<FormControl>
-				<FormControlLabel
-					disabled={ ! isModuleEnabled }
-					control={
-						<Switch
-							checked={ !! form.hide_user_routes }
-							name="hide_user_routes"
-							size="small"
-							onChange={ setField }
-						/>
-					}
-					label={ __(
-						'Disable /wp/v2/users/* Routes',
-						'rest-api-firewall'
-					) }
-				/>
-			</FormControl>
+			</Stack>
+		
 
-			<Stack spacing={ 1 }>
+			<Divider />
+
+			<DisabledRouteResponse
+				proSettings={ proSettings }
+				onChange={ onProChange }
+				onSave={ onSave }
+				canSave={ canSave }
+				isModuleEnabled={ isModuleEnabled }
+			/>
+
+			<Divider />
+
+			<Stack spacing={ 2 }>
 				<Tooltip
 					title={
 						! hasValidLicense
-							? __( 'Licence required', 'rest-api-firewall' )
+							? __( 'License required', 'rest-api-firewall' )
 							: ''
 					}
 					followCursor
 				>
-					<Stack spacing={ 0.5 }>
-						<Typography variant="body2">
-							{ __(
-								'Disable HTTP Methods',
-								'rest-api-firewall'
-							) }
-						</Typography>
-						<Typography variant="caption" color="text.secondary">
-							{ __(
-								'Toggle to disable an HTTP method globally across all routes.',
-								'rest-api-firewall'
-							) }
-						</Typography>
-
+					<Stack spacing={ 2 }>
+						
+						<Stack spacing={ 0 }>
+							<Typography variant="subtitle1" fontWeight={ 600 }>
+								{ __(
+									'Disable HTTP Methods',
+									'rest-api-firewall'
+								) }
+							</Typography>
+							<Typography variant="body2" color="text.secondary">
+								{ __(
+								'Disables an HTTP method globally across all routes.',
+									'rest-api-firewall'
+								) }
+	
+							</Typography>
+						</Stack>
+						
 						<Stack
 							direction="row"
-							spacing={ 1 }
+							gap={ 1 }
 							flexWrap="wrap"
-							pt={ 0.5 }
 						>
 							{ HTTP_METHODS.map( ( method ) => (
 								<FormControlLabel
@@ -134,9 +209,9 @@ export default function GlobalRoutesPolicy( { form, setField } ) {
 										<Switch
 											size="small"
 											checked={ (
-												form.disabled_methods || []
+											proSettings.disabled_methods || []
 											).includes( method.toLowerCase() ) }
-											onChange={ handleMethodToggle(
+											onChange={ onMethodToggle(
 												method
 											) }
 										/>
@@ -144,50 +219,89 @@ export default function GlobalRoutesPolicy( { form, setField } ) {
 									label={
 										<Typography
 											variant="body2"
-											sx={ {
-												fontFamily: 'monospace',
-												fontWeight: 600,
-												fontSize: '0.8rem',
-											} }
+											sx={ { fontFamily: 'monospace', fontWeight: 600 } }
 										>
-											{ method }
+											{ method.toUpperCase() }
 										</Typography>
 									}
+									sx={ {
+										m: 0,
+										px: 1.5,
+										py: 0.5,
+										userSelect: 'none',
+									} }
 								/>
 							) ) }
 						</Stack>
+						{ hasValidLicense && (
+							<Stack direction="row" justifyContent="flex-end">
+								<Button
+									variant="contained"
+									disableElevation
+									size="small"
+									disabled={ ! canSave }
+									onClick={ onSave }
+								>
+									{ __( 'Save', 'rest-api-firewall' ) }
+								</Button>
+							</Stack>
+						) }
 					</Stack>
 				</Tooltip>
 			</Stack>
 
-			<Stack spacing={ 1 }>
+			<Divider />
+
+			<Stack spacing={ 2 }>
 				<Tooltip
 					title={
 						! hasValidLicense
-							? __( 'Licence required', 'rest-api-firewall' )
+							? __( 'License required', 'rest-api-firewall' )
 							: ''
 					}
 					followCursor
 				>
-					<Stack>
-						<ObjectTypeSelect
-							disabled={ ! hasValidLicense || ! isModuleEnabled }
-							name="disabled_post_types"
-							label={ __(
-								'Disable Object Types',
-								'rest-api-firewall'
-							) }
-							value={ form.disabled_post_types || [] }
-							helperText={
-								<Typography variant="caption" color="inherit">
-									{ __(
-										'Object types will be blocked in the REST API.',
-										'rest-api-firewall'
-									) }
-								</Typography>
-							}
-							onChange={ setField }
-						/>
+					<Stack spacing={ 2 }>
+						<Stack spacing={ 0 }>
+							<Typography variant="subtitle1" fontWeight={ 600 }>
+								{ __(
+									'Disable Post Types and Taxonomies',
+									'rest-api-firewall'
+								) }
+							</Typography>
+							<Typography variant="body2" color="text.secondary">
+								{ __(
+								'Disables post types and taxonomies globally across all routes.',
+									'rest-api-firewall'
+								) }
+	
+							</Typography>
+						</Stack>
+						<Stack>
+							<ObjectTypeSelect
+								disabled={ ! hasValidLicense || ! isModuleEnabled }
+								name="disabled_post_types"
+								label={ __(
+									'Disable Object Types',
+									'rest-api-firewall'
+								) }
+								value={ proSettings.disabled_post_types || [] }
+								onChange={ onProChange }
+							/>
+						</Stack>
+						{ hasValidLicense && (
+							<Stack direction="row" justifyContent="flex-end">
+								<Button
+									variant="contained"
+									disableElevation
+									size="small"
+									disabled={ ! canSave }
+									onClick={ onSave }
+								>
+									{ __( 'Save', 'rest-api-firewall' ) }
+								</Button>
+							</Stack>
+						) }
 					</Stack>
 				</Tooltip>
 			</Stack>

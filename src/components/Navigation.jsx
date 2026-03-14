@@ -64,7 +64,6 @@ export default function Navigation( {
 	showSaveButton,
 	onSave,
 	saving,
-	needsLicense,
 } ) {
 	const { hasValidLicense } = useLicense();
 	const { adminData, updateAdminData } = useAdminData();
@@ -459,7 +458,8 @@ export default function Navigation( {
 							borderBottom: 1,
 							borderColor: 'divider',
 							px: 2,
-							height: APP_BAR_HEIGHT,
+							height: { xs: 'auto', xl: APP_BAR_HEIGHT },
+                    		minHeight: APP_BAR_HEIGHT,
 							overflow: 'hidden',
 							gap: 2,
 						} }
@@ -544,29 +544,17 @@ export default function Navigation( {
 							/>
 
 							{ showSaveButton && (
-								<Tooltip
-									followCursor
-									title={
-										needsLicense
-											? __(
-													'Licence required',
-													'rest-api-firewall'
-											)
-											: ''
-									}
-								>
-									<Box>
-										<Button
-											variant="contained"
-											disableElevation
-											size="small"
-											onClick={ onSave }
-											disabled={ needsLicense || saving }
-										>
-											{ __( 'Save', 'rest-api-firewall' ) }
-										</Button>
-									</Box>
-								</Tooltip>
+								<Box>
+									<Button
+										variant="contained"
+										disableElevation
+										size="small"
+										onClick={ onSave }
+										disabled={ saving }
+									>
+										{ __( 'Save', 'rest-api-firewall' ) }
+									</Button>
+								</Box>
 							) }
 						</Stack>
 					</Toolbar>

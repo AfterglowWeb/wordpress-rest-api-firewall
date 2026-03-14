@@ -285,15 +285,6 @@ export default function Models() {
 		<Stack p={4} spacing={ 2 } sx={ { height: '100%', flexGrow: 1 } }>
 			
 			<Stack spacing={ 2 } sx={ { maxWidth: 720 } }>
-				
-				<Stack>
-					<Typography variant="subtitle1" fontWeight={ 600 }>
-						{ __( 'Global Settings', 'rest-api-firewall' ) }
-					</Typography>
-					<Typography variant="body2" color="text.secondary">
-						{ __( 'Global output transformations applied to REST API responses.', 'rest-api-firewall' ) }
-					</Typography>
-				</Stack>
 			
 				<GlobalProperties form={ outputForm } setField={ setOutputField } />
 
