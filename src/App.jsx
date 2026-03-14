@@ -23,8 +23,7 @@ import Navigation, {
 
 import ConfigurationPanel from './components/ConfigurationDialog';
 
-import RoutesPolicyTree from './components/Firewall/Routes/RoutesPolicyTree';
-import GlobalRoutesPolicy from './components/Firewall/Routes/GlobalRoutesPolicy';
+import RoutesPanel from './components/Firewall/Routes/RoutesPanel';
 import IpFilter from './components/Firewall/IpFilter/IpFilter';
 import RateLimit from './components/Firewall/Users/RateLimit';
 import RestApiUser from './components/Firewall/Users/RestApiSingleUser';
@@ -201,13 +200,13 @@ function AppContent() {
 	};
 	if ( hasValidLicense ) {
 		delete PANEL_SAVE_GROUP[ 1 ];
+		delete PANEL_SAVE_GROUP[ 2 ];
 		delete PANEL_SAVE_GROUP[ 5 ];
 		delete PANEL_SAVE_GROUP[ 7 ];
 	}
 
 	const activeSaveGroup = PANEL_SAVE_GROUP[ panelGroup ] ?? null;
 	const showSaveButton = activeSaveGroup !== null;
-	const needsLicense = panelGroup === 5 && ! hasValidLicense;
 
 	const handleSave = () => {
 		save( pickGroup( activeSaveGroup ), SAVE_CONFIG[ activeSaveGroup ] );
@@ -230,7 +229,6 @@ function AppContent() {
 					showSaveButton={ showSaveButton }
 					onSave={ handleSave }
 					saving={ saving }
-					needsLicense={ needsLicense }
 				/>
 
 				<Stack
@@ -284,22 +282,10 @@ function AppContent() {
 						</>
 					) }
 
-					{ panelGroup === 2 && (
-						<Stack 
-							spacing={ 3 } 
-							sx={ { p: 4, flexGrow: 1 } }
-						>
-							<GlobalRoutesPolicy
-								form={ form }
-								setField={ setField }
-							/>
-							<Divider />
-							<RoutesPolicyTree
-								form={ form }
-								setField={ setField }
-							/>
-						</Stack>
-					) }
+					{ panelGroup === 2 && (<RoutesPanel
+						form={ form }
+						setField={ setField }
+					/>) }
 
 					{ panelGroup === 3 && <IpFilter /> }
 
