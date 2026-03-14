@@ -38,6 +38,7 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 		use_auth: true,
 		use_rate_limit: true,
 		use_disabled: true,
+		fetch_data: false,
 	} );
 
 	const handleOpen = ( e ) => {
@@ -79,6 +80,7 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 					use_auth: options.use_auth ? '1' : '0',
 					use_rate_limit: options.use_rate_limit ? '1' : '0',
 					use_disabled: options.use_disabled ? '1' : '0',
+					fetch_data: options.fetch_data ? '1' : '0',
 				} ),
 			} );
 
@@ -255,6 +257,36 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 										renderTestResult( testName, test )
 								) }
 							</Box>
+
+							{ result.live_data && (
+								<>
+									<Divider sx={ { my: 1 } } />
+									<Typography
+										variant="caption"
+										color="text.secondary"
+										sx={ { mb: 0.5, display: 'block' } }
+									>
+										{ __( 'Live response', 'rest-api-firewall' ) } ({ result.live_data.status })
+									</Typography>
+									<Box
+										component="pre"
+										sx={ {
+											p: 1.5,
+											bgcolor: 'grey.50',
+											borderRadius: 1,
+											overflowX: 'auto',
+											fontSize: '0.68rem',
+											lineHeight: 1.5,
+											m: 0,
+											whiteSpace: 'pre-wrap',
+											wordBreak: 'break-all',
+											maxHeight: 300,
+										} }
+									>
+										{ JSON.stringify( result.live_data.body, null, 2 ) }
+									</Box>
+								</>
+							) }
 						</AccordionDetails>
 					</Accordion>
 				) ) }
@@ -396,6 +428,23 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 										'rest-api-firewall'
 									) }
 								/>
+								{ method === 'GET' && (
+									<FormControlLabel
+										control={
+											<Checkbox
+												checked={ options.fetch_data }
+												onChange={ handleOptionChange(
+													'fetch_data'
+												) }
+												size="small"
+											/>
+										}
+										label={ __(
+											'Fetch real data (authenticated)',
+											'rest-api-firewall'
+										) }
+									/>
+								) }
 							</Stack>
 						</Box>
 

@@ -285,6 +285,7 @@ function AppContent() {
 					{ panelGroup === 2 && (<RoutesPanel
 						form={ form }
 						setField={ setField }
+						onNavigate={ navigateTo }
 					/>) }
 
 					{ panelGroup === 3 && <IpFilter /> }

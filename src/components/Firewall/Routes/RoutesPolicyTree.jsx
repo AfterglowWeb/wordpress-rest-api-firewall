@@ -32,7 +32,7 @@ import {
 import { CustomTreeItem } from './RoutesPolicyNodeContent';
 import RoutesPolicyUsersPopover from './RoutesPolicyUsersPopover';
 
-export default function RoutesPolicyTree( { form, setField } ) {
+export default function RoutesPolicyTree( { form, setField, selectedApplicationId, onNavigate } ) {
 	const {
 		enforce_auth,
 		enforce_rate_limit,
@@ -151,6 +151,7 @@ export default function RoutesPolicyTree( { form, setField } ) {
 				body: new URLSearchParams( {
 					action: 'get_route_policy_users',
 					nonce: adminData.nonce,
+					...( selectedApplicationId ? { application_id: selectedApplicationId } : {} ),
 				} ),
 			} );
 			const result = await response.json();
@@ -319,14 +320,6 @@ export default function RoutesPolicyTree( { form, setField } ) {
 			<RichTreeView
 				items={ nodes }
 				slots={ { item: CustomTreeItem } }
-				sx={ {
-					'& .MuiTreeItem-group': {
-						ml: 2,
-						pl: 1,
-						borderLeft: '2px solid',
-						borderColor: 'divider',
-					},
-				} }
 				slotProps={ {
 					item: {
 						toggleNodeSetting: handleToggle,
@@ -348,6 +341,7 @@ export default function RoutesPolicyTree( { form, setField } ) {
 						expandedItems,
 						hasValidLicense,
 						usersData,
+						onNavigate,
 					},
 				} }
 				expandedItems={ expandedItems }

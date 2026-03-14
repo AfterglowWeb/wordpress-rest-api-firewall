@@ -1,6 +1,8 @@
 import { forwardRef } from '@wordpress/element';
 import { useLicense } from '../../../contexts/LicenseContext';
+import { useAdminData } from '../../../contexts/AdminDataContext';
 
+import { styled, alpha } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
@@ -12,9 +14,10 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import SettingsBackupRestoreOutlinedIcon from '@mui/icons-material/SettingsBackupRestoreOutlined';
 
-import { TreeItem, TreeItemContent } from '@mui/x-tree-view/TreeItem';
+import { TreeItem, TreeItemContent, treeItemClasses } from '@mui/x-tree-view/TreeItem';
 import { useTreeItem } from '@mui/x-tree-view/useTreeItem';
 
 import TestPolicy from './TestPolicy';
@@ -25,6 +28,14 @@ import {
 	getAllDescendantMethodIds,
 } from './routesPolicyUtils';
 
+const StyledTreeItem = styled( TreeItem )( ( { theme } ) => ( {
+	[ `& .${ treeItemClasses.groupTransition }` ]: {
+		marginLeft: theme.spacing( 2 ),
+		paddingLeft: theme.spacing( 1 ),
+		borderLeft: `2px solid ${ alpha( theme.palette.text.primary, 0.15 ) }`,
+	},
+} ) );
+
 export const CustomTreeItem = forwardRef(
 	function CustomTreeItem( props, ref ) {
 		const node = props.getNodeById
@@ -32,7 +43,7 @@ export const CustomTreeItem = forwardRef(
 			: null;
 
 		return (
-			<TreeItem
+			<StyledTreeItem
 				{ ...props }
 				ref={ ref }
 				slots={ { content: NodeContent } }
@@ -56,6 +67,7 @@ export const CustomTreeItem = forwardRef(
 							props.disabled_post_type_routes,
 						expandedItems: props.expandedItems,
 						usersData: props.usersData,
+						onNavigate: props.onNavigate,
 					},
 				} }
 			/>
@@ -82,11 +94,13 @@ export function NodeContent( {
 	disabled_post_type_routes,
 	expandedItems,
 	usersData,
+	onNavigate,
 	...props
 } ) {
 	useTreeItem( props );
 	const { __, sprintf } = wp.i18n || {};
 	const { hasValidLicense } = useLicense();
+	const { adminData } = useAdminData();
 
 	if ( ! node?.id ) {
 		return <TreeItemContent { ...props }>{ children }</TreeItemContent>;
@@ -98,6 +112,16 @@ export function NodeContent( {
 		rate_limit: { value: false, inherited: false, overridden: false },
 		rate_limit_time: { value: false, inherited: false, overridden: false },
 	};
+
+	const postTypeForRoute = ! node.isMethod
+		? ( adminData?.post_types || [] ).find( ( pt ) => {
+				const prefix = `/wp/v2/${ pt.rest_base || pt.value }`;
+				return (
+					node.path === prefix ||
+					node.path?.startsWith( prefix + '/' )
+				);
+		  } )
+		: null;
 
 	const isCustom = isNodeCustom( nodeSettings );
 	const hasChildren = node.children && node.children.length > 0;
@@ -319,6 +343,21 @@ export function NodeContent( {
 						<CopyButton toCopy={ node.path || node.route } />
 					</Tooltip>
 				) }
+
+			{ postTypeForRoute && onNavigate && (
+				<Tooltip disableInteractive title={ __( 'View model properties', 'rest-api-firewall' ) }>
+					<IconButton
+						size="small"
+						onClick={ ( e ) => {
+							e.stopPropagation();
+							onNavigate( 5 );
+						} }
+						sx={ { opacity: 0.5 } }
+					>
+						<AccountTreeOutlinedIcon fontSize="small" />
+					</IconButton>
+				</Tooltip>
+			) }
 			</Stack>
 
 			<Stack

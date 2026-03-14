@@ -35,6 +35,7 @@ class TestPolicy {
 		$use_auth        = isset( $_POST['use_auth'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['use_auth'] ) ) : true;
 		$use_rate_limit  = isset( $_POST['use_rate_limit'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['use_rate_limit'] ) ) : true;
 		$use_disabled    = isset( $_POST['use_disabled'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['use_disabled'] ) ) : true;
+		$fetch_data      = isset( $_POST['fetch_data'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['fetch_data'] ) ) : false;
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		if ( empty( $route ) ) {
@@ -56,7 +57,8 @@ class TestPolicy {
 			$routes_to_test,
 			$use_auth,
 			$use_rate_limit,
-			$use_disabled
+			$use_disabled,
+			$fetch_data
 		);
 
 		wp_send_json_success( $results, 200 );
@@ -122,7 +124,7 @@ class TestPolicy {
 	}
 
 
-	protected function run_tests( array $routes, bool $use_auth, bool $use_rate_limit, bool $use_disabled ): array {
+	protected function run_tests( array $routes, bool $use_auth, bool $use_rate_limit, bool $use_disabled, bool $fetch_data = false ): array {
 		$results = array();
 
 		foreach ( $routes as $route_info ) {
@@ -148,10 +150,26 @@ class TestPolicy {
 				$result['tests']['rate_limit'] = $this->test_rate_limit( $route, $method, $result['policy'] );
 			}
 
+			if ( $fetch_data && 'GET' === $method ) {
+				$result['live_data'] = $this->fetch_live_data( $route );
+			}
+
 			$results[] = $result;
 		}
 
 		return $results;
+	}
+
+	protected function fetch_live_data( string $route ): array {
+		$response    = $this->make_request( $route, 'GET', true );
+		$status_code = wp_remote_retrieve_response_code( $response );
+		$body_raw    = wp_remote_retrieve_body( $response );
+		$body        = json_decode( $body_raw, true );
+
+		return array(
+			'status' => $status_code,
+			'body'   => null !== $body ? $body : $body_raw,
+		);
 	}
 
 	protected function get_policy_for_route( string $route, string $method ): array {
