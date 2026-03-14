@@ -36,6 +36,7 @@ import {
 } from './routesPolicyUtils';
 import { CustomTreeItem } from './RoutesPolicyNodeContent';
 import RoutesPolicyUsersPopover from './RoutesPolicyUsersPopover';
+import TestPolicyPanel from './TestPolicyPanel';
 
 export default function RoutesPolicyTree( { form, setField, selectedApplicationId, onNavigate } ) {
 	const {
@@ -51,7 +52,8 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 	} = form;
 
 	const { adminData } = useAdminData();
-	const { hasValidLicense } = useLicense();
+	const { hasValidLicense, proNonce } = useLicense();
+	const nonce = proNonce || adminData.nonce;
 	const { __, sprintf } = wp.i18n || {};
 	const [ treeData, setTreeData ] = useState( null );
 	const [ loading, setLoading ] = useState( false );
@@ -66,6 +68,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 	const [ isDirty, setIsDirty ] = useState( false );
 	const [ saving, setSaving ] = useState( false );
 	const [ confirmSaveOpen, setConfirmSaveOpen ] = useState( false );
+	const [ testRoute, setTestRoute ] = useState( null );
 	const usersLoadedRef = useRef( false );
 	const treeLoadingRef = useRef( true );
 
@@ -81,7 +84,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 				},
 				body: new URLSearchParams( {
 					action: 'get_routes_policy_tree',
-					nonce: adminData.nonce,
+					nonce,
 				} ),
 			} );
 
@@ -89,10 +92,6 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 
 			if ( result?.success ) {
 				setTreeData( result.data.tree );
-				// Do NOT pre-load users from the tree response: the tree uses
-				// find_first_active() and may belong to a different application.
-				// Users are loaded lazily via get_route_policy_users which
-				// correctly uses selectedApplicationId.
 			}
 		} catch ( error ) {
 			setErrorMessage(
@@ -101,7 +100,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 		} finally {
 			setLoading( false );
 		}
-	}, [ adminData ] );
+	}, [ adminData, nonce ] );
 
 	useEffect( () => {
 		loadRoutes();
@@ -117,7 +116,9 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 		if ( treeData && Array.isArray( treeData ) ) {
 			treeLoadingRef.current = true;
 			dispatch( { type: 'RESET', payload: normalizeTree( treeData ) } );
+			loadUsers();
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ treeData ] );
 
 	const handleToggle = ( id, key, effectiveValues ) =>
@@ -157,7 +158,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 				},
 				body: new URLSearchParams( {
 					action: 'get_route_policy_users',
-					nonce: adminData.nonce,
+					nonce,
 					...( selectedApplicationId ? { application_id: selectedApplicationId } : {} ),
 				} ),
 			} );
@@ -169,7 +170,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 		} finally {
 			setUsersLoading( false );
 		}
-	}, [ adminData, selectedApplicationId ] );
+	}, [ adminData, nonce, selectedApplicationId ] );
 
 	const handleOpenUsersPopover = useCallback(
 		( nodeId, anchorEl ) => {
@@ -227,7 +228,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 					},
 					body: new URLSearchParams( {
 						action: 'save_routes_policy_tree',
-						nonce: adminData.nonce,
+						nonce,
 						tree: JSON.stringify( tree ),
 						users: JSON.stringify( users || [] ),
 						application_id: selectedApplicationId || '',
@@ -240,7 +241,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 				setSaving( false );
 			}
 		},
-		[ adminData, selectedApplicationId ]
+		[ adminData, nonce, selectedApplicationId ]
 	);
 
 	useEffect( () => {
@@ -286,6 +287,19 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 
 	return (
 		<Box sx={ { minHeight: 352, minWidth: '100%' } }>
+			<Box sx={ { display: testRoute ? 'block' : 'none' } }>
+				<TestPolicyPanel
+					route={ testRoute?.route || '' }
+					method={ testRoute?.method || 'GET' }
+					hasChildren={ testRoute?.hasChildren || false }
+					hasUsers={ testRoute?.hasUsers || false }
+					onClose={ () => setTestRoute( null ) }
+					onNavigate={ onNavigate }
+				/>
+			</Box>
+
+			<Box sx={ { display: testRoute ? 'none' : 'block' } }>
+
 			<Toolbar disableGutters sx={ { gap: 1.5, mb: 2, flexWrap: 'wrap', minHeight: '0 !important' } }>
 				<Button
 					startIcon={ <RefreshIcon /> }
@@ -355,6 +369,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 						hasValidLicense,
 						usersData,
 						onNavigate,
+						onTest: setTestRoute,
 					},
 				} }
 				expandedItems={ expandedItems }
@@ -395,7 +410,8 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 					</Button>
 					<Button
 						variant="contained"
-						color="warning"
+						size="small"
+						disableElevation
 						onClick={ () => {
 							setConfirmSaveOpen( false );
 							saveTree( nodes, usersData );
@@ -405,6 +421,8 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 					</Button>
 				</DialogActions>
 			</Dialog>
+
+			</Box> { /* end tree toggle Box */ }
 		</Box>
 	);
 }

@@ -7,7 +7,21 @@ use WP_User;
 class Permissions {
 
 	public static function ajax_validate_has_firewall_admin_caps(): bool {
-		return check_ajax_referer( 'rest_api_firewall_update_options_nonce', 'nonce' )
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified below via wp_verify_nonce
+		$nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
+
+		// Accept the free-plugin nonce OR an alternative nonce registered by
+		// an extension (e.g. the pro plugin) via the filter below.
+		$valid = wp_verify_nonce( $nonce, 'rest_api_firewall_update_options_nonce' );
+
+		if ( ! $valid ) {
+			$alt_action = (string) apply_filters( 'rest_api_firewall_alt_admin_nonce_action', '' );
+			if ( $alt_action ) {
+				$valid = wp_verify_nonce( $nonce, $alt_action );
+			}
+		}
+
+		return (bool) $valid
 			&& is_user_logged_in()
 			&& current_user_can( 'rest_api_firewall_edit_options' );
 	}

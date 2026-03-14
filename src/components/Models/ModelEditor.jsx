@@ -68,7 +68,6 @@ export default function ModelEditor( { model, onBack } ) {
 
 	const [ loaded, setLoaded ] = useState( isNew );
 
-	// Test tab state.
 	const [ testMode, setTestMode ] = useState( false );
 	const [ testStatus, setTestStatus ] = useState( 'idle' ); // 'idle' | 'running' | 'done' | 'error'
 	const [ testResult, setTestResult ] = useState( null );

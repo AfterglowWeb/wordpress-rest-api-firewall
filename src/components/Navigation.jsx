@@ -41,6 +41,7 @@ import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
+import ShieldIcon from '@mui/icons-material/Shield';
 
 import AppIdentity from './AppIdentity';
 import ApplicationSelector from './ApplicationSelector';
@@ -75,7 +76,6 @@ export default function Navigation( {
 
 	const [ mobileOpen, setMobileOpen ] = useState( false );
 
-	// Per-panel module enabled states (driven from adminData.admin_options + IpFilter's own option).
 	const moduleKey = {
 		1:  { module: 'users', optionKey: 'user_rate_limit_enabled', label: __( 'Active', 'rest-api-firewall' ) },
 		2:  { module: 'routes_policy', optionKey: 'firewall_routes_policy_enabled', label: __( 'Active', 'rest-api-firewall' ) },
@@ -86,9 +86,9 @@ export default function Navigation( {
 		7:  { module: 'webhooks', optionKey: 'webhooks_enabled', label: __( 'Active', 'rest-api-firewall' ) },
 		8:  { module: 'mails', optionKey: 'mails_enabled', label: __( 'Active', 'rest-api-firewall' ) },
 		13: { module: 'automations', optionKey: 'automations_enabled', label: __( 'Active', 'rest-api-firewall' ) },
+		13: { module: 'global_security', optionKey: 'global_security_enabled', label: __( 'Active', 'rest-api-firewall' ) },
 	};
 
-	// IpFilter reads from its own REST option; store it in local state hydrated on mount.
 	const [ ipFilterEnabled, setIpFilterEnabled ] = useState(
 		() => !! adminData?.ip_filter_enabled
 	);
@@ -244,6 +244,13 @@ export default function Navigation( {
 		},
 
 		{ type: 'section', label: __( '', 'rest-api-firewall' ) },
+		{
+			key: 'global_security',
+			label: __( 'Global Security', 'rest-api-firewall' ),
+			breadcrumbPrefix: 'Modules',
+			panelGroup: 14,
+			icon: ShieldIcon,
+		},
 		{
 			key: 'theme',
 			label: __( 'Theme', 'rest-api-firewall' ),

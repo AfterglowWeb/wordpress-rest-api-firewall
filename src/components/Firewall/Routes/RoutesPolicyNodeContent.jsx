@@ -13,14 +13,13 @@ import Switch from '@mui/material/Switch';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import SettingsBackupRestoreOutlinedIcon from '@mui/icons-material/SettingsBackupRestoreOutlined';
 
 import { TreeItem, TreeItemContent, treeItemClasses } from '@mui/x-tree-view/TreeItem';
 import { useTreeItem } from '@mui/x-tree-view/useTreeItem';
 
-import TestPolicy from './TestPolicy';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import CopyButton from '../../CopyButton';
 import {
 	isNodeCustom,
@@ -68,6 +67,7 @@ export const CustomTreeItem = forwardRef(
 						expandedItems: props.expandedItems,
 						usersData: props.usersData,
 						onNavigate: props.onNavigate,
+						onTest: props.onTest,
 					},
 				} }
 			/>
@@ -95,6 +95,7 @@ export function NodeContent( {
 	expandedItems,
 	usersData,
 	onNavigate,
+	onTest,
 	...props
 } ) {
 	useTreeItem( props );
@@ -119,6 +120,16 @@ export function NodeContent( {
 				return (
 					node.path === prefix ||
 					node.path?.startsWith( prefix + '/' )
+				);
+		  } )
+		: null;
+
+	const postTypeForMethod = node.isMethod
+		? ( adminData?.post_types || [] ).find( ( pt ) => {
+				const prefix = `/wp/v2/${ pt.rest_base || pt.value }`;
+				return (
+					node.route === prefix ||
+					node.route?.startsWith( prefix + '/' )
 				);
 		  } )
 		: null;
@@ -312,13 +323,24 @@ export function NodeContent( {
 							
 						</Stack>
 
-						{ node.isMethod && node.route && (
-							<TestPolicy
-								route={ node.route }
-								method={ node.method || 'GET' }
-								hasChildren={ hasChildren }
-								hasUsers={ ownUserCount > 0 }
-							/>
+						{ node.isMethod && node.route && onTest && (
+							<Button
+								variant="text"
+								size="small"
+								onClick={ ( e ) => {
+									e.stopPropagation();
+									onTest( {
+										route: node.route,
+										method: node.method || 'GET',
+										hasChildren,
+										hasUsers: ownUserCount > 0,
+									} );
+								} }
+								startIcon={ <PlayArrowIcon /> }
+								sx={ { minWidth: 'auto', textTransform: 'none' } }
+							>
+								{ __( 'Test', 'rest-api-firewall' ) }
+							</Button>
 						) }
 					</Stack>
 
@@ -346,6 +368,20 @@ export function NodeContent( {
 				) }
 
 			{ postTypeForRoute && onNavigate && (
+				<Tooltip disableInteractive title={ __( 'View model properties', 'rest-api-firewall' ) }>
+					<IconButton
+						size="small"
+						onClick={ ( e ) => {
+							e.stopPropagation();
+							onNavigate( 5 );
+						} }
+						sx={ { opacity: 0.5 } }
+					>
+						<AccountTreeOutlinedIcon fontSize="small" />
+					</IconButton>
+				</Tooltip>
+			) }
+			{ postTypeForMethod && onNavigate && (
 				<Tooltip disableInteractive title={ __( 'View model properties', 'rest-api-firewall' ) }>
 					<IconButton
 						size="small"

@@ -78,8 +78,8 @@ class PolicyRuntime {
 
 				if (
 					( ! empty( $opts['hide_oembed_routes'] ) && 0 === strpos( $route, '/oembed' ) ) ||
-					( ! empty( $opts['hide_user_routes'] )   && 0 === strpos( $route, '/wp/v2/users' ) ) ||
-					( ! empty( $opts['hide_batch_routes'] )  && ( 0 === strpos( $route, '/wp/v2/batch' ) || 0 === strpos( $route, '/batch/v1' ) ) ) ||
+					( ! empty( $opts['hide_user_routes'] ) && 0 === strpos( $route, '/wp/v2/users' ) ) ||
+					( ! empty( $opts['hide_batch_routes'] ) && ( 0 === strpos( $route, '/wp/v2/batch' ) || 0 === strpos( $route, '/batch/v1' ) ) ) ||
 					( ! empty( $dis_methods ) && in_array( strtolower( $method ), $dis_methods, true ) )
 				) {
 					$effective['state'] = false;

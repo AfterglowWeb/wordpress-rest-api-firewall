@@ -7,17 +7,43 @@ use cmk\RestApiFirewall\Core\CoreOptions;
 use cmk\RestApiFirewall\Firewall\WordpressAuth;
 use cmk\RestApiFirewall\Firewall\IpBlackList;
 use cmk\RestApiFirewall\Firewall\RateLimit;
+use cmk\RestApiFirewall\Policy\PolicyRuntime;
 use WP_REST_Request;
 use WP_Error;
 
 class Firewall {
+
+	/**
+	 * Check whether the current request is an internal firewall policy test.
+	 * TestPolicy::make_request() sets a short-lived transient and appends the
+	 * token as a _firewall_test query parameter so the admin bypass is skipped
+	 * and real policy checks run. Query params are used (not headers) because
+	 * some proxies/servers strip unknown custom request headers.
+	 */
+	public static function is_test_request(): bool {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- test token validated via transient below
+		$token = isset( $_GET['_firewall_test'] )
+			? sanitize_text_field( wp_unslash( $_GET['_firewall_test'] ) )
+			: '';
+
+		if ( empty( $token ) ) {
+			return false;
+		}
+
+		$key = 'rest_firewall_test_ctx_' . md5( $token );
+		if ( get_transient( $key ) ) {
+			return true;
+		}
+
+		return false;
+	}
 
 	public static function result( $result ) {
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
 
-		if ( is_user_logged_in() && current_user_can( 'manage_options' ) ) {
+		if ( is_user_logged_in() && current_user_can( 'manage_options' ) && ! self::is_test_request() ) {
 			return $result;
 		}
 
@@ -36,8 +62,32 @@ class Firewall {
 
 	public static function request( WP_REST_Request $request ) {
 
-		if ( is_user_logged_in() && current_user_can( 'manage_options' ) ) {
+		if ( is_user_logged_in() && current_user_can( 'manage_options' ) && ! self::is_test_request() ) {
 			return $request;
+		}
+
+		if ( CoreOptions::read_option( 'firewall_routes_policy_enabled' ) ) {
+			$policy = PolicyRuntime::resolve_for_request( $request );
+
+			if ( ! $policy['state'] ) {
+				return new WP_Error(
+					'rest_firewall_route_disabled',
+					esc_html__( 'This route has been disabled.', 'rest-api-firewall' ),
+					array( 'status' => 403 )
+				);
+			}
+
+			// Per-route authentication: only enforce here when global enforce_auth is OFF
+			// (global enforce_auth is handled earlier by rest_authentication_errors).
+			if ( $policy['protect'] && ! CoreOptions::read_option( 'enforce_auth' ) ) {
+				if ( ! WordpressAuth::validate_wp_application_password() ) {
+					return new WP_Error(
+						'rest_forbidden',
+						esc_html__( 'Authentication required.', 'rest-api-firewall' ),
+						array( 'status' => 401 )
+					);
+				}
+			}
 		}
 
 		$rate_check = self::rate_limit( $request );

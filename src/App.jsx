@@ -49,6 +49,7 @@ import Applications from './components/Applications/Applications';
 import License from './components/License/License';
 
 import Users from './components/Firewall/Users/Users';
+import GlobalSecurity from './components/GlobalSecurity/GlobalSecurity';
 
 function AppContent() {
 	const { adminData } = useAdminData();
@@ -188,6 +189,17 @@ function AppContent() {
 			),
 			confirmMessage: __( 'Save theme settings?', 'rest-api-firewall' ),
 		},
+		global_security: {
+			successTitle: __( 'Global Security Saved', 'rest-api-firewall' ),
+			successMessage: __(
+				'Global security settings saved successfully.',
+				'rest-api-firewall'
+			),
+			confirmMessage: __(
+				'Save global security settings?',
+				'rest-api-firewall'
+			),
+		},
 	};
 
 	const PANEL_SAVE_GROUP = {
@@ -197,6 +209,8 @@ function AppContent() {
 		5: 'models_properties',
 		6: 'settings_route',
 		7: 'webhook',
+		9: 'theme',
+		14: 'global_security',
 	};
 	if ( hasValidLicense ) {
 		delete PANEL_SAVE_GROUP[ 1 ];
@@ -328,6 +342,12 @@ function AppContent() {
 					{ panelGroup === 12 && hasValidLicense && <Logs /> }
 
 					{ panelGroup === 13 && hasValidLicense && <Automations /> }
+
+					{ panelGroup === 14 && (
+							<GlobalSecurity 
+							form={ form }
+							setField={ setField } /> 
+					) }
 
 					{ panelGroup === 9 && (
 						<ThemeSettings
