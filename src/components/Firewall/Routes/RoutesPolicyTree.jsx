@@ -14,6 +14,7 @@ import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
 import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
+import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -38,6 +39,8 @@ export default function RoutesPolicyTree( { form, setField } ) {
 		rate_limit,
 		rate_limit_time,
 		hide_user_routes,
+		hide_batch_routes,
+		hide_oembed_routes,
 		disabled_methods,
 		disabled_post_types,
 	} = form;
@@ -274,69 +277,61 @@ export default function RoutesPolicyTree( { form, setField } ) {
 
 	return (
 		<Box sx={ { minHeight: 352, minWidth: '100%' } }>
-			<Stack
-				direction="row"
-				justifyContent="space-between"
-				alignItems="center"
-			>
-				<Stack direction="row" alignItems="center" gap={ 1 }>
-					<Typography
-						variant="caption"
-						sx={ {
-							display: 'block',
-							textTransform: 'uppercase',
-							letterSpacing: 0.5,
-							fontSize: '0.75rem',
-							color: 'text.secondary',
-						} }
-					>
-						{ __( 'Per-Route Settings', 'rest-api-firewall' ) }
-					</Typography>
+			<Toolbar disableGutters sx={ { gap: 1.5, mb: 2, flexWrap: 'wrap', minHeight: '0 !important' } }>
+				<Typography
+					variant="caption"
+					sx={ {
+						textTransform: 'uppercase',
+						letterSpacing: 0.5,
+						fontSize: '0.75rem',
+						color: 'text.secondary',
+						fontWeight: 600,
+					} }
+				>
+					{ __( 'Per-Route Settings', 'rest-api-firewall' ) }
+				</Typography>
 
-					{ customCount > 0 && (
-						<Chip
-							label={ `${ customCount } custom` }
-							size="small"
-							color="info"
-							variant="outlined"
-							sx={ { fontSize: '0.65rem', height: 18, px: 0.5 } }
-						/>
-					) }
-					{ customCount > 0 && (
-						<Tooltip
-							title={ __(
-								'Reset per-route settings',
-								'rest-api-firewall'
-							) }
-							placement="right"
-						>
-							<Button
-								onClick={ () =>
-									dispatch( { type: 'RESET_ALL_OVERRIDES' } )
-								}
-								size="small"
-							>
-								{ __('Reset', 'rest-api-firewall')}
-							</Button>
-						</Tooltip>
-					) }
-				</Stack>
+				{ customCount > 0 && (
+					<Chip
+						label={ `${ customCount } custom` }
+						size="small"
+						color="info"
+						variant="outlined"
+						sx={ { fontSize: '0.65rem', height: 18, px: 0.5 } }
+					/>
+				) }
 
-				<Stack direction="row" alignItems="center">
-					<Tooltip
-						title={ __( 'Refresh Routes', 'rest-api-firewall' ) }
-						placement="left"
-					>
-						<IconButton onClick={ loadRoutes }>
-							<RefreshIcon />
-						</IconButton>
-					</Tooltip>
-				</Stack>
-			</Stack>
+				<Box sx={ { flexGrow: 1 } } />
+
+				<Button
+					startIcon={ <ReplayIcon /> }
+					size="small"
+					disabled={ customCount === 0 }
+					onClick={ () => dispatch( { type: 'RESET_ALL_OVERRIDES' } ) }
+				>
+					{ __( 'Reset All', 'rest-api-firewall' ) }
+				</Button>
+
+				<Tooltip
+					title={ __( 'Refresh Routes', 'rest-api-firewall' ) }
+					placement="left"
+				>
+					<IconButton onClick={ loadRoutes } disabled={ loading }>
+						<RefreshIcon />
+					</IconButton>
+				</Tooltip>
+			</Toolbar>
 
 			<RichTreeView
 				items={ nodes }
 				slots={ { item: CustomTreeItem } }
+				sx={ {
+					'& .MuiTreeItem-group': {
+						ml: 2,
+						borderLeft: '2px solid',
+						borderColor: 'divider',
+					},
+				} }
 				slotProps={ {
 					item: {
 						toggleNodeSetting: handleToggle,
@@ -350,8 +345,8 @@ export default function RoutesPolicyTree( { form, setField } ) {
 						enforce_rate_limit,
 						rate_limit,
 						rate_limit_time,
-						hide_user_routes,
-						disabled_methods: disabled_methods || [],
+						hide_user_routes,					hide_batch_routes,
+					hide_oembed_routes,						disabled_methods: disabled_methods || [],
 						disabled_post_type_routes: disabledPostTypeRoutes,
 						expandedItems,
 						hasValidLicense,

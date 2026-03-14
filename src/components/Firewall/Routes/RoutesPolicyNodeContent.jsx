@@ -47,6 +47,8 @@ export const CustomTreeItem = forwardRef(
 						rate_limit: props.rate_limit,
 						rate_limit_time: props.rate_limit_time,
 						hide_user_routes: props.hide_user_routes,
+						hide_batch_routes: props.hide_batch_routes,
+						hide_oembed_routes: props.hide_oembed_routes,
 						disabled_methods: props.disabled_methods,
 						disabled_post_type_routes:
 							props.disabled_post_type_routes,
@@ -72,6 +74,8 @@ export function NodeContent( {
 	rate_limit,
 	rate_limit_time,
 	hide_user_routes,
+	hide_batch_routes,
+	hide_oembed_routes,
 	disabled_methods,
 	disabled_post_type_routes,
 	expandedItems,
@@ -108,6 +112,17 @@ export function NodeContent( {
 		node.route?.startsWith( '/wp/v2/users' )
 	);
 
+	const isBatchRoute = !! (
+		node.path?.startsWith( '/wp/v2/batch' ) ||
+		node.path?.startsWith( '/batch/v1' ) ||
+		node.route?.startsWith( '/batch/v1' )
+	);
+
+	const isOembedRoute = !! (
+		node.path?.startsWith( '/oembed' ) ||
+		node.route?.startsWith( '/oembed' )
+	);
+
 	const isMethodGloballyDisabled =
 		!! node.isMethod &&
 		( disabled_methods || [] ).includes( node.method?.toLowerCase() );
@@ -120,6 +135,8 @@ export function NodeContent( {
 	const disabledIsGlobal =
 		! isCustom &&
 		( ( !! hide_user_routes && isUserRoute ) ||
+			( !! hide_batch_routes && isBatchRoute ) ||
+			( !! hide_oembed_routes && isOembedRoute ) ||
 			isMethodGloballyDisabled ||
 			isPostTypeGloballyDisabled );
 
@@ -211,13 +228,16 @@ export function NodeContent( {
 								isDisabled && node.isMethod
 									? 'default'
 									: 'pointer',
-							filter:
-								isDisabled && node.isMethod
-									? 'grayscale(1) opacity(0.6)'
-									: 'none',
 						} }
 					>
-						{ children }
+
+						<Stack
+							direction="row"
+							alignItems="center"
+							sx={ { opacity: isDisabled ? 0.45 : 1 } }
+						>
+							{ children }
+						</Stack>
 
 						{ node.permission && (
 							<Chip
@@ -236,27 +256,61 @@ export function NodeContent( {
 							/>
 						) }
 
-						{ modifiedCount > 0 && (
-							<Box
-								component="span"
-								sx={ {
-									bgcolor: 'info.main',
-									color: '#fff',
-									borderRadius: '50%',
-									width: 18,
-									height: 18,
-									display: 'inline-flex',
-									alignItems: 'center',
-									justifyContent: 'center',
-									fontSize: '0.65rem',
-									fontWeight: 700,
-									lineHeight: 1,
-									flexShrink: 0,
-								} }
-							>
-								{ modifiedCount }
-							</Box>
-						) }
+						<Stack
+							direction="row"
+							alignItems="center"
+							gap={ 0.5 }
+						>
+							{ modifiedCount > 0 && (
+								<Box
+									component="span"
+									sx={ {
+										bgcolor: 'info.main',
+										color: '#fff',
+										borderRadius: '50%',
+										width: 18,
+										height: 18,
+										display: 'inline-flex',
+										alignItems: 'center',
+										justifyContent: 'center',
+										fontSize: '0.65rem',
+										fontWeight: 700,
+										lineHeight: 1,
+										flexShrink: 0,
+									} }
+								>
+									{ modifiedCount }
+								</Box>
+							) }
+
+							{ isDisabled && (
+								<Tooltip title={ __( 'Disabled in global options', 'rest-api-firewall' ) }>
+									<Box
+										component="span"
+										sx={ {
+											color: 'text.disabled',
+											borderRadius: '50%',
+											width: 18,
+											height: 18,
+											display: 'inline-flex',
+											alignItems: 'center',
+											justifyContent: 'center',
+											fontSize: '0.65rem',
+											fontWeight: 700,
+											lineHeight: 1,
+											flexShrink: 0,
+										} }
+									>
+										<RemoveCircleOutlineIcon
+											color="inherit"
+											sx={{
+												fontSize: 14,
+											}}
+										/>
+									</Box>
+								</Tooltip>
+							) }
+						</Stack>
 
 						{ node.isMethod && node.route && (
 							<TestPolicy
@@ -494,8 +548,16 @@ export function NodeContent( {
 								? __(
 										'Users routes disabled globally — pin custom settings to override',
 										'rest-api-firewall'
-								  )
-								: isPostTypeGloballyDisabled
+								  )							: hide_batch_routes && isBatchRoute
+							? __(
+									'Batch routes disabled globally — pin custom settings to override',
+									'rest-api-firewall'
+							  )
+							: hide_oembed_routes && isOembedRoute
+							? __(
+									'oEmbed routes disabled globally — pin custom settings to override',
+									'rest-api-firewall'
+							  )								: isPostTypeGloballyDisabled
 								? __(
 										'Post type disabled globally — pin custom settings to override',
 										'rest-api-firewall'

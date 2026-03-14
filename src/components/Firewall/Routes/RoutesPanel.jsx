@@ -9,7 +9,7 @@ import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 
-import TuneIcon from '@mui/icons-material/Tune';
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 
 import GlobalRoutesPolicy from './GlobalRoutesPolicy';
@@ -118,10 +118,12 @@ export default function RoutesPanel( { form, setField } ) {
 	 */
 	const effectiveForm = hasValidLicense ? {
 		...form,
-		enforce_auth:      proSettings.enforce_auth,
-		enforce_rate_limit: proSettings.enforce_rate_limit,
-		hide_user_routes:  proSettings.hide_user_routes,
-		disabled_methods:  proSettings.disabled_methods,
+		enforce_auth:        proSettings.enforce_auth,
+		enforce_rate_limit:  proSettings.enforce_rate_limit,
+		hide_user_routes:   proSettings.hide_user_routes,
+		hide_batch_routes:  proSettings.hide_batch_routes,
+		hide_oembed_routes: proSettings.hide_oembed_routes,
+		disabled_methods:   proSettings.disabled_methods,
 		disabled_post_types: proSettings.disabled_post_types,
 	} : form;
 
@@ -137,7 +139,7 @@ export default function RoutesPanel( { form, setField } ) {
             } }
 			>
 				<Tab
-					icon={ <TuneIcon /> }
+					icon={ <AccountTreeOutlinedIcon /> }
 					iconPosition="start"
 					label={ __( 'Global Options', 'rest-api-firewall' ) }
 				/>

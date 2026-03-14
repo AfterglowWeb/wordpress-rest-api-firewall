@@ -133,7 +133,7 @@ export default function GlobalRoutesPolicy( { form, setField, proSettings, onPro
 										onChange={ onProChange }
 									/>
 								}
-								label={ __( 'Disable /wp/v2/oembed/1.0/* Routes', 'rest-api-firewall' ) }
+								label={ __( 'Disable oembed/1.0/* Routes', 'rest-api-firewall' ) }
 							/>
 						</FormControl>
 
@@ -148,7 +148,7 @@ export default function GlobalRoutesPolicy( { form, setField, proSettings, onPro
 										onChange={ onProChange }
 									/>
 								}
-								label={ __( 'Disable /wp/v2/batch/v1 Routes', 'rest-api-firewall' ) }
+								label={ __( 'Disable batch/v1 Routes', 'rest-api-firewall' ) }
 							/>
 						</FormControl>
 					</Stack>
