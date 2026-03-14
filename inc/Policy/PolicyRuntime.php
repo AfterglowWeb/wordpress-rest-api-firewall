@@ -10,6 +10,10 @@ class PolicyRuntime {
 
 	protected static $cache = array();
 
+	public static function clear_cache(): void {
+		self::$cache = array();
+	}
+
 	public static function resolve_for_request( WP_REST_Request $request ): array {
 
 		$route  = $request->get_route();
@@ -118,7 +122,17 @@ class PolicyRuntime {
 
 	protected static function resolve_settings( array $node_settings_chain, array $route_settings ): array {
 
-		$firewall_options       = CoreOptions::read_options();
+		$firewall_options = CoreOptions::read_options();
+
+		/**
+		 * Allow per-application settings to override the global firewall options
+		 * used during policy resolution (e.g. enforce_auth, enforce_rate_limit).
+		 * The pro plugin hooks here to inject the current application's settings.
+		 *
+		 * @param array $firewall_options Merged global + per-app options.
+		 */
+		$firewall_options = apply_filters( 'rest_api_firewall_runtime_options', $firewall_options );
+
 		$global_enforce_auth    = (bool) ( $firewall_options['enforce_auth'] ?? false );
 		$global_enforce_rate    = (bool) ( $firewall_options['enforce_rate_limit'] ?? false );
 		$global_rate_limit      = (int) ( $firewall_options['rate_limit'] ?? 30 );

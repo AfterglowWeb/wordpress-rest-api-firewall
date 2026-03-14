@@ -317,6 +317,7 @@ export function NodeContent( {
 								route={ node.route }
 								method={ node.method || 'GET' }
 								hasChildren={ hasChildren }
+								hasUsers={ ownUserCount > 0 }
 							/>
 						) }
 					</Stack>

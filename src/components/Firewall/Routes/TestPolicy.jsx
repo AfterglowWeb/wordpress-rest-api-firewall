@@ -15,16 +15,81 @@ import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import Box from '@mui/material/Box';
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 
-export default function TestPolicy( { route, method, hasChildren = false } ) {
+const METHOD_COLOR = {
+	GET: 'primary',
+	POST: 'success',
+	PUT: 'warning',
+	PATCH: 'warning',
+	DELETE: 'error',
+};
+
+function StatusBadge( { status } ) {
+	const color =
+		status >= 200 && status < 300
+			? 'success'
+			: status >= 400
+			? 'error'
+			: 'default';
+	return (
+		<Chip
+			label={ status || '—' }
+			size="small"
+			color={ color }
+			variant="outlined"
+			sx={ { fontFamily: 'monospace', fontWeight: 700 } }
+		/>
+	);
+}
+
+function DataPanel( { label, data, bgcolor } ) {
+	return (
+		<Box sx={ { flex: 1, minWidth: 0 } }>
+			<Stack
+				direction="row"
+				spacing={ 1 }
+				alignItems="center"
+				sx={ { mb: 0.5 } }
+			>
+				<Typography variant="caption" fontWeight={ 600 }>
+					{ label }
+				</Typography>
+				{ data?.status && <StatusBadge status={ data.status } /> }
+			</Stack>
+			<Box
+				component="pre"
+				sx={ {
+					p: 1.5,
+					bgcolor: bgcolor || 'grey.50',
+					borderRadius: 1,
+					overflowX: 'auto',
+					fontSize: '0.68rem',
+					lineHeight: 1.5,
+					m: 0,
+					whiteSpace: 'pre-wrap',
+					wordBreak: 'break-all',
+					maxHeight: 260,
+					overflowY: 'auto',
+				} }
+			>
+				{ data?.body !== undefined
+					? JSON.stringify( data.body, null, 2 )
+					: '—' }
+			</Box>
+		</Box>
+	);
+}
+
+export default function TestPolicy( {
+	route,
+	method,
+	hasChildren = false,
+	hasUsers = false,
+} ) {
 	const { adminData } = useAdminData();
 	const { __ } = wp.i18n || {};
 
@@ -33,13 +98,8 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 	const [ results, setResults ] = useState( null );
 	const [ error, setError ] = useState( null );
 
-	const [ options, setOptions ] = useState( {
-		test_sub_routes: false,
-		use_auth: true,
-		use_rate_limit: true,
-		use_disabled: true,
-		fetch_data: false,
-	} );
+	const [ testSubRoutes, setTestSubRoutes ] = useState( false );
+	const [ bypassUsers, setBypassUsers ] = useState( false );
 
 	const handleOpen = ( e ) => {
 		e.stopPropagation();
@@ -50,13 +110,6 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 
 	const handleClose = () => {
 		setOpen( false );
-	};
-
-	const handleOptionChange = ( key ) => ( e ) => {
-		setOptions( ( prev ) => ( {
-			...prev,
-			[ key ]: e.target.checked,
-		} ) );
 	};
 
 	const runTest = async () => {
@@ -76,11 +129,8 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 					nonce: adminData.nonce,
 					route,
 					method,
-					test_sub_routes: options.test_sub_routes ? '1' : '0',
-					use_auth: options.use_auth ? '1' : '0',
-					use_rate_limit: options.use_rate_limit ? '1' : '0',
-					use_disabled: options.use_disabled ? '1' : '0',
-					fetch_data: options.fetch_data ? '1' : '0',
+					test_sub_routes: testSubRoutes ? '1' : '0',
+					bypass_users: bypassUsers ? '1' : '0',
 				} ),
 			} );
 
@@ -103,126 +153,36 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 		}
 	};
 
-	const getTestIcon = ( test ) => {
-		if ( test.skip ) {
+	const renderTestIcon = ( test ) => {
+		if ( test?.skip ) {
 			return <RemoveCircleIcon color="disabled" fontSize="small" />;
 		}
-		if ( test.pass ) {
+		if ( test?.pass ) {
 			return <CheckCircleIcon color="success" fontSize="small" />;
 		}
 		return <CancelIcon color="error" fontSize="small" />;
 	};
 
-	const getTestLabel = ( testName ) => {
-		switch ( testName ) {
-			case 'auth':
-				return __( 'Authentication', 'rest-api-firewall' );
-			case 'rate_limit':
-				return __( 'Rate Limit', 'rest-api-firewall' );
-			case 'disabled':
-				return __( 'Disabled', 'rest-api-firewall' );
-			default:
-				return testName;
-		}
-	};
-
-	const renderTestResult = ( testName, test ) => {
-		return (
-			<Stack
-				key={ testName }
-				direction="row"
-				spacing={ 1 }
-				alignItems="center"
-				sx={ { py: 0.5 } }
-			>
-				{ getTestIcon( test ) }
-				<Typography
-					variant="body2"
-					sx={ { fontWeight: 500, minWidth: 100 } }
-				>
-					{ getTestLabel( testName ) }
-				</Typography>
-				<Typography variant="body2" color="text.secondary">
-					{ test.skip ? test.reason : test.message }
-				</Typography>
-			</Stack>
-		);
-	};
-
-	const renderPolicyInfo = ( policy ) => {
-		return (
-			<Stack
-				direction="row"
-				spacing={ 1 }
-				flexWrap="wrap"
-				sx={ { mb: 1 } }
-			>
-				<Chip
-					label={
-						policy.state
-							? __( 'Enabled', 'rest-api-firewall' )
-							: __( 'Disabled', 'rest-api-firewall' )
-					}
-					size="small"
-					color={ policy.state ? 'success' : 'error' }
-					variant="outlined"
-				/>
-				<Chip
-					label={
-						policy.protect
-							? __( 'Protected', 'rest-api-firewall' )
-							: __( 'Public', 'rest-api-firewall' )
-					}
-					size="small"
-					color={ policy.protect ? 'warning' : 'default' }
-					variant="outlined"
-				/>
-				{ policy.rate_limit && (
-					<Chip
-						label={ `${ policy.rate_limit } req/${ policy.rate_limit_time }s` }
-						size="small"
-						color="info"
-						variant="outlined"
-					/>
-				) }
-			</Stack>
-		);
-	};
-
 	const renderResults = () => {
-		if ( ! results || results.length === 0 ) {
-			return null;
-		}
+		if ( ! results || results.length === 0 ) return null;
 
 		return (
-			<Stack spacing={ 1 } sx={ { mt: 2 } }>
-				<Typography variant="subtitle2" fontWeight={ 600 }>
-					{ __( 'Results', 'rest-api-firewall' ) } ({ results.length }
-					)
-				</Typography>
-
+			<Stack spacing={ 2 } sx={ { mt: 1 } }>
 				{ results.map( ( result, index ) => (
-					<Accordion
-						key={ index }
-						defaultExpanded={ results.length === 1 }
-					>
-						<AccordionSummary expandIcon={ <ExpandMoreIcon /> }>
+					<Box key={ index }>
+						{ results.length > 1 && (
 							<Stack
 								direction="row"
 								spacing={ 1 }
 								alignItems="center"
+								sx={ { mb: 1 } }
 							>
 								<Chip
 									label={ result.method }
 									size="small"
 									color={
-										result.method === 'GET'
-											? 'primary'
-											: result.method === 'POST'
-											? 'success'
-											: result.method === 'DELETE'
-											? 'error'
-											: 'default'
+										METHOD_COLOR[ result.method ] ||
+										'default'
 									}
 								/>
 								<Typography
@@ -232,63 +192,90 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 									{ result.route }
 								</Typography>
 							</Stack>
-						</AccordionSummary>
-						<AccordionDetails>
-							<Typography
-								variant="caption"
-								color="text.secondary"
-								sx={ { mb: 1 } }
-							>
-								{ __( 'Policy:', 'rest-api-firewall' ) }
-							</Typography>
-							{ renderPolicyInfo( result.policy ) }
+						) }
 
-							<Divider sx={ { my: 1 } } />
-
-							<Typography
-								variant="caption"
-								color="text.secondary"
-							>
-								{ __( 'Tests:', 'rest-api-firewall' ) }
-							</Typography>
-							<Box sx={ { mt: 0.5 } }>
-								{ Object.entries( result.tests ).map(
-									( [ testName, test ] ) =>
-										renderTestResult( testName, test )
-								) }
-							</Box>
-
-							{ result.live_data && (
-								<>
-									<Divider sx={ { my: 1 } } />
-									<Typography
-										variant="caption"
-										color="text.secondary"
-										sx={ { mb: 0.5, display: 'block' } }
-									>
-										{ __( 'Live response', 'rest-api-firewall' ) } ({ result.live_data.status })
-									</Typography>
-									<Box
-										component="pre"
-										sx={ {
-											p: 1.5,
-											bgcolor: 'grey.50',
-											borderRadius: 1,
-											overflowX: 'auto',
-											fontSize: '0.68rem',
-											lineHeight: 1.5,
-											m: 0,
-											whiteSpace: 'pre-wrap',
-											wordBreak: 'break-all',
-											maxHeight: 300,
-										} }
-									>
-										{ JSON.stringify( result.live_data.body, null, 2 ) }
-									</Box>
-								</>
+						{ /* Policy summary */ }
+						<Stack
+							direction="row"
+							spacing={ 0.5 }
+							flexWrap="wrap"
+							sx={ { mb: 1 } }
+						>
+							<Chip
+								label={
+									result.policy.state
+										? __( 'Enabled', 'rest-api-firewall' )
+										: __( 'Disabled', 'rest-api-firewall' )
+								}
+								size="small"
+								color={ result.policy.state ? 'success' : 'error' }
+								variant="outlined"
+							/>
+							<Chip
+								label={
+									result.policy.protect
+										? __( 'Protected', 'rest-api-firewall' )
+										: __( 'Public', 'rest-api-firewall' )
+								}
+								size="small"
+								color={
+									result.policy.protect ? 'warning' : 'default'
+								}
+								variant="outlined"
+							/>
+							{ result.policy.rate_limit && (
+								<Chip
+									label={ `${ result.policy.rate_limit } req/${ result.policy.rate_limit_time }s` }
+									size="small"
+									color="info"
+									variant="outlined"
+								/>
 							) }
-						</AccordionDetails>
-					</Accordion>
+						</Stack>
+
+						{ /* Tests row */ }
+						<Stack direction="row" spacing={ 2 } sx={ { mb: 1.5 } }>
+							{ Object.entries( result.tests ).map(
+								( [ name, test ] ) => (
+									<Stack
+										key={ name }
+										direction="row"
+										spacing={ 0.5 }
+										alignItems="center"
+									>
+										{ renderTestIcon( test ) }
+										<Typography
+											variant="caption"
+											color="text.secondary"
+										>
+											{ name === 'auth'
+												? __( 'Auth', 'rest-api-firewall' )
+												: name === 'rate_limit'
+												? __( 'Rate', 'rest-api-firewall' )
+												: __(
+														'Disabled',
+														'rest-api-firewall'
+												  ) }
+										</Typography>
+									</Stack>
+								)
+							) }
+						</Stack>
+
+						{ /* Raw + Result panels */ }
+						<Stack direction="row" spacing={ 1.5 }>
+							<DataPanel
+								label={ __( 'Raw', 'rest-api-firewall' ) }
+								data={ result.raw_data }
+								bgcolor="grey.50"
+							/>
+							<DataPanel
+								label={ __( 'Result', 'rest-api-firewall' ) }
+								data={ result.result_data }
+								bgcolor="primary.50"
+							/>
+						</Stack>
+					</Box>
 				) ) }
 			</Stack>
 		);
@@ -319,136 +306,75 @@ export default function TestPolicy( { route, method, hasChildren = false } ) {
 
 				<DialogContent>
 					<Stack spacing={ 2 }>
-						<Box>
+						{ /* Route header */ }
+						<Stack
+							direction="row"
+							spacing={ 1 }
+							alignItems="center"
+						>
+							<Chip
+								label={ method }
+								size="small"
+								color={ METHOD_COLOR[ method ] || 'default' }
+							/>
 							<Typography
-								variant="subtitle2"
-								color="text.secondary"
+								variant="body1"
+								sx={ { fontFamily: 'monospace' } }
 							>
-								{ __( 'Route', 'rest-api-firewall' ) }
+								{ route }
 							</Typography>
-							<Stack
-								direction="row"
-								spacing={ 1 }
-								alignItems="center"
-							>
-								<Chip
-									label={ method }
-									size="small"
-									color={
-										method === 'GET'
-											? 'primary'
-											: method === 'POST'
-											? 'success'
-											: method === 'DELETE'
-											? 'error'
-											: 'default'
-									}
-								/>
-								<Typography
-									variant="body1"
-									sx={ { fontFamily: 'monospace' } }
-								>
-									{ route }
-								</Typography>
-							</Stack>
-						</Box>
+						</Stack>
 
-						<Divider />
-
-						<Box>
-							<Typography variant="subtitle2" sx={ { mb: 1 } }>
-								{ __( 'Test Options', 'rest-api-firewall' ) }
-							</Typography>
-
-							<Stack spacing={ 0.5 }>
-								{ hasChildren && (
-									<FormControlLabel
-										control={
-											<Checkbox
-												checked={
-													options.test_sub_routes
-												}
-												onChange={ handleOptionChange(
-													'test_sub_routes'
-												) }
-												size="small"
-											/>
-										}
-										label={ __(
-											'Include sub-routes',
-											'rest-api-firewall'
-										) }
-									/>
-								) }
-
-								<FormControlLabel
-									control={
-										<Checkbox
-											checked={ options.use_auth }
-											onChange={ handleOptionChange(
-												'use_auth'
+						{ /* Options */ }
+						{ ( hasChildren || hasUsers ) && (
+							<>
+								<Divider />
+								<Stack spacing={ 0.5 }>
+									{ hasChildren && (
+										<FormControlLabel
+											control={
+												<Checkbox
+													checked={ testSubRoutes }
+													onChange={ ( e ) =>
+														setTestSubRoutes(
+															e.target.checked
+														)
+													}
+													size="small"
+												/>
+											}
+											label={ __(
+												'Include sub-routes',
+												'rest-api-firewall'
 											) }
-											size="small"
 										/>
-									}
-									label={ __(
-										'Test authentication',
-										'rest-api-firewall'
 									) }
-								/>
-
-								<FormControlLabel
-									control={
-										<Checkbox
-											checked={ options.use_rate_limit }
-											onChange={ handleOptionChange(
-												'use_rate_limit'
+									{ hasUsers && (
+										<FormControlLabel
+											control={
+												<Checkbox
+													checked={ bypassUsers }
+													onChange={ ( e ) =>
+														setBypassUsers(
+															e.target.checked
+														)
+													}
+													size="small"
+												/>
+											}
+											label={ __(
+												'Bypass users settings',
+												'rest-api-firewall'
 											) }
-											size="small"
 										/>
-									}
-									label={ __(
-										'Test rate limiting',
-										'rest-api-firewall'
 									) }
-								/>
-
-								<FormControlLabel
-									control={
-										<Checkbox
-											checked={ options.use_disabled }
-											onChange={ handleOptionChange(
-												'use_disabled'
-											) }
-											size="small"
-										/>
-									}
-									label={ __(
-										'Test disabled state',
-										'rest-api-firewall'
-									) }
-								/>
-								{ method === 'GET' && (
-									<FormControlLabel
-										control={
-											<Checkbox
-												checked={ options.fetch_data }
-												onChange={ handleOptionChange(
-													'fetch_data'
-												) }
-												size="small"
-											/>
-										}
-										label={ __(
-											'Fetch real data (authenticated)',
-											'rest-api-firewall'
-										) }
-									/>
-								) }
-							</Stack>
-						</Box>
+								</Stack>
+							</>
+						) }
 
 						{ error && <Alert severity="error">{ error }</Alert> }
+
+						{ results && <Divider /> }
 
 						{ renderResults() }
 					</Stack>

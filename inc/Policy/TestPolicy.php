@@ -32,10 +32,7 @@ class TestPolicy {
 		$route           = isset( $_POST['route'] ) ? sanitize_text_field( wp_unslash( $_POST['route'] ) ) : '';
 		$method          = isset( $_POST['method'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_POST['method'] ) ) ) : 'GET';
 		$test_sub_routes = isset( $_POST['test_sub_routes'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['test_sub_routes'] ) ) : false;
-		$use_auth        = isset( $_POST['use_auth'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['use_auth'] ) ) : true;
-		$use_rate_limit  = isset( $_POST['use_rate_limit'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['use_rate_limit'] ) ) : true;
-		$use_disabled    = isset( $_POST['use_disabled'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['use_disabled'] ) ) : true;
-		$fetch_data      = isset( $_POST['fetch_data'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['fetch_data'] ) ) : false;
+		$bypass_users    = isset( $_POST['bypass_users'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['bypass_users'] ) ) : false;
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		if ( empty( $route ) ) {
@@ -53,13 +50,7 @@ class TestPolicy {
 			wp_send_json_error( array( 'message' => 'No routes found to test' ), 404 );
 		}
 
-		$results = $this->run_tests(
-			$routes_to_test,
-			$use_auth,
-			$use_rate_limit,
-			$use_disabled,
-			$fetch_data
-		);
+		$results = $this->run_tests( $routes_to_test, $bypass_users );
 
 		wp_send_json_success( $results, 200 );
 	}
@@ -124,44 +115,37 @@ class TestPolicy {
 	}
 
 
-	protected function run_tests( array $routes, bool $use_auth, bool $use_rate_limit, bool $use_disabled, bool $fetch_data = false ): array {
+	protected function run_tests( array $routes, bool $bypass_users ): array {
 		$results = array();
 
 		foreach ( $routes as $route_info ) {
 			$route  = $route_info['route'];
 			$method = $route_info['method'];
 
-			$result = array(
-				'route'  => $route,
-				'method' => $method,
-				'policy' => $this->get_policy_for_route( $route, $method ),
-				'tests'  => array(),
+			PolicyRuntime::clear_cache();
+
+			$policy = $this->get_policy_for_route( $route, $method );
+
+			$results[] = array(
+				'route'        => $route,
+				'method'       => $method,
+				'policy'       => $policy,
+				'bypass_users' => $bypass_users,
+				'tests'        => array(
+					'disabled'   => $this->test_disabled( $route, $method, $policy ),
+					'auth'       => $this->test_auth( $route, $method, $policy ),
+					'rate_limit' => $this->test_rate_limit( $route, $method, $policy ),
+				),
+				'raw_data'    => $this->fetch_data( $route, false ),
+				'result_data' => $this->fetch_data( $route, true ),
 			);
-
-			if ( $use_disabled ) {
-				$result['tests']['disabled'] = $this->test_disabled( $route, $method, $result['policy'] );
-			}
-
-			if ( $use_auth ) {
-				$result['tests']['auth'] = $this->test_auth( $route, $method, $result['policy'] );
-			}
-
-			if ( $use_rate_limit ) {
-				$result['tests']['rate_limit'] = $this->test_rate_limit( $route, $method, $result['policy'] );
-			}
-
-			if ( $fetch_data && 'GET' === $method ) {
-				$result['live_data'] = $this->fetch_live_data( $route );
-			}
-
-			$results[] = $result;
 		}
 
 		return $results;
 	}
 
-	protected function fetch_live_data( string $route ): array {
-		$response    = $this->make_request( $route, 'GET', true );
+	protected function fetch_data( string $route, bool $with_auth ): array {
+		$response    = $this->make_request( $route, 'GET', $with_auth );
 		$status_code = wp_remote_retrieve_response_code( $response );
 		$body_raw    = wp_remote_retrieve_body( $response );
 		$body        = json_decode( $body_raw, true );

@@ -65,6 +65,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 
 	const loadRoutes = useCallback( async () => {
 		setLoading( true );
+		usersLoadedRef.current = false;
 		try {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
@@ -82,10 +83,10 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 
 			if ( result?.success ) {
 				setTreeData( result.data.tree );
-				if ( Array.isArray( result.data.users ) ) {
-					setUsersData( result.data.users );
-					usersLoadedRef.current = true;
-				}
+				// Do NOT pre-load users from the tree response: the tree uses
+				// find_first_active() and may belong to a different application.
+				// Users are loaded lazily via get_route_policy_users which
+				// correctly uses selectedApplicationId.
 			}
 		} catch ( error ) {
 			setErrorMessage(
