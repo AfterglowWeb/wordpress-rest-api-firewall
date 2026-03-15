@@ -408,7 +408,7 @@ export function NodeContent( {
 						} }
 						sx={ { opacity: 0.5 } }
 					>
-						<AccountTreeOutlinedIcon fontSize="small" />
+						<RuleIcon fontSize="small" />
 					</IconButton>
 				</Tooltip>
 			) }
