@@ -37,13 +37,7 @@ class WordpressAuth {
 		$user   = wp_get_current_user();
 		$exists = $user && $user->exists();
 		$has_cap = $exists && $user->has_cap( 'rest_firewall_api_access' );
-		error_log( sprintf(
-			'[WordpressAuth::validate] user_id=%d exists=%s has_cap=rest_firewall_api_access:%s → result=%s',
-			$exists ? $user->ID : 0,
-			$exists ? 'yes' : 'no',
-			$has_cap ? 'yes' : 'no',
-			$has_cap ? 'true' : 'false'
-		) );
+
 		return $has_cap;
 	}
 }

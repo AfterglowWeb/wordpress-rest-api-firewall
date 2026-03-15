@@ -98,28 +98,13 @@ class Firewall {
 		$is_test  = self::is_test_request();
 		$is_admin = is_user_logged_in() && current_user_can( 'manage_options' );
 
-		error_log( sprintf(
-			'[Firewall::request] route=%s method=%s | is_test=%s is_admin=%s',
-			$request->get_route(),
-			$request->get_method(),
-			$is_test ? 'yes' : 'no',
-			$is_admin ? 'yes' : 'no'
-		) );
 
 		if ( $is_admin && ! $is_test ) {
-			error_log( '[Firewall::request] → admin bypass' );
 			return $request;
 		}
 
 		if ( CoreOptions::read_option( 'firewall_routes_policy_enabled' ) ) {
 			$policy = PolicyRuntime::resolve_for_request( $request );
-
-			error_log( sprintf(
-				'[Firewall::request] policy_enabled=yes | state=%s protect=%s | policy=%s',
-				( $policy['state'] ?? true ) ? 'enabled' : 'DISABLED',
-				( $policy['protect'] ?? false ) ? 'yes' : 'no',
-				wp_json_encode( $policy )
-			) );
 
 			if ( ! $policy['state'] ) {
 				$error = new WP_Error(
@@ -140,27 +125,16 @@ class Firewall {
 
 			$enforce_auth_global = CoreOptions::read_option( 'enforce_auth' );
 
-			error_log( sprintf(
-				'[Firewall::request] enforce_auth_global=%s protect=%s pro_auth_owner=%s → per_route_auth_check=%s',
-				$enforce_auth_global ? 'yes' : 'no',
-				( $policy['protect'] ?? false ) ? 'yes' : 'no',
-				self::$pro_auth_owner ? 'yes' : 'no',
-				( ( $policy['protect'] ?? false ) && ! $enforce_auth_global && ! self::$pro_auth_owner ) ? 'WILL CHECK' : 'skip'
-			) );
 
 			if ( $policy['protect'] && ! $enforce_auth_global && ! self::$pro_auth_owner ) {
 				if ( ! WordpressAuth::validate_wp_application_password() ) {
-					error_log( '[Firewall::request] → per-route auth FAILED → 401' );
 					return new WP_Error(
 						'rest_forbidden',
 						esc_html__( 'Authentication required.', 'rest-api-firewall' ),
 						array( 'status' => 401 )
 					);
 				}
-				error_log( '[Firewall::request] → per-route auth PASSED' );
 			}
-		} else {
-			error_log( '[Firewall::request] policy_enabled=no → skipping policy checks' );
 		}
 
 		$rate_check = self::rate_limit( $request );
@@ -198,25 +172,17 @@ class Firewall {
 		$policy_enabled  = CoreOptions::read_option( 'firewall_routes_policy_enabled' );
 		$enforce_auth    = CoreOptions::read_option( 'enforce_auth' );
 
-		error_log( sprintf(
-			'[Firewall::wordpress_auth] policy_enabled=%s enforce_auth=%s',
-			$policy_enabled ? 'yes' : 'no',
-			$enforce_auth ? 'yes' : 'no'
-		) );
-
 		if ( false === $policy_enabled ) {
 			return $result;
 		}
 
 		if ( false === $enforce_auth ) {
-			error_log( '[Firewall::wordpress_auth] → enforce_auth=false, skipping global auth check' );
 			return $result;
 		}
 
 		$auth_valid = WordpressAuth::validate_wp_application_password();
 
 		if ( false === $auth_valid ) {
-			error_log( '[Firewall::wordpress_auth] → global auth FAILED → 401' );
 			return new WP_Error(
 				'rest_forbidden',
 				esc_html__( 'Authentication required.', 'rest-api-firewall' ),
@@ -224,7 +190,6 @@ class Firewall {
 			);
 		}
 
-		error_log( '[Firewall::wordpress_auth] → global auth PASSED' );
 		return $result;
 	}
 
