@@ -241,9 +241,9 @@ class TestPolicy {
 		$pass        = $is_redirect || $is_error;
 
 		return array(
-			'skip'   => false,
-			'pass'   => $pass,
-			'actual' => $status_code,
+			'skip'    => false,
+			'pass'    => $pass,
+			'actual'  => $status_code,
 			'message' => $pass
 				? ( $is_redirect ? "Disabled route correctly redirects ({$status_code})" : "Disabled route correctly blocked ({$status_code})" )
 				: "Disabled route should be blocked or redirect, got {$status_code}",
@@ -317,7 +317,7 @@ class TestPolicy {
 
 	protected function make_request( string $route, string $method, bool $with_auth = false ) {
 		$test_token = wp_generate_password( 32, false );
-		$test_ctx = array( 'app_id' => null );
+		$test_ctx   = array( 'app_id' => null );
 		if ( ! empty( $this->current_test_application_id ) ) {
 			$test_ctx['app_id'] = $this->current_test_application_id;
 		} elseif ( class_exists( 'cmk\\RestApiFirewallPro\\Application\\ApplicationRepository' ) ) {

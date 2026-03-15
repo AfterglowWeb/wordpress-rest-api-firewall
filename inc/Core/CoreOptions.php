@@ -442,7 +442,6 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-
 			// Module enable toggles — visible in free (as locked), functional with PRO licence.
 			'user_rate_limit_enabled'                   => array(
 				'default_value'     => false,

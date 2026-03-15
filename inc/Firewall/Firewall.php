@@ -98,7 +98,6 @@ class Firewall {
 		$is_test  = self::is_test_request();
 		$is_admin = is_user_logged_in() && current_user_can( 'manage_options' );
 
-
 		if ( $is_admin && ! $is_test ) {
 			return $request;
 		}
@@ -124,7 +123,6 @@ class Firewall {
 			}
 
 			$enforce_auth_global = CoreOptions::read_option( 'enforce_auth' );
-
 
 			if ( $policy['protect'] && ! $enforce_auth_global && ! self::$pro_auth_owner ) {
 				if ( ! WordpressAuth::validate_wp_application_password() ) {
@@ -169,8 +167,8 @@ class Firewall {
 			return $result;
 		}
 
-		$policy_enabled  = CoreOptions::read_option( 'firewall_routes_policy_enabled' );
-		$enforce_auth    = CoreOptions::read_option( 'enforce_auth' );
+		$policy_enabled = CoreOptions::read_option( 'firewall_routes_policy_enabled' );
+		$enforce_auth   = CoreOptions::read_option( 'enforce_auth' );
 
 		if ( false === $policy_enabled ) {
 			return $result;
