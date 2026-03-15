@@ -300,129 +300,129 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 
 			<Box sx={ { display: testRoute ? 'none' : 'block' } }>
 
-			<Toolbar disableGutters sx={ { gap: 1.5, mb: 2, flexWrap: 'wrap', minHeight: '0 !important' } }>
-				<Button
-					startIcon={ <RefreshIcon /> }
-					size="small"
-					onClick={ loadRoutes }
-					disabled={ loading }
-				>
-					{ __( 'Refresh From Server', 'rest-api-firewall' ) }
-				</Button>
-
-				<Stack flex={ 1 } />
-
-				<Stack direction="row" alignItems="center" gap={ 1 }>
-					{ customCount > 0 && (
-						<Chip
-							label={ sprintf( __( '%d per-route settings', 'rest-api-firewall' ), customCount ) }
-							size="small"
-							variant="outlined"
-						/>
-					) }
-
+				<Toolbar disableGutters sx={ { gap: 1.5, mb: 2, flexWrap: 'wrap', minHeight: '0 !important' } }>
 					<Button
-						startIcon={ <SettingsBackupRestoreOutlinedIcon /> }
+						startIcon={ <RefreshIcon /> }
 						size="small"
-						disabled={ customCount === 0 }
-						onClick={ () => dispatch( { type: 'RESET_ALL_OVERRIDES' } ) }
+						onClick={ loadRoutes }
+						disabled={ loading }
 					>
-						{ __( 'Reset Per-route Settings', 'rest-api-firewall' ) }
+						{ __( 'Refresh From Server', 'rest-api-firewall' ) }
 					</Button>
 
-					<Button
-						variant="contained"
-						size="small"
-						disableElevation
-						disabled={ ! isDirty || saving }
-						onClick={ () => setConfirmSaveOpen( true ) }
-					>
-						{ saving
-							? __( 'Saving…', 'rest-api-firewall' )
-							: __( 'Save', 'rest-api-firewall' ) }
-					</Button>
-				</Stack>
-			</Toolbar>
+					<Stack flex={ 1 } />
 
-			<RichTreeView
-				items={ nodes }
-				slots={ { item: CustomTreeItem } }
-				slotProps={ {
-					item: {
-						toggleNodeSetting: handleToggle,
-						overrideNodeSetting: handleOverrideNode,
-						getNodeById,
-						openUsersPopover: hasValidLicense
-							? handleOpenUsersPopover
-							: null,
-						toggleNodeCustom: handleToggleCustom,
-						enforce_auth,
-						enforce_rate_limit,
-						rate_limit,
-						rate_limit_time,
-						hide_user_routes,
-						hide_batch_routes,
-						hide_oembed_routes,
-						disabled_methods: disabled_methods || [],
-						disabled_post_type_routes: disabledPostTypeRoutes,
-						expandedItems,
-						hasValidLicense,
-						usersData,
-						onNavigate,
-						onTest: setTestRoute,
-					},
-				} }
-				expandedItems={ expandedItems }
-				onExpandedItemsChange={ ( _e, ids ) => setExpandedItems( ids ) }
-			/>
-
-			<RoutesPolicyUsersPopover
-				open={ Boolean( popoverAnchor ) }
-				anchorEl={ popoverAnchor }
-				onClose={ handleCloseUsersPopover }
-				usersData={ usersData }
-				usersLoading={ usersLoading }
-				routeIds={ popoverRouteIds }
-				isBulk={ popoverIsBulk }
-				onUserAccessChange={ handleUserAccessChange }
-			/>
-
-			<Dialog
-				open={ confirmSaveOpen }
-				onClose={ () => setConfirmSaveOpen( false ) }
-				maxWidth="xs"
-				fullWidth
-			>
-				<DialogTitle>
-					{ __( 'Save Route Policy', 'rest-api-firewall' ) }
-				</DialogTitle>
-				<DialogContent>
-					<DialogContentText>
-						{ __(
-							'Changing route policies can break your front-end application. Make sure you have tested your configuration before saving.',
-							'rest-api-firewall'
+					<Stack direction="row" alignItems="center" gap={ 1 }>
+						{ customCount > 0 && (
+							<Chip
+								label={ sprintf( __( '%d per-route settings', 'rest-api-firewall' ), customCount ) }
+								size="small"
+								variant="outlined"
+							/>
 						) }
-					</DialogContentText>
-				</DialogContent>
-				<DialogActions>
-					<Button onClick={ () => setConfirmSaveOpen( false ) }>
-						{ __( 'Cancel', 'rest-api-firewall' ) }
-					</Button>
-					<Button
-						variant="contained"
-						size="small"
-						disableElevation
-						onClick={ () => {
-							setConfirmSaveOpen( false );
-							saveTree( nodes, usersData );
-						} }
-					>
-						{ __( 'Confirm Save', 'rest-api-firewall' ) }
-					</Button>
-				</DialogActions>
-			</Dialog>
 
-			</Box> { /* end tree toggle Box */ }
+						<Button
+							startIcon={ <SettingsBackupRestoreOutlinedIcon /> }
+							size="small"
+							disabled={ customCount === 0 }
+							onClick={ () => dispatch( { type: 'RESET_ALL_OVERRIDES' } ) }
+						>
+							{ __( 'Reset Per-route Settings', 'rest-api-firewall' ) }
+						</Button>
+
+						<Button
+							variant="contained"
+							size="small"
+							disableElevation
+							disabled={ ! isDirty || saving }
+							onClick={ () => setConfirmSaveOpen( true ) }
+						>
+							{ saving
+								? __( 'Saving…', 'rest-api-firewall' )
+								: __( 'Save', 'rest-api-firewall' ) }
+						</Button>
+					</Stack>
+				</Toolbar>
+
+				<RichTreeView
+					items={ nodes }
+					slots={ { item: CustomTreeItem } }
+					slotProps={ {
+						item: {
+							toggleNodeSetting: handleToggle,
+							overrideNodeSetting: handleOverrideNode,
+							getNodeById,
+							openUsersPopover: hasValidLicense
+								? handleOpenUsersPopover
+								: null,
+							toggleNodeCustom: handleToggleCustom,
+							enforce_auth,
+							enforce_rate_limit,
+							rate_limit,
+							rate_limit_time,
+							hide_user_routes,
+							hide_batch_routes,
+							hide_oembed_routes,
+							disabled_methods: disabled_methods || [],
+							disabled_post_type_routes: disabledPostTypeRoutes,
+							expandedItems,
+							hasValidLicense,
+							usersData,
+							onNavigate,
+							onTest: setTestRoute,
+						},
+					} }
+					expandedItems={ expandedItems }
+					onExpandedItemsChange={ ( _e, ids ) => setExpandedItems( ids ) }
+				/>
+
+				<RoutesPolicyUsersPopover
+					open={ Boolean( popoverAnchor ) }
+					anchorEl={ popoverAnchor }
+					onClose={ handleCloseUsersPopover }
+					usersData={ usersData }
+					usersLoading={ usersLoading }
+					routeIds={ popoverRouteIds }
+					isBulk={ popoverIsBulk }
+					onUserAccessChange={ handleUserAccessChange }
+				/>
+
+				<Dialog
+					open={ confirmSaveOpen }
+					onClose={ () => setConfirmSaveOpen( false ) }
+					maxWidth="xs"
+					fullWidth
+				>
+					<DialogTitle>
+						{ __( 'Save Route Policy', 'rest-api-firewall' ) }
+					</DialogTitle>
+					<DialogContent>
+						<DialogContentText>
+							{ __(
+								'Changing route policies can break your front-end application. Make sure you have tested your configuration before saving.',
+								'rest-api-firewall'
+							) }
+						</DialogContentText>
+					</DialogContent>
+					<DialogActions>
+						<Button onClick={ () => setConfirmSaveOpen( false ) }>
+							{ __( 'Cancel', 'rest-api-firewall' ) }
+						</Button>
+						<Button
+							variant="contained"
+							size="small"
+							disableElevation
+							onClick={ () => {
+								setConfirmSaveOpen( false );
+								saveTree( nodes, usersData );
+							} }
+						>
+							{ __( 'Confirm Save', 'rest-api-firewall' ) }
+						</Button>
+					</DialogActions>
+				</Dialog>
+
+			</Box>
 		</Box>
 	);
 }

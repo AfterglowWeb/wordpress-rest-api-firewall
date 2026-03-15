@@ -249,7 +249,7 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 				}
 			}
 		} catch {
-			// Fail silently.
+			// Silent fail.
 		}
 	}, [ adminData, nonce ] );
 

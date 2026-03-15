@@ -11,24 +11,18 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
-import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
+import Toolbar from '@mui/material/Toolbar';
+
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-
-const METHOD_COLOR = {
-	GET: 'primary',
-	POST: 'success',
-	PUT: 'warning',
-	PATCH: 'warning',
-	DELETE: 'error',
-};
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 function StatusBadge( { status } ) {
 	return (
@@ -104,20 +98,23 @@ export default function TestPolicyPanel( {
 		setResults( null );
 
 		try {
+			const params = {
+				action: 'run_policy_test',
+				nonce,
+				route,
+				method,
+				test_sub_routes: testSubRoutes ? '1' : '0',
+				bypass_users: bypassUsers ? '1' : '0',
+				has_users: hasUsers ? '1' : '0',
+			};
+
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
 				headers: {
 					'Content-Type':
 						'application/x-www-form-urlencoded; charset=UTF-8',
 				},
-				body: new URLSearchParams( {
-					action: 'run_policy_test',
-					nonce,
-					route,
-					method,
-					test_sub_routes: testSubRoutes ? '1' : '0',
-					bypass_users: bypassUsers ? '1' : '0',
-				} ),
+				body: new URLSearchParams( params ),
 			} );
 
 			const result = await response.json();
@@ -210,9 +207,6 @@ export default function TestPolicyPanel( {
 								<Chip
 									label={ result.method }
 									size="small"
-									color={
-										METHOD_COLOR[ result.method ] || 'default'
-									}
 									variant="outlined"
 								/>
 								<Typography
@@ -239,7 +233,6 @@ export default function TestPolicyPanel( {
 										: __( 'Disabled', 'rest-api-firewall' )
 								}
 								size="small"
-								color={ result.policy.state ? 'success' : 'error' }
 								variant="outlined"
 							/>
 							<Chip
@@ -249,14 +242,12 @@ export default function TestPolicyPanel( {
 										: __( 'Public', 'rest-api-firewall' )
 								}
 								size="small"
-								color={ result.policy.protect ? 'warning' : 'default' }
 								variant="outlined"
 							/>
 							{ result.policy.rate_limit && (
 								<Chip
 									label={ `${ result.policy.rate_limit } req/${ result.policy.rate_limit_time }s` }
 									size="small"
-									color="info"
 									variant="outlined"
 								/>
 							) }
@@ -265,7 +256,6 @@ export default function TestPolicyPanel( {
 									<Chip
 										label={ result.model.title }
 										size="small"
-										color="secondary"
 										variant="outlined"
 									/>
 									{ onNavigate && (
@@ -344,33 +334,31 @@ export default function TestPolicyPanel( {
 	};
 
 	return (
-		<Paper
-			variant="outlined"
-			sx={ { mb: 2 } }
-			onClick={ ( e ) => e.stopPropagation() }
-		>
-			{ /* Header */ }
-			<Stack
-				direction="row"
-				alignItems="center"
-				sx={ {
-					px: 2,
-					py: 1,
-					borderBottom: 1,
-					borderColor: 'divider',
-				} }
+		<Stack>
+			<Toolbar
+			direction="row"
+			alignItems="center"
+			disableGutters
 			>
 				<Stack
-					direction="row"
-					spacing={ 1 }
-					alignItems="center"
-					sx={ { flex: 1, mr: 1, overflow: 'hidden' } }
+				direction="row"
+				gap={ 2 }
+				alignItems="center"
 				>
+					<IconButton
+					size="small"
+					onClick={ onClose }
+					>
+						<ArrowBackIcon />
+					</IconButton>
+
+					<Divider orientation="vertical" flexItem />
+
 					<Chip
-						label={ method }
-						size="small"
-						color={ METHOD_COLOR[ method ] || 'default' }
+					label={ method }
+					size="small"
 					/>
+
 					<Typography
 						variant="body2"
 						sx={ {
@@ -382,80 +370,77 @@ export default function TestPolicyPanel( {
 					>
 						{ route }
 					</Typography>
-				</Stack>
-				<Stack direction="row" alignItems="center" spacing={ 0.5 }>
-					<Button
-						variant="contained"
-						size="small"
-						onClick={ runTest }
-						disabled={ loading }
-						startIcon={
-							loading ? (
-								<CircularProgress size={ 14 } />
-							) : (
-								<PlayArrowIcon />
-							)
-						}
-						sx={ { textTransform: 'none' } }
-					>
+
+					<Divider orientation="vertical" flexItem />
+
+					<Stack direction="row" gap={ 2 } alignItems="center">
+						
+						<FormControlLabel
+							disabled={ ! hasChildren }
+							control={
+								<Checkbox
+									checked={ testSubRoutes }
+									onChange={ ( e ) =>
+										setTestSubRoutes( e.target.checked )
+									}
+									size="small"
+								/>
+							}
+							label={ __(
+								'Include sub-routes',
+								'rest-api-firewall'
+							) }
+						/>
+				
+						<FormControlLabel
+							control={
+								<Checkbox
+									disabled={ ! hasUsers }
+									checked={ bypassUsers }
+									onChange={ ( e ) =>
+										setBypassUsers( e.target.checked )
+									}
+									size="small"
+								/>
+							}
+							label={ __(
+								'Bypass users settings',
+								'rest-api-firewall'
+							) }
+						/>
+
+						<Button
+							variant="contained"
+							size="small"
+							disableElevation
+							onClick={ runTest }
+							disabled={ loading }
+							startIcon={
+								loading ? (
+									<CircularProgress size={ 14 } />
+								) : (
+									<PlayArrowIcon />
+								)
+							}
+							sx={ { textTransform: 'none' } }
+						>
 						{ loading
 							? __( 'Running…', 'rest-api-firewall' )
 							: __( 'Run Test', 'rest-api-firewall' ) }
-					</Button>
-					<IconButton size="small" onClick={ onClose }>
-						<CloseIcon fontSize="small" />
-					</IconButton>
+						</Button>
+
+					</Stack>
+					
 				</Stack>
-			</Stack>
 
-			{ /* Body */ }
-			<Box sx={ { p: 2 } }>
-				<Stack spacing={ 2 }>
-					{ ( hasChildren || hasUsers ) && (
-						<Stack spacing={ 0.5 }>
-							{ hasChildren && (
-								<FormControlLabel
-									control={
-										<Checkbox
-											checked={ testSubRoutes }
-											onChange={ ( e ) =>
-												setTestSubRoutes( e.target.checked )
-											}
-											size="small"
-										/>
-									}
-									label={ __(
-										'Include sub-routes',
-										'rest-api-firewall'
-									) }
-								/>
-							) }
-							{ hasUsers && (
-								<FormControlLabel
-									control={
-										<Checkbox
-											checked={ bypassUsers }
-											onChange={ ( e ) =>
-												setBypassUsers( e.target.checked )
-											}
-											size="small"
-										/>
-									}
-									label={ __(
-										'Bypass users settings',
-										'rest-api-firewall'
-									) }
-								/>
-							) }
-							<Divider sx={ { mt: 0.5 } } />
-						</Stack>
-					) }
+				<Stack flex={ 1 } />
 
-					{ error && <Alert severity="error">{ error }</Alert> }
+			</Toolbar>
+			
+			{ error && <Alert severity="error">{ error }</Alert> }
 
-					{ renderResults() }
-				</Stack>
-			</Box>
-		</Paper>
+			{ renderResults() }
+			
+		</Stack>
 	);
 }

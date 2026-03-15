@@ -14,7 +14,10 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
+import RuleIcon from '@mui/icons-material/Rule';
+
 import SettingsBackupRestoreOutlinedIcon from '@mui/icons-material/SettingsBackupRestoreOutlined';
+
 
 import { TreeItem, TreeItemContent, treeItemClasses } from '@mui/x-tree-view/TreeItem';
 import { useTreeItem } from '@mui/x-tree-view/useTreeItem';
@@ -377,7 +380,7 @@ export function NodeContent( {
 						} }
 						sx={ { opacity: 0.5 } }
 					>
-						<AccountTreeOutlinedIcon fontSize="small" />
+						<RuleIcon fontSize="small" />
 					</IconButton>
 				</Tooltip>
 			) }
@@ -391,7 +394,7 @@ export function NodeContent( {
 						} }
 						sx={ { opacity: 0.5 } }
 					>
-						<AccountTreeOutlinedIcon fontSize="small" />
+						<RuleIcon fontSize="small" />
 					</IconButton>
 				</Tooltip>
 			) }
@@ -429,7 +432,6 @@ export function NodeContent( {
 										effectiveValues
 									);
 								} }
-								sx={ { color: 'error.main' } }
 							>
 								<SettingsBackupRestoreOutlinedIcon fontSize="small" />
 							</IconButton>
@@ -469,24 +471,22 @@ export function NodeContent( {
 					</Tooltip>
 				) }
 
-				{ openUsersPopover && isAuthEnforced && (
-					<Button
-						size="small"
-						variant="text"
-						disabled={ isDisabled && node.isMethod }
-						onClick={ ( e ) => {
-							e.stopPropagation();
-							openUsersPopover( node.id, e.currentTarget );
-						} }
-						sx={ { fontSize: '0.75rem', minWidth: 0, px: 1 } }
-					>
-						{ buttonUserCount > 0
-							? `${ buttonUserCount } user${
-									buttonUserCount > 1 ? 's' : ''
-							  } set`
-							: __( 'Set users', 'rest-api-firewall' ) }
-					</Button>
-				) }
+				<Button
+					size="small"
+					variant="text"
+					disabled={ (isDisabled && node.isMethod) || ! isAuthEnforced || ! openUsersPopover }
+					onClick={ ( e ) => {
+						e.stopPropagation();
+						openUsersPopover( node.id, e.currentTarget );
+					} }
+					sx={ { fontSize: '0.75rem', minWidth: 0, px: 1 } }
+				>
+					{ buttonUserCount > 0
+						? `${ buttonUserCount } user${
+								buttonUserCount > 1 ? 's' : ''
+							} set`
+						: __( 'Set users', 'rest-api-firewall' ) }
+				</Button>
 
 				<Tooltip
 					disableInteractive

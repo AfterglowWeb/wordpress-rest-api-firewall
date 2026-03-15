@@ -134,9 +134,6 @@ class TestPolicy {
 
 			$policy = $this->get_policy_for_route( $route, $method );
 
-			// When users are configured for this route and bypass is not requested,
-			// result_data is fetched without auth to show the 403 that a non-authorized
-			// user would receive. When bypass is true (or no users), use auth.
 			$use_auth_for_result = ! $has_users || $bypass_users;
 
 			$result_entry = array(
@@ -342,7 +339,17 @@ class TestPolicy {
 		// the admin bypass for this loopback request and applies real policy checks.
 		// Passed as a query parameter (not a header) because some proxies strip custom headers.
 		$test_token = wp_generate_password( 32, false );
-		set_transient( 'rest_firewall_test_ctx_' . md5( $test_token ), true, 60 );
+
+		// Store test context including the active application ID so that
+		// ApplicationResolver can resolve the correct app for this loopback request.
+		$test_ctx = array( 'app_id' => null );
+		if ( class_exists( 'cmk\\RestApiFirewallPro\\Application\\ApplicationRepository' ) ) {
+			$active_app = \cmk\RestApiFirewallPro\Application\ApplicationRepository::find_first_active();
+			if ( $active_app ) {
+				$test_ctx['app_id'] = $active_app['id'];
+			}
+		}
+		set_transient( 'rest_firewall_test_ctx_' . md5( $test_token ), $test_ctx, 60 );
 
 		$url = add_query_arg( '_firewall_test', $test_token, $this->build_rest_url( $route ) );
 
@@ -370,7 +377,9 @@ class TestPolicy {
 			}
 		}
 
-		return wp_remote_request( $url, $args );
+		$response = wp_remote_request( $url, $args );
+
+		return $response;
 	}
 
 	protected function get_or_create_test_app_password( int $user_id ): ?string {
