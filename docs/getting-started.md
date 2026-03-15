@@ -1,153 +1,109 @@
 # Getting Started
 
+## Installation
 
-### Optional 
-5. Create a child theme
-
-6. Configure custom post types, taxonomies, and menus using JSON files in ``blank-child/config` directory (see Configuration section)
-
-## Authentication - WordPress Application Password
-
-Blank theme uses **WordPress Application Passwords**. In WordPress, you can setup application passwords in the user profiles.
-By default, the theme validates the application password against **User ID 1** (typically the site administrator).
-
-1. Go to **Users > Profile** in WordPress admin
-2. Scroll to **Application Passwords** section
-3. Create a new application password
-4. **Important:** Copy the generated token 
-5. Store it in your client application environement file (typically .env)
-   ```
-   WORDPRESS_BEARER_TOKEN=abcd efg hijk lmnop
-   ```
-6. Use it in your API requests with pipe delimiter format: `Bearer|token`
+### 1. Clone the repository
 
 ```bash
-curl -H "Authorization: Bearer|abcd efg hijk lmnop" \
-     https://your-site.com/wp-json/blank/v1/data
+cd wp-content/plugins/
+git clone https://github.com/AfterglowWeb/wordpress-rest-api-firewall.git rest-api-firewall
+cd rest-api-firewall
 ```
 
-## REST API Endpoints
+### 2. Install PHP dependencies
 
-The theme provides **3 custom REST API endpoint** intended to serve only necessary data.
-  - `/blank/v1/data`
-  - `/blank/v1/<post_type>`
-  - `/blank/v1/<post_type>/images`
-
-Combined with the Posts per page setting in the theme option page, this speedup data and assets scrapping from your application.
-
-### GET /wp-json/blank/v1/data
-
-Provides site identity and menu data. 
-Provides ACF options page fields if ACF support is activated in admin page.
-
-**Response:**
-```json
-{
-  "menus": {
-    "main_menu": [...],
-    "footer_menu": [...]
-  },
-  "identity": {
-    "name": "Site Name",
-    "description": "Site Description",
-    "url": "https://your-site.com",
-    "favicon": "https://your-site.com/favicon.ico",
-    {..."acf_fields"}
-  }
-}
+```bash
+composer install
 ```
 
-### GET /wp-json/blank/v1/{post_type}
+### 3. Install JS dependencies and build
 
-**Description:**  
-Provides flatten post objects containing the `post_type` parameter.
-
-**Parameters:**
-- `post_type` (string, required)
-
-### GET /wp-json/blank/v1/{post_type}/images
-
-**Description:**  
-Provides flatten attachment objects attached to posts containing the `post_type` parameter.
-The attachments src are filtered out to remove site domain and upload folder.
-
-The posts are explored for:
-- Post featured attachment, 
-- ACF image and gallery fields
-
-**Parameters:**
-- `post_type` (string, required)
-
-**Response**
-```json
-[
-  {
-    "id": 123,
-    "src": "2025/01/image.jpg",
-    "alt": "Image alt text",
-    "width": 1200,
-    "height": 800,
-    "mime_type": "image/jpeg",
-    "post_id": 122,
-    "field_key": "featured_image"
-  },
-  ...
-]
+```bash
+npm install
+npm run build
 ```
 
-## Post Types, Menus and Taxonomies Configuration
+or with Yarn:
 
-### Custom Taxonomies
-
-Define taxonomies in `config/custom_taxonomies.json`:
-
-```json
-{
-  "custom_taxonomies": [
-    {
-      "slug": "portfolio-category",
-      "singular_name": "Portfolio Category",
-      "plural_name": "Portfolio Categories",
-      "post_types": ["portfolio"]
-    }
-  ]
-}
+```bash
+yarn
+yarn build
 ```
 
-### Custom Post Types
+### 4. Activate the plugin
 
-Define custom post types in `config/custom_posts.json`:
+Go to **WordPress Admin → Plugins** and activate **WordPress Application Layer**.
 
-```json
-{
-  "custom_posts": [
-    {
-      "slug": "portfolio",
-      "singular_name": "Portfolio Item",
-      "plural_name": "Portfolio Items",
-      "public": true,
-      "show_in_rest": true,
-      "supports": ["title", "editor", "thumbnail", "excerpt"]
-    }
-  ]
-}
+---
+
+## First Configuration
+
+After activation, a new **Application Layer** menu item appears in the WordPress admin sidebar.
+
+### Recommended first steps
+
+1. **Global Security tab** — enable the hardening options relevant to your setup (disable XML-RPC, secure wp-config.php, etc.).
+2. **Auth & Rate Limiting tab** — optionally add users and assign rate limits if you want to restrict REST API access.
+3. **Properties tab** — optionally create a Model for your post types to clean up REST responses.
+
+---
+
+## Development Server (plugin JS)
+
+To develop the admin UI with hot reload:
+
+```bash
+npm run start
 ```
 
-### Custom Menus
+Make sure WordPress is running locally (e.g. via Local by Flywheel).
 
-Define navigation menus in `config/custom_menus.json`:
+---
 
-```json
-{
-  "custom_menus": [
-    {
-      "slug": "main-menu",
-      "name": "Main Menu"
-    },
-    {
-      "slug": "footer-menu",
-      "name": "Footer Menu"
-    }
-  ]
-}
+## Documentation Site (VitePress)
+
+To preview the documentation site locally:
+
+```bash
+npm run docs:dev
 ```
+
+The docs site runs at `http://localhost:5173` and hot-reloads on any `.md` change.
+
+To build the static site for deployment:
+
+```bash
+npm run docs:build
+```
+
+Output goes to `docs/.vitepress/dist/` and is automatically deployed to GitHub Pages on every push to `main`.
+
+---
+
+## Optional: Deploy the Headless Theme
+
+The plugin ships with a blank headless WordPress theme.
+
+1. Go to the **Theme** tab in the plugin admin.
+2. Click **Deploy** to install the theme.
+3. Activate it from **Appearance → Themes**.
+
+The blank theme redirects all front-end template requests, giving you full control of the front-end from your JS application.
+
+---
+
+## Multisite
+
+The plugin is compatible with WordPress multisite installations. Options are stored per-site using `get_blog_option` / `update_blog_option`.
+
+---
+
+## Updating
+
+```bash
+git pull origin main
+composer install
+npm run build
+```
+
+If the plugin admin shows a **Database Schema — Update required** notice after updating, click **Run Update** in the **Configuration** tab.
