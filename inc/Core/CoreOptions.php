@@ -306,6 +306,33 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
+			'theme_secure_http_headers'          => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'theme',
+			),
+
+			'theme_compression_http_headers'          => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'theme',
+			),
+
+			'theme_wp_http_headers'          => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'theme',
+			),
+
 			'theme_redirect_templates_enabled'          => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
