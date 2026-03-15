@@ -112,11 +112,20 @@ class Firewall {
 			$policy = PolicyRuntime::resolve_for_request( $request );
 
 			if ( ! $policy['state'] ) {
-				return new WP_Error(
+				$error = new WP_Error(
 					'rest_firewall_route_disabled',
-					esc_html__( 'This route has been disabled.', 'rest-api-firewall' ),
-					array( 'status' => 403 )
+					esc_html__( 'This route is not available.', 'rest-api-firewall' ),
+					array( 'status' => 404 )
 				);
+				/**
+				 * Filters the response when a route is disabled.
+				 * Return a WP_Error for a JSON error response, or call wp_redirect()+exit
+				 * / exit directly for redirects or empty responses.
+				 *
+				 * @param WP_Error        $error   Default 404 error.
+				 * @param WP_REST_Request $request The current REST request.
+				 */
+				return apply_filters( 'rest_api_firewall_disabled_route_response', $error, $request );
 			}
 
 			$enforce_auth_global = CoreOptions::read_option( 'enforce_auth' );

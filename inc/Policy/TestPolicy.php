@@ -254,34 +254,38 @@ class TestPolicy {
 		$response = $this->make_request( $route, $method, false );
 
 		$status_code = wp_remote_retrieve_response_code( $response );
-		$expected    = 403;
 		$is_redirect = $status_code >= 301 && $status_code <= 308;
-		$pass        = $status_code === $expected || $is_redirect;
+		$is_error    = $status_code >= 400 && $status_code < 600;
+		$pass        = $is_redirect || $is_error;
 
 		return array(
-			'skip'     => false,
-			'pass'     => $pass,
-			'expected' => $expected,
-			'actual'   => $status_code,
-			'message'  => $pass
-				? ( $is_redirect ? "Disabled route correctly redirects ({$status_code})" : 'Disabled route correctly returns 403' )
-				: "Disabled route should return 403 or redirect, got {$status_code}",
+			'skip'   => false,
+			'pass'   => $pass,
+			'actual' => $status_code,
+			'message' => $pass
+				? ( $is_redirect ? "Disabled route correctly redirects ({$status_code})" : "Disabled route correctly blocked ({$status_code})" )
+				: "Disabled route should be blocked or redirect, got {$status_code}",
 		);
 	}
 
 	protected function test_auth( string $route, string $method, array $policy ): array {
-		$is_protected = $policy['protect'] ?? false;
+		$enforce_auth_global = (bool) CoreOptions::read_option( 'enforce_auth' );
+		$is_protected        = (bool) ( $policy['protect'] ?? false );
 
-		if ( ! $is_protected ) {
+		// Auth is not required only when both global and per-route protection are off.
+		if ( ! $enforce_auth_global && ! $is_protected ) {
 			return array(
 				'skip'   => true,
-				'reason' => 'Route is not protected',
+				'reason' => 'Route is public (auth not enforced globally or per-route)',
 				'pass'   => null,
 			);
 		}
 
-		$response = $this->make_request( $route, $method, false );
+		$auth_source = $enforce_auth_global && $is_protected
+			? 'global + per-route'
+			: ( $enforce_auth_global ? 'global — all routes enforced' : 'per-route policy' );
 
+		$response    = $this->make_request( $route, $method, false );
 		$status_code = wp_remote_retrieve_response_code( $response );
 		$expected    = 401;
 		$pass        = $status_code === $expected;
@@ -302,8 +306,8 @@ class TestPolicy {
 			'expected' => $expected,
 			'actual'   => $status_code,
 			'message'  => $pass
-				? 'Protected route correctly requires authentication'
-				: "Protected route should return {$expected} without auth, got {$status_code}",
+				? "Auth correctly enforced ({$auth_source})"
+				: "Expected 401 without auth ({$auth_source}), got {$status_code}",
 		);
 	}
 

@@ -1,4 +1,4 @@
-import { useState } from '@wordpress/element';
+import { useState, useEffect } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useLicense } from '../../../contexts/LicenseContext';
 
@@ -91,6 +91,18 @@ export default function TestPolicyPanel( {
 
 	const [ testSubRoutes, setTestSubRoutes ] = useState( false );
 	const [ bypassUsers, setBypassUsers ] = useState( false );
+
+	useEffect( () => {
+		if ( ! route ) return;
+		runTest();
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ route, method ] );
+
+	const handleClose = () => {
+		setResults( null );
+		setError( null );
+		onClose();
+	};
 
 	const runTest = async () => {
 		setLoading( true );
@@ -347,7 +359,7 @@ export default function TestPolicyPanel( {
 				>
 					<IconButton
 					size="small"
-					onClick={ onClose }
+					onClick={ handleClose }
 					>
 						<ArrowBackIcon />
 					</IconButton>
@@ -426,7 +438,7 @@ export default function TestPolicyPanel( {
 						>
 						{ loading
 							? __( 'Running…', 'rest-api-firewall' )
-							: __( 'Run Test', 'rest-api-firewall' ) }
+						: __( 'Re-run', 'rest-api-firewall' ) }
 						</Button>
 
 					</Stack>
