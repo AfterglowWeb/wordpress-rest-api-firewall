@@ -10,7 +10,7 @@ Email entries define reusable transactional templates used by Automations or tri
 <summary>Recipient &amp; Subject</summary>
 
 <p><strong>To</strong> is the recipient email address. Dynamic placeholders resolve values from the trigger event context at send time:</p>
-<pre><code>{{user.email}}   {{post.title}}   {{site.name}}</code></pre>
+<pre><code v-pre>{{user.email}}   {{post.title}}   {{site.name}}</code></pre>
 <p><strong>Subject</strong> supports the same placeholder syntax.</p>
 
 </details>
@@ -18,7 +18,7 @@ Email entries define reusable transactional templates used by Automations or tri
 <details>
 <summary>Body</summary>
 
-<p><strong>Body</strong> is the email content in HTML. Compose your template in the editor and use <code>{{object.field}}</code> placeholders to inject dynamic content. A plain text fallback is generated automatically from the HTML.</p>
+<p><strong>Body</strong> is the email content in HTML. Compose your template in the editor and use <code v-pre>{{object.field}}</code> placeholders to inject dynamic content. A plain text fallback is generated automatically from the HTML.</p>
 
 </details>
 

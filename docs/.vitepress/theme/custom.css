@@ -1,0 +1,51 @@
+/* ── Banner ──────────────────────────────────────────────── */
+.vp-custom-banner {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  width: 100%;
+  background: #1565c0;
+  color: #fff;
+  text-align: center;
+  padding: 8px 16px;
+}
+
+.vp-custom-banner p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.vp-custom-banner a {
+  color: #fff;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* ── Smooth slide-in animation for the left sidebar / mobile drawer ── */
+
+/* Desktop sidebar */
+.VPSidebar {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity  0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mobile: the sidebar slides in from the left */
+@media (max-width: 959px) {
+  .VPSidebar {
+    transform: translateX(-100%);
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity  0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .VPSidebar.open {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  /* Backdrop overlay fade */
+  .vt-doc-sidebar-mask {
+    transition: opacity 0.3s ease;
+  }
+}
