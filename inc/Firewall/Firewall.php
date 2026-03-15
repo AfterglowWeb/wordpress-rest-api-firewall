@@ -13,11 +13,16 @@ use WP_Error;
 
 class Firewall {
 
-	/**
-	 * WP_Error returned by Firewall::request() during rest_pre_dispatch.
-	 * Saved so rest_authentication_errors can re-enforce it if a 3rd-party
-	 * plugin resets rest_pre_dispatch to null after our priority-3 callback.
-	 */
+	private static bool $pro_auth_owner = false;
+
+	public static function set_pro_auth_owner( bool $value ): void {
+		self::$pro_auth_owner = $value;
+	}
+
+	public static function is_pro_auth_owner(): bool {
+		return self::$pro_auth_owner;
+	}
+
 	private static ?WP_Error $pending_pre_dispatch_error = null;
 
 	public static function set_pending_pre_dispatch_error( ?WP_Error $error ): void {
@@ -28,13 +33,6 @@ class Firewall {
 		return self::$pending_pre_dispatch_error;
 	}
 
-	/**
-	 * Check whether the current request is an internal firewall policy test.
-	 * TestPolicy::make_request() sets a short-lived transient and appends the
-	 * token as a _firewall_test query parameter so the admin bypass is skipped
-	 * and real policy checks run. Query params are used (not headers) because
-	 * some proxies/servers strip unknown custom request headers.
-	 */
 	public static function is_test_request(): bool {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- test token validated via transient below
 		$token = isset( $_GET['_firewall_test'] )
@@ -51,10 +49,6 @@ class Firewall {
 		return ! empty( $ctx );
 	}
 
-	/**
-	 * Return the application ID stored in the test transient, if any.
-	 * Returns null when not a test request or when no application context was stored.
-	 */
 	public static function get_test_application_id(): ?string {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- token validated via transient
 		$token = isset( $_GET['_firewall_test'] )
@@ -112,16 +106,25 @@ class Firewall {
 			$policy = PolicyRuntime::resolve_for_request( $request );
 
 			if ( ! $policy['state'] ) {
-				return new WP_Error(
+				$error = new WP_Error(
 					'rest_firewall_route_disabled',
-					esc_html__( 'This route has been disabled.', 'rest-api-firewall' ),
-					array( 'status' => 403 )
+					esc_html__( 'This route is not available.', 'rest-api-firewall' ),
+					array( 'status' => 404 )
 				);
+				/**
+				 * Filters the response when a route is disabled.
+				 * Return a WP_Error for a JSON error response, or call wp_redirect()+exit
+				 * / exit directly for redirects or empty responses.
+				 *
+				 * @param WP_Error        $error   Default 404 error.
+				 * @param WP_REST_Request $request The current REST request.
+				 */
+				return apply_filters( 'rest_api_firewall_disabled_route_response', $error, $request );
 			}
 
 			$enforce_auth_global = CoreOptions::read_option( 'enforce_auth' );
-			
-			if ( $policy['protect'] && ! $enforce_auth_global ) {
+
+			if ( $policy['protect'] && ! $enforce_auth_global && ! self::$pro_auth_owner ) {
 				if ( ! WordpressAuth::validate_wp_application_password() ) {
 					return new WP_Error(
 						'rest_forbidden',
@@ -164,11 +167,14 @@ class Firewall {
 			return $result;
 		}
 
-		if ( false === CoreOptions::read_option( 'firewall_routes_policy_enabled' ) ) {
+		$policy_enabled = CoreOptions::read_option( 'firewall_routes_policy_enabled' );
+		$enforce_auth   = CoreOptions::read_option( 'enforce_auth' );
+
+		if ( false === $policy_enabled ) {
 			return $result;
 		}
 
-		if ( false === CoreOptions::read_option( 'enforce_auth' ) ) {
+		if ( false === $enforce_auth ) {
 			return $result;
 		}
 

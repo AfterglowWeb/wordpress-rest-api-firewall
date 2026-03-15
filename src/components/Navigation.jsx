@@ -77,16 +77,15 @@ export default function Navigation( {
 	const [ mobileOpen, setMobileOpen ] = useState( false );
 
 	const moduleKey = {
-		1:  { module: 'users', optionKey: 'user_rate_limit_enabled', label: __( 'Active', 'rest-api-firewall' ) },
-		2:  { module: 'routes_policy', optionKey: 'firewall_routes_policy_enabled', label: __( 'Active', 'rest-api-firewall' ) },
-		3:  { module: 'ip_filter', optionKey: null, label: __( 'Active', 'rest-api-firewall' ) },
-		4:  { module: 'collections', optionKey: 'rest_collections_enabled', label: __( 'Active', 'rest-api-firewall' ) },
-		5:  { module: 'models', optionKey: 'rest_models_enabled', label: __( 'Active', 'rest-api-firewall' ) },
-		6:  { module: 'settings_route', optionKey: 'rest_settings_route_enabled', label: __( 'Active', 'rest-api-firewall' ) },
-		7:  { module: 'webhooks', optionKey: 'webhooks_enabled', label: __( 'Active', 'rest-api-firewall' ) },
-		8:  { module: 'mails', optionKey: 'mails_enabled', label: __( 'Active', 'rest-api-firewall' ) },
-		13: { module: 'automations', optionKey: 'automations_enabled', label: __( 'Active', 'rest-api-firewall' ) },
-		13: { module: 'global_security', optionKey: 'global_security_enabled', label: __( 'Active', 'rest-api-firewall' ) },
+		'user-rate-limiting': { module: 'users',          optionKey: 'user_rate_limit_enabled',           label: __( 'Active', 'rest-api-firewall' ) },
+		'per-route-settings': { module: 'routes_policy',  optionKey: 'firewall_routes_policy_enabled',    label: __( 'Active', 'rest-api-firewall' ) },
+		'ip-filtering':       { module: 'ip_filter',      optionKey: null,                                label: __( 'Active', 'rest-api-firewall' ) },
+		'collections':        { module: 'collections',    optionKey: 'rest_collections_enabled',          label: __( 'Active', 'rest-api-firewall' ) },
+		'models-properties':  { module: 'models',         optionKey: 'rest_models_enabled',               label: __( 'Active', 'rest-api-firewall' ) },
+		'settings-route':     { module: 'settings_route', optionKey: 'rest_settings_route_enabled',       label: __( 'Active', 'rest-api-firewall' ) },
+		'webhook':            { module: 'webhooks',       optionKey: 'webhooks_enabled',                  label: __( 'Active', 'rest-api-firewall' ) },
+		'emails':             { module: 'mails',          optionKey: 'mails_enabled',                     label: __( 'Active', 'rest-api-firewall' ) },
+		'automations':        { module: 'automations',    optionKey: 'automations_enabled',               label: __( 'Active', 'rest-api-firewall' ) },
 	};
 
 	const [ ipFilterEnabled, setIpFilterEnabled ] = useState(
@@ -94,7 +93,7 @@ export default function Navigation( {
 	);
 
 	const getModuleEnabled = ( pg ) => {
-		if ( pg === 3 ) return ipFilterEnabled;
+		if ( pg === 'ip-filtering' ) return ipFilterEnabled;
 		const key = moduleKey[ pg ]?.optionKey;
 		return key ? !! adminData?.admin_options?.[ key ] : null;
 	};
@@ -125,7 +124,7 @@ export default function Navigation( {
 						? __( 'Module enabled successfully.', 'rest-api-firewall' )
 						: __( 'Module disabled successfully.', 'rest-api-firewall' ),
 					onSuccess: () => {
-						if ( pg === 3 ) {
+						if ( pg === 'ip-filtering' ) {
 							setIpFilterEnabled( checked );
 						} else {
 							updateAdminData( {
@@ -147,7 +146,6 @@ export default function Navigation( {
 			key: 'applications',
 			label: __( 'Applications', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Pro',
-			panelGroup: 0,
 			icon: AppsOutlinedIcon,
 			disabled: ! hasValidLicense,
 		},
@@ -159,21 +157,18 @@ export default function Navigation( {
 			key: 'user-rate-limiting',
 			label: __( 'Auth. & Rate Limit', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'REST API Firewall',
-			panelGroup: 1,
 			icon: SecurityOutlined,
 		},
 		{
 			key: 'per-route-settings',
 			label: __( 'Routes', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'REST API Firewall',
-			panelGroup: 2,
 			icon: AccountTreeIcon,
 		},
 		{
 			key: 'ip-filtering',
 			label: __( 'IP Filtering', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'REST API Firewall',
-			panelGroup: 3,
 			icon: VpnLockOutlinedIcon,
 		},
 
@@ -186,7 +181,6 @@ export default function Navigation( {
 			label: __( 'Collections', 'rest-api-firewall' ),
 			secondary: 'wp/v2/posts/*',
 			breadcrumbPrefix: 'REST API Output',
-			panelGroup: 4,
 			icon: ApiIcon,
 		},
 		{
@@ -194,7 +188,6 @@ export default function Navigation( {
 			label: __( 'Properties', 'rest-api-firewall' ),
 			secondary: 'wp/v2/posts/*',
 			breadcrumbPrefix: 'REST API Output',
-			panelGroup: 5,
 			icon: RuleOutlinedIcon,
 		},
 		{
@@ -202,7 +195,6 @@ export default function Navigation( {
 			label: __( 'Settings Route', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'REST API Output',
 			secondary: 'wp/v2/settings',
-			panelGroup: 6,
 			icon: BusinessOutlinedIcon,
 		},
 
@@ -211,7 +203,6 @@ export default function Navigation( {
 			key: 'automations',
 			label: __( 'Automations', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Integrations',
-			panelGroup: 13,
 			icon: AutoFixHighOutlinedIcon,
 			disabled: ! hasValidLicense,
 		},
@@ -221,14 +212,12 @@ export default function Navigation( {
 				? __( 'Webhooks', 'rest-api-firewall' )
 				: __( 'Webhook', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Integrations',
-			panelGroup: 7,
 			icon: WebhookIcon,
 		},
 		{
 			key: 'emails',
 			label: __( 'Emails', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Integrations',
-			panelGroup: 8,
 			icon: EmailOutlined,
 			disabled: ! hasValidLicense,
 		},
@@ -238,7 +227,6 @@ export default function Navigation( {
 			key: 'logs',
 			label: __( 'Logs', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'All Applications',
-			panelGroup: 12,
 			icon: AssessmentOutlinedIcon,
 			disabled: ! hasValidLicense,
 		},
@@ -248,21 +236,18 @@ export default function Navigation( {
 			key: 'global_security',
 			label: __( 'Global Security', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Modules',
-			panelGroup: 14,
 			icon: ShieldIcon,
 		},
 		{
 			key: 'theme',
 			label: __( 'Theme', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Modules',
-			panelGroup: 9,
 			icon: PaletteOutlined,
 		},
 		{
 			key: 'license',
 			label: __( 'License', 'rest-api-firewall' ),
 			breadcrumbPrefix: '',
-			panelGroup: 10,
 			icon: CardMembershipOutlinedIcon,
 		},
 		...( migrationNeeded && ! migrationDone
@@ -280,14 +265,13 @@ export default function Navigation( {
 			key: 'configuration',
 			label: __( 'Configuration', 'rest-api-firewall' ),
 			breadcrumbPrefix: '',
-			panelGroup: 11,
 			icon: SettingsOutlinedIcon,
 			badge: schemaUpdateNeeded && ! migrationDone,
 		},
 	];
 
 	const activeMenuItem =
-		menuItems.find( ( m ) => m.panelGroup === panelGroup ) || null;
+		menuItems.find( ( m ) => m.key === panelGroup ) || null;
 
 	return (
 		<>
@@ -357,7 +341,7 @@ export default function Navigation( {
 							);
 						}
 
-						const isActive = panelGroup === item.panelGroup;
+						const isActive = panelGroup === item.key;
 						const Icon = item.icon;
 
 						return (
@@ -386,7 +370,7 @@ export default function Navigation( {
 											if ( item.action ) {
 												item.action();
 											} else {
-												onPanelChange( item.panelGroup );
+											onPanelChange( item.key );
 											}
 											setMobileOpen( false );
 										} }
@@ -481,8 +465,11 @@ export default function Navigation( {
 							</IconButton>
 						) }
 
-						{ hasValidLicense &&
-							( panelGroup < 9 || panelGroup === 13 ) && (
+{ hasValidLicense && [
+							'applications', 'user-rate-limiting', 'per-route-settings',
+							'ip-filtering', 'collections', 'models-properties',
+							'settings-route', 'webhook', 'emails', 'automations',
+						].includes( panelGroup ) && (
 								<ApplicationSelector />
 							) }
 

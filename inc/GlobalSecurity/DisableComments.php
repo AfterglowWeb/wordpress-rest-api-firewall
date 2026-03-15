@@ -21,6 +21,49 @@ class DisableComments {
 			add_filter( 'comments_open', '__return_false', 20, 2 );
 			add_filter( 'pings_open', '__return_false', 20, 2 );
 			add_filter( 'comments_array', '__return_empty_array', 10, 2 );
+			add_filter(
+				'wp_headers',
+				function ( array $headers ): array {
+					unset( $headers['X-Pingback'] );
+					return $headers;
+				}
+			);
+			add_filter(
+				'bloginfo_url',
+				function ( string $output, string $show ): string {
+					return 'pingback_url' === $show ? '' : $output;
+				},
+				10,
+				2
+			);
+			add_filter(
+				'rest_endpoints',
+				function ( array $endpoints ): array {
+					foreach ( array_keys( $endpoints ) as $route ) {
+						if ( 0 === strpos( $route, '/wp/v2/comments' ) ) {
+							unset( $endpoints[ $route ] );
+						}
+					}
+					return $endpoints;
+				}
+			);
+
+			remove_action( 'wp_head', 'rsd_link' );
+			remove_action( 'wp_head', 'wp_generator' );
+
+			add_action(
+				'wp_enqueue_scripts',
+				function (): void {
+					wp_dequeue_script( 'comment-reply' );
+				}
+			);
+
+			add_action(
+				'wp_dashboard_setup',
+				function (): void {
+					remove_meta_box( 'dashboard_recent_comments', 'dashboard', 'normal' );
+				}
+			);
 		}
 
 		add_action(
@@ -50,6 +93,27 @@ class DisableComments {
 						remove_post_type_support( $post_type, 'trackbacks' );
 					}
 				}
+
+				update_option( 'default_pingback_flag', 0 );
+				update_option( 'default_ping_status', 0 );
+				update_option( 'default_comment_status', 0 );
+				update_option( 'thread_comments', 0 );
+				update_option( 'show_comments_cookies_opt_in', 0 );
+				update_option( 'page_comments', 0 );
+
+				update_option( 'require_name_email', 1 );
+				update_option( 'comment_registration', 1 );
+				update_option( 'close_comments_for_old_posts', 1 );
+				update_option( 'close_comments_days_old', 0 );
+
+				update_option( 'comments_notify', 1 );
+				update_option( 'moderation_notify', 1 );
+				update_option( 'wp_notes_notify', 1 );
+
+				update_option( 'comment_moderation', 1 );
+				update_option( 'comment_previously_approved', 1 );
+				update_option( 'comment_max_links', 0 );
+				update_option( 'show_avatars', 0 );
 			}
 		);
 

@@ -60,7 +60,7 @@ function AppContent() {
 	const { openDialog } = useDialog();
 
 	const [ postTypes, setPostTypes ] = useState( [] );
-	const [ panelGroup, setPanelGroup ] = useState( 1 );
+	const [ panelGroup, setPanelGroup ] = useState( 'user-rate-limiting' );
 	const [ themeStatus, setThemeStatus ] = useState( null );
 
 	const migrationNeeded = !! window.restApiFirewallPro?.migrationNeeded;
@@ -76,10 +76,9 @@ function AppContent() {
 	} );
 
 	useEffect( () => {
-		const lastTab =
-			window.localStorage.getItem( 'rest_api_firewall_last_tab' ) || null;
-		if ( lastTab ) {
-			setPanelGroup( Number( lastTab ) );
+		const lastTab = window.localStorage.getItem( 'rest_api_firewall_last_tab' ) || null;
+		if ( lastTab && isNaN( Number( lastTab ) ) ) {
+			setPanelGroup( lastTab );
 		}
 	}, [] );
 
@@ -203,20 +202,20 @@ function AppContent() {
 	};
 
 	const PANEL_SAVE_GROUP = {
-		1: 'firewall_auth_rate',
-		2: 'firewall_routes_policy',
-		4: 'collections',
-		5: 'models_properties',
-		6: 'settings_route',
-		7: 'webhook',
-		9: 'theme',
-		14: 'global_security',
+		'user-rate-limiting': 'firewall_auth_rate',
+		'per-route-settings': 'firewall_routes_policy',
+		'collections':        'collections',
+		'models-properties':  'models_properties',
+		'settings-route':     'settings_route',
+		'webhook':            'webhook',
+		'theme':              'theme',
+		'global_security':    'global_security',
 	};
 	if ( hasValidLicense ) {
-		delete PANEL_SAVE_GROUP[ 1 ];
-		delete PANEL_SAVE_GROUP[ 2 ];
-		delete PANEL_SAVE_GROUP[ 5 ];
-		delete PANEL_SAVE_GROUP[ 7 ];
+		delete PANEL_SAVE_GROUP[ 'user-rate-limiting' ];
+		delete PANEL_SAVE_GROUP[ 'per-route-settings' ];
+		delete PANEL_SAVE_GROUP[ 'models-properties' ];
+		delete PANEL_SAVE_GROUP[ 'webhook' ];
 	}
 
 	const activeSaveGroup = PANEL_SAVE_GROUP[ panelGroup ] ?? null;
@@ -270,9 +269,9 @@ function AppContent() {
 						bgcolor: 'background.paper',
 					} }
 				>
-					{ hasValidLicense && panelGroup === 0 && <Applications onNavigate={ navigateTo } /> }
+					{ hasValidLicense && panelGroup === 'applications' && <Applications onNavigate={ navigateTo } /> }
 
-					{ panelGroup === 1 && (
+					{ panelGroup === 'user-rate-limiting' && (
 						<>
 							{ hasValidLicense ? (
 								<Users />
@@ -296,15 +295,15 @@ function AppContent() {
 						</>
 					) }
 
-					{ panelGroup === 2 && (<RoutesPanel
+					{ panelGroup === 'per-route-settings' && (<RoutesPanel
 						form={ form }
 						setField={ setField }
 						onNavigate={ navigateTo }
 					/>) }
 
-					{ panelGroup === 3 && <IpFilter /> }
+					{ panelGroup === 'ip-filtering' && <IpFilter /> }
 
-					{ panelGroup === 4 && (
+					{ panelGroup === 'collections' && (
 						<Collections
 							form={ form }
 							setField={ setField }
@@ -312,7 +311,7 @@ function AppContent() {
 						/>
 					) }
 
-					{ panelGroup === 5 &&
+					{ panelGroup === 'models-properties' &&
 						( hasValidLicense ? (
 							<Models />
 						) : (
@@ -323,33 +322,31 @@ function AppContent() {
 							/>
 						) ) }
 
-					{ panelGroup === 6 && (
+					{ panelGroup === 'settings-route' && (
 						<SettingsRoute
 							form={ form }
 							setField={ setField }
 						/>
 					) }
 
-					{ panelGroup === 7 &&
+					{ panelGroup === 'webhook' &&
 						( hasValidLicense ? (
 							<Webhooks />
 						) : (
 							<Webhook form={ form } setField={ setField } />
 						) ) }
 
-					{ panelGroup === 8 && hasValidLicense && <MailsPanel /> }
+					{ panelGroup === 'emails' && hasValidLicense && <MailsPanel /> }
 
-					{ panelGroup === 12 && hasValidLicense && <Logs /> }
+					{ panelGroup === 'logs' && hasValidLicense && <Logs /> }
 
-					{ panelGroup === 13 && hasValidLicense && <Automations /> }
+					{ panelGroup === 'automations' && hasValidLicense && <Automations /> }
 
-					{ panelGroup === 14 && (
-							<GlobalSecurity 
-							form={ form }
-							setField={ setField } /> 
-					) }
+					{ panelGroup === 'global_security' && (
+					<GlobalSecurity form={ form } setField={ setField } />
+				) }
 
-					{ panelGroup === 9 && (
+					{ panelGroup === 'theme' && (
 						<ThemeSettings
 							form={ form }
 							setField={ setField }
@@ -359,9 +356,9 @@ function AppContent() {
 						/>
 					) }
 
-					{ panelGroup === 10 && <License /> }
+					{ panelGroup === 'license' && <License /> }
 
-					{ panelGroup === 11 && (
+					{ panelGroup === 'configuration' && (
 						<ConfigurationPanel
 							form={ form }
 							setField={ setField }

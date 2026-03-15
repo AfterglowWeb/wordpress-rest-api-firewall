@@ -41,6 +41,7 @@ export default function ThemeSettings( {
 					status={ themeStatus }
 					setStatus={ setThemeStatus }
 				/>
+
 				<Stack spacing={ 3 }>
 					<Typography
 						variant="subtitle1"
@@ -139,6 +140,7 @@ export default function ThemeSettings( {
 					<TextField
 						label={ __( 'Custom URL', 'rest-api-firewall' ) }
 						type="url"
+						size="small"
 						helperText={ __(
 							'Full url with protocol and domain (https://www.example.com)',
 							'rest-api-firewall'
@@ -153,56 +155,45 @@ export default function ThemeSettings( {
 						fullWidth
 					/>
 				</Stack>
-			</Stack>
 
-			<Stack flex={ 1 } spacing={ 3 }>
 				<Stack spacing={ 3 }>
 					<Typography
 						variant="subtitle1"
 						fontWeight={ 600 }
 						sx={ { mb: 2 } }
 					>
-						{ __( 'Security', 'rest-api-firewall' ) }
+						{ __( 'ACF', 'rest-api-firewall' ) }
 					</Typography>
+
+					<FormControl>
+						<FormControlLabel
+							control={
+								<Switch
+									size="small"
+									checked={
+										!! form.theme_json_acf_fields_enabled
+									}
+									name="theme_json_acf_fields_enabled"
+									onChange={ setField }
+								/>
+							}
+							label={ __(
+								'Sync ACF Fields to JSON',
+								'rest-api-firewall'
+							) }
+						/>
+						<FormHelperText>
+							{ __(
+								'Write JSON files in theme config directory',
+								'rest-api-firewall'
+							) }
+						</FormHelperText>
+					</FormControl>
 				</Stack>
 
-				<FormControl disabled={ disabled }>
-					<FormControlLabel
-						control={
-							<Switch
-								size="small"
-								checked={ !! form.theme_disable_xmlrpc }
-								name="theme_disable_xmlrpc"
-								onChange={ setField }
-								disabled={ disabled }
-							/>
-						}
-						label={ __(
-							'Disable XML-RPC endpoint',
-							'rest-api-firewall'
-						) }
-					/>
-				</FormControl>
+			</Stack>
 
-				<FormControl disabled={ disabled }>
-					<FormControlLabel
-						control={
-							<Switch
-								size="small"
-								checked={ !! form.theme_disable_filedit }
-								name="theme_disable_filedit"
-								onChange={ setField }
-								disabled={ disabled }
-							/>
-						}
-						label={ __(
-							'Disable theme file editor',
-							'rest-api-firewall'
-						) }
-					/>
-				</FormControl>
-
-				<Divider />
+			<Stack flex={ 1 } spacing={ 3 }>
 
 				<Stack spacing={ 3 }>
 					<Typography
@@ -288,103 +279,6 @@ export default function ThemeSettings( {
 						</FormHelperText>
 					</FormControl>
 				</Stack>
-
-				<Divider />
-
-				<Stack spacing={ 3 }>
-					<Typography
-						variant="subtitle1"
-						fontWeight={ 600 }
-						sx={ { mb: 2 } }
-					>
-						{ __( 'ACF', 'rest-api-firewall' ) }
-					</Typography>
-
-					<FormControl>
-						<FormControlLabel
-							control={
-								<Switch
-									size="small"
-									checked={
-										!! form.theme_json_acf_fields_enabled
-									}
-									name="theme_json_acf_fields_enabled"
-									onChange={ setField }
-								/>
-							}
-							label={ __(
-								'Sync ACF Fields to JSON',
-								'rest-api-firewall'
-							) }
-						/>
-						<FormHelperText>
-							{ __(
-								'Write JSON files in theme config directory',
-								'rest-api-firewall'
-							) }
-						</FormHelperText>
-					</FormControl>
-				</Stack>
-			</Stack>
-
-			<Stack flex={ 1 } spacing={ 3 }>
-				<Stack spacing={ 3 }>
-					<Typography
-						variant="subtitle1"
-						fontWeight={ 600 }
-						sx={ { mb: 2 } }
-					>
-						{ __( 'Comments & Pingbacks', 'rest-api-firewall' ) }
-					</Typography>
-					<FormControl disabled={ disabled }>
-						<FormControlLabel
-							control={
-								<Switch
-									size="small"
-									checked={ !! form.theme_disable_comments }
-									name="theme_disable_comments"
-									onChange={ setField }
-									disabled={ disabled }
-								/>
-							}
-							label={ __(
-								'Disable Comments',
-								'rest-api-firewall'
-							) }
-						/>
-						<FormHelperText>
-							{ __(
-								'Deactivate comments site wide',
-								'rest-api-firewall'
-							) }
-						</FormHelperText>
-					</FormControl>
-					<FormControl disabled={ disabled }>
-						<FormControlLabel
-							control={
-								<Switch
-									size="small"
-									checked={ !! form.theme_disable_pingbacks }
-									name="theme_disable_pingbacks"
-									onChange={ setField }
-									disabled={ disabled }
-								/>
-							}
-							label={ __(
-								'Disable Pingbacks',
-								'rest-api-firewall'
-							) }
-						/>
-						<FormHelperText>
-							{ __(
-								'Deactivate pingbacks site wide',
-								'rest-api-firewall'
-							) }
-						</FormHelperText>
-					</FormControl>
-				</Stack>
-
-				<Divider />
 
 				<Stack spacing={ 3 }>
 					<Typography
@@ -497,6 +391,8 @@ export default function ThemeSettings( {
 						</FormControl>
 					</Stack>
 				</Stack>
+
+				
 			</Stack>
 		</Stack>
 	);

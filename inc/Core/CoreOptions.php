@@ -249,7 +249,7 @@ class CoreOptions {
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
-				'group'             => 'theme',
+				'group'             => 'global_security',
 			),
 
 			'theme_disable_filedit'                     => array(
@@ -258,7 +258,7 @@ class CoreOptions {
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
-				'group'             => 'theme',
+				'group'             => 'global_security',
 			),
 
 			'theme_disable_comments'                    => array(
@@ -267,7 +267,7 @@ class CoreOptions {
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
-				'group'             => 'theme',
+				'group'             => 'global_security',
 			),
 
 			'theme_disable_pingbacks'                   => array(
@@ -276,34 +276,70 @@ class CoreOptions {
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
-				'group'             => 'theme',
+				'group'             => 'global_security',
 			),
 
-			'theme_disable_rss'                   => array(
+			'theme_disable_rss'                         => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
-				'group'             => 'theme',
+				'group'             => 'global_security',
 			),
 
-			'theme_enforce_wpconfig_permissions'       => array(
+			'theme_disable_sitemap'                     => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
-				'group'             => 'theme',
+				'group'             => 'global_security',
 			),
 
-			'theme_secure_uploads_dir'          => array(
+			'theme_enforce_wpconfig_permissions'        => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
-				'group'             => 'theme',
+				'group'             => 'global_security',
+			),
+
+			'theme_secure_uploads_dir'                  => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'global_security',
+			),
+
+			'theme_secure_http_headers'                 => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'global_security',
+			),
+
+			'theme_compression_http_headers'            => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'global_security',
+			),
+
+			'theme_wp_http_headers'                     => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'global_security',
 			),
 
 			'theme_redirect_templates_enabled'          => array(
@@ -405,7 +441,6 @@ class CoreOptions {
 				'context'           => array( 'free', 'pro' ),
 				'group'             => 'theme',
 			),
-
 
 			// Module enable toggles — visible in free (as locked), functional with PRO licence.
 			'user_rate_limit_enabled'                   => array(

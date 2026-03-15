@@ -272,4 +272,42 @@ class FileUtils {
 
 		return $wp_filesystem->delete( $file_path );
 	}
+
+	/**
+	 * Get file permissions.
+	 *
+	 * WP_Filesystem::getchmod() returns a 3-digit octal string (e.g. '440').
+	 *
+	 * @return string|false Permissions as a 3-digit string (e.g. '440') or false on failure.
+	 */
+	public static function get_file_permissions( string $file_path ) {
+		$wp_filesystem = self::wp_filesystem();
+
+		if ( ! $wp_filesystem ) {
+			return false;
+		}
+
+		if ( ! $wp_filesystem->exists( $file_path ) ) {
+			return false;
+		}
+
+		$perms = $wp_filesystem->getchmod( $file_path );
+		return false === $perms ? false : (string) $perms;
+	}
+
+	/**
+	 * Change file permissions.
+	 *
+	 * @return bool True on success, false on failure.
+	 */
+	public static function change_file_permissions( string $file_path, int $permissions ): bool {
+		$wp_filesystem = self::wp_filesystem();
+		if ( ! $wp_filesystem ) {
+			return false;
+		}
+		if ( ! $wp_filesystem->exists( $file_path ) ) {
+			return false;
+		}
+		return $wp_filesystem->chmod( $file_path, $permissions );
+	}
 }
