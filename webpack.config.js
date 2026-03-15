@@ -1,6 +1,10 @@
 const defaultConfig = require( '@wordpress/scripts/config/webpack.config' );
-const BundleAnalyzerPlugin =
-	require( 'webpack-bundle-analyzer' ).BundleAnalyzerPlugin;
+
+const extraPlugins = [];
+if ( process.env.ANALYZE ) {
+	const { BundleAnalyzerPlugin } = require( 'webpack-bundle-analyzer' );
+	extraPlugins.push( new BundleAnalyzerPlugin() );
+}
 
 module.exports = {
 	...defaultConfig,
@@ -29,5 +33,5 @@ module.exports = {
 			},
 		},
 	},
-	plugins: [ ...defaultConfig.plugins, new BundleAnalyzerPlugin() ],
+	plugins: [ ...defaultConfig.plugins, ...extraPlugins ],
 };
