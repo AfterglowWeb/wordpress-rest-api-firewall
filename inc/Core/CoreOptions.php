@@ -242,7 +242,69 @@ class CoreOptions {
 				'group'             => 'webhook',
 			),
 
-			// Theme.
+			// Global security.
+			'theme_disable_xmlrpc'                      => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'theme',
+			),
+
+			'theme_disable_filedit'                     => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'theme',
+			),
+
+			'theme_disable_comments'                    => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'theme',
+			),
+
+			'theme_disable_pingbacks'                   => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'theme',
+			),
+
+			'theme_disable_rss'                   => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'theme',
+			),
+
+			'theme_enforce_wpconfig_permissions'       => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'theme',
+			),
+
+			'theme_secure_uploads_dir'          => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'theme',
+			),
 
 			'theme_redirect_templates_enabled'          => array(
 				'default_value'     => false,
@@ -253,6 +315,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
+			// Theme.
 			'theme_redirect_templates_preset_url'       => array(
 				'default_value'     => '',
 				'type'              => 'string',
@@ -275,51 +338,6 @@ class CoreOptions {
 				'default_value'     => '',
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_url',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'theme',
-			),
-
-			'theme_disable_xmlrpc'                      => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'theme',
-			),
-
-			'theme_disable_filedit'                     => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'theme',
-			),
-
-			'theme_disable_gutenberg'                   => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'theme',
-			),
-
-			'theme_disable_comments'                    => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'theme',
-			),
-
-			'theme_disable_pingbacks'                   => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
 				'group'             => 'theme',
@@ -378,6 +396,16 @@ class CoreOptions {
 				'context'           => array( 'free', 'pro' ),
 				'group'             => 'theme',
 			),
+
+			'theme_disable_gutenberg'                   => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'theme',
+			),
+
 
 			// Module enable toggles — visible in free (as locked), functional with PRO licence.
 			'user_rate_limit_enabled'                   => array(

@@ -7,17 +7,82 @@ use cmk\RestApiFirewall\Core\CoreOptions;
 use cmk\RestApiFirewall\Firewall\WordpressAuth;
 use cmk\RestApiFirewall\Firewall\IpBlackList;
 use cmk\RestApiFirewall\Firewall\RateLimit;
+use cmk\RestApiFirewall\Policy\PolicyRuntime;
 use WP_REST_Request;
 use WP_Error;
 
 class Firewall {
+
+	/**
+	 * WP_Error returned by Firewall::request() during rest_pre_dispatch.
+	 * Saved so rest_authentication_errors can re-enforce it if a 3rd-party
+	 * plugin resets rest_pre_dispatch to null after our priority-3 callback.
+	 */
+	private static ?WP_Error $pending_pre_dispatch_error = null;
+
+	public static function set_pending_pre_dispatch_error( ?WP_Error $error ): void {
+		self::$pending_pre_dispatch_error = $error;
+	}
+
+	public static function get_pending_pre_dispatch_error(): ?WP_Error {
+		return self::$pending_pre_dispatch_error;
+	}
+
+	/**
+	 * Check whether the current request is an internal firewall policy test.
+	 * TestPolicy::make_request() sets a short-lived transient and appends the
+	 * token as a _firewall_test query parameter so the admin bypass is skipped
+	 * and real policy checks run. Query params are used (not headers) because
+	 * some proxies/servers strip unknown custom request headers.
+	 */
+	public static function is_test_request(): bool {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- test token validated via transient below
+		$token = isset( $_GET['_firewall_test'] )
+			? sanitize_text_field( wp_unslash( $_GET['_firewall_test'] ) )
+			: '';
+
+		if ( empty( $token ) ) {
+			return false;
+		}
+
+		$key = 'rest_firewall_test_ctx_' . md5( $token );
+		$ctx = get_transient( $key );
+
+		return ! empty( $ctx );
+	}
+
+	/**
+	 * Return the application ID stored in the test transient, if any.
+	 * Returns null when not a test request or when no application context was stored.
+	 */
+	public static function get_test_application_id(): ?string {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- token validated via transient
+		$token = isset( $_GET['_firewall_test'] )
+			? sanitize_text_field( wp_unslash( $_GET['_firewall_test'] ) )
+			: '';
+
+		if ( empty( $token ) ) {
+			return null;
+		}
+
+		$ctx = get_transient( 'rest_firewall_test_ctx_' . md5( $token ) );
+
+		if ( ! is_array( $ctx ) || empty( $ctx['app_id'] ) ) {
+			return null;
+		}
+
+		return (string) $ctx['app_id'];
+	}
 
 	public static function result( $result ) {
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
 
-		if ( is_user_logged_in() && current_user_can( 'manage_options' ) ) {
+		$is_test  = self::is_test_request();
+		$is_admin = is_user_logged_in() && current_user_can( 'manage_options' );
+
+		if ( $is_admin && ! $is_test ) {
 			return $result;
 		}
 
@@ -36,8 +101,35 @@ class Firewall {
 
 	public static function request( WP_REST_Request $request ) {
 
-		if ( is_user_logged_in() && current_user_can( 'manage_options' ) ) {
+		$is_test  = self::is_test_request();
+		$is_admin = is_user_logged_in() && current_user_can( 'manage_options' );
+
+		if ( $is_admin && ! $is_test ) {
 			return $request;
+		}
+
+		if ( CoreOptions::read_option( 'firewall_routes_policy_enabled' ) ) {
+			$policy = PolicyRuntime::resolve_for_request( $request );
+
+			if ( ! $policy['state'] ) {
+				return new WP_Error(
+					'rest_firewall_route_disabled',
+					esc_html__( 'This route has been disabled.', 'rest-api-firewall' ),
+					array( 'status' => 403 )
+				);
+			}
+
+			$enforce_auth_global = CoreOptions::read_option( 'enforce_auth' );
+			
+			if ( $policy['protect'] && ! $enforce_auth_global ) {
+				if ( ! WordpressAuth::validate_wp_application_password() ) {
+					return new WP_Error(
+						'rest_forbidden',
+						esc_html__( 'Authentication required.', 'rest-api-firewall' ),
+						array( 'status' => 401 )
+					);
+				}
+			}
 		}
 
 		$rate_check = self::rate_limit( $request );
@@ -80,7 +172,9 @@ class Firewall {
 			return $result;
 		}
 
-		if ( false === WordpressAuth::validate_wp_application_password() ) {
+		$auth_valid = WordpressAuth::validate_wp_application_password();
+
+		if ( false === $auth_valid ) {
 			return new WP_Error(
 				'rest_forbidden',
 				esc_html__( 'Authentication required.', 'rest-api-firewall' ),

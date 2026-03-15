@@ -11,6 +11,11 @@ import { useLicense } from '../../../contexts/LicenseContext';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
 import Toolbar from '@mui/material/Toolbar';
@@ -31,8 +36,9 @@ import {
 } from './routesPolicyUtils';
 import { CustomTreeItem } from './RoutesPolicyNodeContent';
 import RoutesPolicyUsersPopover from './RoutesPolicyUsersPopover';
+import TestPolicyPanel from './TestPolicyPanel';
 
-export default function RoutesPolicyTree( { form, setField } ) {
+export default function RoutesPolicyTree( { form, setField, selectedApplicationId, onNavigate } ) {
 	const {
 		enforce_auth,
 		enforce_rate_limit,
@@ -46,7 +52,8 @@ export default function RoutesPolicyTree( { form, setField } ) {
 	} = form;
 
 	const { adminData } = useAdminData();
-	const { hasValidLicense } = useLicense();
+	const { hasValidLicense, proNonce } = useLicense();
+	const nonce = proNonce || adminData.nonce;
 	const { __, sprintf } = wp.i18n || {};
 	const [ treeData, setTreeData ] = useState( null );
 	const [ loading, setLoading ] = useState( false );
@@ -60,11 +67,14 @@ export default function RoutesPolicyTree( { form, setField } ) {
 	const [ popoverIsBulk, setPopoverIsBulk ] = useState( false );
 	const [ isDirty, setIsDirty ] = useState( false );
 	const [ saving, setSaving ] = useState( false );
+	const [ confirmSaveOpen, setConfirmSaveOpen ] = useState( false );
+	const [ testRoute, setTestRoute ] = useState( null );
 	const usersLoadedRef = useRef( false );
 	const treeLoadingRef = useRef( true );
 
 	const loadRoutes = useCallback( async () => {
 		setLoading( true );
+		usersLoadedRef.current = false;
 		try {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
@@ -74,7 +84,7 @@ export default function RoutesPolicyTree( { form, setField } ) {
 				},
 				body: new URLSearchParams( {
 					action: 'get_routes_policy_tree',
-					nonce: adminData.nonce,
+					nonce,
 				} ),
 			} );
 
@@ -82,10 +92,6 @@ export default function RoutesPolicyTree( { form, setField } ) {
 
 			if ( result?.success ) {
 				setTreeData( result.data.tree );
-				if ( Array.isArray( result.data.users ) ) {
-					setUsersData( result.data.users );
-					usersLoadedRef.current = true;
-				}
 			}
 		} catch ( error ) {
 			setErrorMessage(
@@ -94,7 +100,7 @@ export default function RoutesPolicyTree( { form, setField } ) {
 		} finally {
 			setLoading( false );
 		}
-	}, [ adminData ] );
+	}, [ adminData, nonce ] );
 
 	useEffect( () => {
 		loadRoutes();
@@ -110,7 +116,9 @@ export default function RoutesPolicyTree( { form, setField } ) {
 		if ( treeData && Array.isArray( treeData ) ) {
 			treeLoadingRef.current = true;
 			dispatch( { type: 'RESET', payload: normalizeTree( treeData ) } );
+			loadUsers();
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ treeData ] );
 
 	const handleToggle = ( id, key, effectiveValues ) =>
@@ -150,7 +158,8 @@ export default function RoutesPolicyTree( { form, setField } ) {
 				},
 				body: new URLSearchParams( {
 					action: 'get_route_policy_users',
-					nonce: adminData.nonce,
+					nonce,
+					...( selectedApplicationId ? { application_id: selectedApplicationId } : {} ),
 				} ),
 			} );
 			const result = await response.json();
@@ -161,7 +170,7 @@ export default function RoutesPolicyTree( { form, setField } ) {
 		} finally {
 			setUsersLoading( false );
 		}
-	}, [ adminData ] );
+	}, [ adminData, nonce, selectedApplicationId ] );
 
 	const handleOpenUsersPopover = useCallback(
 		( nodeId, anchorEl ) => {
@@ -219,9 +228,10 @@ export default function RoutesPolicyTree( { form, setField } ) {
 					},
 					body: new URLSearchParams( {
 						action: 'save_routes_policy_tree',
-						nonce: adminData.nonce,
+						nonce,
 						tree: JSON.stringify( tree ),
 						users: JSON.stringify( users || [] ),
+						application_id: selectedApplicationId || '',
 					} ),
 				} );
 				setIsDirty( false );
@@ -231,8 +241,13 @@ export default function RoutesPolicyTree( { form, setField } ) {
 				setSaving( false );
 			}
 		},
-		[ adminData ]
+		[ adminData, nonce, selectedApplicationId ]
 	);
+
+	useEffect( () => {
+		usersLoadedRef.current = false;
+		setUsersData( null );
+	}, [ selectedApplicationId ] );
 
 	useEffect( () => {
 		if ( treeLoadingRef.current ) {
@@ -272,98 +287,142 @@ export default function RoutesPolicyTree( { form, setField } ) {
 
 	return (
 		<Box sx={ { minHeight: 352, minWidth: '100%' } }>
-			<Toolbar disableGutters sx={ { gap: 1.5, mb: 2, flexWrap: 'wrap', minHeight: '0 !important' } }>
-				<Button
-					startIcon={ <RefreshIcon /> }
-					size="small"
-					onClick={ loadRoutes }
-					disabled={ loading }
-				>
-					{ __( 'Refresh From Server', 'rest-api-firewall' ) }
-				</Button>
+			<Box sx={ { display: testRoute ? 'block' : 'none' } }>
+				<TestPolicyPanel
+					route={ testRoute?.route || '' }
+					method={ testRoute?.method || 'GET' }
+					hasChildren={ testRoute?.hasChildren || false }
+					hasUsers={ testRoute?.hasUsers || false }
+					onClose={ () => setTestRoute( null ) }
+					onNavigate={ onNavigate }
+				/>
+			</Box>
 
-				<Stack flex={ 1 } />
+			<Box sx={ { display: testRoute ? 'none' : 'block' } }>
 
-				<Stack direction="row" alignItems="center" gap={ 1 }>
-					{ customCount > 0 && (
-						<Chip
-							label={ sprintf( __( '%d per-route settings', 'rest-api-firewall' ), customCount ) }
+				<Toolbar disableGutters sx={ { gap: 1.5, mb: 2, flexWrap: 'wrap', minHeight: '0 !important' } }>
+					<Button
+						startIcon={ <RefreshIcon /> }
+						size="small"
+						onClick={ loadRoutes }
+						disabled={ loading }
+					>
+						{ __( 'Refresh From Server', 'rest-api-firewall' ) }
+					</Button>
+
+					<Stack flex={ 1 } />
+
+					<Stack direction="row" alignItems="center" gap={ 1 }>
+						{ customCount > 0 && (
+							<Chip
+								label={ sprintf( __( '%d per-route settings', 'rest-api-firewall' ), customCount ) }
+								size="small"
+								variant="outlined"
+							/>
+						) }
+
+						<Button
+							startIcon={ <SettingsBackupRestoreOutlinedIcon /> }
 							size="small"
-							variant="outlined"
-						/>
-					) }
+							disabled={ customCount === 0 }
+							onClick={ () => dispatch( { type: 'RESET_ALL_OVERRIDES' } ) }
+						>
+							{ __( 'Reset Per-route Settings', 'rest-api-firewall' ) }
+						</Button>
 
-					<Button
-						startIcon={ <SettingsBackupRestoreOutlinedIcon /> }
-						size="small"
-						disabled={ customCount === 0 }
-						onClick={ () => dispatch( { type: 'RESET_ALL_OVERRIDES' } ) }
-					>
-						{ __( 'Reset Per-route Settings', 'rest-api-firewall' ) }
-					</Button>
+						<Button
+							variant="contained"
+							size="small"
+							disableElevation
+							disabled={ ! isDirty || saving }
+							onClick={ () => setConfirmSaveOpen( true ) }
+						>
+							{ saving
+								? __( 'Saving…', 'rest-api-firewall' )
+								: __( 'Save', 'rest-api-firewall' ) }
+						</Button>
+					</Stack>
+				</Toolbar>
 
-					<Button
-						variant="contained"
-						size="small"
-						disableElevation
-						disabled={ ! isDirty || saving }
-						onClick={ () => saveTree( nodes, usersData ) }
-					>
-						{ saving
-							? __( 'Saving…', 'rest-api-firewall' )
-							: __( 'Save', 'rest-api-firewall' ) }
-					</Button>
-				</Stack>
-			</Toolbar>
+				<RichTreeView
+					items={ nodes }
+					slots={ { item: CustomTreeItem } }
+					slotProps={ {
+						item: {
+							toggleNodeSetting: handleToggle,
+							overrideNodeSetting: handleOverrideNode,
+							getNodeById,
+							openUsersPopover: hasValidLicense
+								? handleOpenUsersPopover
+								: null,
+							toggleNodeCustom: handleToggleCustom,
+							enforce_auth,
+							enforce_rate_limit,
+							rate_limit,
+							rate_limit_time,
+							hide_user_routes,
+							hide_batch_routes,
+							hide_oembed_routes,
+							disabled_methods: disabled_methods || [],
+							disabled_post_type_routes: disabledPostTypeRoutes,
+							expandedItems,
+							hasValidLicense,
+							usersData,
+							onNavigate,
+							onTest: setTestRoute,
+						},
+					} }
+					expandedItems={ expandedItems }
+					onExpandedItemsChange={ ( _e, ids ) => setExpandedItems( ids ) }
+				/>
 
-			<RichTreeView
-				items={ nodes }
-				slots={ { item: CustomTreeItem } }
-				sx={ {
-					'& .MuiTreeItem-group': {
-						ml: 2,
-						pl: 1,
-						borderLeft: '2px solid',
-						borderColor: 'divider',
-					},
-				} }
-				slotProps={ {
-					item: {
-						toggleNodeSetting: handleToggle,
-						overrideNodeSetting: handleOverrideNode,
-						getNodeById,
-						openUsersPopover: hasValidLicense
-							? handleOpenUsersPopover
-							: null,
-						toggleNodeCustom: handleToggleCustom,
-						enforce_auth,
-						enforce_rate_limit,
-						rate_limit,
-						rate_limit_time,
-						hide_user_routes,
-						hide_batch_routes,
-						hide_oembed_routes,
-						disabled_methods: disabled_methods || [],
-						disabled_post_type_routes: disabledPostTypeRoutes,
-						expandedItems,
-						hasValidLicense,
-						usersData,
-					},
-				} }
-				expandedItems={ expandedItems }
-				onExpandedItemsChange={ ( _e, ids ) => setExpandedItems( ids ) }
-			/>
+				<RoutesPolicyUsersPopover
+					open={ Boolean( popoverAnchor ) }
+					anchorEl={ popoverAnchor }
+					onClose={ handleCloseUsersPopover }
+					usersData={ usersData }
+					usersLoading={ usersLoading }
+					routeIds={ popoverRouteIds }
+					isBulk={ popoverIsBulk }
+					onUserAccessChange={ handleUserAccessChange }
+				/>
 
-			<RoutesPolicyUsersPopover
-				open={ Boolean( popoverAnchor ) }
-				anchorEl={ popoverAnchor }
-				onClose={ handleCloseUsersPopover }
-				usersData={ usersData }
-				usersLoading={ usersLoading }
-				routeIds={ popoverRouteIds }
-				isBulk={ popoverIsBulk }
-				onUserAccessChange={ handleUserAccessChange }
-			/>
+				<Dialog
+					open={ confirmSaveOpen }
+					onClose={ () => setConfirmSaveOpen( false ) }
+					maxWidth="xs"
+					fullWidth
+				>
+					<DialogTitle>
+						{ __( 'Save Route Policy', 'rest-api-firewall' ) }
+					</DialogTitle>
+					<DialogContent>
+						<DialogContentText>
+							{ __(
+								'Changing route policies can break your front-end application. Make sure you have tested your configuration before saving.',
+								'rest-api-firewall'
+							) }
+						</DialogContentText>
+					</DialogContent>
+					<DialogActions>
+						<Button onClick={ () => setConfirmSaveOpen( false ) }>
+							{ __( 'Cancel', 'rest-api-firewall' ) }
+						</Button>
+						<Button
+							variant="contained"
+							size="small"
+							disableElevation
+							onClick={ () => {
+								setConfirmSaveOpen( false );
+								saveTree( nodes, usersData );
+							} }
+						>
+							{ __( 'Confirm Save', 'rest-api-firewall' ) }
+						</Button>
+					</DialogActions>
+				</Dialog>
+
+			</Box>
 		</Box>
 	);
 }

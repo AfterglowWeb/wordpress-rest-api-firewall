@@ -50,7 +50,7 @@ export default function CountryBlockList( { listType = 'blacklist' } ) {
 				setStats( result.data.stats || [] );
 			}
 		} catch {
-			// Silent.
+			// Silent fail.
 		} finally {
 			setLoading( false );
 		}
@@ -75,7 +75,7 @@ export default function CountryBlockList( { listType = 'blacklist' } ) {
 				setRowSelectionModel( { type: 'include', ids: new Set( blocked ) } );
 			}
 		} catch {
-			// Silent.
+			// Silent fail.
 		}
 	}, [ adminData, proNonce, listType ] );
 
