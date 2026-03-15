@@ -84,10 +84,13 @@ class PolicyRepository {
 		if ( ! is_array( $users ) ) {
 			$users = array();
 		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
+		$application_id = isset( $_POST['application_id'] ) ? sanitize_text_field( wp_unslash( $_POST['application_id'] ) ) : '';
 
-		$diff          = self::extract_diff_from_tree( $tree );
-		$diff['users'] = self::normalize_users( $users );
-		$saved         = self::save_diff( $diff );
+		$diff                   = self::extract_diff_from_tree( $tree );
+		$diff['users']          = self::normalize_users( $users );
+		$diff['application_id'] = $application_id;
+		$saved                  = self::save_diff( $diff );
 
 		if ( ! $saved ) {
 			wp_send_json_error(
@@ -284,7 +287,7 @@ class PolicyRepository {
 				continue;
 			}
 			$out[] = array(
-				'id'                  => (int) $user['id'],
+				'id'                  => sanitize_text_field( $user['id'] ),
 				'wp_user_id'          => isset( $user['wp_user_id'] ) ? (int) $user['wp_user_id'] : 0,
 				'display_name'        => isset( $user['display_name'] ) ? sanitize_text_field( $user['display_name'] ) : '',
 				'related_routes_uuid' => isset( $user['related_routes_uuid'] ) && is_array( $user['related_routes_uuid'] )

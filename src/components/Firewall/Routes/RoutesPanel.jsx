@@ -15,7 +15,7 @@ import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import GlobalRoutesPolicy from './GlobalRoutesPolicy';
 import RoutesPolicyTree from './RoutesPolicyTree';
 
-export default function RoutesPanel( { form, setField } ) {
+export default function RoutesPanel( { form, setField, onNavigate } ) {
 	const { hasValidLicense, proNonce } = useLicense();
 	const { adminData } = useAdminData();
 	const { selectedApplicationId } = useApplication();
@@ -173,6 +173,8 @@ export default function RoutesPanel( { form, setField } ) {
 					<RoutesPolicyTree
 						form={ effectiveForm }
 						setField={ setField }
+						selectedApplicationId={ selectedApplicationId }
+						onNavigate={ onNavigate }
 					/>
 				</Stack>
 			) }

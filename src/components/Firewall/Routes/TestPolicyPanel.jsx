@@ -1,5 +1,6 @@
 import { useState } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
+import { useLicense } from '../../../contexts/LicenseContext';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -8,7 +9,6 @@ import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
-import Drawer from '@mui/material/Drawer';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
@@ -17,31 +17,19 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
+import Toolbar from '@mui/material/Toolbar';
+
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-
-const METHOD_COLOR = {
-	GET: 'primary',
-	POST: 'success',
-	PUT: 'warning',
-	PATCH: 'warning',
-	DELETE: 'error',
-};
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 function StatusBadge( { status } ) {
-	const color =
-		status >= 200 && status < 300
-			? 'success'
-			: status >= 400
-			? 'error'
-			: 'default';
 	return (
 		<Chip
 			label={ status || '—' }
 			size="small"
-			color={ color }
 			variant="outlined"
-			sx={ { fontFamily: 'monospace', fontWeight: 700 } }
 		/>
 	);
 }
@@ -84,16 +72,19 @@ function DataPanel( { label, data, bgcolor } ) {
 	);
 }
 
-export default function TestPolicy( {
+export default function TestPolicyPanel( {
 	route,
 	method,
 	hasChildren = false,
 	hasUsers = false,
+	onClose,
+	onNavigate,
 } ) {
 	const { adminData } = useAdminData();
+	const { proNonce } = useLicense();
+	const nonce = proNonce || adminData.nonce;
 	const { __ } = wp.i18n || {};
 
-	const [ open, setOpen ] = useState( false );
 	const [ loading, setLoading ] = useState( false );
 	const [ results, setResults ] = useState( null );
 	const [ error, setError ] = useState( null );
@@ -101,37 +92,29 @@ export default function TestPolicy( {
 	const [ testSubRoutes, setTestSubRoutes ] = useState( false );
 	const [ bypassUsers, setBypassUsers ] = useState( false );
 
-	const handleOpen = ( e ) => {
-		e.stopPropagation();
-		setOpen( true );
-		setResults( null );
-		setError( null );
-	};
-
-	const handleClose = () => {
-		setOpen( false );
-	};
-
 	const runTest = async () => {
 		setLoading( true );
 		setError( null );
 		setResults( null );
 
 		try {
+			const params = {
+				action: 'run_policy_test',
+				nonce,
+				route,
+				method,
+				test_sub_routes: testSubRoutes ? '1' : '0',
+				bypass_users: bypassUsers ? '1' : '0',
+				has_users: hasUsers ? '1' : '0',
+			};
+
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
 				headers: {
 					'Content-Type':
 						'application/x-www-form-urlencoded; charset=UTF-8',
 				},
-				body: new URLSearchParams( {
-					action: 'run_policy_test',
-					nonce: adminData.nonce,
-					route,
-					method,
-					test_sub_routes: testSubRoutes ? '1' : '0',
-					bypass_users: bypassUsers ? '1' : '0',
-				} ),
+				body: new URLSearchParams( params ),
 			} );
 
 			const result = await response.json();
@@ -174,7 +157,7 @@ export default function TestPolicy( {
 				</Typography>
 			);
 		}
-		if ( test?.pass ) {
+		if ( test?.pass === true ) {
 			return (
 				<Typography
 					variant="caption"
@@ -182,6 +165,17 @@ export default function TestPolicy( {
 					fontWeight={ 600 }
 				>
 					{ __( 'Pass', 'rest-api-firewall' ) }
+				</Typography>
+			);
+		}
+		if ( test?.pass === null ) {
+			return (
+				<Typography
+					variant="caption"
+					color="text.secondary"
+					fontWeight={ 600 }
+				>
+					{ __( '—', 'rest-api-firewall' ) }
 				</Typography>
 			);
 		}
@@ -213,9 +207,7 @@ export default function TestPolicy( {
 								<Chip
 									label={ result.method }
 									size="small"
-									color={
-										METHOD_COLOR[ result.method ] || 'default'
-									}
+									variant="outlined"
 								/>
 								<Typography
 									variant="body2"
@@ -231,6 +223,7 @@ export default function TestPolicy( {
 							direction="row"
 							spacing={ 0.5 }
 							flexWrap="wrap"
+							alignItems="center"
 							sx={ { mb: 1.5 } }
 						>
 							<Chip
@@ -240,7 +233,6 @@ export default function TestPolicy( {
 										: __( 'Disabled', 'rest-api-firewall' )
 								}
 								size="small"
-								color={ result.policy.state ? 'success' : 'error' }
 								variant="outlined"
 							/>
 							<Chip
@@ -250,20 +242,36 @@ export default function TestPolicy( {
 										: __( 'Public', 'rest-api-firewall' )
 								}
 								size="small"
-								color={ result.policy.protect ? 'warning' : 'default' }
 								variant="outlined"
 							/>
 							{ result.policy.rate_limit && (
 								<Chip
 									label={ `${ result.policy.rate_limit } req/${ result.policy.rate_limit_time }s` }
 									size="small"
-									color="info"
 									variant="outlined"
 								/>
 							) }
+							{ result.model && (
+								<Stack direction="row" alignItems="center" spacing={ 0.5 }>
+									<Chip
+										label={ result.model.title }
+										size="small"
+										variant="outlined"
+									/>
+									{ onNavigate && (
+										<IconButton
+											size="small"
+											onClick={ () => onNavigate( 5 ) }
+											sx={ { opacity: 0.7 } }
+										>
+											<AccountTreeOutlinedIcon fontSize="small" />
+										</IconButton>
+									) }
+								</Stack>
+							) }
 						</Stack>
 
-						{ /* Tests table — no vertical borders */ }
+						{ /* Tests table */ }
 						<Table
 							size="small"
 							sx={ {
@@ -326,157 +334,113 @@ export default function TestPolicy( {
 	};
 
 	return (
-		<>
-			<Button
-				variant="text"
-				size="small"
-				onClick={ handleOpen }
-				startIcon={ <PlayArrowIcon /> }
-				sx={ { minWidth: 'auto', textTransform: 'none' } }
+		<Stack>
+			<Toolbar
+			direction="row"
+			alignItems="center"
+			disableGutters
 			>
-				{ __( 'Test', 'rest-api-firewall' ) }
-			</Button>
-
-			<Drawer
-				anchor="right"
-				open={ open }
-				onClose={ handleClose }
-				onClick={ ( e ) => e.stopPropagation() }
-				PaperProps={ {
-					sx: {
-						width: { xs: '100%', sm: 560, md: 680 },
-						display: 'flex',
-						flexDirection: 'column',
-					},
-				} }
-			>
-				{ /* Header */ }
 				<Stack
-					direction="row"
-					alignItems="center"
-					sx={ {
-						px: 2.5,
-						py: 1.5,
-						borderBottom: 1,
-						borderColor: 'divider',
-						flexShrink: 0,
-					} }
+				direction="row"
+				gap={ 2 }
+				alignItems="center"
 				>
-					<Stack
-						direction="row"
-						spacing={ 1 }
-						alignItems="center"
-						sx={ { flex: 1, mr: 1, overflow: 'hidden' } }
+					<IconButton
+					size="small"
+					onClick={ onClose }
 					>
-						<Chip
-							label={ method }
-							size="small"
-							color={ METHOD_COLOR[ method ] || 'default' }
-						/>
-						<Typography
-							variant="body2"
-							sx={ {
-								fontFamily: 'monospace',
-								overflow: 'hidden',
-								textOverflow: 'ellipsis',
-								whiteSpace: 'nowrap',
-							} }
-						>
-							{ route }
-						</Typography>
-					</Stack>
-					<IconButton size="small" onClick={ handleClose }>
-						<CloseIcon fontSize="small" />
+						<ArrowBackIcon />
 					</IconButton>
-				</Stack>
 
-				{ /* Scrollable content */ }
-				<Box sx={ { flex: 1, overflowY: 'auto', p: 2.5 } }>
-					<Stack spacing={ 2 }>
-						{ ( hasChildren || hasUsers ) && (
-							<Stack spacing={ 0.5 }>
-								{ hasChildren && (
-									<FormControlLabel
-										control={
-											<Checkbox
-												checked={ testSubRoutes }
-												onChange={ ( e ) =>
-													setTestSubRoutes(
-														e.target.checked
-													)
-												}
-												size="small"
-											/>
-										}
-										label={ __(
-											'Include sub-routes',
-											'rest-api-firewall'
-										) }
-									/>
-								) }
-								{ hasUsers && (
-									<FormControlLabel
-										control={
-											<Checkbox
-												checked={ bypassUsers }
-												onChange={ ( e ) =>
-													setBypassUsers(
-														e.target.checked
-													)
-												}
-												size="small"
-											/>
-										}
-										label={ __(
-											'Bypass users settings',
-											'rest-api-firewall'
-										) }
-									/>
-								) }
-								<Divider sx={ { mt: 0.5 } } />
-							</Stack>
-						) }
+					<Divider orientation="vertical" flexItem />
 
-						{ error && <Alert severity="error">{ error }</Alert> }
+					<Chip
+					label={ method }
+					size="small"
+					/>
 
-						{ renderResults() }
-					</Stack>
-				</Box>
-
-				{ /* Footer */ }
-				<Stack
-					direction="row"
-					justifyContent="flex-end"
-					spacing={ 1 }
-					sx={ {
-						px: 2.5,
-						py: 1.5,
-						borderTop: 1,
-						borderColor: 'divider',
-						flexShrink: 0,
-					} }
-				>
-					<Button onClick={ handleClose } disabled={ loading }>
-						{ __( 'Close', 'rest-api-firewall' ) }
-					</Button>
-					<Button
-						variant="contained"
-						onClick={ runTest }
-						disabled={ loading }
-						startIcon={
-							loading ? (
-								<CircularProgress size={ 16 } />
-							) : (
-								<PlayArrowIcon />
-							)
-						}
+					<Typography
+						variant="body2"
+						sx={ {
+							fontFamily: 'monospace',
+							overflow: 'hidden',
+							textOverflow: 'ellipsis',
+							whiteSpace: 'nowrap',
+						} }
 					>
+						{ route }
+					</Typography>
+
+					<Divider orientation="vertical" flexItem />
+
+					<Stack direction="row" gap={ 2 } alignItems="center">
+						
+						<FormControlLabel
+							disabled={ ! hasChildren }
+							control={
+								<Checkbox
+									checked={ testSubRoutes }
+									onChange={ ( e ) =>
+										setTestSubRoutes( e.target.checked )
+									}
+									size="small"
+								/>
+							}
+							label={ __(
+								'Include sub-routes',
+								'rest-api-firewall'
+							) }
+						/>
+				
+						<FormControlLabel
+							control={
+								<Checkbox
+									disabled={ ! hasUsers }
+									checked={ bypassUsers }
+									onChange={ ( e ) =>
+										setBypassUsers( e.target.checked )
+									}
+									size="small"
+								/>
+							}
+							label={ __(
+								'Bypass users settings',
+								'rest-api-firewall'
+							) }
+						/>
+
+						<Button
+							variant="contained"
+							size="small"
+							disableElevation
+							onClick={ runTest }
+							disabled={ loading }
+							startIcon={
+								loading ? (
+									<CircularProgress size={ 14 } />
+								) : (
+									<PlayArrowIcon />
+								)
+							}
+							sx={ { textTransform: 'none' } }
+						>
 						{ loading
 							? __( 'Running…', 'rest-api-firewall' )
 							: __( 'Run Test', 'rest-api-firewall' ) }
-					</Button>
+						</Button>
+
+					</Stack>
+					
 				</Stack>
-			</Drawer>
-		</>
+
+				<Stack flex={ 1 } />
+
+			</Toolbar>
+			
+			{ error && <Alert severity="error">{ error }</Alert> }
+
+			{ renderResults() }
+			
+		</Stack>
 	);
 }

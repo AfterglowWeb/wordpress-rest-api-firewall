@@ -32,9 +32,8 @@ class TestPolicy {
 		$route           = isset( $_POST['route'] ) ? sanitize_text_field( wp_unslash( $_POST['route'] ) ) : '';
 		$method          = isset( $_POST['method'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_POST['method'] ) ) ) : 'GET';
 		$test_sub_routes = isset( $_POST['test_sub_routes'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['test_sub_routes'] ) ) : false;
-		$use_auth        = isset( $_POST['use_auth'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['use_auth'] ) ) : true;
-		$use_rate_limit  = isset( $_POST['use_rate_limit'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['use_rate_limit'] ) ) : true;
-		$use_disabled    = isset( $_POST['use_disabled'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['use_disabled'] ) ) : true;
+		$bypass_users    = isset( $_POST['bypass_users'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['bypass_users'] ) ) : false;
+		$has_users       = isset( $_POST['has_users'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['has_users'] ) ) : false;
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		if ( empty( $route ) ) {
@@ -52,12 +51,7 @@ class TestPolicy {
 			wp_send_json_error( array( 'message' => 'No routes found to test' ), 404 );
 		}
 
-		$results = $this->run_tests(
-			$routes_to_test,
-			$use_auth,
-			$use_rate_limit,
-			$use_disabled
-		);
+		$results = $this->run_tests( $routes_to_test, $bypass_users, $has_users );
 
 		wp_send_json_success( $results, 200 );
 	}
@@ -122,36 +116,119 @@ class TestPolicy {
 	}
 
 
-	protected function run_tests( array $routes, bool $use_auth, bool $use_rate_limit, bool $use_disabled ): array {
+	/**
+	 * Run tests for a list of routes.
+	 *
+	 * @param array $routes       Routes to test.
+	 * @param bool  $bypass_users When true, result_data uses auth regardless of user restrictions.
+	 * @param bool  $has_users    Whether the route has user-specific access configured.
+	 */
+	protected function run_tests( array $routes, bool $bypass_users, bool $has_users = false ): array {
 		$results = array();
 
 		foreach ( $routes as $route_info ) {
 			$route  = $route_info['route'];
 			$method = $route_info['method'];
 
-			$result = array(
-				'route'  => $route,
-				'method' => $method,
-				'policy' => $this->get_policy_for_route( $route, $method ),
-				'tests'  => array(),
+			PolicyRuntime::clear_cache();
+
+			$policy = $this->get_policy_for_route( $route, $method );
+
+			$use_auth_for_result = ! $has_users || $bypass_users;
+
+			$result_entry = array(
+				'route'        => $route,
+				'method'       => $method,
+				'policy'       => $policy,
+				'bypass_users' => $bypass_users,
+				'tests'        => array(
+					'disabled'   => $this->test_disabled( $route, $method, $policy ),
+					'auth'       => $this->test_auth( $route, $method, $policy ),
+					'rate_limit' => $this->test_rate_limit( $route, $method, $policy ),
+				),
+				'raw_data'     => $this->fetch_data( $route, $method, false ),
+				'result_data'  => $this->fetch_data( $route, $method, $use_auth_for_result ),
 			);
 
-			if ( $use_disabled ) {
-				$result['tests']['disabled'] = $this->test_disabled( $route, $method, $result['policy'] );
+			$model = $this->get_model_for_route( $route );
+			if ( $model ) {
+				$result_entry['model'] = array(
+					'id'          => $model['id'],
+					'title'       => $model['title'],
+					'object_type' => $model['object_type'],
+				);
 			}
 
-			if ( $use_auth ) {
-				$result['tests']['auth'] = $this->test_auth( $route, $method, $result['policy'] );
-			}
-
-			if ( $use_rate_limit ) {
-				$result['tests']['rate_limit'] = $this->test_rate_limit( $route, $method, $result['policy'] );
-			}
-
-			$results[] = $result;
+			$results[] = $result_entry;
 		}
 
 		return $results;
+	}
+
+	/**
+	 * Find the active model for a given route path, if one exists.
+	 * Requires the pro plugin's ModelRepository and ApplicationRepository.
+	 *
+	 * @param string $route REST route, e.g. /wp/v2/posts.
+	 * @return array|null Model row or null.
+	 */
+	protected function get_model_for_route( string $route ): ?array {
+		if ( ! class_exists( 'cmk\\RestApiFirewallPro\\Models\\ModelRepository' ) ||
+			! class_exists( 'cmk\\RestApiFirewallPro\\Application\\ApplicationRepository' ) ) {
+			return null;
+		}
+
+		$app = \cmk\RestApiFirewallPro\Application\ApplicationRepository::find_first_active();
+		if ( ! $app ) {
+			return null;
+		}
+
+		$post_type = $this->post_type_from_route( $route );
+		if ( ! $post_type ) {
+			return null;
+		}
+
+		return \cmk\RestApiFirewallPro\Models\ModelRepository::find_enabled_by_object_type(
+			$app['id'],
+			$post_type
+		);
+	}
+
+	/**
+	 * Resolve a REST route to its WordPress post type slug.
+	 * Handles /wp/v2/{rest_base} and /wp/v2/{rest_base}/{id} patterns.
+	 *
+	 * @param string $route REST route path.
+	 * @return string|null Post type slug or null.
+	 */
+	protected function post_type_from_route( string $route ): ?string {
+		// Match /wp/v2/{segment}[/...] and extract the segment.
+		if ( ! preg_match( '#^/wp/v2/([^/]+)#', $route, $m ) ) {
+			return null;
+		}
+
+		$segment = $m[1];
+
+		foreach ( get_post_types( array( 'show_in_rest' => true ), 'objects' ) as $post_type ) {
+			$rest_base = ! empty( $post_type->rest_base ) ? $post_type->rest_base : $post_type->name;
+			if ( $rest_base === $segment ) {
+				return $post_type->name;
+			}
+		}
+
+		return null;
+	}
+
+	protected function fetch_data( string $route, string $method, bool $with_auth ): array {
+		$response    = $this->make_request( $route, $method, $with_auth );
+		$status_code = wp_remote_retrieve_response_code( $response );
+		$body_raw    = wp_remote_retrieve_body( $response );
+		$body        = json_decode( $body_raw, true );
+
+		return array(
+			'status' => $status_code,
+			'body'   => null !== $body ? $body : $body_raw,
+		);
 	}
 
 	protected function get_policy_for_route( string $route, string $method ): array {
@@ -178,7 +255,8 @@ class TestPolicy {
 
 		$status_code = wp_remote_retrieve_response_code( $response );
 		$expected    = 403;
-		$pass        = $status_code === $expected;
+		$is_redirect = $status_code >= 301 && $status_code <= 308;
+		$pass        = $status_code === $expected || $is_redirect;
 
 		return array(
 			'skip'     => false,
@@ -186,8 +264,8 @@ class TestPolicy {
 			'expected' => $expected,
 			'actual'   => $status_code,
 			'message'  => $pass
-				? 'Disabled route correctly returns 403'
-				: "Disabled route should return {$expected}, got {$status_code}",
+				? ( $is_redirect ? "Disabled route correctly redirects ({$status_code})" : 'Disabled route correctly returns 403' )
+				: "Disabled route should return 403 or redirect, got {$status_code}",
 		);
 	}
 
@@ -207,6 +285,16 @@ class TestPolicy {
 		$status_code = wp_remote_retrieve_response_code( $response );
 		$expected    = 401;
 		$pass        = $status_code === $expected;
+
+		// Non-GET routes may require a valid request body before auth is checked.
+		// A 400 response is inconclusive — auth may still be enforced.
+		if ( 'GET' !== $method && 400 === $status_code ) {
+			return array(
+				'skip'    => false,
+				'pass'    => null,
+				'message' => 'Cannot verify auth: non-GET route returned 400 (body required before auth check)',
+			);
+		}
 
 		return array(
 			'skip'     => false,
@@ -247,13 +335,30 @@ class TestPolicy {
 	}
 
 	protected function make_request( string $route, string $method, bool $with_auth = false ) {
-		$url = $this->build_rest_url( $route );
+		// Generate a one-time token stored as a transient so the firewall skips
+		// the admin bypass for this loopback request and applies real policy checks.
+		// Passed as a query parameter (not a header) because some proxies strip custom headers.
+		$test_token = wp_generate_password( 32, false );
+
+		// Store test context including the active application ID so that
+		// ApplicationResolver can resolve the correct app for this loopback request.
+		$test_ctx = array( 'app_id' => null );
+		if ( class_exists( 'cmk\\RestApiFirewallPro\\Application\\ApplicationRepository' ) ) {
+			$active_app = \cmk\RestApiFirewallPro\Application\ApplicationRepository::find_first_active();
+			if ( $active_app ) {
+				$test_ctx['app_id'] = $active_app['id'];
+			}
+		}
+		set_transient( 'rest_firewall_test_ctx_' . md5( $test_token ), $test_ctx, 60 );
+
+		$url = add_query_arg( '_firewall_test', $test_token, $this->build_rest_url( $route ) );
 
 		$args = array(
-			'method'    => $method,
-			'timeout'   => 10,
-			'sslverify' => false,
-			'headers'   => array(
+			'method'      => $method,
+			'timeout'     => 10,
+			'sslverify'   => false,
+			'redirection' => 0,
+			'headers'     => array(
 				'Content-Type' => 'application/json',
 			),
 		);
@@ -272,7 +377,9 @@ class TestPolicy {
 			}
 		}
 
-		return wp_remote_request( $url, $args );
+		$response = wp_remote_request( $url, $args );
+
+		return $response;
 	}
 
 	protected function get_or_create_test_app_password( int $user_id ): ?string {

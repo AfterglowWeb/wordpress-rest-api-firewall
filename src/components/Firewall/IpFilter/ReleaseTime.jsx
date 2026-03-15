@@ -67,7 +67,7 @@ export default function ReleaseTime( { listType = 'blacklist', rowSelectionModel
 				setExpiryUnit( parsed.unit );
 			}
 		} catch ( e ) {
-			// silent
+			// Silent fail.
 		}
 	}, [ adminData, nonce ] );
 
@@ -128,7 +128,7 @@ export default function ReleaseTime( { listType = 'blacklist', rowSelectionModel
 				onExpirySaved?.();
 			}
 		} catch ( e ) {
-			// silent
+			// Silent fail.
 		} finally {
 			setSavingExpiry( false );
 			setAnchorEl( null );

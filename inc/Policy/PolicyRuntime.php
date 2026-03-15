@@ -10,6 +10,10 @@ class PolicyRuntime {
 
 	protected static $cache = array();
 
+	public static function clear_cache(): void {
+		self::$cache = array();
+	}
+
 	public static function resolve_for_request( WP_REST_Request $request ): array {
 
 		$route  = $request->get_route();
@@ -52,6 +56,36 @@ class PolicyRuntime {
 			$node_settings,
 			$route_settings
 		);
+
+		// Apply global disable flags (mirrors frontend NodeContent logic).
+		// Only applies when the route has no custom per-route settings override.
+		if ( $effective['state'] ) {
+			$is_custom = false;
+			foreach ( $node_settings as $ns ) {
+				if ( ! empty( $ns['custom'] ) ) {
+					$is_custom = true;
+					break;
+				}
+			}
+			if ( ! $is_custom && ! empty( $route_settings['custom'] ) ) {
+				$is_custom = true;
+			}
+
+			if ( ! $is_custom ) {
+				$opts        = CoreOptions::read_options();
+				$opts        = apply_filters( 'rest_api_firewall_runtime_options', $opts );
+				$dis_methods = isset( $opts['disabled_methods'] ) ? (array) $opts['disabled_methods'] : array();
+
+				if (
+					( ! empty( $opts['hide_oembed_routes'] ) && 0 === strpos( $route, '/oembed' ) ) ||
+					( ! empty( $opts['hide_user_routes'] ) && 0 === strpos( $route, '/wp/v2/users' ) ) ||
+					( ! empty( $opts['hide_batch_routes'] ) && ( 0 === strpos( $route, '/wp/v2/batch' ) || 0 === strpos( $route, '/batch/v1' ) ) ) ||
+					( ! empty( $dis_methods ) && in_array( strtolower( $method ), $dis_methods, true ) )
+				) {
+					$effective['state'] = false;
+				}
+			}
+		}
 
 		return $effective;
 	}
@@ -118,7 +152,17 @@ class PolicyRuntime {
 
 	protected static function resolve_settings( array $node_settings_chain, array $route_settings ): array {
 
-		$firewall_options       = CoreOptions::read_options();
+		$firewall_options = CoreOptions::read_options();
+
+		/**
+		 * Allow per-application settings to override the global firewall options
+		 * used during policy resolution (e.g. enforce_auth, enforce_rate_limit).
+		 * The pro plugin hooks here to inject the current application's settings.
+		 *
+		 * @param array $firewall_options Merged global + per-app options.
+		 */
+		$firewall_options = apply_filters( 'rest_api_firewall_runtime_options', $firewall_options );
+
 		$global_enforce_auth    = (bool) ( $firewall_options['enforce_auth'] ?? false );
 		$global_enforce_rate    = (bool) ( $firewall_options['enforce_rate_limit'] ?? false );
 		$global_rate_limit      = (int) ( $firewall_options['rate_limit'] ?? 30 );

@@ -294,14 +294,12 @@ export default function AuthManager( {
 	const singleEnforcement = allowedAuthMethods.length === 1;
 	const multiEnforcement = allowedAuthMethods.length > 1;
 
-	// Auto-select the only allowed method when exactly one is enforced
 	useEffect( () => {
 		if ( singleEnforcement && authMethod !== allowedAuthMethods[ 0 ] ) {
 			onAuthMethodChange( allowedAuthMethods[ 0 ] );
 		}
 	}, [ allowedAuthMethods.join( ',' ) ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
-	// Build visible options
 	const visibleMethods = noEnforcement
 		? AUTH_METHODS.map( ( m ) =>
 				m.value === 'any'
@@ -310,7 +308,6 @@ export default function AuthManager( {
 		  )
 		: AUTH_METHODS.filter( ( m ) => allowedAuthMethods.includes( m.value ) );
 
-	// When multiple methods are enforced and current value is not in the list, treat as unset
 	const selectValue =
 		multiEnforcement && ( authMethod === 'any' || ! allowedAuthMethods.includes( authMethod ) )
 			? ''
@@ -340,7 +337,6 @@ export default function AuthManager( {
 				label={ __( 'Select Authentication Method', 'rest-api-firewall' ) }
 				disabled={ singleEnforcement }
 				//displayEmpty={ multiEnforcement }
-				
 				>
 					{ visibleMethods.map( ( opt ) => (
 						<MenuItem key={ opt.value } value={ opt.value }>
