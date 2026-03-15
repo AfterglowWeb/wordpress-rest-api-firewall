@@ -1,6 +1,7 @@
 import { useState, useEffect } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useLicense } from '../../../contexts/LicenseContext';
+import { useApplication } from '../../../contexts/ApplicationContext';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -82,6 +83,7 @@ export default function TestPolicyPanel( {
 } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
+	const { selectedApplicationId } = useApplication();
 	const nonce = proNonce || adminData.nonce;
 	const { __ } = wp.i18n || {};
 
@@ -118,6 +120,7 @@ export default function TestPolicyPanel( {
 				test_sub_routes: testSubRoutes ? '1' : '0',
 				bypass_users: bypassUsers ? '1' : '0',
 				has_users: hasUsers ? '1' : '0',
+				application_id: selectedApplicationId || '',
 			};
 
 			const response = await fetch( adminData.ajaxurl, {

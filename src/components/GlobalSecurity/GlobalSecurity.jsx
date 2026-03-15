@@ -73,7 +73,7 @@ export default function GlobalSecurity( { form, setField } ) {
                     />
                     <FormHelperText>
                         { __(
-                            'Deactivate comments site wide',
+                            'Deactivate comments site wide.',
                             'rest-api-firewall'
                         ) }
                     </FormHelperText>
@@ -96,7 +96,7 @@ export default function GlobalSecurity( { form, setField } ) {
                     />
                     <FormHelperText>
                         { __(
-                            'Deactivate pingbacks site wide',
+                            'Deactivate pingbacks site wide.',
                             'rest-api-firewall'
                         ) }
                     </FormHelperText>
@@ -142,7 +142,7 @@ export default function GlobalSecurity( { form, setField } ) {
                     />
                     <FormHelperText>
                         { __(
-                            'Disable the built-in XML sitemap functionality',
+                            'Disable the built-in XML sitemap functionality.',
                             'rest-api-firewall'
                         ) }
                     </FormHelperText>
@@ -165,7 +165,7 @@ export default function GlobalSecurity( { form, setField } ) {
                     />
                     <FormHelperText>
                         { __(
-                            'Enforce secure HTTP headers for cookie protection',
+                            'Enforce secure HTTP headers for cookie protection.',
                             'rest-api-firewall'
                         ) }
                     </FormHelperText>
@@ -188,7 +188,7 @@ export default function GlobalSecurity( { form, setField } ) {
                     />
                     <FormHelperText>
                         { __(
-                            'Write 400 or 440 file permissions on wp-config.php',
+                            'Set wp-config.php file permissions to 400 or 440.',
                             'rest-api-firewall'
                         ) }
                     </FormHelperText>

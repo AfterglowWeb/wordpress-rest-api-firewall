@@ -12,6 +12,8 @@ class TestPolicy {
 
 	protected static $instance = null;
 
+	private string $current_test_application_id = '';
+
 	public static function get_instance() {
 		if ( null === static::$instance ) {
 			static::$instance = new static();
@@ -34,7 +36,10 @@ class TestPolicy {
 		$test_sub_routes = isset( $_POST['test_sub_routes'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['test_sub_routes'] ) ) : false;
 		$bypass_users    = isset( $_POST['bypass_users'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['bypass_users'] ) ) : false;
 		$has_users       = isset( $_POST['has_users'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['has_users'] ) ) : false;
+		$application_id  = isset( $_POST['application_id'] ) ? sanitize_text_field( wp_unslash( $_POST['application_id'] ) ) : '';
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		$this->current_test_application_id = $application_id;
 
 		if ( empty( $route ) ) {
 			wp_send_json_error( array( 'message' => 'Route is required' ), 400 );
@@ -135,6 +140,22 @@ class TestPolicy {
 			$policy = $this->get_policy_for_route( $route, $method );
 
 			$use_auth_for_result = ! $has_users || $bypass_users;
+
+			error_log( sprintf(
+				'[TestPolicy::run_tests] route=%s method=%s | policy_state=%s protect=%s | bypass_users=%s has_users=%s use_auth_for_result=%s',
+				$route,
+				$method,
+				( $policy['state'] ?? true ) ? 'enabled' : 'disabled',
+				( $policy['protect'] ?? false ) ? 'yes' : 'no',
+				$bypass_users ? 'yes' : 'no',
+				$has_users ? 'yes' : 'no',
+				$use_auth_for_result ? 'yes' : 'no'
+			) );
+			error_log( sprintf(
+				'[TestPolicy::run_tests] CoreOptions enforce_auth=%s firewall_routes_policy_enabled=%s',
+				CoreOptions::read_option( 'enforce_auth' ) ? 'yes' : 'no',
+				CoreOptions::read_option( 'firewall_routes_policy_enabled' ) ? 'yes' : 'no'
+			) );
 
 			$result_entry = array(
 				'route'        => $route,
@@ -272,6 +293,13 @@ class TestPolicy {
 		$enforce_auth_global = (bool) CoreOptions::read_option( 'enforce_auth' );
 		$is_protected        = (bool) ( $policy['protect'] ?? false );
 
+		error_log( sprintf(
+			'[TestPolicy::test_auth] route=%s | enforce_auth_global=%s is_protected=%s',
+			$route,
+			$enforce_auth_global ? 'yes' : 'no',
+			$is_protected ? 'yes' : 'no'
+		) );
+
 		// Auth is not required only when both global and per-route protection are off.
 		if ( ! $enforce_auth_global && ! $is_protected ) {
 			return array(
@@ -344,10 +372,13 @@ class TestPolicy {
 		// Passed as a query parameter (not a header) because some proxies strip custom headers.
 		$test_token = wp_generate_password( 32, false );
 
-		// Store test context including the active application ID so that
+		// Store test context including the application ID so that
 		// ApplicationResolver can resolve the correct app for this loopback request.
+		// Use the application selected in the UI if provided; otherwise fall back to the first active app.
 		$test_ctx = array( 'app_id' => null );
-		if ( class_exists( 'cmk\\RestApiFirewallPro\\Application\\ApplicationRepository' ) ) {
+		if ( ! empty( $this->current_test_application_id ) ) {
+			$test_ctx['app_id'] = $this->current_test_application_id;
+		} elseif ( class_exists( 'cmk\\RestApiFirewallPro\\Application\\ApplicationRepository' ) ) {
 			$active_app = \cmk\RestApiFirewallPro\Application\ApplicationRepository::find_first_active();
 			if ( $active_app ) {
 				$test_ctx['app_id'] = $active_app['id'];
@@ -356,6 +387,14 @@ class TestPolicy {
 		set_transient( 'rest_firewall_test_ctx_' . md5( $test_token ), $test_ctx, 60 );
 
 		$url = add_query_arg( '_firewall_test', $test_token, $this->build_rest_url( $route ) );
+
+		error_log( sprintf(
+			'[TestPolicy::make_request] route=%s method=%s with_auth=%s | url=%s',
+			$route,
+			$method,
+			$with_auth ? 'true' : 'false',
+			$url
+		) );
 
 		$args = array(
 			'method'      => $method,
@@ -382,6 +421,11 @@ class TestPolicy {
 		}
 
 		$response = wp_remote_request( $url, $args );
+
+		error_log( sprintf(
+			'[TestPolicy::make_request] response status=%s',
+			wp_remote_retrieve_response_code( $response )
+		) );
 
 		return $response;
 	}
