@@ -78,7 +78,6 @@ class Routes {
 			999,
 			3
 		);
-
 	}
 
 	private static function set_posts_per_page(): void {

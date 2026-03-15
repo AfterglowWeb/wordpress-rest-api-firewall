@@ -34,12 +34,10 @@ class WordpressAuth {
 	}
 
 	public static function validate_wp_application_password(): bool {
-		$user = wp_get_current_user();
+		$user    = wp_get_current_user();
+		$exists  = $user && $user->exists();
+		$has_cap = $exists && $user->has_cap( 'rest_firewall_api_access' );
 
-		if ( ! $user || ! $user->exists() ) {
-			return false;
-		}
-
-		return $user->has_cap( 'rest_firewall_api_access' );
+		return $has_cap;
 	}
 }

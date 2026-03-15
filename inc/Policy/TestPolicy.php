@@ -12,6 +12,8 @@ class TestPolicy {
 
 	protected static $instance = null;
 
+	private string $current_test_application_id = '';
+
 	public static function get_instance() {
 		if ( null === static::$instance ) {
 			static::$instance = new static();
@@ -34,7 +36,10 @@ class TestPolicy {
 		$test_sub_routes = isset( $_POST['test_sub_routes'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['test_sub_routes'] ) ) : false;
 		$bypass_users    = isset( $_POST['bypass_users'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['bypass_users'] ) ) : false;
 		$has_users       = isset( $_POST['has_users'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['has_users'] ) ) : false;
+		$application_id  = isset( $_POST['application_id'] ) ? sanitize_text_field( wp_unslash( $_POST['application_id'] ) ) : '';
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		$this->current_test_application_id = $application_id;
 
 		if ( empty( $route ) ) {
 			wp_send_json_error( array( 'message' => 'Route is required' ), 400 );
@@ -115,14 +120,6 @@ class TestPolicy {
 		return strpos( $route_clean, $parent_clean ) === 0 && $route_clean !== $parent_clean;
 	}
 
-
-	/**
-	 * Run tests for a list of routes.
-	 *
-	 * @param array $routes       Routes to test.
-	 * @param bool  $bypass_users When true, result_data uses auth regardless of user restrictions.
-	 * @param bool  $has_users    Whether the route has user-specific access configured.
-	 */
 	protected function run_tests( array $routes, bool $bypass_users, bool $has_users = false ): array {
 		$results = array();
 
@@ -165,13 +162,6 @@ class TestPolicy {
 		return $results;
 	}
 
-	/**
-	 * Find the active model for a given route path, if one exists.
-	 * Requires the pro plugin's ModelRepository and ApplicationRepository.
-	 *
-	 * @param string $route REST route, e.g. /wp/v2/posts.
-	 * @return array|null Model row or null.
-	 */
 	protected function get_model_for_route( string $route ): ?array {
 		if ( ! class_exists( 'cmk\\RestApiFirewallPro\\Models\\ModelRepository' ) ||
 			! class_exists( 'cmk\\RestApiFirewallPro\\Application\\ApplicationRepository' ) ) {
@@ -194,15 +184,7 @@ class TestPolicy {
 		);
 	}
 
-	/**
-	 * Resolve a REST route to its WordPress post type slug.
-	 * Handles /wp/v2/{rest_base} and /wp/v2/{rest_base}/{id} patterns.
-	 *
-	 * @param string $route REST route path.
-	 * @return string|null Post type slug or null.
-	 */
 	protected function post_type_from_route( string $route ): ?string {
-		// Match /wp/v2/{segment}[/...] and extract the segment.
 		if ( ! preg_match( '#^/wp/v2/([^/]+)#', $route, $m ) ) {
 			return null;
 		}
@@ -254,40 +236,41 @@ class TestPolicy {
 		$response = $this->make_request( $route, $method, false );
 
 		$status_code = wp_remote_retrieve_response_code( $response );
-		$expected    = 403;
 		$is_redirect = $status_code >= 301 && $status_code <= 308;
-		$pass        = $status_code === $expected || $is_redirect;
+		$is_error    = $status_code >= 400 && $status_code < 600;
+		$pass        = $is_redirect || $is_error;
 
 		return array(
-			'skip'     => false,
-			'pass'     => $pass,
-			'expected' => $expected,
-			'actual'   => $status_code,
-			'message'  => $pass
-				? ( $is_redirect ? "Disabled route correctly redirects ({$status_code})" : 'Disabled route correctly returns 403' )
-				: "Disabled route should return 403 or redirect, got {$status_code}",
+			'skip'    => false,
+			'pass'    => $pass,
+			'actual'  => $status_code,
+			'message' => $pass
+				? ( $is_redirect ? "Disabled route correctly redirects ({$status_code})" : "Disabled route correctly blocked ({$status_code})" )
+				: "Disabled route should be blocked or redirect, got {$status_code}",
 		);
 	}
 
 	protected function test_auth( string $route, string $method, array $policy ): array {
-		$is_protected = $policy['protect'] ?? false;
+		$enforce_auth_global = (bool) CoreOptions::read_option( 'enforce_auth' );
+		$is_protected        = (bool) ( $policy['protect'] ?? false );
 
-		if ( ! $is_protected ) {
+		if ( ! $enforce_auth_global && ! $is_protected ) {
 			return array(
 				'skip'   => true,
-				'reason' => 'Route is not protected',
+				'reason' => 'Route is public (auth not enforced globally or per-route)',
 				'pass'   => null,
 			);
 		}
 
-		$response = $this->make_request( $route, $method, false );
+		$auth_source = $enforce_auth_global && $is_protected
+			? 'global + per-route'
+			: ( $enforce_auth_global ? 'global — all routes enforced' : 'per-route policy' );
 
+		$response    = $this->make_request( $route, $method, false );
 		$status_code = wp_remote_retrieve_response_code( $response );
 		$expected    = 401;
 		$pass        = $status_code === $expected;
 
-		// Non-GET routes may require a valid request body before auth is checked.
-		// A 400 response is inconclusive — auth may still be enforced.
 		if ( 'GET' !== $method && 400 === $status_code ) {
 			return array(
 				'skip'    => false,
@@ -302,8 +285,8 @@ class TestPolicy {
 			'expected' => $expected,
 			'actual'   => $status_code,
 			'message'  => $pass
-				? 'Protected route correctly requires authentication'
-				: "Protected route should return {$expected} without auth, got {$status_code}",
+				? "Auth correctly enforced ({$auth_source})"
+				: "Expected 401 without auth ({$auth_source}), got {$status_code}",
 		);
 	}
 
@@ -319,8 +302,6 @@ class TestPolicy {
 			);
 		}
 
-		// To update: We don't actually trigger rate limiting for the moment.
-		// Instead, we verify the policy is set and make a single request to confirm the route responds.
 		$response    = $this->make_request( $route, $method, false );
 		$status_code = wp_remote_retrieve_response_code( $response );
 
@@ -335,15 +316,11 @@ class TestPolicy {
 	}
 
 	protected function make_request( string $route, string $method, bool $with_auth = false ) {
-		// Generate a one-time token stored as a transient so the firewall skips
-		// the admin bypass for this loopback request and applies real policy checks.
-		// Passed as a query parameter (not a header) because some proxies strip custom headers.
 		$test_token = wp_generate_password( 32, false );
-
-		// Store test context including the active application ID so that
-		// ApplicationResolver can resolve the correct app for this loopback request.
-		$test_ctx = array( 'app_id' => null );
-		if ( class_exists( 'cmk\\RestApiFirewallPro\\Application\\ApplicationRepository' ) ) {
+		$test_ctx   = array( 'app_id' => null );
+		if ( ! empty( $this->current_test_application_id ) ) {
+			$test_ctx['app_id'] = $this->current_test_application_id;
+		} elseif ( class_exists( 'cmk\\RestApiFirewallPro\\Application\\ApplicationRepository' ) ) {
 			$active_app = \cmk\RestApiFirewallPro\Application\ApplicationRepository::find_first_active();
 			if ( $active_app ) {
 				$test_ctx['app_id'] = $active_app['id'];

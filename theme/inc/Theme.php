@@ -22,31 +22,6 @@ class Theme {
 		add_action( 'after_setup_theme', array( $this, 'theme_lang' ) );
 		add_filter( 'show_admin_bar', '__return_false' );
 
-		if ( true === CoreOptions::read_option( 'theme_disable_filedit' ) ) {
-			if ( ! defined( 'DISALLOW_FILE_EDIT' ) ) {
-				define( 'DISALLOW_FILE_EDIT', true );
-			}
-		}
-
-		if ( true === CoreOptions::read_option( 'theme_disable_xmlrpc' ) ) {
-			add_filter( 'xmlrpc_enabled', '__return_false' );
-		}
-
-		if ( true === CoreOptions::read_option( 'theme_disable_pingbacks' ) ) {
-			add_filter( 'wp_headers', function ( $headers ) {
-				if ( isset( $headers['X-Pingback'] ) ) {
-					unset( $headers['X-Pingback'] );
-				}
-				return $headers;
-			} );
-			add_filter( 'xmlrpc_methods', function ( $methods ) {
-				if ( isset( $methods['pingback.ping'] ) ) {
-					unset( $methods['pingback.ping'] );
-				}
-				return $methods;
-			} );
-		}
-
 		if ( true === CoreOptions::read_option( 'theme_remove_emoji_scripts' ) ) {
 			add_action( 'init', array( $this, 'remove_emoji_scripts' ) );
 		}

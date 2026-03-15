@@ -10,6 +10,12 @@ use cmk\RestApiFirewall\Admin\Documentation;
 use cmk\RestApiFirewall\Routes\Routes;
 use cmk\RestApiFirewall\Firewall\IpBlackList;
 use cmk\RestApiFirewall\Firewall\IpFilter\IpSchema;
+use cmk\RestApiFirewall\GlobalSecurity\DisableBase;
+use cmk\RestApiFirewall\GlobalSecurity\DisableComments;
+use cmk\RestApiFirewall\GlobalSecurity\DisableEmbeds;
+use cmk\RestApiFirewall\GlobalSecurity\DisableRss;
+use cmk\RestApiFirewall\GlobalSecurity\FilePermissions;
+use cmk\RestApiFirewall\GlobalSecurity\HttpHeaders;
 use cmk\RestApiFirewall\Policy\PolicyRepository;
 use cmk\RestApiFirewall\Policy\TestPolicy;
 use cmk\RestApiFirewall\Webhook\WebhookService;
@@ -36,6 +42,13 @@ final class Bootstrap {
 		PolicyRepository::get_instance();
 		WebhookService::get_instance();
 		WebhookAutoTrigger::get_instance();
+
+		DisableBase::get_instance();
+		DisableRss::get_instance();
+		DisableEmbeds::get_instance();
+		DisableComments::get_instance();
+		HttpHeaders::get_instance();
+		FilePermissions::get_instance();
 
 		if ( is_admin() ) {
 			CoreOptionsService::get_instance();

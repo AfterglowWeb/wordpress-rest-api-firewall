@@ -398,6 +398,20 @@ export function NodeContent( {
 					</IconButton>
 				</Tooltip>
 			) }
+			{ postTypeForMethod && onNavigate && (
+				<Tooltip disableInteractive title={ __( 'View model properties', 'rest-api-firewall' ) }>
+					<IconButton
+						size="small"
+						onClick={ ( e ) => {
+							e.stopPropagation();
+							onNavigate( 5 );
+						} }
+						sx={ { opacity: 0.5 } }
+					>
+						<RuleIcon fontSize="small" />
+					</IconButton>
+				</Tooltip>
+			) }
 			</Stack>
 
 			<Stack
