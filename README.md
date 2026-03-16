@@ -85,29 +85,29 @@ WordPress Application Layer is a comprehensive suite designed to secure, filter,
 ## Wordpress Application Layer — FREE
 
 - Enforce authentication, rate limiting, and IP blacklisting.
-- Add ACF options pages to the wp/v2/settings route.
-- Explore REST API routes and schemas to understand how and where data is exposed.
+- Add ACF options pages and resolved menus to the wp/v2/settings route.
+- Browse REST API routes and inspect schemas — understand how and where data is exposed.
+- Apply a global per-property content policy: disable or filter properties across all routes.
 - Trigger webhooks to your front-end application on WordPress events.
 - Configure an SMTP server.
-- Send email notifications on REST API security and traffic events. *(Under development)*
-- Configure plugin bypass rules. (Under development)
+- Send email notifications on REST API security and traffic events.
+- Plugin bypass rules.
 - Compatible with WordPress multisite installations.
 
 > Each admin option exposes a WordPress filter for advanced customization.
 
-### Headless Mode
+### Security and Privacy Features
 
-<details>
-<summary>Full features list</summary>
-
-Running fully headless? Deploy the bundled blank theme for additional control:
-- Redirect all front-end templates
 - Disable comments
 - Disable pingbacks
+- Disable RSS Feeds
 - Disable XML-RPC
-- Disable the theme editor
-- Limit image file size, and more
-</details>
+- Disable sitemap
+- Disable theme editor
+- Enforce security headers
+- Protect wp-config.php and uploads directory
+- Limit image file size
+- Redirect all front-end templates
 
 ## Wordpress Application Layer — PRO
 
@@ -170,7 +170,7 @@ Additionally, you can run applications entirely through webhooks. Data is sent u
     - Supported plugin events
     - Custom plugin events
     - Custom CRON events
-    - REST API events
+    - Security and Traffic events
 - Send email notifications for webhook executions.
 
 ### Emails
@@ -235,7 +235,6 @@ Its role is to:
 
 #### Not Supported
 
-- Subscriptions
 - Complex coupon logic
 - Multi-currency
 - Payment gateways other than Stripe and PayPal
@@ -301,25 +300,7 @@ Current; 0.1.0-alpha.17
 | 0.1.0-beta.1x | Documentation |
 | 0.1.0-alpha.3x | Linting and testing (PHPUnit, Jest) |
 | 0.1.0-alpha.2x | Migration from JavaScript to TypeScript |
-
-### Upcoming in 0.1.0-alpha.18
-- Email notification editor
-
-## Changelog
-
-### 0.1.0-alpha.17
-- UI: layout refactorization
-- Single source of truth for options
-- Free / Pro procedure articulation
-- Auto‑blacklist IPs on rate limit
-- IPs table management
-- Webhook automation on WordPress Events
-
-### 0.1.0-alpha.1
-
-- Initial release
-- Fork from the Blank WordPress Headless Theme repo
-- Major refactoring to a plugin architecture
+| 0.1.0-alpha.1x | Features integration |
 
 ## Contributing
 
