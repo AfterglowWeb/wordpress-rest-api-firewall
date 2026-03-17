@@ -1,13 +1,16 @@
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
+import { useNavigation } from '../../contexts/NavigationContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
 import useProActions from '../../hooks/useProActions';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
+import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
@@ -30,17 +33,23 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import formatDate from '../../utils/formatDate';
 import LoadingMessage from '../LoadingMessage';
 import EntryToolbar from '../shared/EntryToolbar';
+import ConfirmWithInputDialog from '../ConfirmWithInputDialog';
+import AllowedIps from '../Firewall/IpFilter/AllowedIps';
+import AllowedOrigins from '../Firewall/IpFilter/AllowedOrigins';
+import HttpMethodsSelector from '../Firewall/Users/HttpMethodsSelector';
+import { AUTH_METHODS } from '../Firewall/Users/AuthManager';
 
 const MODULE_KEY = {
-	1:  { module: 'users',          optionKey: 'user_rate_limit_enabled' },
-	2:  { module: 'routes_policy',  optionKey: 'firewall_routes_policy_enabled' },
-	3:  { module: 'ip_filter',      optionKey: null },
-	4:  { module: 'collections',    optionKey: 'rest_collections_enabled' },
-	5:  { module: 'models',         optionKey: 'rest_models_enabled' },
-	6:  { module: 'settings_route', optionKey: 'rest_settings_route_enabled' },
-	7:  { module: 'webhooks',       optionKey: 'webhooks_enabled' },
-	8:  { module: 'mails',          optionKey: 'mails_enabled' },
-	13: { module: 'automations',    optionKey: 'automations_enabled' },
+	1:  { module: 'users',          panelKey: 'user-rate-limiting',  optionKey: 'user_rate_limit_enabled' },
+	2:  { module: 'routes_policy',  panelKey: 'per-route-settings',  optionKey: 'firewall_routes_policy_enabled' },
+	3:  { module: 'ip_filter',      panelKey: 'ip-filtering',        optionKey: null },
+	4:  { module: 'collections',    panelKey: 'collections',         optionKey: 'rest_collections_enabled' },
+	5:  { module: 'models',         panelKey: 'models-properties',   optionKey: 'rest_models_enabled' },
+	6:  { module: 'settings_route', panelKey: 'settings-route',      optionKey: 'rest_settings_route_enabled' },
+	7:  { module: 'webhooks',       panelKey: 'webhook',             optionKey: 'webhooks_enabled' },
+	8:  { module: 'mails',          panelKey: 'emails',              optionKey: 'mails_enabled' },
+	12: { module: 'logs',           panelKey: 'logs',                optionKey: null },
+	13: { module: 'automations',    panelKey: 'automations',         optionKey: 'automations_enabled' },
 };
 
 function PanelCard( { title, Icon, panel, module, onNavigate, enabled, onToggleEnabled, children } ) {
@@ -132,8 +141,9 @@ function DataRow( { label, children } ) {
 	);
 }
 
-export default function ApplicationEditor( { application, onBack, onNavigate } ) {
+export default function ApplicationEditor( { application, onBack } ) {
 	const { adminData, updateAdminData } = useAdminData();
+	const { navigate } = useNavigation();
 	const { proNonce } = useLicense();
 	const nonce = proNonce || adminData.nonce;
 
@@ -152,6 +162,11 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 	const clearDirty = useCallback(
 		() => setDirtyFlag( { has: false, message: '' } ),
 		[ setDirtyFlag ]
+	);
+
+	const handlePanelNavigate = useCallback(
+		( panelNum ) => navigate( MODULE_KEY[ panelNum ]?.panelKey || '' ),
+		[ navigate ]
 	);
 	const [ loading, setLoading ] = useState( ! isNew );
 	const [ loadError, setLoadError ] = useState( '' );
@@ -173,6 +188,17 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 	const [ dateModified, setDateModified ] = useState( '' );
 
 	const [ appUsers, setAppUsers ] = useState( [] );
+
+	// Security defaults — loaded from application settings
+	const [ serverSettings, setServerSettings ] = useState( {} );
+	const [ appAllowedIps, setAppAllowedIps ] = useState( [] );
+	const [ appAllowedAuthMethods, setAppAllowedAuthMethods ] = useState( [] );
+	const [ appDefaultHttpMethods, setAppDefaultHttpMethods ] = useState( [ 'get' ] );
+	const [ rateLimitReleaseSeconds, setRateLimitReleaseSeconds ] = useState( 300 );
+	const [ rateLimitBlacklistAfter, setRateLimitBlacklistAfter ] = useState( 5 );
+	const [ rateLimitBlacklistWindow, setRateLimitBlacklistWindow ] = useState( 3600 );
+
+	const [ confirmDeleteOpen, setConfirmDeleteOpen ] = useState( false );
 
 	const loadEntry = useCallback( async () => {
 		setLoading( true );
@@ -213,10 +239,17 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 				);
 
 				const s = e.settings || {};
+				setServerSettings( s );
 				setDescription( s.description || '' );
 				setAllowedOrigins( s.allowed_origins || [] );
+				setAppAllowedIps( s.allowed_ips || [] );
+				setAppAllowedAuthMethods( s.allowed_auth_methods || [] );
+				setAppDefaultHttpMethods( s.default_http_methods || [ 'get' ] );
 				setRateLimitRequests( s.rate_limit?.max_requests ?? 100 );
 				setRateLimitWindow( s.rate_limit?.window_seconds ?? 60 );
+				setRateLimitReleaseSeconds( s.rate_limit?.release_seconds ?? 300 );
+				setRateLimitBlacklistAfter( s.rate_limit?.blacklist_after ?? 5 );
+				setRateLimitBlacklistWindow( s.rate_limit?.blacklist_window ?? 3600 );
 			}
 		} catch ( err ) {
 			setLoadError( err.message );
@@ -321,24 +354,32 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 		loadUsers();
 	}, [ isNew, loadEntry, loadUsers ] );
 
-	const handleSave = async () => {
+	// Build the full settings object from all current state.
+	// Used by the main Save and all per-section save buttons.
+	const buildCurrentSettings = useCallback( () => ( {
+		...serverSettings,
+		description,
+		allowed_ips: appAllowedIps,
+		allowed_origins: allowedOrigins,
+		allowed_auth_methods: appAllowedAuthMethods,
+		default_http_methods: appDefaultHttpMethods,
+		rate_limit: {
+			max_requests: Number( rateLimitRequests ) || 0,
+			window_seconds: Number( rateLimitWindow ) || 0,
+			release_seconds: Number( rateLimitReleaseSeconds ) || 0,
+			blacklist_after: Number( rateLimitBlacklistAfter ) || 0,
+			blacklist_window: Number( rateLimitBlacklistWindow ) || 0,
+		},
+	} ), [
+		serverSettings, description, appAllowedIps, allowedOrigins,
+		appAllowedAuthMethods, appDefaultHttpMethods,
+		rateLimitRequests, rateLimitWindow, rateLimitReleaseSeconds,
+		rateLimitBlacklistAfter, rateLimitBlacklistWindow,
+	] );
+
+	const handleSave = () => {
 		if ( ! title.trim() ) {
 			return;
-		}
-
-		let existingSettings = {};
-		if ( ! isNew ) {
-			try {
-				const res = await fetch( adminData.ajaxurl, {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-					body: new URLSearchParams( { action: 'get_application_entry', nonce, id: application.id } ),
-				} );
-				const result = await res.json();
-				if ( result?.success && result?.data?.entry ) {
-					existingSettings = result.data.entry.settings || {};
-				}
-			} catch {}
 		}
 
 		save(
@@ -347,7 +388,9 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 				...( ! isNew && { id: application.id } ),
 				title: title.trim(),
 				enabled: enabled ? '1' : '0',
-				settings: JSON.stringify( { ...existingSettings, description } ),
+				settings: JSON.stringify(
+					isNew ? { description } : buildCurrentSettings()
+				),
 			},
 			{
 				skipConfirm: true,
@@ -358,24 +401,19 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 		);
 	};
 
-	const handleDelete = () => {
+	const handleDelete = () => setConfirmDeleteOpen( true );
+
+	const handleConfirmDelete = () => {
+		setConfirmDeleteOpen( false );
 		remove(
 			{
 				action: 'delete_application_entry',
 				id: application.id,
 			},
 			{
-				confirmTitle: __( 'Delete Application', 'rest-api-firewall' ),
-				confirmMessage: __(
-					'Are you sure you want to permanently delete this application? This action cannot be undone.',
-					'rest-api-firewall'
-				),
-				confirmLabel: __( 'Delete', 'rest-api-firewall' ),
+				skipConfirm: true,
 				successTitle: __( 'Application Deleted', 'rest-api-firewall' ),
-				successMessage: __(
-					'The application has been removed.',
-					'rest-api-firewall'
-				),
+				successMessage: __( 'The application has been removed.', 'rest-api-firewall' ),
 				onSuccess: () => { clearDirty(); onBack(); },
 			}
 		);
@@ -431,6 +469,137 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 				<>
 					<Divider />
 
+					{ /* Security defaults */ }
+				<Stack p={ { xs: 2, sm: 4 } } spacing={ 3 } sx={ { maxWidth: 640 } }>
+
+						{ /* Allowed IPs */ }
+						<Stack spacing={ 0.75 }>
+						<Typography variant="subtitle1" fontWeight={ 600 }>
+							{ __( 'Allowed IPs', 'rest-api-firewall' ) }
+						</Typography>
+						<Typography variant="body2" color="text.secondary">
+							{ __( 'In whitelist mode, only these IPs can access this application. Users can restrict their own IP further but cannot extend beyond this list.', 'rest-api-firewall' ) }
+						</Typography>
+						<AllowedIps
+							value={ appAllowedIps }
+							onChange={ setAppAllowedIps }
+						/>
+						</Stack>
+
+						{ /* Allowed Origins */ }
+						<Stack spacing={ 0.75 }>
+						<Typography variant="subtitle1" fontWeight={ 600 }>
+							{ __( 'Allowed Origins', 'rest-api-firewall' ) }
+						</Typography>
+						<Typography variant="body2" color="text.secondary">
+							{ __( 'Restrict requests by Origin header. Combine with IP whitelisting for stronger security.', 'rest-api-firewall' ) }
+						</Typography>
+						<AllowedOrigins
+							value={ allowedOrigins }
+							onChange={ setAllowedOrigins }
+						/>
+						</Stack>
+
+						{ /* Allowed Auth Methods */ }
+						<Stack spacing={ 0.75 }>
+							<Typography variant="subtitle1" fontWeight={ 600 }>
+								{ __( 'Allowed Auth Methods', 'rest-api-firewall' ) }
+							</Typography>
+							<Typography variant="body2" color="text.secondary">
+								{ __( 'Auth methods available to users of this application. Users can only use methods enabled here.', 'rest-api-firewall' ) }
+							</Typography>
+							<Stack direction="row" flexWrap="wrap" gap={ 1 }>
+								{ AUTH_METHODS.filter( ( m ) => m.value !== 'any' ).map( ( method ) => (
+									<FormControlLabel
+										key={ method.value }
+										control={
+											<Checkbox
+												size="small"
+												checked={ appAllowedAuthMethods.includes( method.value ) }
+												onChange={ ( e ) => {
+													const next = e.target.checked
+														? [ ...appAllowedAuthMethods, method.value ]
+														: appAllowedAuthMethods.filter( ( v ) => v !== method.value );
+													setAppAllowedAuthMethods( next );
+												} }
+											/>
+										}
+										label={ <Typography variant="body2">{ method.label }</Typography> }
+									/>
+								) ) }
+							</Stack>
+						</Stack>
+
+						{ /* Default HTTP Methods */ }
+						<Stack spacing={ 0.75 }>
+						<Typography variant="subtitle1" fontWeight={ 600 }>
+							{ __( 'Default HTTP Methods', 'rest-api-firewall' ) }
+						</Typography>
+						<Typography variant="body2" color="text.secondary">
+							{ __( 'HTTP verbs allowed by default. Users can restrict to a subset but cannot add methods not enabled here.', 'rest-api-firewall' ) }
+						</Typography>
+						<HttpMethodsSelector
+							value={ appDefaultHttpMethods }
+							onChange={ setAppDefaultHttpMethods }
+						/>
+						</Stack>
+
+						{ /* Rate Limit */ }
+						<Stack spacing={ 0.75 }>
+						<Typography variant="subtitle1" fontWeight={ 600 }>
+							{ __( 'Rate Limit', 'rest-api-firewall' ) }
+						</Typography>
+						<Typography variant="body2" color="text.secondary">
+							{ __( 'Default request cap for this application. Users can set a stricter limit but cannot exceed this.', 'rest-api-firewall' ) }
+						</Typography>
+						<Stack direction={ { xs: 'column', sm: 'row' } } spacing={ 2 }>
+								<TextField
+									size="small"
+									label={ __( 'Max Requests', 'rest-api-firewall' ) }
+									type="number"
+									value={ rateLimitRequests }
+									onChange={ ( e ) => setRateLimitRequests( e.target.value ) }
+									sx={ { flex: 1 } }
+								/>
+								<TextField
+									size="small"
+									label={ __( 'Window (s)', 'rest-api-firewall' ) }
+									type="number"
+									value={ rateLimitWindow }
+									onChange={ ( e ) => setRateLimitWindow( e.target.value ) }
+									sx={ { flex: 1 } }
+								/>
+								<TextField
+									size="small"
+									label={ __( 'Release (s)', 'rest-api-firewall' ) }
+									type="number"
+									value={ rateLimitReleaseSeconds }
+									onChange={ ( e ) => setRateLimitReleaseSeconds( e.target.value ) }
+									sx={ { flex: 1 } }
+								/>
+							</Stack>
+							<Stack direction={ { xs: 'column', sm: 'row' } } spacing={ 2 }>
+								<TextField
+									size="small"
+									label={ __( 'Blacklist After (violations)', 'rest-api-firewall' ) }
+									type="number"
+									value={ rateLimitBlacklistAfter }
+									onChange={ ( e ) => setRateLimitBlacklistAfter( e.target.value ) }
+									sx={ { flex: 1 } }
+								/>
+								<TextField
+									size="small"
+									label={ __( 'Blacklist Window (s)', 'rest-api-firewall' ) }
+									type="number"
+									value={ rateLimitBlacklistWindow }
+									onChange={ ( e ) => setRateLimitBlacklistWindow( e.target.value ) }
+									sx={ { flex: 1 } }
+								/>
+							</Stack>
+						</Stack>
+					</Stack>
+					<Divider />
+
 					<Box
 						sx={ {
 							p: { xs: 2, sm: 4 },
@@ -446,7 +615,7 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 							Icon={ SecurityOutlined }
 							panel={ 1 }
 							module="users"
-							onNavigate={ onNavigate }
+							onNavigate={ handlePanelNavigate }
 							enabled={ getModuleEnabled( 1 ) }
 							onToggleEnabled={ handleModuleToggle }
 						>
@@ -475,7 +644,7 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 							Icon={ AccountTreeIcon }
 							panel={ 2 }
 							module="routes_policy"
-							onNavigate={ onNavigate }
+							onNavigate={ handlePanelNavigate }
 							enabled={ getModuleEnabled( 2 ) }
 							onToggleEnabled={ handleModuleToggle }
 						>
@@ -495,7 +664,7 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 							Icon={ VpnLockOutlinedIcon }
 							panel={ 3 }
 							module="ip_filter"
-							onNavigate={ onNavigate }
+							onNavigate={ handlePanelNavigate }
 							enabled={ getModuleEnabled( 3 ) }
 							onToggleEnabled={ handleModuleToggle }
 						>
@@ -543,7 +712,7 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 							Icon={ ApiIcon }
 							panel={ 4 }
 							module="collections"
-							onNavigate={ onNavigate }
+							onNavigate={ handlePanelNavigate }
 							enabled={ getModuleEnabled( 4 ) }
 							onToggleEnabled={ handleModuleToggle }
 						>
@@ -559,7 +728,7 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 							Icon={ RuleOutlinedIcon }
 							panel={ 5 }
 							module="models"
-							onNavigate={ onNavigate }
+							onNavigate={ handlePanelNavigate }
 							enabled={ getModuleEnabled( 5 ) }
 							onToggleEnabled={ handleModuleToggle }
 						>
@@ -581,7 +750,7 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 							Icon={ BusinessOutlinedIcon }
 							panel={ 6 }
 							module="settings_route"
-							onNavigate={ onNavigate }
+							onNavigate={ handlePanelNavigate }
 							enabled={ getModuleEnabled( 6 ) }
 							onToggleEnabled={ handleModuleToggle }
 						>
@@ -598,7 +767,7 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 							Icon={ AutoFixHighOutlinedIcon }
 							panel={ 13 }
 							module="automations"
-							onNavigate={ onNavigate }
+							onNavigate={ handlePanelNavigate }
 							enabled={ getModuleEnabled( 13 ) }
 							onToggleEnabled={ handleModuleToggle }
 						>
@@ -615,7 +784,7 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 							Icon={ WebhookIcon }
 							panel={ 7 }
 							module="webhooks"
-							onNavigate={ onNavigate }
+							onNavigate={ handlePanelNavigate }
 							enabled={ getModuleEnabled( 7 ) }
 							onToggleEnabled={ handleModuleToggle }
 						>
@@ -637,7 +806,7 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 							Icon={ EmailOutlinedIcon }
 							panel={ 8 }
 							module="mails"
-							onNavigate={ onNavigate }
+							onNavigate={ handlePanelNavigate }
 							enabled={ getModuleEnabled( 8 ) }
 							onToggleEnabled={ handleModuleToggle }
 						>
@@ -660,7 +829,7 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 									title={ __( 'Logs', 'rest-api-firewall' ) }
 									Icon={ AssessmentOutlinedIcon }
 									panel={ 12 }
-									onNavigate={ onNavigate }
+									onNavigate={ handlePanelNavigate }
 								>
 									<DataRow label={ __( 'Scope', 'rest-api-firewall' ) }>
 										<Typography variant="caption" color="text.disabled">
@@ -673,6 +842,17 @@ export default function ApplicationEditor( { application, onBack, onNavigate } )
 					</Box>
 				</>
 			) }
-		</Stack>
+
+		<ConfirmWithInputDialog
+			open={ confirmDeleteOpen }
+			title={ __( 'Delete Application', 'rest-api-firewall' ) }
+			message={ __( 'This will permanently delete the application and all its configuration. This action cannot be undone.', 'rest-api-firewall' ) }
+			requiredText={ title }
+			confirmLabel={ __( 'Delete', 'rest-api-firewall' ) }
+			onConfirm={ handleConfirmDelete }
+			onCancel={ () => setConfirmDeleteOpen( false ) }
+			loading={ saving }
+		/>
+	</Stack>
 	);
 }

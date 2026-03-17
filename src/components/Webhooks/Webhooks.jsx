@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
+import { useNavigation } from '../../contexts/NavigationContext';
 
 import { DataGrid } from '@mui/x-data-grid';
 
@@ -25,6 +26,7 @@ export default function Webhooks() {
 	const { __ } = wp.i18n || {};
 
 	const { remove } = useProActions();
+	const { subKey, navigate } = useNavigation();
 
 	const [ rows, setRows ] = useState( [] );
 	const [ loading, setLoading ] = useState( true );
@@ -41,8 +43,9 @@ export default function Webhooks() {
 	} );
 
 	const [ fetchError, setFetchError ] = useState( '' );
-
-	const [ editing, setEditing ] = useState( null );
+	const editing = subKey === 'new'
+		? { id: null, title: '', enabled: true, method: 'POST', type: 'general', headers: [], timeout_seconds: 10, retry_count: 0, body_payload: '' }
+		: subKey ? { id: subKey } : null;
 
 	const handleDeleteOne = useCallback(
 		( id, title ) => {
@@ -128,7 +131,7 @@ export default function Webhooks() {
 						fontFamily: 'monospace',
 						color: 'primary.main',
 					} }
-					onClick={ () => setEditing( params.row ) }
+					onClick={ () => navigate( 'webhook', params.row.id ) }
 					>
 					{ params.value }
 						<OpenInNewIcon
@@ -343,7 +346,7 @@ export default function Webhooks() {
 			<WebhookEditor
 				webhook={ editing }
 				onBack={ () => {
-					setEditing( null );
+					navigate( 'webhook', null, true );
 					fetchEntries();
 				} }
 			/>
@@ -357,19 +360,7 @@ export default function Webhooks() {
 					variant="contained"
 					size="small"
 					disableElevation
-					onClick={ () =>
-						setEditing( {
-							id: null,
-							title: '',
-							enabled: true,
-							method: 'POST',
-							type: 'general',
-							headers: [],
-							timeout_seconds: 10,
-							retry_count: 0,
-							body_payload: '',
-						} )
-					}
+					onClick={ () => navigate( 'webhook', 'new' ) }
 				>
 					{ __( 'New Webhook', 'rest-api-firewall' ) }
 				</Button>

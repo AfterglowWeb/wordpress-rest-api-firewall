@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useDialog, DIALOG_TYPES } from '../../../contexts/DialogContext';
 import { useLicense } from '../../../contexts/LicenseContext';
+import { useNavigation } from '../../../contexts/NavigationContext';
 import Alert from '@mui/material/Alert';
 import FormControl from '@mui/material/FormControl';
 import FormHelperText from '@mui/material/FormHelperText';
@@ -29,7 +30,8 @@ export default function IpFilter() {
 		enabled: false,
 		mode: 'blacklist',
 	} );
-	const [ currentTab, setCurrentTab ] = useState( 0 );
+	const { subKey, navigate } = useNavigation();
+	const currentTab = subKey === 'countries' ? 1 : 0;
 	const { hasValidLicense, proNonce } = useLicense();
 	const nonce = proNonce || adminData.nonce;
 	const { openDialog, updateDialog } = useDialog();
@@ -208,7 +210,7 @@ export default function IpFilter() {
 
 			<Tabs
 			value={ currentTab }
-			onChange={ ( e, v ) => setCurrentTab( v ) }
+			onChange={ ( e, v ) => navigate( 'ip-filtering', v === 1 ? 'countries' : 'ips' ) }
 			sx={ {
 				mb: 2,
 				borderBottom: 1,

@@ -42,7 +42,9 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import ShieldIcon from '@mui/icons-material/Shield';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
+import { useNavigation } from '../contexts/NavigationContext';
 import AppIdentity from './AppIdentity';
 import ApplicationSelector from './ApplicationSelector';
 import Documentation from './Documentation/Documentation';
@@ -56,8 +58,6 @@ export const WP_MENU_WIDTH_MD = 36;
 export const WP_MENU_WIDTH_LG = 160;
 
 export default function Navigation( {
-	panelGroup,
-	onPanelChange,
 	migrationNeeded,
 	migrationDone,
 	schemaUpdateNeeded,
@@ -68,8 +68,9 @@ export default function Navigation( {
 } ) {
 	const { hasValidLicense } = useLicense();
 	const { adminData, updateAdminData } = useAdminData();
-	const { dirtyFlag } = useApplication();
+	const { dirtyFlag, selectedApplication } = useApplication();
 	const { save } = useProActions();
+	const { panel, navigateGuarded } = useNavigation();
 	const { __ } = wp.i18n || {};
 	const theme = useTheme();
 	const isMobile = useMediaQuery( theme.breakpoints.down( 'md' ) );
@@ -149,9 +150,13 @@ export default function Navigation( {
 			icon: AppsOutlinedIcon,
 			disabled: ! hasValidLicense,
 		},
+		{ type: 'app-selector' },
+		{ type: 'current-app' },
 		{
 			type: 'section',
 			label: __( 'REST API Firewall', 'rest-api-firewall' ),
+			breadcrumbPrefix: '',
+			icon:'',
 		},
 		{
 			key: 'user-rate-limiting',
@@ -271,7 +276,7 @@ export default function Navigation( {
 	];
 
 	const activeMenuItem =
-		menuItems.find( ( m ) => m.key === panelGroup ) || null;
+		menuItems.find( ( m ) => m.key === panel ) || null;
 
 	return (
 		<>
@@ -341,9 +346,44 @@ export default function Navigation( {
 							);
 						}
 
-						const isActive = panelGroup === item.key;
-						const Icon = item.icon;
+					if ( item.type === 'app-selector' ) {
+						if ( ! hasValidLicense ) return null;
+						return (
+							<Box key="app-selector" sx={ { px: 2, pt: 0.5, pb: 1 } }>
+								<ApplicationSelector />
+							</Box>
+						);
+					}
 
+					if ( item.type === 'current-app' ) {
+						if ( ! selectedApplication ) return null;
+						return (
+							<ListItemButton
+								key="current-app"
+								onClick={ () => navigateGuarded( 'applications', selectedApplication.id ) }
+								sx={ { pl: 3, py: 0.5 } }
+							>
+								<Typography
+									variant="body2"
+									sx={ {
+										color: 'primary.main',
+										textDecoration: 'underline',
+										overflow: 'hidden',
+										textOverflow: 'ellipsis',
+										whiteSpace: 'nowrap',
+										flex: 1,
+										mr: 0.5,
+									} }
+								>
+									{ selectedApplication.title }
+								</Typography>
+								<ArrowForwardIosIcon sx={ { fontSize: 9, color: 'primary.main', flexShrink: 0 } } />
+							</ListItemButton>
+						);
+					}
+
+
+						const Icon = item.icon;
 						return (
 							<Tooltip
 								key={ item.key }
@@ -361,7 +401,7 @@ export default function Navigation( {
 									<ListItemButton
 										sx={ {
 											px: 3,
-											backgroundColor: isActive
+											backgroundColor: !! item.disabled
 												? 'grey.100'
 												: '',
 										} }
@@ -370,7 +410,7 @@ export default function Navigation( {
 											if ( item.action ) {
 												item.action();
 											} else {
-											onPanelChange( item.key );
+													navigateGuarded( item.key );
 											}
 											setMobileOpen( false );
 										} }
@@ -380,7 +420,7 @@ export default function Navigation( {
 												sx={ {
 													px: 1,
 													minWidth: 32,
-													color: isActive
+													color: !! item.disabled
 														? 'primary.main'
 														: 'text.secondary',
 												} }
@@ -465,13 +505,7 @@ export default function Navigation( {
 							</IconButton>
 						) }
 
-{ hasValidLicense && [
-							'applications', 'user-rate-limiting', 'per-route-settings',
-							'ip-filtering', 'collections', 'models-properties',
-							'settings-route', 'webhook', 'emails', 'automations',
-						].includes( panelGroup ) && (
-								<ApplicationSelector />
-							) }
+
 
 						
 						<Stack direction="row" alignItems="center" gap={ 2 }>
@@ -511,13 +545,13 @@ export default function Navigation( {
 
 							<Divider variant="middle" flexItem orientation="vertical" />
 
-							{ hasValidLicense && moduleKey[ panelGroup ] !== undefined && (
-								<FormControlLabel
-								control={
-									<Switch
-										size="small"
-										checked={ !! getModuleEnabled( panelGroup ) }
-										onChange={ ( e ) => handleModuleToggle( panelGroup, e.target.checked ) }
+						{ hasValidLicense && moduleKey[ panel ] !== undefined && (
+							<FormControlLabel
+							control={
+								<Switch
+									size="small"
+									checked={ !! getModuleEnabled( panel ) }
+									onChange={ ( e ) => handleModuleToggle( panel, e.target.checked ) }
 									/>
 								}
 								sx={{ 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
+import { useNavigation } from '../../contexts/NavigationContext';
 
 import { DataGrid } from '@mui/x-data-grid';
 
@@ -28,6 +29,7 @@ export default function Automations() {
 	const { __ } = wp.i18n || {};
 
 	const { remove } = useProActions();
+	const { subKey, navigate } = useNavigation();
 
 	const [ rows, setRows ] = useState( [] );
 	const [ loading, setLoading ] = useState( true );
@@ -43,7 +45,9 @@ export default function Automations() {
 		type: 'include',
 		ids: new Set( [] ),
 	} );
-	const [ editing, setEditing ] = useState( null );
+	const editing = subKey === 'new'
+		? { id: null, event: '', conditions: [], payload_map: {}, webhook_ids: [], mail_ids: [], enabled: true }
+		: subKey ? { id: subKey } : null;
 
 	const fetchEntries = useCallback( async () => {
 		setLoading( true );
@@ -193,7 +197,7 @@ export default function Automations() {
 						fontFamily: 'monospace',
 						color: 'primary.main',
 					} }
-					onClick={ () => setEditing( params.row ) }
+					onClick={ () => navigate( 'automations', params.row.id ) }
 					>
 					{ params.value }
 						<OpenInNewIcon
@@ -277,7 +281,7 @@ export default function Automations() {
 			<AutomationEditor
 				automation={ editing }
 				onBack={ () => {
-					setEditing( null );
+					navigate( 'automations', null, true );
 					fetchEntries();
 				} }
 			/>
@@ -297,17 +301,7 @@ export default function Automations() {
 					size="small"
 					variant="contained"
 					disableElevation
-					onClick={ () =>
-						setEditing( {
-							id: null,
-							event: '',
-							conditions: [],
-							payload_map: {},
-							webhook_ids: [],
-							mail_ids: [],
-							enabled: true,
-						} )
-					}
+					onClick={ () => navigate( 'automations', 'new' ) }
 					disabled={ ! hasValidLicense }
 				>
 					{ __( 'New Automation', 'rest-api-firewall' ) }
@@ -359,9 +353,7 @@ export default function Automations() {
 					rowSelectionModel={ rowSelectionModel }
 					showToolbar
 					onRowSelectionModelChange={ setRowSelectionModel }
-					onRowDoubleClick={ ( params ) =>
-						setEditing( params.row )
-					}
+					onRowDoubleClick={ ( params ) => navigate( 'automations', params.row.id ) }
 					sx={ {
 						'& .MuiDataGrid-cell': {
 							display: 'flex',

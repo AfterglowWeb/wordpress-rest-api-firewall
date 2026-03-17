@@ -21,6 +21,8 @@ class CoreOptionsService {
 		add_action( 'wp_ajax_rest_api_firewall_update_option', array( $this, 'ajax_update_option' ) );
 		add_action( 'wp_ajax_rest_api_firewall_read_options', array( $this, 'ajax_read_options' ) );
 		add_action( 'wp_ajax_rest_api_firewall_flush_rewrite_rules', array( $this, 'ajax_flush_rewrite_rules' ) );
+		add_action( 'wp_ajax_get_firewall_global_settings', array( $this, 'ajax_get_global_settings' ) );
+		add_action( 'wp_ajax_save_firewall_global_settings', array( $this, 'ajax_save_global_settings' ) );
 	}
 
 	public function ajax_read_options() {
@@ -113,5 +115,53 @@ class CoreOptionsService {
 		} else {
 			wp_send_json_error( 'Unknown parameter', 422 );
 		}
+	}
+
+	public function ajax_get_global_settings(): void {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
+			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
+		}
+
+		$settings = get_option( 'rest_api_firewall_global_settings', array() );
+		if ( ! is_array( $settings ) ) {
+			$settings = array();
+		}
+
+		wp_send_json_success(
+			array(
+				'allowed_ips'     => $settings['allowed_ips'] ?? array(),
+				'allowed_origins' => $settings['allowed_origins'] ?? array(),
+			)
+		);
+	}
+
+	public function ajax_save_global_settings(): void {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
+			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
+		$field = isset( $_POST['field'] ) ? sanitize_key( wp_unslash( $_POST['field'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in Permissions::ajax_validate_has_firewall_admin_caps()
+		$raw   = isset( $_POST['value'] ) ? sanitize_text_field( wp_unslash( $_POST['value'] ) ) : '[]';
+		$value = json_decode( $raw, true );
+
+		if ( ! in_array( $field, array( 'allowed_ips', 'allowed_origins' ), true ) ) {
+			wp_send_json_error( array( 'message' => esc_html__( 'Invalid field', 'rest-api-firewall' ) ), 422 );
+		}
+
+		if ( ! is_array( $value ) ) {
+			wp_send_json_error( array( 'message' => esc_html__( 'Invalid value', 'rest-api-firewall' ) ), 422 );
+		}
+
+		$settings = get_option( 'rest_api_firewall_global_settings', array() );
+		if ( ! is_array( $settings ) ) {
+			$settings = array();
+		}
+
+		$settings[ $field ] = array_values( array_map( 'sanitize_text_field', $value ) );
+		update_option( 'rest_api_firewall_global_settings', $settings, false );
+
+		wp_send_json_success( array( 'message' => esc_html__( 'Settings saved', 'rest-api-firewall' ) ) );
 	}
 }

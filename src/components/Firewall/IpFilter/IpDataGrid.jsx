@@ -11,6 +11,7 @@ import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Toolbar from '@mui/material/Toolbar';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
 import AddIcon from '@mui/icons-material/Add';
@@ -56,15 +57,23 @@ export default function IpDataGrid( { listType = 'blacklist' } ) {
 				width: 80,
 				sortable: false,
 				filterable: false,
-				renderCell: ( params ) => (
-					<IconButton
-						size="small"
-						color="default"
-						onClick={ () => handleDeleteOne( params.row.id ) }
-					>
-						<DeleteOutlineIcon fontSize="small" />
-					</IconButton>
-				),
+				renderCell: ( params ) => {
+					const isLinked = listType === 'whitelist' && ( params.row.related_users?.length > 0 );
+					return (
+						<Tooltip title={ isLinked ? __( 'Remove from application first', 'rest-api-firewall' ) : '' }>
+							<span>
+								<IconButton
+									size="small"
+									color="default"
+									onClick={ () => handleDeleteOne( params.row.id ) }
+									disabled={ isLinked }
+								>
+									<DeleteOutlineIcon fontSize="small" />
+								</IconButton>
+							</span>
+						</Tooltip>
+					);
+				},
 			},
 			{
 				field: 'ip',
@@ -166,8 +175,41 @@ export default function IpDataGrid( { listType = 'blacklist' } ) {
 			},
 		];
 
+		if ( listType === 'whitelist' ) {
+			baseColumns.push( {
+				field: 'related_users',
+				headerName: __( 'Related Users', 'rest-api-firewall' ),
+				width: 230,
+				sortable: false,
+				filterable: false,
+				renderCell: ( params ) => {
+					const users = params.value || [];
+					if ( ! users.length ) return null;
+					const visible = users.slice( 0, 2 );
+					const extra   = users.length - visible.length;
+					return (
+						<Stack direction="row" flexWrap="wrap" gap={ 0.5 } alignItems="center">
+							{ visible.map( ( u ) => (
+								<Chip
+									key={ u.id }
+									size="small"
+									label={ `${ u.display_name } (${ u.app_title })` }
+									variant="outlined"
+								/>
+							) ) }
+							{ extra > 0 && (
+								<Typography variant="caption" color="text.secondary">
+									+{ extra }
+								</Typography>
+							) }
+						</Stack>
+					);
+				},
+			} );
+		}
+
 		return baseColumns;
-	}, [ hasValidLicense, __ ] );
+	}, [ hasValidLicense, listType, __ ] );
 
 	const fetchEntries = useCallback( async () => {
 		setLoading( true );
