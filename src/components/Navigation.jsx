@@ -42,6 +42,7 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import ShieldIcon from '@mui/icons-material/Shield';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
 import { useNavigation } from '../contexts/NavigationContext';
 import AppIdentity from './AppIdentity';
