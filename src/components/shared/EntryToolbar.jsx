@@ -13,7 +13,7 @@ import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
 import { WP_ADMIN_BAR_HEIGHT_DESKTOP, WP_ADMIN_BAR_HEIGHT_MOBILE, APP_BAR_HEIGHT } from '../Navigation';
 import Documentation from '../Documentation/Documentation';
 
-export default function EntryToolbar( { isNew, title, author, dateCreated, dateModified, handleBack, handleSave, handleDelete, saving, enabled = null, setEnabled = null, dirtyFlag = null, breadcrumb = null, docPage = null, children } ) {
+export default function EntryToolbar( { isNew, title, author, dateCreated, dateModified, handleBack, handleSave, handleDelete, saving, enabled = null, setEnabled = null, dirtyFlag = null, breadcrumb = null, docPage = null, titleSuffix = null, children } ) {
     const { __ } = wp.i18n || {};
     const { openDialog } = useDialog();
 
@@ -121,6 +121,7 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
                         >
                             { title || ( isNew ? `${ __( 'New', 'rest-api-firewall' ) } ${ breadcrumb?.at( -1 ) ?? __( 'Entry', 'rest-api-firewall' ) }` : __( 'Entry', 'rest-api-firewall' ) ) }
                         </Typography>
+                        { titleSuffix && titleSuffix }
                         </Stack>
 
                         <Divider orientation="vertical" flexItem />

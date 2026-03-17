@@ -1,6 +1,7 @@
-import { useState } from '@wordpress/element';
+import { useState, useCallback } from '@wordpress/element';
 import { useAdminData } from '../contexts/AdminDataContext';
 import { useLicense } from '../contexts/LicenseContext';
+import { useDialog, DIALOG_TYPES } from '../contexts/DialogContext';
 
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
@@ -14,6 +15,7 @@ import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
 
+import CachedIcon from '@mui/icons-material/Cached';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import StorageIcon from '@mui/icons-material/Storage';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
@@ -75,6 +77,49 @@ export default function ConfigurationPanel( {
 		} finally {
 			setSchemaRunning( false );
 		}
+	};
+
+	const [ flushRunning, setFlushRunning ] = useState( false );
+	const [ flushResult,  setFlushResult  ] = useState( null );
+	const { openDialog, closeDialog }       = useDialog();
+
+	const runFlush = useCallback( async () => {
+		setFlushRunning( true );
+		setFlushResult( null );
+		try {
+			const response = await fetch( adminData.ajaxurl, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+				body: new URLSearchParams( {
+					action: 'rest_api_firewall_flush_rewrite_rules',
+					nonce:  adminData.nonce,
+				} ),
+			} );
+			const json = await response.json();
+			setFlushResult( {
+				success: !! json?.success,
+				message: json?.data?.message || ( json?.success
+					? __( 'Done.', 'rest-api-firewall' )
+					: __( 'An error occurred.', 'rest-api-firewall' ) ),
+			} );
+		} catch ( err ) {
+			setFlushResult( { success: false, message: err.message } );
+		} finally {
+			setFlushRunning( false );
+		}
+	}, [ adminData, __ ] );
+
+	const handleFlushRewriteRules = () => {
+		openDialog( {
+			type: DIALOG_TYPES.CONFIRM,
+			title: __( 'Flush Rewrite Rules', 'rest-api-firewall' ),
+			content: __( 'This will regenerate all WordPress rewrite rules. The site will continue to work normally.', 'rest-api-firewall' ),
+			confirmLabel: __( 'Flush now', 'rest-api-firewall' ),
+			onConfirm: () => {
+				closeDialog();
+				runFlush();
+			},
+		} );
 	};
 
 	return (
@@ -166,6 +211,41 @@ export default function ConfigurationPanel( {
 					<Divider sx={ { mb: 4 } } />
 				</>
 			) }
+
+			<Stack spacing={ 2 } mb={ 4 }>
+				<Stack direction="row" alignItems="center" gap={ 1 }>
+					<CachedIcon fontSize="small" color="action" />
+					<Typography variant="subtitle1" fontWeight={ 600 }>
+						{ __( 'Rewrite Rules', 'rest-api-firewall' ) }
+					</Typography>
+				</Stack>
+
+				<Typography variant="body2" color="text.secondary">
+					{ __( 'Regenerate WordPress rewrite rules. Use this after updating the plugin to ensure URL rules are applied correctly.', 'rest-api-firewall' ) }
+				</Typography>
+
+				<Stack direction="row">
+					<Button
+						variant="outlined"
+						size="small"
+						disabled={ flushRunning }
+						startIcon={ flushRunning ? <CircularProgress size={ 14 } color="inherit" /> : null }
+						onClick={ handleFlushRewriteRules }
+					>
+						{ flushRunning
+							? __( 'Flushing…', 'rest-api-firewall' )
+							: __( 'Flush Rewrite Rules', 'rest-api-firewall' ) }
+					</Button>
+				</Stack>
+
+				{ flushResult && (
+					<Alert severity={ flushResult.success ? 'success' : 'error' }>
+						{ flushResult.message }
+					</Alert>
+				) }
+			</Stack>
+
+			<Divider sx={ { mb: 4 } } />
 
 			<Stack spacing={ 2 }>
 				<Typography variant="subtitle1" fontWeight={ 600 }>

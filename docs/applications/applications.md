@@ -2,49 +2,81 @@
 
 # Applications
 
-Applications define scoped authentication contexts for your REST API. Each application links a client to a specific origin, accepted auth methods, and per-module feature toggles. Use multiple applications to serve different clients from the same WordPress installation without exposing the full API surface to each.
+An Application is the central orchestration unit of the Pro layer. Every feature module — auth, rate limiting, IP filtering, route policy, properties, collections, automations, webhooks, and emails — is configured independently per application. This lets you serve different clients from the same WordPress installation with completely isolated API surfaces: different auth methods, different data views, different rate limits, different allowed origins.
+
+You can create as many applications as you need. Each one is independent.
 
 ---
 
-<details>
-<summary>Identity &amp; Host</summary>
+## Applications List
 
-<p><strong>Title</strong> is a display name for the application used in the admin interface.</p>
-<p><strong>Host</strong> restricts accepted requests to a specific origin domain (e.g. <code>https://myapp.com</code>). Leave empty to accept requests from any origin.</p>
-<p><strong>Enabled</strong> toggles the application on or off without deleting it. Disabled applications are skipped during firewall matching.</p>
+The list view is the entry point for managing all your applications.
 
-</details>
+- **Create** a new application with the add button.
+- **Enable / Disable** an application with the toggle. A confirmation dialog requires you to type the application name before the change is applied — this prevents accidental deactivation of a live application.
+- **Delete** an application permanently. A confirmation dialog requires you to type the application name before deletion proceeds.
+- **Open** any application to access its editor and module configuration.
 
-<details>
-<summary>Authentication Methods</summary>
-
-<p>Select which authentication mechanisms are valid for this application. Available methods include WordPress Application Passwords, JWT, OAuth 2.0, and SSO — depending on which authenticators are active globally.</p>
-<p>Requests authenticated with a non-listed method are rejected at stage 4 of the firewall pipeline with a <code>403</code> response.</p>
-
-</details>
-
-<details>
-<summary>Feature Modules</summary>
-
-<p>Each feature module (Users &amp; Rate Limit, Properties, Collections, Automations, Webhooks, Emails) can be enabled or disabled at the application level. A module must also be globally active to take effect here.</p>
-<p>Use this to expose only the relevant features to each client application.</p>
-
-</details>
+Once at least one application exists and is enabled, any incoming REST request that does not match a registered application is blocked.
 
 ---
 
-**Entry type:** Application
+## Application Editor
 
-- [MUI DataGrid — sorting, filtering &amp; pagination](https://mui.com/x/react-data-grid/)
+Each application has its own editor with two areas:
+
+### Identity
+
+- **Title** — display name used throughout the admin.
+- **Description** — optional notes for your own reference.
+- **Enabled** — activate or deactivate the application without deleting it.
+
+### Modules
+
+Each module can be toggled on or off at the application level. A module must also be globally active to take effect. The editor shows a summary of the current configuration for each module and a direct link to its dedicated settings panel.
+
+| Module | Description | Doc |
+|---|---|---|
+| **Auth & Rate Limiting** | Auth methods, allowed origins & IPs, HTTP methods, users and per-user overrides | [→ Auth & Rate Limit](/users/users) |
+| **IP Filtering** | Whitelist / blacklist, CIDR ranges, country blocking | [→ IP Filtering](/ipsfilter/ipsfilter) |
+| **Routes Policy** | Per-route auth, rate limit, disable, user restriction | [→ Routes](/routes/routes) |
+| **Properties & Models** | Response transforms, per-property control, custom schemas | [→ Properties & Models](/models/models) |
+| **Collections** | Per-page limits, drag-and-drop sort order | [→ Collections](/collections/collections) |
+| **Automations** | Event-driven workflows with conditions and actions | [→ Automations](/automations/automations) |
+| **Webhooks** | Outbound webhook entries with event triggers | [→ Webhooks](/webhooks/webhooks) |
+| **Emails** | Transactional email templates with SMTP | [→ Emails](/mails/mails) |
+
+---
+
+## Auth & Rate Limiting Module
+
+See the dedicated [Auth & Rate Limiting](/users/users) page for full documentation of application-level defaults, the users list, and the user editor.
+
+---
+
+## IP Filtering Module
+
+Manages IP-based access control for this application.
+
+- **Whitelist mode** — only requests from listed IPs or CIDR ranges are allowed through.
+- **Blacklist mode** — listed IPs or ranges are blocked. Configurable retention time.
+- **Country blocking** — block or allow requests by country using GeoIP data.
+- **CIDR support** — define ranges in addition to individual addresses.
+
+See the dedicated [IP Filtering](/ipsfilter/ipsfilter) page for full documentation.
 
 ---
 
 ## FAQ
 
-**Can multiple applications share the same host?**
+**Can multiple applications share the same origin?**
 
-Yes. The firewall matches the first enabled application whose host matches the request origin. List order determines priority.
+Yes. The firewall matches the first enabled application whose origin matches the request. List order determines priority.
 
 **What happens when no application matches a request?**
 
-The request continues through the base firewall pipeline. Applications add a scoped layer on top — they do not replace the standard free-plugin rules.
+Once applications are enabled, any request that does not match a registered application is blocked.
+
+**Can I test an application's policy before enabling it?**
+
+Yes. The Routes module includes a Test panel that lets you fire live requests through the current policy without exposing it to real traffic.
