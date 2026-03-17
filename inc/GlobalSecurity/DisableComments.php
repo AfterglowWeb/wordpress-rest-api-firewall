@@ -17,6 +17,27 @@ class DisableComments {
 
 	private function __construct() {
 
+		add_action(
+			'admin_notices',
+			function (): void {
+				global $pagenow;
+				if ( 'options-discussion.php' !== $pagenow ) {
+					return;
+				}
+				if ( empty( CoreOptions::read_option( 'theme_disable_comments' ) ) ) {
+					return;
+				}
+				$settings_url = admin_url( 'admin.php?page=rest-api-firewall-admin#global_security' );
+				printf(
+					'<div class="notice notice-error"><p>%s <a href="%s">%s</a>. %s</p></div>',
+					esc_html__( 'Comments are globally disabled by the WordPress Application Layer plugin.', 'rest-api-firewall' ),
+					esc_url( $settings_url ),
+					esc_html__( 'Global Security tab', 'rest-api-firewall' ),
+					esc_html__( 'Changes made on this page will have no effect while that setting is active.', 'rest-api-firewall' )
+				);
+			}
+		);
+
 		if ( true === CoreOptions::read_option( 'theme_disable_comments' ) ) {
 			add_filter( 'comments_open', '__return_false', 20, 2 );
 			add_filter( 'pings_open', '__return_false', 20, 2 );

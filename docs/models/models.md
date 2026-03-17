@@ -2,7 +2,9 @@
 
 # Properties
 
-Models define REST response transformation rules for a post type or taxonomy. Choose between the standard WordPress REST schema with optional transforms, or a fully custom property map. Transformations run server-side before the response is sent, removing the need for client-side data massaging.
+Models define REST response transformation rules for a post type or taxonomy. **Sitewide transforms** (resolve embedded data, flatten rendered fields, strip domain from URLs) are available in the free tier and apply globally to all routes. **Per-property control** (disable, rename or remap individual fields) and **custom schemas** require Pro.
+
+Transformations run server-side before the response is sent, removing the need for client-side data massaging.
 
 ---
 
@@ -16,7 +18,7 @@ Models define REST response transformation rules for a post type or taxonomy. Ch
   <li><strong>Embedded author</strong> — inlines the author user object</li>
   <li><strong>Embedded attachments</strong> — inlines all post attachments</li>
   <li><strong>Resolve rendered props</strong> — unwraps <code>rendered</code> wrappers (e.g. <code>title.rendered</code> → <code>title</code>)</li>
-  <li><strong>Remove empty props</strong> — strips null and empty string fields</li>
+  <li><strong>Remove empty props</strong> <span style="display:inline-block;padding:1px 6px;border-radius:3px;background:#1565c0;color:#fff;font-size:10px;font-weight:600">PRO</span> — strips null and empty string fields</li>
   <li><strong>Remove <code>_links</code></strong> — removes the HAL links object</li>
   <li><strong>Remove <code>_embedded</code></strong> — removes sideloaded embed data</li>
 </ul>
@@ -24,9 +26,30 @@ Models define REST response transformation rules for a post type or taxonomy. Ch
 </details>
 
 <details>
-<summary>Custom Schema</summary>
+<summary>Per-Property Control <span style="display:inline-block;padding:1px 6px;border-radius:3px;background:#1565c0;color:#fff;font-size:10px;font-weight:600">PRO</span></summary>
 
-<p>The <strong>custom schema</strong> replaces the full REST response with a hand-crafted property map. Define each top-level key you want in the response and map it to a dot-path from the original REST response (e.g. <code>"headline": "title.rendered"</code>).</p>
+<p>In Pro, each individual property in the WordPress schema can be managed at field level:</p>
+<ul>
+  <li><strong>Disable</strong> — remove a specific property from the response</li>
+  <li><strong>Rename</strong> — expose a property under a different key (e.g. <code>title.rendered</code> → <code>headline</code>)</li>
+  <li><strong>Remap</strong> — source a property's value from a different field in the original response</li>
+</ul>
+<p>These rules layer on top of the sitewide transforms and apply to the WordPress schema mode only.</p>
+
+</details>
+
+<details>
+<summary>Custom Schema <span style="display:inline-block;padding:1px 6px;border-radius:3px;background:#1565c0;color:#fff;font-size:10px;font-weight:600">PRO</span></summary>
+
+<p>The <strong>custom schema</strong> replaces the full REST response with a hand-crafted property map. Define each top-level key you want in the response and map it to a dot-path from the original REST response (e.g. <code>"headline": "title.rendered"</code>). You can also add static values.</p>
+<p>Properties in a custom schema support the same sitewide transforms as the WordPress schema:</p>
+<ul>
+  <li><strong>Resolve media</strong> — replace an attachment ID with the full media object. The resolved object uses the active model you have defined for the <code>attachment</code> type; if none is defined it falls back to the default WP REST response.</li>
+  <li><strong>Resolve terms</strong> — replace term IDs with full term objects. The resolved object uses the active model for that taxonomy; if none is defined it falls back to the default WP REST response.</li>
+  <li><strong>Resolve author</strong> — replace author ID with the full user object. The resolved object uses the active model for <code>user</code>; if none is defined it falls back to the default WP REST response.</li>
+  <li><strong>Filter URL</strong> — strip the domain from URL fields (relative URLs)</li>
+  <li><strong>Search &amp; replace</strong> <em>(under development)</em> — apply text substitutions to string field values</li>
+</ul>
 <p>Use this mode to produce a minimal, application-specific payload that hides WordPress internals entirely.</p>
 
 </details>
@@ -51,8 +74,14 @@ Models define REST response transformation rules for a post type or taxonomy. Ch
 
 **Can I define one model per post type and one per taxonomy?**
 
-Yes. Each model is scoped to a single object type. You can have separate models for `post`, `page`, custom post types, and any REST-exposed taxonomy.
+You can define as many models as you want for the same object type, but only one can be active at a time. This lets you maintain multiple schema variants (e.g. a minimal public schema and a richer internal one) and switch between them without deleting the others.
 
-**Do models affect all REST consumers?**
+**Do models apply globally or per application?**
 
-Models apply globally to the standard WP REST API (`/wp/v2/`). They do not affect custom endpoints or the admin API. Per-application overrides can be set via the `rest_firewall_model_context` filter.
+In Pro, models are scoped per application. The same post type can be served with a minimal public schema to one application and a richer internal schema to another — each application has its own active model per object type. In the free tier, one model per object type applies to all consumers.
+
+**Which routes support property-level filtering?**
+
+Property-level control (disable, rename, remap, custom schema) currently applies to standard WordPress object routes — posts, pages, custom post types, taxonomies, users, and media (`/wp/v2/`). The `/wp/v2/settings` route is also supported: you can pull ACF options pages and resolved menus, and edit the properties of that endpoint.
+
+For other routes (third-party plugin endpoints), you can already explore their schema in the Routes explorer, and fine-grained property filtering is coming very soon. In the meantime, those routes support disable, auth enforcement, rate limiting, and redirect at the route level.

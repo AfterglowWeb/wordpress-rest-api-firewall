@@ -10,7 +10,10 @@
     "format": "wp-scripts format",
     "lint:css": "wp-scripts lint-style",
     "lint:js": "wp-scripts lint-js",
-    "packages-update": "wp-scripts packages-update"
+    "packages-update": "wp-scripts packages-update",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "author": "Cédric Moris Kelly",
   "license": "GPL-2.0-or-later",
@@ -31,6 +34,7 @@
     "dompurify": "^3.2.7"
   },
   "devDependencies": {
+    "vitepress": "^1.6.3",
     "css-loader": "^6.11.0",
     "css-minimizer-webpack-plugin": "^5.0.1",
     "react": "^18.3.1",

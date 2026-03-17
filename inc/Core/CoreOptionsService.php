@@ -20,6 +20,7 @@ class CoreOptionsService {
 		add_action( 'wp_ajax_rest_api_firewall_update_options', array( $this, 'ajax_update_options' ) );
 		add_action( 'wp_ajax_rest_api_firewall_update_option', array( $this, 'ajax_update_option' ) );
 		add_action( 'wp_ajax_rest_api_firewall_read_options', array( $this, 'ajax_read_options' ) );
+		add_action( 'wp_ajax_rest_api_firewall_flush_rewrite_rules', array( $this, 'ajax_flush_rewrite_rules' ) );
 	}
 
 	public function ajax_read_options() {
@@ -33,6 +34,15 @@ class CoreOptionsService {
 
 		$options = CoreOptions::read_options();
 		wp_send_json_success( $options );
+	}
+
+	public function ajax_flush_rewrite_rules(): void {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
+			wp_send_json_error( array( 'message' => esc_html__( 'Unauthorized', 'rest-api-firewall' ) ), 403 );
+		}
+
+		flush_rewrite_rules( false );
+		wp_send_json_success( array( 'message' => esc_html__( 'Rewrite rules flushed successfully.', 'rest-api-firewall' ) ) );
 	}
 
 	public function ajax_update_options() {

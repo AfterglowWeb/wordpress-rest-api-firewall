@@ -2,47 +2,49 @@
 
 # Emails
 
-Email entries define reusable transactional templates used by Automations or triggered manually. Each entry stores the recipient address, subject line, and HTML body. SMTP delivery settings are managed globally in the Email settings panel.
+Email templates define reusable transactional messages fired by [Automations](/automations/automations). Emails are a Pro feature and do not exist in the free tier.
 
 ---
 
-<details>
-<summary>Recipient &amp; Subject</summary>
+## Emails List
 
-<p><strong>To</strong> is the recipient email address. Dynamic placeholders resolve values from the trigger event context at send time:</p>
-<pre><code>{{user.email}}   {{post.title}}   {{site.name}}</code></pre>
-<p><strong>Subject</strong> supports the same placeholder syntax.</p>
+The default view is the emails list. It follows the same pattern as other entry lists in the plugin:
 
-</details>
-
-<details>
-<summary>Body</summary>
-
-<p><strong>Body</strong> is the email content in HTML. Compose your template in the editor and use <code>{{object.field}}</code> placeholders to inject dynamic content. A plain text fallback is generated automatically from the HTML.</p>
-
-</details>
-
-<details>
-<summary>SMTP</summary>
-
-<p>Delivery uses the global SMTP configuration from the <strong>Email settings panel</strong>. If SMTP is disabled, WordPress <code>wp_mail()</code> is used as fallback (server default mailer).</p>
-<p>SMTP host, port, encryption, credentials, and sender identity are all configured at the plugin level — not per template.</p>
-
-</details>
+- **Add** a new template with the add button.
+- **Enable / Disable** an entry with the toggle. A confirmation is required.
+- **Delete** an entry. A confirmation is required.
 
 ---
 
-**Entry type:** Email template
+## Email Editor
 
-- [MUI DataGrid — sorting, filtering &amp; pagination](https://mui.com/x/react-data-grid/)
+- **Title** — display name used in the admin list.
+- **Description** — internal notes, not sent to recipients.
+- **To** — recipient email address.
+- **CC** — carbon copy recipients.
+- **BCC** — blind carbon copy recipients.
+- **Subject** — email subject line.
+- **Body** — HTML email content. A full payload mapping system — allowing automation event data to be referenced as placeholders in the subject and body — is coming soon.
+
+---
+
+## SMTP Settings
+
+The second tab in the panel is SMTP configuration. Like all settings in Pro, SMTP is scoped per application — each application can use a different sender identity and mail server.
+
+Configurable fields: SMTP host, port, encryption, username, password, and sender name / address. If SMTP is disabled, WordPress `wp_mail()` is used as fallback.
 
 ---
 
 ## FAQ
 
+**How are emails triggered?**
+
+Emails are fired by automations. Create an automation, configure its event and conditions, then add a *Send Email* action pointing to a template.
+
 **Can I send to multiple recipients?**
 
-Separate multiple addresses with commas in the **To** field.
+Yes. Fill in To, CC, and BCC as needed. Multiple addresses in the same field can be comma-separated.
 
 **Are sent emails logged?**
 

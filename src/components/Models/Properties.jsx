@@ -148,6 +148,7 @@ export function PropertyRow( {
 	depth = 0,
 	basePath = '',
 	alwaysExpanded = false,
+	disabled = false,
 } ) {
 	const [ expanded, setExpanded ] = useState( false );
 	const [ detailsOpen, setDetailsOpen ] = useState( false );
@@ -311,7 +312,7 @@ export function PropertyRow( {
 									<FormControlLabel
 										key={ filter.key }
 										sx={ { flex: 0 } }
-										disabled={ ! hasValidLicense }
+									disabled={ disabled || ! hasValidLicense }
 										control={
 											<Checkbox
 												size="small"
@@ -334,7 +335,7 @@ export function PropertyRow( {
 												} }
 												fontSize="0.75rem"
 												color={
-													! hasValidLicense
+													( disabled || ! hasValidLicense )
 														? 'text.disabled'
 														: 'text.primary'
 												}
@@ -346,7 +347,7 @@ export function PropertyRow( {
 								) ) }
 
 							<FormControlLabel
-								disabled={ ! hasValidLicense }
+								disabled={ disabled || ! hasValidLicense }
 								control={
 									<Switch
 										size="small"
@@ -371,7 +372,7 @@ export function PropertyRow( {
 										} }
 										fontSize="0.75rem"
 										color={
-											! hasValidLicense
+											( disabled || ! hasValidLicense )
 												? 'text.disabled'
 												: 'text.primary'
 										}
@@ -463,6 +464,7 @@ export function PropertyRow( {
 									depth={ depth + 1 }
 									basePath={ `${ basePath }.properties.${ subName }` }
 									alwaysExpanded={ true }
+									disabled={ disabled }
 								/>
 							)
 						) }
@@ -487,6 +489,7 @@ export function PropertyRow( {
 										__={ __ }
 										depth={ depth + 1 }
 										basePath={ `${ basePath }.properties.${ subName }` }
+										disabled={ disabled }
 									/>
 								)
 							) }

@@ -204,15 +204,22 @@ class CoreOptions {
 				'group'             => 'settings_route',
 			),
 
-			// Application.
-
-			'application_host'                          => array(
+			'rest_models_acf_options_page_endpoint'     => array(
 				'default_value'     => '',
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'webhook',
+				'context'           => array( 'pro' ),
+				'group'             => 'settings_route',
+			),
+
+			'rest_models_embed_menus_endpoint'          => array(
+				'default_value'     => '',
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'settings_route',
 			),
 
 			'application_webhook_endpoint'              => array(
@@ -453,6 +460,107 @@ class CoreOptions {
 			),
 
 			'rest_models_enabled'                       => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'models_properties',
+			),
+
+			// Global output filters (Post Types & Taxonomies).
+			'rest_models_relative_url_enabled'          => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'models_properties',
+			),
+
+			'rest_models_relative_attachment_url_enabled' => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'models_properties',
+			),
+
+			'rest_models_remove_links_prop'             => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'models_properties',
+			),
+
+			'rest_models_remove_embed_prop'             => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'models_properties',
+			),
+
+			'rest_models_remove_empty_props'            => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'models_properties',
+			),
+
+			'rest_models_remove_empty_props_recursively' => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'models_properties',
+			),
+
+			// Global output filters (Post Types only).
+			'rest_models_resolve_rendered_props'        => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'models_properties',
+			),
+
+			'rest_models_embed_featured_attachment_enabled' => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'models_properties',
+			),
+
+			'rest_models_embed_post_attachments_enabled' => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'models_properties',
+			),
+
+			'rest_models_embed_terms_enabled'           => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'models_properties',
+			),
+
+			'rest_models_embed_author_enabled'          => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
