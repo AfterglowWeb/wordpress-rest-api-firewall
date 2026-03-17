@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
+import { useNavigation } from '../../contexts/NavigationContext';
 
 import { DataGrid } from '@mui/x-data-grid';
 
@@ -17,12 +18,14 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import ApplicationEditor from './ApplicationEditor';
 import useProActions from '../../hooks/useProActions';
+import ConfirmWithInputDialog from '../ConfirmWithInputDialog';
 
-export default function Applications( { onNavigate } ) {
+export default function Applications() {
 	const { adminData } = useAdminData();
 	const { hasValidLicense, proNonce } = useLicense();
 	const nonce = proNonce || adminData.nonce;
 	const { __ } = wp.i18n || {};
+	const { subKey, navigate } = useNavigation();
 
 	const { remove } = useProActions();
 
@@ -41,40 +44,31 @@ export default function Applications( { onNavigate } ) {
 	} );
 
 	const [ fetchError, setFetchError ] = useState( '' );
-
-	const [ editingApp, setEditing ] = useState( null );
+	const editingApp = subKey === 'new'
+		? { id: null, title: '', enabled: false, policy: false }
+		: subKey ? { id: subKey } : null;
+	const [ confirmDelete, setConfirmDelete ] = useState( { open: false, id: null, title: '' } );
 
 	const handleDeleteOne = useCallback(
-		( id, title ) => {
-			remove(
-				{ action: 'delete_application_entry', id },
-				{
-					confirmTitle: __(
-						'Delete Application',
-						'rest-api-firewall'
-					),
-					confirmMessage: title
-						? `${ __(
-								'Permanently delete',
-								'rest-api-firewall'
-						  ) } "${ title }"? ${ __(
-								'This action cannot be undone.',
-								'rest-api-firewall'
-						  ) }`
-						: __(
-								'Permanently delete this application? This action cannot be undone.',
-								'rest-api-firewall'
-						  ),
-					confirmLabel: __( 'Delete', 'rest-api-firewall' ),
-					onSuccess: () =>
-						setRows( ( prev ) =>
-							prev.filter( ( row ) => row.id !== id )
-						),
-				}
-			);
-		},
-		[ remove, __ ]
+		( id, title ) => setConfirmDelete( { open: true, id, title: title || '' } ),
+		[]
 	);
+
+	const handleConfirmDelete = useCallback( () => {
+		const { id, title } = confirmDelete;
+		setConfirmDelete( { open: false, id: null, title: '' } );
+		remove(
+			{ action: 'delete_application_entry', id },
+			{
+				skipConfirm: true,
+				successTitle: __( 'Application Deleted', 'rest-api-firewall' ),
+				successMessage: title
+					? `"${ title }" ${ __( 'has been permanently deleted.', 'rest-api-firewall' ) }`
+					: __( 'Application has been permanently deleted.', 'rest-api-firewall' ),
+			onSuccess: () => setRows( ( prev ) => prev.filter( ( row ) => row.id !== id ) ),
+			}
+		);
+	}, [ confirmDelete, remove, __ ] );
 
 	const columns = useMemo(
 		() => [
@@ -131,7 +125,7 @@ export default function Applications( { onNavigate } ) {
 						fontFamily: 'monospace',
 						color: 'primary.main',
 					} }
-					onClick={ () => setEditing( params.row ) }
+					onClick={ ( e ) => { e.preventDefault(); navigate( 'applications', params.row.id ); } }
 				>
 					{ params.value }
 					<OpenInNewIcon
@@ -255,32 +249,45 @@ export default function Applications( { onNavigate } ) {
 
 	if ( editingApp ) {
 		return (
-			<ApplicationEditor
+			<>
+				<ConfirmWithInputDialog
+					open={ confirmDelete.open }
+					title={ __( 'Delete Application', 'rest-api-firewall' ) }
+					message={ __( 'This will permanently delete the application and all its configuration. This action cannot be undone.', 'rest-api-firewall' ) }
+					requiredText={ confirmDelete.title }
+					confirmLabel={ __( 'Delete', 'rest-api-firewall' ) }
+					onConfirm={ handleConfirmDelete }
+					onCancel={ () => setConfirmDelete( { open: false, id: null, title: '' } ) }
+				/>
+				<ApplicationEditor
 				application={ editingApp }
 				onBack={ () => {
-					setEditing( null );
+					navigate( 'applications', null, true );
 					fetchEntries();
 				} }
-				onNavigate={ onNavigate }
 			/>
+			</>
 		);
 	}
 
 	return (
-		<Stack spacing={ 2 } p={ { xs: 2, sm: 4 } }>
+		<>
+			<ConfirmWithInputDialog
+				open={ confirmDelete.open }
+				title={ __( 'Delete Application', 'rest-api-firewall' ) }
+				message={ __( 'This will permanently delete the application and all its configuration. This action cannot be undone.', 'rest-api-firewall' ) }
+				requiredText={ confirmDelete.title }
+				confirmLabel={ __( 'Delete', 'rest-api-firewall' ) }
+				onConfirm={ handleConfirmDelete }
+				onCancel={ () => setConfirmDelete( { open: false, id: null, title: '' } ) }
+			/>
+			<Stack spacing={ 2 } p={ { xs: 2, sm: 4 } }>
 			<Toolbar disableGutters sx={ { gap: 2, flexWrap: 'wrap' } }>
 				<Button
 					variant="contained"
 					size="small"
 					disableElevation
-					onClick={ () =>
-						setEditing( {
-							id: null,
-							title: '',
-							enabled: false,
-							policy: false,
-						} )
-					}
+					onClick={ () => navigate( 'applications', 'new' ) }
 				>
 					{ __( 'New Application', 'rest-api-firewall' ) }
 				</Button>
@@ -329,5 +336,6 @@ export default function Applications( { onNavigate } ) {
 				} }
 			/>
 		</Stack>
+		</>
 	);
 }

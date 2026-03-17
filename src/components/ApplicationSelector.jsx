@@ -1,12 +1,12 @@
+import { useState } from '@wordpress/element';
 import { useApplication } from '../contexts/ApplicationContext';
 
-import Divider from '@mui/material/Divider';
-import Stack from '@mui/material/Stack';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
+import Alert from '@mui/material/Alert';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
-import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import Snackbar from '@mui/material/Snackbar';
 
 export default function ApplicationSelector() {
 	const { __ } = wp.i18n || {};
@@ -17,33 +17,24 @@ export default function ApplicationSelector() {
 		applicationsLoading,
 		setSelectedApplicationId,
 	} = useApplication();
+	const [ snackOpen, setSnackOpen ] = useState( false );
+
+	const handleChange = ( e ) => {
+		setSelectedApplicationId( e.target.value );
+		setSnackOpen( true );
+	};
 
 	return (
-		<Stack direction="row" alignItems="center" gap={ 2 }>
-			<Stack sx={ { color: 'text.secondary' } }>
-				<AppsOutlinedIcon color="inherit" />
-			</Stack>
-
-			<FormControl
-				size="small"
-				variant="standard"
-				sx={ { minWidth: 180, maxWidth: 270 } }
-			>
-				<InputLabel id={ `select-application-label` }>
-					{ __( 'Application', 'rest-api-firewall' ) }
-				</InputLabel>
+		<>
+			<FormControl size="small" variant="standard" fullWidth>
 				<Select
 					size="small"
-					labelId={ `select-application-label` }
+					label={ __( 'Application', 'rest-api-firewall' ) }
 					value={ selectedApplicationId }
-					onChange={ ( e ) =>
-						setSelectedApplicationId( e.target.value )
-					}
+					onChange={ handleChange }
 					displayEmpty
-					disabled={
-						applicationsLoading || applications.length === 0
-					}
-					sx={ { minWidth: 180, maxWidth: 260 } }
+					disabled={ applicationsLoading || applications.length === 0 }
+					sx={ { fontSize: '0.9rem' } }
 					renderValue={ () =>
 						applicationsLoading
 							? __( 'Loading…', 'rest-api-firewall' )
@@ -59,12 +50,20 @@ export default function ApplicationSelector() {
 				</Select>
 			</FormControl>
 
-			<Divider
-				orientation="vertical"
-				sx={ { ml: 2 } }
-				flexItem
-				variant="middle"
-			/>
-		</Stack>
+			<Snackbar
+				open={ snackOpen }
+				autoHideDuration={ 2000 }
+				onClose={ () => setSnackOpen( false ) }
+				anchorOrigin={ { vertical: 'bottom', horizontal: 'center' } }
+			>
+				<Alert
+					severity="success"
+					variant="filled"
+					onClose={ () => setSnackOpen( false ) }
+				>
+					{ __( 'Application changed', 'rest-api-firewall' ) }
+				</Alert>
+			</Snackbar>
+		</>
 	);
 }

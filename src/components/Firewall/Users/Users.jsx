@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useLicense } from '../../../contexts/LicenseContext';
 import { useApplication } from '../../../contexts/ApplicationContext';
+import { useNavigation } from '../../../contexts/NavigationContext';
 
 import { DataGrid } from '@mui/x-data-grid';
 
@@ -33,6 +34,7 @@ export default function Users() {
 	const { __ } = wp.i18n || {};
 
 	const { selectedApplicationId } = useApplication();
+	const { subKey, navigate } = useNavigation();
 	const { save, remove } = useProActions();
 
 	const [ rows, setRows ] = useState( [] );
@@ -49,7 +51,17 @@ export default function Users() {
 		ids: new Set( [] ),
 	} );
 	const [ fetchError, setFetchError ] = useState( '' );
-	const [ editingUser, setEditingUser ] = useState( null );
+	const editingUser = subKey === 'new'
+		? {
+			id: null,
+			application_id: selectedApplicationId,
+			status: 'inactive',
+			auth_method: 'any',
+			allowed_methods: appDefaultMethods.length ? appDefaultMethods : [ 'get' ],
+			rate_limit_max_requests: 100,
+			rate_limit_window_seconds: 60,
+		}
+		: subKey ? { id: subKey } : null;
 
 	const [ appDefaultMethods, setAppDefaultMethods ] = useState( [] );
 	const [ appAllowedAuthMethods, setAppAllowedAuthMethods ] = useState( [] );
@@ -239,7 +251,7 @@ export default function Users() {
 						spacing={ 0.5 }
 						alignItems="center"
 						sx={ { cursor: 'pointer' } }
-						onClick={ () => setEditingUser( params.row ) }
+						onClick={ () => navigate( 'user-rate-limiting', params.row.id ) }
 					>
 						<Typography
 							variant="body2"
@@ -397,7 +409,7 @@ export default function Users() {
 				user={ editingUser }
 				appAllowedAuthMethods={ appAllowedAuthMethods }
 				onBack={ () => {
-					setEditingUser( null );
+					navigate( 'user-rate-limiting', null, true );
 					fetchEntries();
 				} }
 			/>
@@ -406,102 +418,12 @@ export default function Users() {
 
 	return (
 		<Stack spacing={ 2 } flexGrow={ 1 } p={ { xs: 2, sm: 4 } }>
-			{ selectedApplicationId && (
-				<Stack spacing={ 2 }  maxWidth={640}>
-					<Stack spacing={ 2 }>
-						<Box>
-							<Typography variant="subtitle1" fontWeight={ 600 }>
-								{ __( 'App Rate Limit', 'rest-api-firewall' ) }
-							</Typography>
-							<Typography variant="body2" color="text.secondary">
-								{ __( 'Default rate limit for all users of this application. Can be overridden per user.', 'rest-api-firewall' ) }
-							</Typography>
-						</Box>
-						<DefaultRateLimit />
-					</Stack>
-
-					<Divider />
-
-					<Stack spacing={ 2 }>
-						<Box>
-							<Typography variant="subtitle1" fontWeight={ 600 }>
-								{ __( 'Default HTTP Methods', 'rest-api-firewall' ) }
-							</Typography>
-							<Typography variant="body2" color="text.secondary">
-								{ __( 'Pre-selected HTTP methods when creating a new user. Can be overridden per user.', 'rest-api-firewall' ) }
-							</Typography>
-						</Box>
-						<HttpMethodsSelector
-							value={ appDefaultMethods }
-							onChange={ setAppDefaultMethods }
-							onSave={ saveDefaultMethods }
-
-						/>
-					</Stack>
-
-					<Divider />
-
-					<Stack spacing={ 2 }>
-						<Box>
-							<Typography variant="subtitle1" fontWeight={ 600 }>
-								{ __( 'Enforce Authentication Methods', 'rest-api-firewall' ) }
-							</Typography>
-							<Typography variant="body2" color="text.secondary">
-								{ __( 'Restrict which authentication methods users of this application may use. Cannot be overridden per user. Leave all unchecked to allow public access.', 'rest-api-firewall' ) }
-							</Typography>
-						</Box>
-						<Stack direction="row" flexWrap="wrap" gap={ 1 }>
-							{ AUTH_METHODS.filter( ( m ) => m.value !== 'any' ).map( ( method ) => (
-								<FormControlLabel
-									key={ method.value }
-									label={ method.label }
-									control={
-										<Checkbox
-											size="small"
-											checked={ appAllowedAuthMethods.includes( method.value ) }
-											onChange={ ( e ) => {
-												setAppAllowedAuthMethods( ( prev ) =>
-													e.target.checked
-														? [ ...prev, method.value ]
-														: prev.filter( ( v ) => v !== method.value )
-												);
-											} }
-										/>
-									}
-								/>
-							) ) }
-							<Stack flex={ 1 } pt={1} direction="column" justifyContent="flex-end" alignItems="flex-end">
-								<Button
-									variant="contained"
-									disableElevation
-									size="small"
-									onClick={ saveAppSettings }
-								>
-									{ __( 'Save', 'rest-api-firewall' ) }
-								</Button>
-							</Stack>
-						</Stack>
-					</Stack>
-
-					<Divider />
-				</Stack>
-			) }
 			<Toolbar disableGutters sx={ { gap: 2, mb: 2, flexWrap: 'wrap' } }>
 				<Button
 					variant="contained"
 					size="small"
 					disableElevation
-					onClick={ () =>
-						setEditingUser( {
-							id: null,
-							application_id: selectedApplicationId,
-							status: 'inactive',
-							auth_method: 'any',
-							allowed_methods: appDefaultMethods.length ? appDefaultMethods : [ 'get' ],
-							rate_limit_max_requests: 100,
-							rate_limit_window_seconds: 60,
-						} )
-					}
+					onClick={ () => navigate( 'user-rate-limiting', 'new' ) }
 				>
 					{ __( 'New User', 'rest-api-firewall' ) }
 				</Button>
