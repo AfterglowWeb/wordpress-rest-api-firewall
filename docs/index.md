@@ -11,7 +11,7 @@ hero:
   actions:
     - theme: brand
       text: Get Started
-      link: /getting-started
+      link: /presentation
     - theme: alt
       text: View on GitHub
       link: https://github.com/AfterglowWeb/wordpress-rest-api-firewall
@@ -19,20 +19,20 @@ hero:
 features:
   - icon: 🔐
     title: Authentication & Rate Limiting
-    details: Enforce JWT or OAuth token authentication. Set per-user request quotas with configurable time windows. Auto-blacklist IPs that exceed thresholds — no third-party service required.
+    details: Authenticate clients with WordPress Application Password (hardened to a single authorised user) or JWT. OAuth requires Pro. Set per-user request quotas with configurable time windows. Auto-blacklist IPs that exceed thresholds — no third-party service required.
     link: /users/users
     linkText: Learn more
 
   - icon: 🗂️
     title: Properties & Models
-    details: Transform REST API responses server-side. Rename, remove, resolve, or remap any field. Define a custom schema that hides WordPress internals entirely and speaks your application's language.
+    details: Apply sitewide response transforms for free — resolve embedded terms, authors & attachments, flatten rendered fields, strip domain from URLs. Pro adds per-property disable, rename and remap, plus fully custom JSON schemas.
     link: /models/models
     linkText: Learn more
 
   - icon: 🔍
-    title: Explore & Audit Your Exposure
-    details: Browse all REST API routes and their schemas directly from the admin. Know exactly what data WordPress is exposing before your clients or users do.
-    link: /getting-started
+    title: Routes & Exposure Control
+    details: Browse every REST API route and its schema from the admin. Globally disable HTTP methods, post types, or taxonomies from the API. Pro adds per-route policy — disable or redirect individual routes, restrict them to specific users, and apply fine-grained rate limits per endpoint.
+    link: /routes/routes
     linkText: Learn more
 
   - icon: 🛡️
@@ -72,7 +72,7 @@ Authentication, data shaping, API scoping, event automation, security hardening:
 
 ### Control what you expose
 
-WordPress exposes a lot by default — user data, internal meta, raw field structures. Application Layer lets you audit every route and decide, field by field, what leaves your server.
+WordPress exposes a lot by default — user data, internal meta, raw field structures. Application Layer lets you audit every route, globally disable HTTP methods, post types or taxonomies, and in Pro, decide field by field what leaves your server.
 
 </div>
 
@@ -80,7 +80,7 @@ WordPress exposes a lot by default — user data, internal meta, raw field struc
 
 ### Shape data for your front-end
 
-Stop massaging responses client-side. Define server-side transforms once: resolve embedded terms, flatten rendered wrappers, rename properties to match your existing schemas.
+Stop massaging responses client-side. Apply sitewide transforms for free: resolve embedded terms, flatten rendered wrappers, strip domain from URLs. Pro adds per-property rename, remap, and fully custom schemas.
 
 </div>
 
@@ -150,16 +150,20 @@ Serve content in multiple languages across separate websites or applications, ea
 |---|:---:|:---:|
 | REST API route explorer | ✅ | ✅ |
 | Authentication & Rate Limiting | ✅ | ✅ |
-| Properties & Models | ✅ | ✅ |
+| Properties & Models (sitewide transforms) | ✅ | ✅ |
+| Routes: global method / post-type / taxonomy disable | ✅ | ✅ |
 | WordPress Security Hardening | ✅ | ✅ |
-| Webhooks | ✅ | ✅ |
+| Webhook (single, post lifecycle events) | ✅ | ✅ |
 | Hooks & Filters API | ✅ | ✅ |
 | Multiple Applications | — | ✅ |
-| IP Filtering + GeoIP | — | ✅ |
+| IP Filtering (blacklist) | ✅ | ✅ |
+| IP Filtering whitelist + CIDR + country blocking | — | ✅ |
 | Collections & Sort Order | — | ✅ |
-| Per-Route Policy | — | ✅ |
+| Properties & Models (per-property control + custom schemas) | — | ✅ |
+| Settings Route schema editor (ACF options, menus) | — | ✅ |
+| Per-Route Policy (per-route disable, redirect, user restriction) | — | ✅ |
 | Automations | — | ✅ |
-| Multiple Webhooks | — | ✅ |
+| Multiple Webhooks (unlimited, per application) | — | ✅ |
 | Email Templates | — | ✅ |
 | Request Logs & Audit Trail | — | ✅ |
 
@@ -216,7 +220,7 @@ Spin up static landing pages on any domain directly from WordPress. Choose any U
 
 **Database Encryption**
 
-An optional encryption layer for sensitive data stored in `wp_options` and custom tables — transparent to the application, enforced at the plugin level.
+An optional encryption layer for sensitive data stored in `wp_options` and custom tables — transparent to the application.
 </div>
 
 </div>

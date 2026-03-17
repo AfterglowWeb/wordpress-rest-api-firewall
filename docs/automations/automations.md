@@ -2,49 +2,56 @@
 
 # Automations
 
-Automations chain a WordPress trigger to one or more actions. When the trigger fires, all enabled actions execute in sequence. Use automations to send emails, call webhooks, or dispatch custom hooks in response to WordPress events — without writing plugin code.
+Automations connect WordPress events to actions — send emails, fire webhooks, or dispatch custom hooks — without writing code. Each automation listens for one or more events, evaluates optional conditions, and executes its action list in sequence.
+
+Automations are a Pro feature. In the free tier, a simplified event selector is available directly in the [Webhook editor](/webhooks/webhooks).
 
 ---
 
-<details>
-<summary>Trigger</summary>
+## Automations List
 
-<p>The <strong>trigger</strong> is the WordPress event that starts the automation. Available trigger types:</p>
-<ul>
-  <li>Post lifecycle — publish, update, delete (filterable by post type)</li>
-  <li>User events — registration, login</li>
-  <li>REST API request events</li>
-  <li>Scheduled interval (WP-Cron)</li>
-</ul>
-<p>Each trigger type exposes its own configuration options in the editor.</p>
-
-</details>
-
-<details>
-<summary>Actions</summary>
-
-<p><strong>Actions</strong> execute in order when the trigger fires. Available action types:</p>
-<ul>
-  <li><strong>Send Email</strong> — dispatches a configured Mail template</li>
-  <li><strong>Call Webhook</strong> — triggers a registered Webhook entry</li>
-  <li><strong>Run Hook</strong> — fires a custom <code>do_action()</code> WordPress hook</li>
-</ul>
-<p>Each action can be individually enabled or disabled within the automation without removing it.</p>
-
-</details>
-
-<details>
-<summary>Conditions</summary>
-
-<p><strong>Conditions</strong> are optional expressions evaluated before the action sequence runs. If any condition fails, the automation halts. Conditions can inspect post meta, user roles, request parameters, or custom values.</p>
-
-</details>
+- **Create** a new automation with the add button.
+- **Enable / Disable** an automation with the toggle. A confirmation is required before the change is applied.
+- **Delete** an automation. A confirmation is required before deletion proceeds.
 
 ---
 
-**Entry type:** Automation
+## Automation Editor
 
-- [MUI DataGrid — sorting, filtering &amp; pagination](https://mui.com/x/react-data-grid/)
+### Identity
+
+- **Title** — display name used in the admin list.
+- **Description** — optional notes for your own reference.
+
+### Events
+
+Select one or more events that trigger this automation. Available event categories:
+
+- **WordPress Posts, Taxonomies & Media** — create, update, and delete events for posts, custom post types, taxonomy terms, and media.
+- **User events** — user registration and login.
+- **WooCommerce** — order, product, customer, and other WooCommerce lifecycle events (requires WooCommerce).
+- **Application Layer** — internal plugin events (user access, rate limit exceeded, application changes, etc.).
+- **Custom Hooks** — declare any WordPress action or filter hook by name. Configure the number of arguments the hook passes, name each argument, and choose which ones are forwarded to the action payload.
+
+### Scheduled Trigger
+
+For scheduled automations, hook data is queued or rotated as events fire. The release condition is either:
+
+- **After N events** — the accumulated data is flushed and the actions run once the queue reaches N hook events.
+- **On schedule** — a WP-Cron interval releases the queued data at a fixed time, regardless of how many events have accumulated.
+
+### Conditions
+
+An optional conditional logic block is evaluated before the action sequence runs. If the block fails, the automation halts.
+
+Conditions are organised in **AND / OR groups**: within a group all conditions must pass (AND); the automation proceeds if any group passes (OR). Each condition inspects a named argument from the trigger hook — the argument list is derived from the hook configuration in the Events section.
+
+### Actions
+
+Actions execute in order when the trigger fires (and conditions pass). Each action can be individually enabled or disabled without removing it. You can add **as many actions as you need** — multiple emails, multiple webhooks, or any combination.
+
+- **Send Email** — select an existing [Email template](/mails/mails) or create a new one inline.
+- **Call Webhook** — select an existing [Webhook entry](/webhooks/webhooks) or create a new one inline.
 
 ---
 
@@ -52,8 +59,12 @@ Automations chain a WordPress trigger to one or more actions. When the trigger f
 
 **Can an automation trigger another automation?**
 
-Not directly. However, a *Run Hook* action can fire a WordPress action that another automation's trigger listens to, creating a chain.
+Not yet. Direct automation chaining is not currently supported. It is a planned action type.
+
+**Can one automation send multiple emails and fire multiple webhooks?**
+
+Yes. Add as many *Send Email* and *Call Webhook* actions as you need. They execute in sequence, each pointing to a different template or webhook entry.
 
 **What happens if one action in a sequence fails?**
 
-By default execution continues to the next action. Failures are written to the application log with the automation ID and action index.
+By default execution continues to the next action. Failures are recorded in the application log with the automation ID and action index.

@@ -1,245 +1,107 @@
 # WordPress Application Layer
 
-A WordPress plugin that provides a secure application layer for the WordPress REST API.
+📖 **[Documentation](https://wordpress-application-layer.abc-plugins.com)**
 
-WordPress Application Layer is a comprehensive suite designed to secure, filter, and extend the WordPress REST API while enabling seamless communication with front-end applications. It integrates with any technology or service capable of consuming REST APIs and webhooks.
+WordPress Application Layer is a plugin that sits between the WordPress REST API and your client applications. It lets you control exactly what data is exposed, who can access it, how it is shaped, and at what rate — without touching WordPress core or your theme.
 
-- Create multiple applications with distinct policy rules and data views, scoped per route and per user.
-- Map collections and properties through JSON objects, similar to Firebase or Supabase.
-- Create application users with restricted roles and specific authentication methods (JWT, OAuth, SSO, and WordPress Application Password).
-- Trigger webhooks on WordPress events and custom events *(support for major plugin events is under development)*.
-- Send notification emails.
-- Spin up a blank front-end template.
+Beyond REST API responses, the plugin can **drive your front-end entirely through webhooks**: WordPress events (post publish, user register, WooCommerce order, custom CRON…) push data to your application in real time using the same schema as the REST API. You can combine both approaches or rely solely on webhooks to feed your application.
 
-> **Alpha version** 
-> This plugin is under active development. Architectural changes may still occur.
+Designed for **headless WordPress** architectures, **multi-application** setups, **event-driven** delivery, and sites that need **REST API security hardening**.
+
+> **Alpha version**
+> This plugin is under active development. Most documented features are implemented and functional — some are still being finalized. Architectural changes may still occur.
 > It is publicly available for testing and feedback. Stability is not yet guaranteed.
 
-## Screenshots
+## Free Features
 
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <img src="docs/wordpress-application-layer-applications-1-tab.webp" alt="Applications List Tab" />
-      <br /><strong>Applications List Tab</strong><br />
-    </td>
-    <td align="center" width="50%">
-      <img src="docs/wordpress-application-layer-applications-2-tab.webp" alt="Create Application Panel" />
-      <br /><strong>New Application Panel</strong><br />
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
-      <img src="docs/wordpress-application-layer-auth-rate-limit-tab.webp" alt="Authentication and Rate Limit Tab" />
-      <br /><strong>Auth. and Rate Limit. Tab (free version)</strong><br />
-    </td>
-    <td align="center" width="50%">
-      <img src="docs/wordpress-application-layer-ip-filters-tab.webp" alt="IPs Filter Tab" />
-      <br /><strong>IPs Filter Tab</strong><br />
-    </td>
-    
-  </tr>
-  <tr>
-    <td align="center" width="50%">
-      <img src="docs/wordpress-application-layer-collections-tab.webp" alt="Routes Management" />
-      <br /><strong>Collections Tab</strong><br />
-    </td>
-    <td align="center" width="50%">
-      <img src="docs/wordpress-application-layer-webhook-tab.webp" alt="Webhook Tab" />
-      <br /><strong>Webhook Tab (free version)</strong><br />
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
-      <img src="docs/wordpress-application-layer-smtp-tab.webp" alt="Emails Tab" />
-      <br /><strong>Emails Tab *(under development)*</strong><br />
-    </td>
-    <td align="center" width="50%">
-      <img src="docs/wordpress-application-layer-theme-tab.webp" alt="Theme Tab" />
-      <br /><strong>Theme Tab</strong><br />
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%" height="300px">
-      <img src="docs/wordpress-application-layer-properties-tab.webp" alt="Properties Tab" />
-      <br /><strong>Properties Tab (free version)</strong><br />
-    </td>
-    <td align="center" width="50%" height="300px">
-      <img src="docs/wordpress-application-layer-settings-route-tab.webp" alt="Settings Route" />
-      <br /><strong>Settings Route Tab (free version)</strong><br />
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%" height="500px">
-      <img src="docs/wordpress-application-layer-routes-tab.webp" alt="Routes Management" />
-      <br /><strong>Routes Tab (free version)</strong><br />
-    </td>
-    <td align="top" width="50%">
-      <img src="docs/wordpress-application-layer-license-tab.webp" alt="License Tab" />
-      <br /><strong>License Tab</strong><br />
-    </td>
-  </tr>
+| Feature | Description |
+|---|---|
+| **Authentication** | WordPress Application Password (hardened to a single authorised user) and JWT. OAuth requires Pro |
+| **Rate Limiting** | Global request quotas with configurable time windows |
+| **IP Filtering** | Automatic and manual IP blacklisting. The plugin detects repeated violations and adds offenders automatically. IPv4 only — no CIDR, no country blocking. Read-only GeoIP stats available |
+| **Routes** | Enforce auth and rate limiting globally. Disable the default `/users` routes to prevent user enumeration |
+| **Properties & Models** | Apply sitewide response transforms: resolve attachments, terms & authors, flatten rendered fields, remove domain from URLs. Rules apply globally across all routes — individual property control requires Pro |
+| **WordPress Security** | Disable XML-RPC, comments, RSS. Secure files, enforce security headers |
+| **Webhook** | Single outbound webhook with event triggers |
+| **Hooks API** | Every option exposes a WordPress filter for customisation |
 
-</table>
+## Pro Features
 
-## Wordpress Application Layer — FREE
+| Feature | Description |
+|---|---|
+| **Applications** | Isolate all settings per client — auth, routes, data, webhooks |
+| **IP Filtering** | Both whitelist and blacklist modes. Whitelist restricts access to allowed origins only. Blacklist with configurable retention. CIDR range support. Block or allow by country (GeoIP) |
+| **Collections** | Enforce per-page limits and drag-and-drop sort order |
+| **Routes Policy** | Per-route method control, user assignment, rate limiting and redirections |
+| **Properties & Models** | Disable, rename or remap any individual property. Remove empty properties. Build fully custom JSON schemas |
+| **Automations** | Event-driven workflows with conditions and chained actions |
+| **Multiple Webhooks** | Unlimited outbound webhooks, scoped per application |
+| **Email Templates** | Transactional email templates with SMTP configuration, per application |
+| **Settings Route** | Schema editor for `/wp/v2/settings` — ACF options pages and resolved WordPress menus |
+| **Logs** | Full request history and audit trail |
 
-- Enforce authentication, rate limiting, and IP blacklisting.
-- Add ACF options pages and resolved menus to the wp/v2/settings route.
-- Browse REST API routes and inspect schemas — understand how and where data is exposed.
-- Apply a global per-property content policy: disable or filter properties across all routes.
-- Trigger webhooks to your front-end application on WordPress events.
-- Configure an SMTP server.
-- Send email notifications on REST API security and traffic events.
-- Plugin bypass rules.
-- Compatible with WordPress multisite installations.
+## Free vs Pro
 
-> Each admin option exposes a WordPress filter for advanced customization.
-
-### Security and Privacy Features
-
-- Disable comments
-- Disable pingbacks
-- Disable RSS Feeds
-- Disable XML-RPC
-- Disable sitemap
-- Disable theme editor
-- Enforce security headers
-- Protect wp-config.php and uploads directory
-- Limit image file size
-- Redirect all front-end templates
-
-## Wordpress Application Layer — PRO
-
-Wordpress Application Layer PRO introduces a multi-application architecture: serve multiple front-end applications with distinct REST API data views from a single WordPress installation. Configure multiple application environments and run them simultaneously.
-- Each application has its own security and content policy.
-- Each application has one or multiple users.
-- Each user has its own Rate Limit, Auth Methods (JWT, oAuth, SSO or Wordpress Application Password), HTTP Methods (GET, POST, PUT, PATCH, DELETE) and Routes
-- Authentication(s) and/or IP(s) determine which application configuration is loaded.
-- The same data source can be exposed through multiple REST API “views.”
-- Each application can replace the default wp/v2 namespace with a custom namespace (under development).
-
-You may also configure a single application and benefit from all Pro features.
-
-Additionally, you can run applications entirely through webhooks. Data is sent using the same schema as the REST API.
-
-### Pro Per Application Features
-
-<details>
-<summary>Full features list</summary>
-
-### Settings
-
-- Name your application and define: allowed IPs/CIDR, global application Rate Limit, users and more.
-- Export and import application configurations.
-
-### Security
-
-- Create multiple REST API users.
-- Assign authentication methods: JWT, OAuth, SSO or WordPress Application Password.
-- Define allowed HTTP methods per user (GET, POST, PUT, PATCH, DELETE).
-- Add HTTP headers for security, caching, or compression (under development).
-- Enforce per-route and per-method policies:
-    - Restrict access to specific users
-    - Rate-limit routes
-    - Modify HTTP headers
-    - Disable methods
-    - Disable entire routes
-    - Disable routes by post type or taxonomy.
-    - Disable routes by HTTP method.
-- Enable whitelist mode or advanced blacklist mode with:
-    - Country blocking
-    - CIDR blocking
-    - IP/CIDR import & export
-
-### REST API Output
-
-- Selectively disable or filter properties per post type and taxonomy.
-- Resolve, flatten or filter: rendered, attachments, terms, author, date, and meta fields.
-- Rename properties dynamically.
-- Hide _embed and _links properties.
-- Create a custom endpoint for ACF options page data.
-- Remove the WordPress domain from URLs.
-- Remove the uploads directory from attachment URLs.
-- Additionally, replace the REST API response by using our json builder to map properties through JSON objects, similar to Firebase or Supabase *(under development)*
-
-### Webhooks
-- Create multiple secured webhooks.
-- Trigger webhooks on:
-    - WordPress core events
-    - Supported plugin events
-    - Custom plugin events
-    - Custom CRON events
-    - Security and Traffic events
-- Send email notifications for webhook executions.
-
-### Emails
-
-- Create multiple notification email templates.
-
-#### Monitoring *(under development)*
-
-- Monitor and export network and user activity.
-
-</details>
+| Feature | Free | Pro |
+|---|:---:|:---:|
+| REST API route explorer | ✅ | ✅ |
+| Authentication & Rate Limiting | ✅ | ✅ |
+| Properties & Models (sitewide transforms) | ✅ | ✅ |
+| Routes: global method / post-type / taxonomy disable | ✅ | ✅ |
+| WordPress Security Hardening | ✅ | ✅ |
+| Webhook (single, post lifecycle events) | ✅ | ✅ |
+| Hooks & Filters API | ✅ | ✅ |
+| Multiple Applications | — | ✅ |
+| IP Filtering (blacklist) | ✅ | ✅ |
+| IP Filtering whitelist + CIDR + country blocking | — | ✅ |
+| Collections & Sort Order | — | ✅ |
+| Properties & Models (per-property control + custom schemas) | — | ✅ |
+| Settings Route schema editor (ACF options, menus) | — | ✅ |
+| Per-Route Policy (per-route disable, redirect, user restriction) | — | ✅ |
+| Automations | — | ✅ |
+| Multiple Webhooks (unlimited, per application) | — | ✅ |
+| Email Templates | — | ✅ |
+| Request Logs & Audit Trail | — | ✅ |
 
 ## How does it work?
 
-Wordpress Application Layer operates exclusively within REST API read and embedded contexts. Admin loggedin queries are forwarded untouched so it does not interfere with core WordPress or plugin functionality in the admin interface.
+WordPress Application Layer operates exclusively within REST API contexts. Admin-authenticated requests are forwarded untouched, so it never interferes with the WordPress admin or other plugins.
 
-If certain plugins require public REST API access, you can configure bypass rules.
+**REST API request pipeline:**
 
-## Extra Modules
+```
+Incoming REST request
+       │
+       ▼
+┌─────────────────────────┐
+│  Application Matching   │  ← Which application owns this request? (Pro)
+└────────────┬────────────┘
+             │
+┌────────────▼────────────┐
+│  Authentication Check   │  ← JWT / WP App Passwords (OAuth: Pro)
+└────────────┬────────────┘
+             │
+┌────────────▼────────────┐
+│    IP / Rate Limiting   │  ← Per-user or global quotas, GeoIP blocking (Pro)
+└────────────┬────────────┘
+             │
+┌────────────▼────────────┐
+│    Routes Policy        │  ← Allowed methods, route-level rules (Pro)
+└────────────┬────────────┘
+             │
+┌────────────▼────────────┐
+│  WordPress REST API     │  ← Native WP handler
+└────────────┬────────────┘
+             │
+┌────────────▼────────────┐
+│  Property Transforms    │  ← Models: rename, remove, resolve, remap fields
+└────────────┬────────────┘
+             │
+       REST Response
+```
 
-<details>
-<summary>Headless Forms — Endpoints & Entry Management</summary>
+Alongside this pipeline, webhooks and email notifications run independently. Any WordPress event (post transitions, user actions, WooCommerce hooks, custom CRON, REST API hits) can trigger an outbound webhook and/or an email notification — scoped per application in Pro.
 
-### Headless Forms — Endpoints & Entry Management
-
-Create secure endpoints to submit form data using Wordpress Application Layer’ security framework.
-
-The Entries Manager provides full CRUD operations for form submissions and is compatible with WPForms and Contact Form 7 out of the box.
-
-Focused on security and privacy, it includes:
-- Configurable data retention periods
-- Advanced GDPR options
-- AES-256 entry encryption
-- Webhooks and notifications
-
-This module can be installed independently from Wordpress Application Layer.
-</details>
-
-<details>
-<summary>(Planned) WooCommerce Headless Applications</summary>
-
-### (Planned) WooCommerce Headless Applications
-
-A bridge module providing headless access to Woocommerce.
-Its role is to:
-- Validate application
-- Validate auth
-- Resolve cart token
-- Forward to Woo route
-- Filter response
-- Return
-
-#### Supported Features (MVP Scope)
-
-- Products (read-only, via existing routes)
-- Cart operations
-- Checkout
-- Stripe payments
-- PayPal payments
-- Logged-in and guest users
-- Shipping rate retrieval
-
-#### Not Supported
-
-- Complex coupon logic
-- Multi-currency
-- Payment gateways other than Stripe and PayPal
-- Blocks-specific checkout flows
-</details>
 
 ## Requirements
 
@@ -290,9 +152,9 @@ yarn build
 
 Navigate to the **Wordpress Application Layer** admin page, open the `Theme Options` tab, and click **Deploy**.
 
-## Roadmap — Free Features
+## Roadmap
 
-Current; 0.1.0-alpha.17
+Current: 0.1.0-alpha.17
 
 | Version | Milestone |
 |---------|-----------|
