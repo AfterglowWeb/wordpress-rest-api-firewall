@@ -164,6 +164,9 @@ export default function Users() {
 						rate_limit_release: String( row.rate_limit_release_seconds ?? 300 ),
 						rate_limit_blacklist_after: String( row.rate_limit_blacklist_after ?? 0 ),
 						rate_limit_blacklist_window: String( row.rate_limit_blacklist_window ?? 0 ),
+						allowed_ips: JSON.stringify( row.allowed_ips || [] ),
+						allowed_origins: JSON.stringify( row.allowed_origins || [] ),
+						rate_limit_enabled: ( row.rate_limit_enabled !== false ) ? '1' : '0',
 					} ),
 				} );
 			} catch {
@@ -408,6 +411,7 @@ export default function Users() {
 			<UserEditor
 				user={ editingUser }
 				appAllowedAuthMethods={ appAllowedAuthMethods }
+				appSettings={ appEntry?.settings || {} }
 				onBack={ () => {
 					navigate( 'user-rate-limiting', null, true );
 					fetchEntries();

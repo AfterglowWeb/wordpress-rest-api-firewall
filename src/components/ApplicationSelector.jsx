@@ -27,13 +27,19 @@ export default function ApplicationSelector() {
 		applicationsLoading,
 		setSelectedApplicationId,
 	} = useApplication();
-	const { navigateGuarded } = useNavigation();
+	const { navigateGuarded, subKey } = useNavigation();
 	const [ menuAnchor, setMenuAnchor ] = useState( null );
 	const [ snackOpen, setSnackOpen ] = useState( false );
 
 	const handleSelectApp = ( id ) => {
 		setMenuAnchor( null );
-		if ( id !== selectedApplicationId ) {
+		if ( id === selectedApplicationId ) return;
+
+		if ( subKey ) {
+			// In an entry editor — navigate to the new application's entry.
+			// Delay app ID change until after dirty-flag confirmation.
+			navigateGuarded( 'applications', id, () => setSelectedApplicationId( id ) );
+		} else {
 			setSelectedApplicationId( id );
 			setSnackOpen( true );
 		}

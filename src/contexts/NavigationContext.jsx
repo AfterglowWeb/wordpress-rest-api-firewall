@@ -71,7 +71,7 @@ export function NavigationProvider( { children } ) {
 	);
 
 	const navigateGuarded = useCallback(
-		( panel, subKey = null ) => {
+		( panel, subKey = null, onAfterNavigate = null ) => {
 			if ( dirtyFlag.has ) {
 				openDialog( {
 					type: DIALOG_TYPES.CONFIRM,
@@ -87,11 +87,13 @@ export function NavigationProvider( { children } ) {
 					onConfirm: () => {
 						setDirtyFlag( { has: false, message: '' } );
 						navigate( panel, subKey );
+						onAfterNavigate?.();
 					},
 				} );
 				return;
 			}
 			navigate( panel, subKey );
+			onAfterNavigate?.();
 		},
 		[ dirtyFlag, openDialog, navigate, setDirtyFlag, __ ]
 	);

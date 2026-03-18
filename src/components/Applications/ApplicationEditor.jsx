@@ -197,6 +197,7 @@ export default function ApplicationEditor( { application, onBack } ) {
 	const [ rateLimitReleaseSeconds, setRateLimitReleaseSeconds ] = useState( 300 );
 	const [ rateLimitBlacklistAfter, setRateLimitBlacklistAfter ] = useState( 5 );
 	const [ rateLimitBlacklistWindow, setRateLimitBlacklistWindow ] = useState( 3600 );
+	const [ rateLimitEnabled, setRateLimitEnabled ] = useState( true );
 
 	const [ confirmDeleteOpen, setConfirmDeleteOpen ] = useState( false );
 
@@ -250,6 +251,7 @@ export default function ApplicationEditor( { application, onBack } ) {
 				setRateLimitReleaseSeconds( s.rate_limit?.release_seconds ?? 300 );
 				setRateLimitBlacklistAfter( s.rate_limit?.blacklist_after ?? 5 );
 				setRateLimitBlacklistWindow( s.rate_limit?.blacklist_window ?? 3600 );
+				setRateLimitEnabled( s.rate_limit?.enabled !== false );
 			}
 		} catch ( err ) {
 			setLoadError( err.message );
@@ -364,6 +366,7 @@ export default function ApplicationEditor( { application, onBack } ) {
 		allowed_auth_methods: appAllowedAuthMethods,
 		default_http_methods: appDefaultHttpMethods,
 		rate_limit: {
+			enabled: rateLimitEnabled,
 			max_requests: Number( rateLimitRequests ) || 0,
 			window_seconds: Number( rateLimitWindow ) || 0,
 			release_seconds: Number( rateLimitReleaseSeconds ) || 0,
@@ -374,7 +377,7 @@ export default function ApplicationEditor( { application, onBack } ) {
 		serverSettings, description, appAllowedIps, allowedOrigins,
 		appAllowedAuthMethods, appDefaultHttpMethods,
 		rateLimitRequests, rateLimitWindow, rateLimitReleaseSeconds,
-		rateLimitBlacklistAfter, rateLimitBlacklistWindow,
+		rateLimitBlacklistAfter, rateLimitBlacklistWindow, rateLimitEnabled,
 	] );
 
 	const handleSave = () => {
@@ -544,12 +547,23 @@ export default function ApplicationEditor( { application, onBack } ) {
 
 						{ /* Rate Limit */ }
 						<Stack spacing={ 0.75 }>
-						<Typography variant="subtitle1" fontWeight={ 600 }>
-							{ __( 'Rate Limit', 'rest-api-firewall' ) }
-						</Typography>
-						<Typography variant="body2" color="text.secondary">
-							{ __( 'Default request cap for this application. Users can set a stricter limit but cannot exceed this.', 'rest-api-firewall' ) }
-						</Typography>
+						<Stack direction="row" alignItems="flex-start" justifyContent="space-between">
+							<Box>
+								<Typography variant="subtitle1" fontWeight={ 600 }>
+									{ __( 'Rate Limit', 'rest-api-firewall' ) }
+								</Typography>
+								<Typography variant="body2" color="text.secondary">
+									{ __( 'Default request cap for this application. Users can set a stricter limit but cannot exceed this.', 'rest-api-firewall' ) }
+								</Typography>
+							</Box>
+							<Switch
+								size="small"
+								checked={ rateLimitEnabled }
+								onChange={ ( e ) => setRateLimitEnabled( e.target.checked ) }
+							/>
+						</Stack>
+						{ rateLimitEnabled && (
+						<>
 						<Stack direction={ { xs: 'column', sm: 'row' } } spacing={ 2 }>
 								<TextField
 									size="small"
@@ -594,6 +608,8 @@ export default function ApplicationEditor( { application, onBack } ) {
 									sx={ { flex: 1 } }
 								/>
 							</Stack>
+						</>
+						) }
 						</Stack>
 				</Stack>
 

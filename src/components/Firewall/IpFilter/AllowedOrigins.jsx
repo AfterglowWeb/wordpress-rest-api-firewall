@@ -37,6 +37,7 @@ export default function AllowedOrigins( {
 	onChange: onChangeProp, // controlled: called on add/remove
 	onSave: onSaveProp,     // controlled: called when Save is clicked
 	saving: savingProp,     // controlled: external save loading state
+	maxEntries,
 } ) {
 	const { __ } = wp.i18n || {};
     const { adminData } = useAdminData();
@@ -55,6 +56,8 @@ export default function AllowedOrigins( {
     const [ dirty, setDirty ] = useState( false );
     const [ anchorEl, setAnchorEl ] = useState( null );
     const open = Boolean( anchorEl );
+
+    const atLimit = maxEntries !== undefined && allowedOrigins.length >= maxEntries;
 
     // Keep internal state in sync when parent changes controlled value
     useEffect( () => {
@@ -208,13 +211,18 @@ export default function AllowedOrigins( {
                                 variant="outlined"
                                 size="small"
                                 onClick={ handleAddOrigin }
-                                disabled={ ! originInput.trim() || originsSaving }
+                                disabled={ ! originInput.trim() || originsSaving || atLimit }
                                 sx={ { flexShrink: 0, mt: '2px' } }
                                 startIcon={ <AddIcon /> }
                             >
                                 { __( 'Add', 'rest-api-firewall' ) }
                             </Button>
                         </Stack>
+                        { atLimit && maxEntries !== undefined && (
+                            <Typography variant="caption" color="warning.main">
+                                { `Max ${ maxEntries } origin${ maxEntries === 1 ? '' : 's' } allowed on free tier` }
+                            </Typography>
+                        ) }
                         { allowedOrigins.length > 0 && (
                             <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 1 } }>
                                 { allowedOrigins.map( ( origin ) => (
