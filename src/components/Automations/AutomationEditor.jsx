@@ -471,7 +471,7 @@ export default function AutomationEditor( { automation, onBack } ) {
 				saving={ saving }
 				enabled={ isNew ? null : enabled }
 				setEnabled={ isNew ? null : setEnabled }
-				breadcrumb={ [ __( 'Automations', 'rest-api-firewall' ), __( 'Automation', 'rest-api-firewall' ) ] }
+				breadcrumb={ [ __( 'Automation', 'rest-api-firewall' ) ] }
 				docPage="automations"
 			/>
 

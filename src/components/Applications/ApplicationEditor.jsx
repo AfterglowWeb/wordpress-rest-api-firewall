@@ -437,7 +437,7 @@ export default function ApplicationEditor( { application, onBack } ) {
 				saving={ saving }
 				enabled={ enabled }
 				setEnabled={ setEnabled }
-				breadcrumb={ [ __( 'Applications', 'rest-api-firewall' ), __( 'Application', 'rest-api-firewall' ) ] }
+				breadcrumb={ [ __( 'Application', 'rest-api-firewall' ) ] }
 				docPage="applications"
 			/>
 
@@ -478,7 +478,7 @@ export default function ApplicationEditor( { application, onBack } ) {
 							{ __( 'Allowed IPs', 'rest-api-firewall' ) }
 						</Typography>
 						<Typography variant="body2" color="text.secondary">
-							{ __( 'In whitelist mode, only these IPs can access this application. Users can restrict their own IP further but cannot extend beyond this list.', 'rest-api-firewall' ) }
+							{ __( 'In whitelist mode, only these IPs can access this application. Users can be restricted further beyond this list.', 'rest-api-firewall' ) }
 						</Typography>
 						<AllowedIps
 							value={ appAllowedIps }

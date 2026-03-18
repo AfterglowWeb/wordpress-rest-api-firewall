@@ -222,16 +222,16 @@ export default function IpFilter() {
 					iconPosition="start"
 					label={ settings.mode === 'blacklist' ? __( 'Block IPs', 'rest-api-firewall' ) : __('Allow IPs', 'rest-api-firewall') }
 				/>
-				<Tab
+				{ settings.mode === 'blacklist' && (<Tab
 					icon={ <PublicIcon /> }
 					iconPosition="start"
-					label={ settings.mode === 'blacklist' ? __( 'Block Country', 'rest-api-firewall' ) : __( 'Allow Country', 'rest-api-firewall' ) }
-				/>
+					label={ __( 'Block Country', 'rest-api-firewall' ) }
+				/>) }
 			</Tabs>
 
 			{ currentTab === 0 && <IpDataGrid listType={ activeListKey } /> }
 
-			{ currentTab === 1 && (
+			{ settings.mode === 'blacklist' && currentTab === 1 && (
 				<CountryBlockList listType={ activeListKey } />
 			) }
 		</Stack>

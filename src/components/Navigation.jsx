@@ -145,7 +145,7 @@ export default function Navigation( {
 		{
 			key: 'applications',
 			label: __( 'Applications', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'Pro',
+			breadcrumbPrefix: '',
 			icon: AppsOutlinedIcon,
 			disabled: ! hasValidLicense,
 			hidden: true,
@@ -159,7 +159,9 @@ export default function Navigation( {
 		},
 		{
 			key: 'user-rate-limiting',
-			label: __( 'Auth. & Rate Limit', 'rest-api-firewall' ),
+			label: hasValidLicense
+				? __( 'Users', 'rest-api-firewall' )
+				: __( 'Auth. & Rate Limit', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'REST API Firewall',
 			icon: SecurityOutlined,
 		},
@@ -479,48 +481,12 @@ export default function Navigation( {
 						) }
 
 
-
-						
 						<Stack direction="row" alignItems="center" gap={ 2 }>
 
-							<Stack>
-								{ activeMenuItem?.breadcrumbPrefix && (
-									<Typography
-										variant="caption"
-										color="text.secondary"
-										sx={ {
-											display: 'block',
-											textTransform: 'uppercase',
-											letterSpacing: 0.5,
-										} }
-									>
-										{ activeMenuItem.breadcrumbPrefix }
-									</Typography>
-								) }
-								<Typography
-									variant="h6"
-									fontWeight={ 600 }
-									color="text.primary"
-									sx={ { lineHeight: 1.2 } }
-								>
-									{ activeMenuItem?.label || '' }
-									{ activeMenuItem?.secondary && (
-										<Typography
-											variant="caption"
-											color="text.secondary"
-											sx={ { ml: 1 } }
-										>
-											{ activeMenuItem.secondary }
-										</Typography>
-									) }
-								</Typography>
-							</Stack>
-
-							<Divider variant="middle" flexItem orientation="vertical" />
-
-						{ hasValidLicense && moduleKey[ panel ] !== undefined && (
-							<FormControlLabel
-							control={
+							{ hasValidLicense && moduleKey[ panel ] !== undefined && (
+							<Stack direction="row" alignItems="center" gap={ 2 }>
+								<FormControlLabel
+								control={
 								<Switch
 									size="small"
 									checked={ !! getModuleEnabled( panel ) }
@@ -532,7 +498,33 @@ export default function Navigation( {
 									'.MuiFormControlLabel-label': { color: 'text.primary' } }}
 								label={ 'Enable' }
 								/>
+							</Stack>
 							) }
+
+							<Stack minWidth={150}>
+								{ selectedApplication && (
+									<Typography
+										variant="caption"
+										color="text.secondary"
+										sx={ {
+											display: 'block',
+											textTransform: 'uppercase',
+											letterSpacing: 0.5,
+										} }
+									>
+										{ selectedApplication.title }
+									</Typography>
+								) }
+								<Typography
+									variant="h6"
+									fontWeight={ 600 }
+									color="text.primary"
+									sx={ { lineHeight: 1.2 } }
+								>
+									{ activeMenuItem?.label || '' }
+								</Typography>
+							</Stack>
+
 							
 						</Stack>
 
