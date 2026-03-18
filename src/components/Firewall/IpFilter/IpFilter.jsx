@@ -109,7 +109,7 @@ export default function IpFilter( { scope = 'app' } ) {
 					iconPosition="start"
 					label={ __( 'Block IPs', 'rest-api-firewall' ) }
 				/>
-				<Tab
+				{ settings.mode === 'blacklist' && (<Tab
 					icon={ <PublicIcon /> }
 					iconPosition="start"
 					label={ __( 'Block Country', 'rest-api-firewall' ) }
