@@ -32,7 +32,7 @@ Incoming REST request
 └────────────┬────────────┘
              │
 ┌────────────▼────────────┐
-│  Authentication Check   │  ← JWT / WP App Passwords (OAuth: Pro)
+│  Authentication Check   │  ← JWT / WP App Passwords
 └────────────┬────────────┘
              │
 ┌────────────▼────────────┐
@@ -105,7 +105,7 @@ External Service (Stripe, GitHub, CRM, IoT, …)
 
 | Feature | Description |
 |---|---|
-| **Authentication** | WordPress Application Password (hardened to a single authorised user) and JWT. OAuth requires Pro |
+| **Authentication** | WordPress Application Password (hardened to a single authorised user) and JWT |
 | **Rate Limiting** | Global request quotas with configurable time windows |
 | **Global IP Filtering** | Shared blocklist that runs before application resolution. Manual IPv4 blacklisting. Auto-blacklist from rate limit violations. Read-only GeoIP stats. CIDR ranges and country blocking require Pro |
 | **Routes** | Enforce auth and rate limiting globally. Disable the default `/users` routes to prevent user enumeration |

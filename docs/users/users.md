@@ -47,7 +47,7 @@ Each entry links a WordPress user to an optional rate limit quota. When the modu
 
 When the Auth &amp; Rate Limiting module is active for an application, the following defaults apply to every user in that application:
 
-- **Allowed auth methods** — accepted authentication mechanisms (WordPress Application Password, JWT, OAuth). Requests using a non-listed method are rejected with `403`.
+- **Allowed auth methods** — accepted authentication mechanisms (WordPress Application Password, JWT). Requests using a non-listed method are rejected with `403`.
 - **Allowed HTTP methods** — permitted verbs across all routes for this application (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`).
 - **Allowed IPs** — optional IP allowlist. Requests from unlisted IPs are rejected.
 - **Allowed origins** — optional origin allowlist. Requests from unlisted origins are rejected.
