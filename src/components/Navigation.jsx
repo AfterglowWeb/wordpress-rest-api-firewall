@@ -77,23 +77,29 @@ export default function Navigation( {
 	const [ mobileOpen, setMobileOpen ] = useState( false );
 
 	const moduleKey = {
-		'user-rate-limiting': { module: 'users',          optionKey: 'user_rate_limit_enabled',           label: __( 'Active', 'rest-api-firewall' ) },
-		'per-route-settings': { module: 'routes_policy',  optionKey: 'firewall_routes_policy_enabled',    label: __( 'Active', 'rest-api-firewall' ) },
-		'ip-filtering':       { module: 'ip_filter',      optionKey: null,                                label: __( 'Active', 'rest-api-firewall' ) },
-		'collections':        { module: 'collections',    optionKey: 'rest_collections_enabled',          label: __( 'Active', 'rest-api-firewall' ) },
-		'models-properties':  { module: 'models',         optionKey: 'rest_models_enabled',               label: __( 'Active', 'rest-api-firewall' ) },
-		'settings-route':     { module: 'settings_route', optionKey: 'rest_settings_route_enabled',       label: __( 'Active', 'rest-api-firewall' ) },
-		'webhook':            { module: 'webhooks',       optionKey: 'webhooks_enabled',                  label: __( 'Active', 'rest-api-firewall' ) },
-		'emails':             { module: 'mails',          optionKey: 'mails_enabled',                     label: __( 'Active', 'rest-api-firewall' ) },
-		'automations':        { module: 'automations',    optionKey: 'automations_enabled',               label: __( 'Active', 'rest-api-firewall' ) },
+		'user-rate-limiting':  { module: 'users',           optionKey: 'user_rate_limit_enabled',           label: __( 'Active', 'rest-api-firewall' ) },
+		'per-route-settings':  { module: 'routes_policy',   optionKey: 'firewall_routes_policy_enabled',    label: __( 'Active', 'rest-api-firewall' ) },
+		'ip-filtering':        { module: 'ip_filter',       optionKey: null,                                label: __( 'Active', 'rest-api-firewall' ) },
+		'global-ip-filtering': { module: 'global_ip_filter', optionKey: null,                               label: __( 'Active', 'rest-api-firewall' ) },
+		'collections':         { module: 'collections',     optionKey: 'rest_collections_enabled',          label: __( 'Active', 'rest-api-firewall' ) },
+		'models-properties':   { module: 'models',          optionKey: 'rest_models_enabled',               label: __( 'Active', 'rest-api-firewall' ) },
+		'settings-route':      { module: 'settings_route',  optionKey: 'rest_settings_route_enabled',       label: __( 'Active', 'rest-api-firewall' ) },
+		'webhook':             { module: 'webhooks',         optionKey: 'webhooks_enabled',                  label: __( 'Active', 'rest-api-firewall' ) },
+		'emails':              { module: 'mails',            optionKey: 'mails_enabled',                     label: __( 'Active', 'rest-api-firewall' ) },
+		'automations':         { module: 'automations',      optionKey: 'automations_enabled',               label: __( 'Active', 'rest-api-firewall' ) },
 	};
 
 	const [ ipFilterEnabled, setIpFilterEnabled ] = useState(
 		() => !! adminData?.ip_filter_enabled
 	);
 
+	const [ globalIpFilterEnabled, setGlobalIpFilterEnabled ] = useState(
+		() => !! adminData?.global_ip_filter_enabled
+	);
+
 	const getModuleEnabled = ( pg ) => {
 		if ( pg === 'ip-filtering' ) return ipFilterEnabled;
+		if ( pg === 'global-ip-filtering' ) return globalIpFilterEnabled;
 		const key = moduleKey[ pg ]?.optionKey;
 		return key ? !! adminData?.admin_options?.[ key ] : null;
 	};
@@ -126,6 +132,8 @@ export default function Navigation( {
 					onSuccess: () => {
 						if ( pg === 'ip-filtering' ) {
 							setIpFilterEnabled( checked );
+						} else if ( pg === 'global-ip-filtering' ) {
+							setGlobalIpFilterEnabled( checked );
 						} else {
 							updateAdminData( {
 								admin_options: {
@@ -238,6 +246,12 @@ export default function Navigation( {
 		},
 
 		{ type: 'section', label: __( '', 'rest-api-firewall' ) },
+		{
+			key: 'global-ip-filtering',
+			label: __( 'Global IP Filtering', 'rest-api-firewall' ),
+			breadcrumbPrefix: 'Modules',
+			icon: VpnLockOutlinedIcon,
+		},
 		{
 			key: 'global_security',
 			label: __( 'Global Security', 'rest-api-firewall' ),

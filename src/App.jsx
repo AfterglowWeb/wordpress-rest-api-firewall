@@ -263,6 +263,8 @@ function AppContent() {
 
 { panel === 'ip-filtering' && <IpFilter /> }
 
+{ panel === 'global-ip-filtering' && <IpFilter scope="global" /> }
+
 							{ panel === 'collections' && (
 						<Collections
 							form={ form }

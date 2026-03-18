@@ -8,6 +8,7 @@ use cmk\RestApiFirewall\Core\CoreOptionsService;
 use cmk\RestApiFirewall\Admin\AdminPage;
 use cmk\RestApiFirewall\Admin\Documentation;
 use cmk\RestApiFirewall\Routes\Routes;
+use cmk\RestApiFirewall\Firewall\GlobalIpBlackList;
 use cmk\RestApiFirewall\Firewall\IpBlackList;
 use cmk\RestApiFirewall\Firewall\IpFilter\IpSchema;
 use cmk\RestApiFirewall\GlobalSecurity\DisableBase;
@@ -38,6 +39,7 @@ final class Bootstrap {
 		IpSchema::install();
 		CoreOptions::get_instance();
 		IpBlackList::get_instance();
+		GlobalIpBlackList::get_instance();
 		Routes::register();
 		PolicyRepository::get_instance();
 		WebhookService::get_instance();

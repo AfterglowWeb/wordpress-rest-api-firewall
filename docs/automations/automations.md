@@ -32,6 +32,18 @@ Select one or more events that trigger this automation. Available event categori
 - **WooCommerce** — order, product, customer, and other WooCommerce lifecycle events (requires WooCommerce).
 - **Application Layer** — internal plugin events (user access, rate limit exceeded, application changes, etc.).
 - **Custom Hooks** — declare any WordPress action or filter hook by name. Configure the number of arguments the hook passes, name each argument, and choose which ones are forwarded to the action payload.
+- **Incoming Webhook** — trigger this automation when an external service calls the application's [incoming webhook endpoint](/webhooks/webhooks#incoming-webhooks). The verified JSON payload from the external request is forwarded as automation arguments and is available in conditions and actions.
+
+#### Incoming Webhook Event
+
+When an automation uses **Incoming Webhook** as its event, it is connected to a specific [incoming webhook entry](/webhooks/webhooks#incoming-webhooks) configured in the Webhooks panel. The incoming webhook entry provides the endpoint URL and HMAC key used to verify the external request.
+
+Once the signature is verified, the automation fires with the **parsed JSON body** of the external request available as named arguments. You can:
+
+- Reference any top-level field from the incoming payload in **Conditions** (e.g. `event`, `amount`, `status`).
+- Forward payload fields to outbound webhooks or email templates via **Actions**.
+
+This makes it straightforward to react to external events — a payment confirmation from Stripe, a build notification from GitHub, a status update from a third-party API — and chain them with any combination of WordPress actions.
 
 ### Scheduled Trigger
 
@@ -56,6 +68,10 @@ Actions execute in order when the trigger fires (and conditions pass). Each acti
 ---
 
 ## FAQ
+
+**How do I trigger an automation from an external service?**
+
+Create an [incoming webhook entry](/webhooks/webhooks#incoming-webhooks) in the Webhooks panel, copy its endpoint URL, and point your external service at it. Connect the incoming webhook entry to this automation using the **Automation** field in the webhook editor. When a valid signed request arrives, this automation fires with the request payload available as arguments.
 
 **Can an automation trigger another automation?**
 

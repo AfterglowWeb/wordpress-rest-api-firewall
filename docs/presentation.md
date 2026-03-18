@@ -23,6 +23,11 @@ Incoming REST request
        │
        ▼
 ┌─────────────────────────┐
+│  Global IP Filtering    │  ← Shared blocklist: IPs, CIDRs, countries (free + Pro)
+└────────────┬────────────┘
+             │  blocked → 403
+             ▼
+┌─────────────────────────┐
 │  Application Matching   │  ← Which application owns this request? (Pro)
 └────────────┬────────────┘
              │
@@ -31,7 +36,7 @@ Incoming REST request
 └────────────┬────────────┘
              │
 ┌────────────▼────────────┐
-│    IP / Rate Limiting   │  ← Per-user or global quotas, GeoIP blocking (Pro)
+│  IP / Rate Limiting     │  ← Per-app IP blocks, per-user quotas, GeoIP (Pro)
 └────────────┬────────────┘
              │
 ┌────────────▼────────────┐
@@ -40,7 +45,7 @@ Incoming REST request
              │
 ┌────────────▼────────────┐
 │  WordPress REST API     │  ← Native WP handler
-└────────────┬────────────┘
+└────────────┘────────────┘
              │
 ┌────────────▼────────────┐
 │  Property Transforms    │  ← Models: rename, remove, resolve, remap fields
@@ -77,7 +82,7 @@ WordPress Event (post publish, order created, cron, …)
 |---|---|
 | **Authentication** | WordPress Application Password (hardened to a single authorised user) and JWT. OAuth requires Pro |
 | **Rate Limiting** | Global request quotas with configurable time windows |
-| **IP Filtering** | Automatic and manual IP blacklisting. The plugin detects repeated violations and adds offenders automatically. IPv4 only — no CIDR, no country blocking. Read-only GeoIP stats available |
+| **Global IP Filtering** | Shared blocklist that runs before application resolution. Manual IPv4 blacklisting. Auto-blacklist from rate limit violations. Read-only GeoIP stats. CIDR ranges and country blocking require Pro |
 | **Routes** | Enforce auth and rate limiting globally. Disable the default `/users` routes to prevent user enumeration |
 | **Properties & Models** | Apply sitewide response transforms: resolve attachments, terms & authors, flatten rendered fields, remove domain from URLs. Rules apply globally across all routes — individual property control (disable, rename, remap) requires Pro |
 | **WordPress Security** | Disable XML-RPC, comments, RSS. Secure files, security headers |
@@ -89,12 +94,13 @@ WordPress Event (post publish, order created, cron, …)
 | Feature | Description |
 |---|---|
 | **Applications** | Isolate all settings per client — auth, routes, data, webhooks |
-| **IP Filtering** | Both whitelist and blacklist modes. Whitelist mode restricts access to allowed origins only. Blacklist mode with configurable retention time. CIDR range support. Block or allow by country (GeoIP) |
+| **Global IP Filtering (Pro additions)** | CIDR range support, country blocking via GeoIP, and configurable retention time on top of the free blocklist |
+| **Per-App IP Filtering** | Application-scoped blocking layered on top of the global check (Pro only — requires Applications) |
 | **Collections** | Enforce per-page limits and drag-and-drop sort order |
 | **Routes Policy** | Per-route method control, user assignment, rate limiting and redirections. Safely disable any route with fine-grained per-application rules (avoids breaking unrelated plugin requests) |
 | **Properties & Models** | Disable, rename or remap any individual property. Remove empty properties to lighten responses. Build fully custom JSON schemas from scratch — map existing fields and add new static ones |
 | **Automations** | Event-driven workflows with conditions and chained actions |
-| **Multiple Webhooks** | Unlimited outbound webhooks, scoped per application |
+| **Multiple Webhooks** | Unlimited outbound webhooks, scoped per application. Incoming webhooks let external services trigger automations via a signed endpoint |
 | **Email Templates** | Transactional email templates with SMTP configuration, scoped per application |
 | **Settings Route** | Schema editor for `/wp/v2/settings` — include ACF options pages and resolved WordPress menus, shaped with per-property control or custom schema |
 | **Logs** | Full request history and audit trail |

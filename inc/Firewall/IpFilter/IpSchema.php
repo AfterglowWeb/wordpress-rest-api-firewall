@@ -6,7 +6,7 @@ use wpdb;
 
 class IpSchema {
 
-	const SCHEMA_VERSION = '1.0.0';
+	const SCHEMA_VERSION = '1.1.0';
 	const OPTION_KEY     = 'rest_api_firewall_ip_schema_version';
 
 	public static function install(): void {
@@ -18,8 +18,15 @@ class IpSchema {
 
 		if ( version_compare( $current, self::SCHEMA_VERSION, '<' ) ) {
 			self::create_tables( $wpdb );
+			self::maybe_alter_list_type_enum( $wpdb );
 			update_option( self::OPTION_KEY, self::SCHEMA_VERSION, false );
 		}
+	}
+
+	private static function maybe_alter_list_type_enum( wpdb $wpdb ): void {
+		$table = $wpdb->prefix . 'rest_api_firewall_ip_entries';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->query( "ALTER TABLE {$table} MODIFY list_type ENUM('whitelist','blacklist','global_blacklist') NOT NULL DEFAULT 'blacklist'" );
 	}
 
 	private static function create_tables( wpdb $wpdb ): void {
@@ -29,7 +36,7 @@ class IpSchema {
 		$sql = "CREATE TABLE {$table} (
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			ip VARCHAR(45) NOT NULL,
-			list_type ENUM('whitelist','blacklist') NOT NULL DEFAULT 'blacklist',
+			list_type ENUM('whitelist','blacklist','global_blacklist') NOT NULL DEFAULT 'blacklist',
 			entry_type ENUM('manual','rate_limit') NOT NULL DEFAULT 'manual',
 			agent VARCHAR(255) NULL,
 			country_code CHAR(2) NULL,
