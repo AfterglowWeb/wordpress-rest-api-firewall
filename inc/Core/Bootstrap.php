@@ -21,6 +21,7 @@ use cmk\RestApiFirewall\Policy\PolicyRepository;
 use cmk\RestApiFirewall\Policy\TestPolicy;
 use cmk\RestApiFirewall\Webhook\WebhookService;
 use cmk\RestApiFirewall\Webhook\WebhookAutoTrigger;
+use cmk\RestApiFirewall\Webhook\InboundWebhookReceiver;
 
 final class Bootstrap {
 
@@ -44,6 +45,7 @@ final class Bootstrap {
 		PolicyRepository::get_instance();
 		WebhookService::get_instance();
 		WebhookAutoTrigger::get_instance();
+		InboundWebhookReceiver::get_instance();
 
 		DisableBase::get_instance();
 		DisableRss::get_instance();

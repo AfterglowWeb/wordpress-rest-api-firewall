@@ -64,6 +64,7 @@ export default function Navigation( {
 	showSaveButton,
 	onSave,
 	saving,
+	formDirty,
 } ) {
 	const { hasValidLicense } = useLicense();
 	const { adminData, updateAdminData } = useAdminData();
@@ -388,18 +389,23 @@ export default function Navigation( {
 							>
 								<span>
 									<ListItemButton
+										selected={ panel === item.key }
 										sx={ {
 											px: 3,
-											backgroundColor: !! item.disabled
-												? 'grey.100'
-												: '',
+											backgroundColor: !! item.disabled ? 'grey.100' : '',
+											'&.Mui-selected': {
+												bgcolor: 'primary.main',
+												color: 'primary.contrastText',
+												'& .MuiListItemIcon-root': { color: 'primary.contrastText' },
+												'&:hover': { bgcolor: 'primary.dark' },
+											},
 										} }
-										disabled={ !! item.disabled }
+										disabled={ panel === item.key || !! item.disabled }
 										onClick={ () => {
 											if ( item.action ) {
 												item.action();
 											} else {
-													navigateGuarded( item.key );
+												navigateGuarded( item.key );
 											}
 											setMobileOpen( false );
 										} }
@@ -557,7 +563,7 @@ export default function Navigation( {
 										disableElevation
 										size="small"
 										onClick={ onSave }
-										disabled={ saving }
+										disabled={ saving || ! formDirty }
 									>
 										{ __( 'Save', 'rest-api-firewall' ) }
 									</Button>

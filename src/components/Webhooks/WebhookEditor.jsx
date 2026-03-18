@@ -12,6 +12,7 @@ import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
 import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
@@ -20,7 +21,9 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
 import AddIcon from '@mui/icons-material/Add';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import WebhookIcon from '@mui/icons-material/Webhook';
 
 import WebhookEditorSecretManager from './WebhookEditorSecretManager';
 import LoadingMessage from '../LoadingMessage';
@@ -33,6 +36,7 @@ const WEBHOOK_TYPES = [
 	{ value: 'automation', label: 'Automation' },
 	{ value: 'data_sync', label: 'Data Sync' },
 	{ value: 'alert', label: 'Alert' },
+	{ value: 'inbound', label: 'Incoming Webhook' },
 ];
 
 const normalizeHeaders = ( raw ) =>
@@ -178,10 +182,28 @@ export default function WebhookEditor( { webhook, onBack } ) {
 		webhook.body_payload || ''
 	);
 	const [ type, setType ] = useState( webhook.type || 'general' );
+	const [ linkedAutomationId, setLinkedAutomationId ] = useState( webhook.linked_automation_id || '' );
+	const [ endpointUrl, setEndpointUrl ] = useState( webhook.endpoint_url || '' );
+	const [ automations, setAutomations ] = useState( [] );
 	const [ dateCreated, setDateCreated ] = useState( '' );
 	const [ dateModified, setDateModified ] = useState( '' );
 	const [ hasSecret, setHasSecret ] = useState( false );
 	const [ pendingSecret, setPendingSecret ] = useState( undefined );
+	const [ copied, setCopied ] = useState( false );
+
+	const isInbound = type === 'inbound';
+
+	// Fetch automations list for the inbound automation selector.
+	useEffect( () => {
+		const appId = selectedApplicationId || webhook.application_id || '';
+		fetch( adminData.ajaxurl, {
+			method: 'POST',
+			body: new URLSearchParams( { action: 'get_automation_entries', nonce, application_id: appId } ),
+		} )
+			.then( ( r ) => r.json() )
+			.then( ( j ) => { if ( j.success ) setAutomations( j.data.entries || [] ); } )
+			.catch( () => {} );
+	}, [ adminData.ajaxurl, nonce, selectedApplicationId, webhook.application_id ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const loadEntry = useCallback( async () => {
 		setLoading( true );
@@ -211,6 +233,8 @@ export default function WebhookEditor( { webhook, onBack } ) {
 				setRetryCount( e.retry_count ?? 0 );
 				setBodyPayload( e.body_payload || '' );
 				setType( e.type || 'general' );
+				setLinkedAutomationId( e.linked_automation_id || '' );
+				setEndpointUrl( e.endpoint_url || '' );
 				setHasSecret( e.has_secret || false );
 				setDateCreated(
 					formatDate(
@@ -259,6 +283,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 		body_payload: bodyPayload,
 		application_id: selectedApplicationId || webhook.application_id || '',
 		type,
+		linked_automation_id: linkedAutomationId || '',
 		...( pendingSecret !== undefined
 			? { secret: pendingSecret ?? '' }
 			: {} ),
@@ -354,206 +379,221 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 			{ loadError && <Alert severity="error">{ loadError }</Alert> }
 
-			<Stack
-				p={ { xs: 2, sm: 4 } }
-				spacing={ 3 }
-				sx={ { maxWidth: 760 } }
-			>
+			<Stack p={ { xs: 2, sm: 4 } } spacing={ 3 } sx={ { maxWidth: 760 } }>
 
+				{ /* Identity — always shown */ }
 				<Stack spacing={ 2 }>
 					<SectionHeader
-						title={ __( 'Webhook', 'rest-api-firewall' ) }
-						description={ __(
-							'Configure the outgoing webhook endpoint.',
-							'rest-api-firewall'
-						) }
+						title={ isInbound ? __( 'Incoming Webhook', 'rest-api-firewall' ) : __( 'Webhook', 'rest-api-firewall' ) }
+						description={ isInbound
+							? __( 'Receive signed HTTP requests from external services and trigger an automation.', 'rest-api-firewall' )
+							: __( 'Configure the outgoing webhook endpoint.', 'rest-api-firewall' )
+						}
 					/>
-
 					<TextField
 						label={ __( 'Title', 'rest-api-firewall' ) }
 						size="small"
 						value={ title }
 						onChange={ ( e ) => setTitle( e.target.value ) }
 						required
-						sx={ { 
-							maxWidth: 340,
-						}}
+						sx={ { maxWidth: 340 } }
 					/>
-
-					<Stack
-						direction={ { xs: 'column', sm: 'row' } }
-						spacing={ 2 }
-					>
-						<TextField
-							label={ __( 'Endpoint URL', 'rest-api-firewall' ) }
-							size="small"
-							value={ endpoint }
-							onChange={ ( e ) => setEndpoint( e.target.value ) }
-							placeholder="https://api.example.com/webhook"
-							sx={ { 
-								flex: 1
-							}}
-							helperText={ __(
-								'The URL to send the webhook request to.',
-								'rest-api-firewall'
-							) }
-						/>
-
-						<FormControl size="small" sx={ { minWidth: 120 } }>
-							<InputLabel>
-								{ __( 'Method', 'rest-api-firewall' ) }
-							</InputLabel>
-							<Select
-								value={ method }
-								onChange={ ( e ) =>
-									setMethod( e.target.value )
-								}
-								label={ __( 'Method', 'rest-api-firewall' ) }
-							>
-								{ HTTP_METHODS.map( ( m ) => (
-									<MenuItem key={ m } value={ m }>
-										{ m }
-									</MenuItem>
-								) ) }
-							</Select>
-						</FormControl>
-					</Stack>
-
 					<FormControl size="small" sx={ { maxWidth: 220 } }>
-						<InputLabel>
-							{ __( 'Type', 'rest-api-firewall' ) }
-						</InputLabel>
+						<InputLabel>{ __( 'Direction', 'rest-api-firewall' ) }</InputLabel>
 						<Select
 							value={ type }
 							onChange={ ( e ) => setType( e.target.value ) }
-							label={ __( 'Type', 'rest-api-firewall' ) }
+							label={ __( 'Direction', 'rest-api-firewall' ) }
 						>
 							{ WEBHOOK_TYPES.map( ( t ) => (
-								<MenuItem key={ t.value } value={ t.value }>
-									{ t.label }
-								</MenuItem>
+								<MenuItem key={ t.value } value={ t.value }>{ t.label }</MenuItem>
 							) ) }
 						</Select>
 					</FormControl>
 				</Stack>
 
 				<Divider />
-				
-				<Stack spacing={ 2 }>
-					<SectionHeader
-						title={ __(
-							'Authentication',
-							'rest-api-firewall'
-						) }
-						description={ __(
-							'Configure a secret to sign outgoing webhook requests using HMAC-SHA256.',
-							'rest-api-firewall'
-						) }
-					/>
-					<WebhookEditorSecretManager
-						initialHasSecret={ hasSecret }
-						onChange={ setPendingSecret }
-					/>
-				</Stack>
 
-				<Divider />
-
-				<Stack spacing={ 2 }>
-					<SectionHeader
-						title={ __( 'Headers', 'rest-api-firewall' ) }
-						description={ __(
-							'Optional custom HTTP headers to include with every request.',
-							'rest-api-firewall'
-						) }
-					/>
-					<HeadersEditor
-						headers={ headers }
-						onChange={ setHeaders }
-					/>
-				</Stack>
-
-				<Divider />
-
-				<Stack spacing={ 2 }>
-					<SectionHeader
-						title={ __( 'Body Payload', 'rest-api-firewall' ) }
-						description={ __(
-							'Optional JSON body template sent with the request. Leave empty to use the default event payload.',
-							'rest-api-firewall'
-						) }
-					/>
-					<TextField
-						label={ __( 'Body', 'rest-api-firewall' ) }
-						size="small"
-						multiline
-						rows={ 6 }
-						value={ bodyPayload }
-						onChange={ ( e ) => setBodyPayload( e.target.value ) }
-						placeholder={
-							'{\n  "event": "{{event_type}}",\n  "data": {{payload}}\n}'
-						}
-						helperText={ __(
-							'Use {{placeholders}} for dynamic values.',
-							'rest-api-firewall'
-						) }
-						inputProps={ {
-							sx: {
-								fontFamily: 'monospace',
-								fontSize: '0.85rem',
-							},
-						} }
-					/>
-				</Stack>
-
-				<Divider />
-
-				<Stack spacing={ 2 }>
-					<SectionHeader
-						title={ __( 'Advanced', 'rest-api-firewall' ) }
-						description={ __(
-							'Timeout and retry behaviour for failed requests.',
-							'rest-api-firewall'
-						) }
-					/>
-					<Stack
-						direction={ { xs: 'column', sm: 'row' } }
-						spacing={ 2 }
-					>
-						<TextField
-							label={ __(
-								'Timeout (seconds)',
-								'rest-api-firewall'
+				{ isInbound ? (
+					<>
+						{ /* Inbound — Endpoint URL (read-only) */ }
+						<Stack spacing={ 2 }>
+							<SectionHeader
+								title={ __( 'Endpoint URL', 'rest-api-firewall' ) }
+								description={ __( 'Share this URL with the external service. It is unique to this entry and generated automatically.', 'rest-api-firewall' ) }
+							/>
+							{ endpointUrl ? (
+								<TextField
+									size="small"
+									value={ endpointUrl }
+									InputProps={ {
+										readOnly: true,
+										sx: { fontFamily: 'monospace', fontSize: '0.85rem' },
+										endAdornment: (
+											<InputAdornment position="end">
+												<IconButton size="small" onClick={ () => { navigator.clipboard.writeText( endpointUrl ); setCopied( true ); setTimeout( () => setCopied( false ), 2000 ); } }>
+													<ContentCopyIcon fontSize="small" />
+												</IconButton>
+											</InputAdornment>
+										),
+									} }
+									helperText={ copied ? __( 'Copied!', 'rest-api-firewall' ) : __( 'Copy and configure this URL as the webhook destination in your external service.', 'rest-api-firewall' ) }
+								/>
+							) : (
+								<Alert severity="info" icon={ <WebhookIcon /> }>
+									{ __( 'Save this webhook to generate an endpoint URL.', 'rest-api-firewall' ) }
+								</Alert>
 							) }
-							type="number"
-							size="small"
-							value={ timeoutSeconds }
-							onChange={ ( e ) =>
-								setTimeoutSeconds( e.target.value )
-							}
-							sx={ { maxWidth: 180 } }
-							helperText={ __(
-								'Request timeout',
-								'rest-api-firewall'
-							) }
-						/>
-						<TextField
-							label={ __( 'Retry Count', 'rest-api-firewall' ) }
-							type="number"
-							size="small"
-							value={ retryCount }
-							onChange={ ( e ) =>
-								setRetryCount( e.target.value )
-							}
-							sx={ { maxWidth: 160 } }
-							helperText={ __(
-								'Retries on failure',
-								'rest-api-firewall'
-							) }
-						/>
-					</Stack>
-				</Stack>
+						</Stack>
 
-				
+						<Divider />
+
+						{ /* Inbound — Automation selector */ }
+						<Stack spacing={ 2 }>
+							<SectionHeader
+								title={ __( 'Linked Automation', 'rest-api-firewall' ) }
+								description={ __( 'The automation to trigger when a valid request is received. The automation must use the "Incoming webhook received" event.', 'rest-api-firewall' ) }
+							/>
+							<FormControl size="small" sx={ { maxWidth: 400 } }>
+								<InputLabel>{ __( 'Automation', 'rest-api-firewall' ) }</InputLabel>
+								<Select
+									value={ linkedAutomationId }
+									onChange={ ( e ) => setLinkedAutomationId( e.target.value ) }
+									label={ __( 'Automation', 'rest-api-firewall' ) }
+								>
+									<MenuItem value=""><em>{ __( 'None', 'rest-api-firewall' ) }</em></MenuItem>
+									{ automations.map( ( a ) => (
+										<MenuItem key={ a.id } value={ a.id }>{ a.title || a.id }</MenuItem>
+									) ) }
+								</Select>
+							</FormControl>
+						</Stack>
+
+						<Divider />
+
+						{ /* Inbound — HMAC verification key */ }
+						<Stack spacing={ 2 }>
+							<SectionHeader
+								title={ __( 'Signing Secret', 'rest-api-firewall' ) }
+								description={ __( 'The secret used to verify the HMAC-SHA256 signature on incoming requests. Configure your external service to sign requests with this key.', 'rest-api-firewall' ) }
+							/>
+							<WebhookEditorSecretManager
+								initialHasSecret={ hasSecret }
+								onChange={ setPendingSecret }
+							/>
+						</Stack>
+					</>
+				) : (
+					<>
+						{ /* Outbound — URL + Method */ }
+						<Stack spacing={ 2 }>
+							<SectionHeader
+								title={ __( 'Endpoint', 'rest-api-firewall' ) }
+								description={ __( 'The URL to send webhook requests to.', 'rest-api-firewall' ) }
+							/>
+							<Stack direction={ { xs: 'column', sm: 'row' } } spacing={ 2 }>
+								<TextField
+									label={ __( 'Endpoint URL', 'rest-api-firewall' ) }
+									size="small"
+									value={ endpoint }
+									onChange={ ( e ) => setEndpoint( e.target.value ) }
+									placeholder="https://api.example.com/webhook"
+									sx={ { flex: 1 } }
+									helperText={ __( 'The URL to send the webhook request to.', 'rest-api-firewall' ) }
+								/>
+								<FormControl size="small" sx={ { minWidth: 120 } }>
+									<InputLabel>{ __( 'Method', 'rest-api-firewall' ) }</InputLabel>
+									<Select
+										value={ method }
+										onChange={ ( e ) => setMethod( e.target.value ) }
+										label={ __( 'Method', 'rest-api-firewall' ) }
+									>
+										{ HTTP_METHODS.map( ( m ) => (
+											<MenuItem key={ m } value={ m }>{ m }</MenuItem>
+										) ) }
+									</Select>
+								</FormControl>
+							</Stack>
+						</Stack>
+
+						<Divider />
+
+						{ /* Outbound — HMAC signing */ }
+						<Stack spacing={ 2 }>
+							<SectionHeader
+								title={ __( 'Authentication', 'rest-api-firewall' ) }
+								description={ __( 'Configure a secret to sign outgoing webhook requests using HMAC-SHA256.', 'rest-api-firewall' ) }
+							/>
+							<WebhookEditorSecretManager
+								initialHasSecret={ hasSecret }
+								onChange={ setPendingSecret }
+							/>
+						</Stack>
+
+						<Divider />
+
+						{ /* Outbound — Headers */ }
+						<Stack spacing={ 2 }>
+							<SectionHeader
+								title={ __( 'Headers', 'rest-api-firewall' ) }
+								description={ __( 'Optional custom HTTP headers to include with every request.', 'rest-api-firewall' ) }
+							/>
+							<HeadersEditor headers={ headers } onChange={ setHeaders } />
+						</Stack>
+
+						<Divider />
+
+						{ /* Outbound — Body Payload */ }
+						<Stack spacing={ 2 }>
+							<SectionHeader
+								title={ __( 'Body Payload', 'rest-api-firewall' ) }
+								description={ __( 'Optional JSON body template sent with the request. Leave empty to use the default event payload.', 'rest-api-firewall' ) }
+							/>
+							<TextField
+								label={ __( 'Body', 'rest-api-firewall' ) }
+								size="small"
+								multiline
+								rows={ 6 }
+								value={ bodyPayload }
+								onChange={ ( e ) => setBodyPayload( e.target.value ) }
+								placeholder={ '{\n  "event": "{{event_type}}",\n  "data": {{payload}}\n}' }
+								helperText={ __( 'Use {{placeholders}} for dynamic values.', 'rest-api-firewall' ) }
+								inputProps={ { sx: { fontFamily: 'monospace', fontSize: '0.85rem' } } }
+							/>
+						</Stack>
+
+						<Divider />
+
+						{ /* Outbound — Advanced */ }
+						<Stack spacing={ 2 }>
+							<SectionHeader
+								title={ __( 'Advanced', 'rest-api-firewall' ) }
+								description={ __( 'Timeout and retry behaviour for failed requests.', 'rest-api-firewall' ) }
+							/>
+							<Stack direction={ { xs: 'column', sm: 'row' } } spacing={ 2 }>
+								<TextField
+									label={ __( 'Timeout (seconds)', 'rest-api-firewall' ) }
+									type="number"
+									size="small"
+									value={ timeoutSeconds }
+									onChange={ ( e ) => setTimeoutSeconds( e.target.value ) }
+									sx={ { maxWidth: 180 } }
+									helperText={ __( 'Request timeout', 'rest-api-firewall' ) }
+								/>
+								<TextField
+									label={ __( 'Retry Count', 'rest-api-firewall' ) }
+									type="number"
+									size="small"
+									value={ retryCount }
+									onChange={ ( e ) => setRetryCount( e.target.value ) }
+									sx={ { maxWidth: 160 } }
+									helperText={ __( 'Retries on failure', 'rest-api-firewall' ) }
+								/>
+							</Stack>
+						</Stack>
+					</>
+				) }
+
 			</Stack>
 		</Stack>
 	);

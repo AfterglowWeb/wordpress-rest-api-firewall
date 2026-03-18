@@ -443,34 +443,32 @@ export default function ApplicationEditor( { application, onBack } ) {
 
 			{ loadError && <Alert severity="error">{ loadError }</Alert> }
 
-			<Stack p={ { xs: 2, sm: 4 } } spacing={ 2 } sx={ { maxWidth: 560 } }>
-				<TextField
-					label={ __( 'Title', 'rest-api-firewall' ) }
-					value={ title }
-					onChange={ ( e ) => setTitle( e.target.value ) }
-					size="small"
-					sx={ { maxWidth: 340 } }
-				/>
-				<TextField
-					label={ __( 'Description', 'rest-api-firewall' ) }
-					value={ description }
-					onChange={ ( e ) => setDescription( e.target.value ) }
-					size="small"
-					multiline
-					rows={ 3 }
-					placeholder={ __(
-						'Optional notes about this application, its purpose, or linked services.',
-						'rest-api-firewall'
-					) }
-				/>
-			</Stack>
+			<Stack spacing={ 3 } maxWidth={780} p={ { xs: 2, sm: 4 } }>
+				<Stack spacing={ 3 }>
+					<TextField
+						label={ __( 'Title', 'rest-api-firewall' ) }
+						value={ title }
+						onChange={ ( e ) => setTitle( e.target.value ) }
+						size="small"
+						sx={ { maxWidth: 340 } }
+					/>
+					<TextField
+						label={ __( 'Description', 'rest-api-firewall' ) }
+						value={ description }
+						onChange={ ( e ) => setDescription( e.target.value ) }
+						size="small"
+						multiline
+						rows={ 3 }
+						placeholder={ __(
+							'Optional notes about this application, its purpose, or linked services.',
+							'rest-api-firewall'
+						) }
+					/>
+				</Stack>
 
-			{ ! isNew && (
-				<>
-					<Divider />
+				<Divider />
 
-					{ /* Security defaults */ }
-				<Stack p={ { xs: 2, sm: 4 } } spacing={ 3 } sx={ { maxWidth: 640 } }>
+				<Stack spacing={ 3 }>
 
 						{ /* Allowed IPs */ }
 						<Stack spacing={ 0.75 }>
@@ -515,7 +513,7 @@ export default function ApplicationEditor( { application, onBack } ) {
 										control={
 											<Checkbox
 												size="small"
-												checked={ appAllowedAuthMethods.includes( method.value ) }
+												checked={ appAllowedAuthMethods && appAllowedAuthMethods.length > 0 && appAllowedAuthMethods.includes( method.value ) }
 												onChange={ ( e ) => {
 													const next = e.target.checked
 														? [ ...appAllowedAuthMethods, method.value ]
@@ -597,262 +595,262 @@ export default function ApplicationEditor( { application, onBack } ) {
 								/>
 							</Stack>
 						</Stack>
-					</Stack>
-					<Divider />
+				</Stack>
 
-					<Box
-						sx={ {
-							p: { xs: 2, sm: 4 },
-							display: 'grid',
-							gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-							gap: 2,
-							maxWidth: 1100,
-						} }
-					>
-						{ /* Auth & Rate Limit */ }
-						<PanelCard
-							title={ __( 'Auth & Rate Limit', 'rest-api-firewall' ) }
-							Icon={ SecurityOutlined }
-							panel={ 1 }
-							module="users"
-							onNavigate={ handlePanelNavigate }
-							enabled={ getModuleEnabled( 1 ) }
-							onToggleEnabled={ handleModuleToggle }
-						>
-							<DataRow label={ __( 'Users', 'rest-api-firewall' ) }>
-								{ appUsers.length > 0 ? (
-									<Typography variant="caption" noWrap>
-										{ appUsers.slice( 0, 2 ).map( ( u ) => u.display_name ).join( ', ' ) }
-										{ appUsers.length > 2 ? ` +${ appUsers.length - 2 }` : '' }
-									</Typography>
-								) : (
-									<Typography variant="caption" color="text.disabled" fontStyle="italic">
-										{ __( 'No users linked', 'rest-api-firewall' ) }
-									</Typography>
-								) }
-							</DataRow>
-							<DataRow label={ __( 'Rate limit', 'rest-api-firewall' ) }>
-								<Typography variant="caption" sx={ { fontFamily: 'monospace' } }>
-									{ rateLimitRequests } req / { rateLimitWindow }s
-								</Typography>
-							</DataRow>
-						</PanelCard>
+				<Divider />
+			</Stack>
 
-						{ /* Routes */ }
-						<PanelCard
-							title={ __( 'Routes', 'rest-api-firewall' ) }
-							Icon={ AccountTreeIcon }
-							panel={ 2 }
-							module="routes_policy"
-							onNavigate={ handlePanelNavigate }
-							enabled={ getModuleEnabled( 2 ) }
-							onToggleEnabled={ handleModuleToggle }
-						>
-							<DataRow label={ __( 'Policy', 'rest-api-firewall' ) }>
-								<Chip
-									label={ policyActive ? __( 'Active', 'rest-api-firewall' ) : __( 'None', 'rest-api-firewall' ) }
-									color={ policyActive ? 'success' : 'default' }
-									size="small"
-									variant="outlined"
-								/>
-							</DataRow>
-						</PanelCard>
+			<Box
+				sx={ {
+					p: { xs: 2, sm: 4 },
+					display: 'grid',
+					gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+					gap: 2,
+					maxWidth: 1100,
+				} }
+			>
+				{ /* Auth & Rate Limit */ }
+				<PanelCard
+					title={ __( 'Auth & Rate Limit', 'rest-api-firewall' ) }
+					Icon={ SecurityOutlined }
+					panel={ 1 }
+					module="users"
+					onNavigate={ handlePanelNavigate }
+					enabled={ getModuleEnabled( 1 ) }
+					onToggleEnabled={ handleModuleToggle }
+				>
+					<DataRow label={ __( 'Users', 'rest-api-firewall' ) }>
+						{ appUsers && appUsers.length > 0 ? (
+							<Typography variant="caption" noWrap>
+								{ appUsers.slice( 0, 2 ).map( ( u ) => u.display_name ).join( ', ' ) }
+								{ appUsers.length > 2 ? ` +${ appUsers.length - 2 }` : '' }
+							</Typography>
+						) : (
+							<Typography variant="caption" color="text.disabled" fontStyle="italic">
+								{ __( 'No users linked', 'rest-api-firewall' ) }
+							</Typography>
+						) }
+					</DataRow>
+					<DataRow label={ __( 'Rate limit', 'rest-api-firewall' ) }>
+						{ rateLimitRequests & rateLimitWindow && (<Typography variant="caption" sx={ { fontFamily: 'monospace' } }>
+							{ rateLimitRequests } req / { rateLimitWindow }s
+						</Typography>) }
+					</DataRow>
+				</PanelCard>
 
-						{ /* IP Filtering */ }
-						<PanelCard
-							title={ __( 'IP Filtering', 'rest-api-firewall' ) }
-							Icon={ VpnLockOutlinedIcon }
-							panel={ 3 }
-							module="ip_filter"
-							onNavigate={ handlePanelNavigate }
-							enabled={ getModuleEnabled( 3 ) }
-							onToggleEnabled={ handleModuleToggle }
-						>
-							<DataRow label={ __( 'Mode', 'rest-api-firewall' ) }>
-								<Chip
-									size="small"
-									variant="outlined"
-									label={
-										! ipFilter.enabled
-											? __( 'Disabled', 'rest-api-firewall' )
-											: ipFilter.mode === 'whitelist'
-											? __( 'Whitelist', 'rest-api-firewall' )
-											: __( 'Blacklist', 'rest-api-firewall' )
-									}
-									color={
-										! ipFilter.enabled
-											? 'default'
-											: ipFilter.mode === 'whitelist'
-											? 'success'
-											: 'warning'
-									}
-								/>
-							</DataRow>
-							{ allowedOrigins.length > 0 && (
-								<DataRow label={ __( 'Origins', 'rest-api-firewall' ) }>
-									<Typography variant="caption" noWrap sx={ { fontFamily: 'monospace' } }>
-										{ allowedOrigins.slice( 0, 2 ).join( ', ' ) }
-										{ allowedOrigins.length > 2 ? ` +${ allowedOrigins.length - 2 }` : '' }
-									</Typography>
-								</DataRow>
-							) }
-							{ ipFilter.enabled && ipFilter.mode === 'whitelist' && ipFilterIps.length > 0 && (
-								<DataRow label={ __( 'IPs', 'rest-api-firewall' ) }>
-									<Typography variant="caption" noWrap sx={ { fontFamily: 'monospace' } }>
-										{ ipFilterIps.slice( 0, 2 ).join( ', ' ) }
-										{ ipFilterIps.length > 2 ? ` +${ ipFilterIps.length - 2 }` : '' }
-									</Typography>
-								</DataRow>
-							) }
-						</PanelCard>
+				{ /* Routes */ }
+				<PanelCard
+					title={ __( 'Routes', 'rest-api-firewall' ) }
+					Icon={ AccountTreeIcon }
+					panel={ 2 }
+					module="routes_policy"
+					onNavigate={ handlePanelNavigate }
+					enabled={ getModuleEnabled( 2 ) }
+					onToggleEnabled={ handleModuleToggle }
+				>
+					<DataRow label={ __( 'Policy', 'rest-api-firewall' ) }>
+						<Chip
+							label={ policyActive ? __( 'Active', 'rest-api-firewall' ) : __( 'None', 'rest-api-firewall' ) }
+							color={ policyActive ? 'success' : 'default' }
+							size="small"
+							variant="outlined"
+						/>
+					</DataRow>
+				</PanelCard>
 
-						{ /* Collections */ }
+				{ /* IP Filtering */ }
+				<PanelCard
+					title={ __( 'IP Filtering', 'rest-api-firewall' ) }
+					Icon={ VpnLockOutlinedIcon }
+					panel={ 3 }
+					module="ip_filter"
+					onNavigate={ handlePanelNavigate }
+					enabled={ getModuleEnabled( 3 ) }
+					onToggleEnabled={ handleModuleToggle }
+				>
+					<DataRow label={ __( 'Mode', 'rest-api-firewall' ) }>
+						<Chip
+							size="small"
+							variant="outlined"
+							label={
+								! ipFilter.enabled
+									? __( 'Disabled', 'rest-api-firewall' )
+									: ipFilter.mode === 'whitelist'
+									? __( 'Whitelist', 'rest-api-firewall' )
+									: __( 'Blacklist', 'rest-api-firewall' )
+							}
+							color={
+								! ipFilter.enabled
+									? 'default'
+									: ipFilter.mode === 'whitelist'
+									? 'success'
+									: 'warning'
+							}
+						/>
+					</DataRow>
+					{ allowedOrigins.length > 0 && (
+						<DataRow label={ __( 'Origins', 'rest-api-firewall' ) }>
+							<Typography variant="caption" noWrap sx={ { fontFamily: 'monospace' } }>
+								{ allowedOrigins.slice( 0, 2 ).join( ', ' ) }
+								{ allowedOrigins.length > 2 ? ` +${ allowedOrigins.length - 2 }` : '' }
+							</Typography>
+						</DataRow>
+					) }
+					{ ipFilter.enabled && ipFilter.mode === 'whitelist' && ipFilterIps.length > 0 && (
+						<DataRow label={ __( 'IPs', 'rest-api-firewall' ) }>
+							<Typography variant="caption" noWrap sx={ { fontFamily: 'monospace' } }>
+								{ ipFilterIps.slice( 0, 2 ).join( ', ' ) }
+								{ ipFilterIps.length > 2 ? ` +${ ipFilterIps.length - 2 }` : '' }
+							</Typography>
+						</DataRow>
+					) }
+				</PanelCard>
+
+				{ /* Collections */ }
+				<PanelCard
+					title={ __( 'Collections', 'rest-api-firewall' ) }
+					Icon={ ApiIcon }
+					panel={ 4 }
+					module="collections"
+					onNavigate={ handlePanelNavigate }
+					enabled={ getModuleEnabled( 4 ) }
+					onToggleEnabled={ handleModuleToggle }
+				>
+					<DataRow label={ __( 'Sorting', 'rest-api-firewall' ) }>
+						<Typography variant="caption" color="text.disabled">
+							{ __( 'Endpoint grouping & access rules', 'rest-api-firewall' ) }
+						</Typography>
+					</DataRow>
+				</PanelCard>
+
+				<PanelCard
+					title={ __( 'Properties', 'rest-api-firewall' ) }
+					Icon={ RuleOutlinedIcon }
+					panel={ 5 }
+					module="models"
+					onNavigate={ handlePanelNavigate }
+					enabled={ getModuleEnabled( 5 ) }
+					onToggleEnabled={ handleModuleToggle }
+				>
+					<DataRow label={ __( 'Transform', 'rest-api-firewall' ) }>
+						<Typography variant="caption" color="text.disabled">
+							{ __( 'REST output field filtering', 'rest-api-firewall' ) }
+						</Typography>
+					</DataRow>
+					<DataRow label={ __( 'Models', 'rest-api-firewall' ) }>
+						<Typography variant="caption" color="text.disabled">
+							{ __( 'Custom field model definitions', 'rest-api-firewall' ) }
+						</Typography>
+					</DataRow>
+				</PanelCard>
+
+				{ /* Settings Route */ }
+				<PanelCard
+					title={ __( 'Settings Route', 'rest-api-firewall' ) }
+					Icon={ BusinessOutlinedIcon }
+					panel={ 6 }
+					module="settings_route"
+					onNavigate={ handlePanelNavigate }
+					enabled={ getModuleEnabled( 6 ) }
+					onToggleEnabled={ handleModuleToggle }
+				>
+					<DataRow label={ __( 'Route', 'rest-api-firewall' ) }>
+						<Typography variant="caption" noWrap sx={ { fontFamily: 'monospace' } }>
+							wp/v2/settings
+						</Typography>
+					</DataRow>
+				</PanelCard>
+
+				{ /* Automations */ }
+				<PanelCard
+					title={ __( 'Automations', 'rest-api-firewall' ) }
+					Icon={ AutoFixHighOutlinedIcon }
+					panel={ 13 }
+					module="automations"
+					onNavigate={ handlePanelNavigate }
+					enabled={ getModuleEnabled( 13 ) }
+					onToggleEnabled={ handleModuleToggle }
+				>
+					<DataRow label={ __( 'Triggers', 'rest-api-firewall' ) }>
+						<Typography variant="caption" color="text.disabled">
+							{ __( 'Event-based rules & actions', 'rest-api-firewall' ) }
+						</Typography>
+					</DataRow>
+				</PanelCard>
+
+				{ /* Webhooks */ }
+				<PanelCard
+					title={ __( 'Webhooks', 'rest-api-firewall' ) }
+					Icon={ WebhookIcon }
+					panel={ 7 }
+					module="webhooks"
+					onNavigate={ handlePanelNavigate }
+					enabled={ getModuleEnabled( 7 ) }
+					onToggleEnabled={ handleModuleToggle }
+				>
+					<DataRow label={ __( 'Settings', 'rest-api-firewall' ) }>
+						<Typography variant="caption" color="text.disabled">
+							{ __( 'Outbound event notifications', 'rest-api-firewall' ) }
+						</Typography>
+					</DataRow>
+					<DataRow label={ __( 'Entries', 'rest-api-firewall' ) }>
+						<Typography variant="caption" color="text.disabled">
+							{ __( 'Per-event webhook targets', 'rest-api-firewall' ) }
+						</Typography>
+					</DataRow>
+				</PanelCard>
+
+				{ /* Emails */ }
+				<PanelCard
+					title={ __( 'Emails', 'rest-api-firewall' ) }
+					Icon={ EmailOutlinedIcon }
+					panel={ 8 }
+					module="mails"
+					onNavigate={ handlePanelNavigate }
+					enabled={ getModuleEnabled( 8 ) }
+					onToggleEnabled={ handleModuleToggle }
+				>
+					<DataRow label={ __( 'SMTP', 'rest-api-firewall' ) }>
+						<Typography variant="caption" color="text.disabled">
+							{ __( 'Mail server configuration', 'rest-api-firewall' ) }
+						</Typography>
+					</DataRow>
+					<DataRow label={ __( 'Templates', 'rest-api-firewall' ) }>
+						<Typography variant="caption" color="text.disabled">
+							{ __( 'Email notification templates', 'rest-api-firewall' ) }
+						</Typography>
+					</DataRow>
+				</PanelCard>
+
+				{ /* Logs */ }
+				<Tooltip title={ __( 'Logs are global across all applications', 'rest-api-firewall' ) } placement="top">
+					<span>
 						<PanelCard
-							title={ __( 'Collections', 'rest-api-firewall' ) }
-							Icon={ ApiIcon }
-							panel={ 4 }
-							module="collections"
+							title={ __( 'Logs', 'rest-api-firewall' ) }
+							Icon={ AssessmentOutlinedIcon }
+							panel={ 12 }
 							onNavigate={ handlePanelNavigate }
-							enabled={ getModuleEnabled( 4 ) }
-							onToggleEnabled={ handleModuleToggle }
 						>
-							<DataRow label={ __( 'Sorting', 'rest-api-firewall' ) }>
+							<DataRow label={ __( 'Scope', 'rest-api-firewall' ) }>
 								<Typography variant="caption" color="text.disabled">
-									{ __( 'Endpoint grouping & access rules', 'rest-api-firewall' ) }
+									{ __( 'Global request history & audit trail', 'rest-api-firewall' ) }
 								</Typography>
 							</DataRow>
 						</PanelCard>
+					</span>
+				</Tooltip>
+			</Box>
 
-						<PanelCard
-							title={ __( 'Properties', 'rest-api-firewall' ) }
-							Icon={ RuleOutlinedIcon }
-							panel={ 5 }
-							module="models"
-							onNavigate={ handlePanelNavigate }
-							enabled={ getModuleEnabled( 5 ) }
-							onToggleEnabled={ handleModuleToggle }
-						>
-							<DataRow label={ __( 'Transform', 'rest-api-firewall' ) }>
-								<Typography variant="caption" color="text.disabled">
-									{ __( 'REST output field filtering', 'rest-api-firewall' ) }
-								</Typography>
-							</DataRow>
-							<DataRow label={ __( 'Models', 'rest-api-firewall' ) }>
-								<Typography variant="caption" color="text.disabled">
-									{ __( 'Custom field model definitions', 'rest-api-firewall' ) }
-								</Typography>
-							</DataRow>
-						</PanelCard>
-
-						{ /* Settings Route */ }
-						<PanelCard
-							title={ __( 'Settings Route', 'rest-api-firewall' ) }
-							Icon={ BusinessOutlinedIcon }
-							panel={ 6 }
-							module="settings_route"
-							onNavigate={ handlePanelNavigate }
-							enabled={ getModuleEnabled( 6 ) }
-							onToggleEnabled={ handleModuleToggle }
-						>
-							<DataRow label={ __( 'Route', 'rest-api-firewall' ) }>
-								<Typography variant="caption" noWrap sx={ { fontFamily: 'monospace' } }>
-									wp/v2/settings
-								</Typography>
-							</DataRow>
-						</PanelCard>
-
-						{ /* Automations */ }
-						<PanelCard
-							title={ __( 'Automations', 'rest-api-firewall' ) }
-							Icon={ AutoFixHighOutlinedIcon }
-							panel={ 13 }
-							module="automations"
-							onNavigate={ handlePanelNavigate }
-							enabled={ getModuleEnabled( 13 ) }
-							onToggleEnabled={ handleModuleToggle }
-						>
-							<DataRow label={ __( 'Triggers', 'rest-api-firewall' ) }>
-								<Typography variant="caption" color="text.disabled">
-									{ __( 'Event-based rules & actions', 'rest-api-firewall' ) }
-								</Typography>
-							</DataRow>
-						</PanelCard>
-
-						{ /* Webhooks */ }
-						<PanelCard
-							title={ __( 'Webhooks', 'rest-api-firewall' ) }
-							Icon={ WebhookIcon }
-							panel={ 7 }
-							module="webhooks"
-							onNavigate={ handlePanelNavigate }
-							enabled={ getModuleEnabled( 7 ) }
-							onToggleEnabled={ handleModuleToggle }
-						>
-							<DataRow label={ __( 'Settings', 'rest-api-firewall' ) }>
-								<Typography variant="caption" color="text.disabled">
-									{ __( 'Outbound event notifications', 'rest-api-firewall' ) }
-								</Typography>
-							</DataRow>
-							<DataRow label={ __( 'Entries', 'rest-api-firewall' ) }>
-								<Typography variant="caption" color="text.disabled">
-									{ __( 'Per-event webhook targets', 'rest-api-firewall' ) }
-								</Typography>
-							</DataRow>
-						</PanelCard>
-
-						{ /* Emails */ }
-						<PanelCard
-							title={ __( 'Emails', 'rest-api-firewall' ) }
-							Icon={ EmailOutlinedIcon }
-							panel={ 8 }
-							module="mails"
-							onNavigate={ handlePanelNavigate }
-							enabled={ getModuleEnabled( 8 ) }
-							onToggleEnabled={ handleModuleToggle }
-						>
-							<DataRow label={ __( 'SMTP', 'rest-api-firewall' ) }>
-								<Typography variant="caption" color="text.disabled">
-									{ __( 'Mail server configuration', 'rest-api-firewall' ) }
-								</Typography>
-							</DataRow>
-							<DataRow label={ __( 'Templates', 'rest-api-firewall' ) }>
-								<Typography variant="caption" color="text.disabled">
-									{ __( 'Email notification templates', 'rest-api-firewall' ) }
-								</Typography>
-							</DataRow>
-						</PanelCard>
-
-						{ /* Logs */ }
-						<Tooltip title={ __( 'Logs are global across all applications', 'rest-api-firewall' ) } placement="top">
-							<span>
-								<PanelCard
-									title={ __( 'Logs', 'rest-api-firewall' ) }
-									Icon={ AssessmentOutlinedIcon }
-									panel={ 12 }
-									onNavigate={ handlePanelNavigate }
-								>
-									<DataRow label={ __( 'Scope', 'rest-api-firewall' ) }>
-										<Typography variant="caption" color="text.disabled">
-											{ __( 'Global request history & audit trail', 'rest-api-firewall' ) }
-										</Typography>
-									</DataRow>
-								</PanelCard>
-							</span>
-						</Tooltip>
-					</Box>
-				</>
-			) }
-
-		<ConfirmWithInputDialog
-			open={ confirmDeleteOpen }
-			title={ __( 'Delete Application', 'rest-api-firewall' ) }
-			message={ __( 'This will permanently delete the application and all its configuration. This action cannot be undone.', 'rest-api-firewall' ) }
-			requiredText={ title }
-			confirmLabel={ __( 'Delete', 'rest-api-firewall' ) }
-			onConfirm={ handleConfirmDelete }
-			onCancel={ () => setConfirmDeleteOpen( false ) }
-			loading={ saving }
-		/>
-	</Stack>
+			<ConfirmWithInputDialog
+				open={ confirmDeleteOpen }
+				title={ __( 'Delete Application', 'rest-api-firewall' ) }
+				message={ __( 'This will permanently delete the application and all its configuration. This action cannot be undone.', 'rest-api-firewall' ) }
+				requiredText={ title }
+				confirmLabel={ __( 'Delete', 'rest-api-firewall' ) }
+				onConfirm={ handleConfirmDelete }
+				onCancel={ () => setConfirmDeleteOpen( false ) }
+				loading={ saving }
+			/>
+		</Stack>
 	);
 }

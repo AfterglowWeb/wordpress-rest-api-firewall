@@ -24,9 +24,17 @@ export function ApplicationProvider( { children } ) {
 	const nonce = proNonce || adminData?.nonce;
 
 	const [ applications, setApplications ] = useState( [] );
-	const [ selectedApplicationId, setSelectedApplicationId ] = useState( '' );
+	const [ selectedApplicationId, setSelectedApplicationId ] = useState( () => {
+		try { return localStorage.getItem( 'raf_app_id' ) || ''; } catch { return ''; }
+	} );
 	const [ applicationsLoading, setApplicationsLoading ] = useState( false );
 	const [ dirtyFlag, setDirtyFlag ] = useState( { has: false, message: '' } );
+
+	useEffect( () => {
+		if ( selectedApplicationId ) {
+			try { localStorage.setItem( 'raf_app_id', selectedApplicationId ); } catch ( e ) {}
+		}
+	}, [ selectedApplicationId ] );
 
 	const fetchApplications = () => {
 		if ( ! hasValidLicense ) {
