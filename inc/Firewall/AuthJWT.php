@@ -93,7 +93,7 @@ class AuthJWT {
 		}
 
 		$payload = json_decode(
-			base64_decode( strtr( $parts[1], '-_', '+/' ) ),
+			base64_decode( strtr( $parts[1], '-_', '+/' ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- base64url decoding JWT payload, not obfuscation
 			true
 		);
 

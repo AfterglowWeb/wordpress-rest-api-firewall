@@ -99,28 +99,28 @@ class WebhookAutoTrigger {
 				'accepted_args' => 5, // term_id, tt_id, taxonomy, deleted_term, object_ids.
 			),
 
-			'user_register'  => array(
+			'user_register'      => array(
 				'label'         => __( 'User registered', 'rest-api-firewall' ),
 				'description'   => __( 'Triggered when a new user account is created', 'rest-api-firewall' ),
 				'group'         => 'users',
 				'context'       => array( 'pro' ),
 				'accepted_args' => 2, // user_id, userdata.
 			),
-			'wp_login'       => array(
+			'wp_login'           => array(
 				'label'         => __( 'User logged in', 'rest-api-firewall' ),
 				'description'   => __( 'Triggered after a successful login', 'rest-api-firewall' ),
 				'group'         => 'users',
 				'context'       => array( 'pro' ),
 				'accepted_args' => 2, // user_login, WP_User.
 			),
-			'profile_update' => array(
+			'profile_update'     => array(
 				'label'         => __( 'User updated', 'rest-api-firewall' ),
 				'description'   => __( 'Triggered when a user profile is updated', 'rest-api-firewall' ),
 				'group'         => 'users',
 				'context'       => array( 'pro' ),
 				'accepted_args' => 3, // user_id, old_user_data, userdata.
 			),
-			'delete_user'    => array(
+			'delete_user'        => array(
 				'label'         => __( 'User deleted', 'rest-api-firewall' ),
 				'description'   => __( 'Triggered before a user is deleted', 'rest-api-firewall' ),
 				'group'         => 'users',
@@ -128,7 +128,7 @@ class WebhookAutoTrigger {
 				'accepted_args' => 3, // user_id, reassign, old_user_data.
 			),
 
-			'inbound_webhook' => array(
+			'inbound_webhook'    => array(
 				'label'         => __( 'Incoming webhook received', 'rest-api-firewall' ),
 				'description'   => __( 'Triggered when an external service sends a signed request to an inbound webhook endpoint', 'rest-api-firewall' ),
 				'group'         => 'inbound',

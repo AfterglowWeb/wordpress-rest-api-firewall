@@ -36,8 +36,6 @@ export default function ApplicationSelector() {
 		if ( id === selectedApplicationId ) return;
 
 		if ( subKey ) {
-			// In an entry editor — navigate to the new application's entry.
-			// Delay app ID change until after dirty-flag confirmation.
 			navigateGuarded( 'applications', id, () => setSelectedApplicationId( id ) );
 		} else {
 			setSelectedApplicationId( id );

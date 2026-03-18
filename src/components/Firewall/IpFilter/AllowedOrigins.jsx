@@ -33,10 +33,10 @@ import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 
 export default function AllowedOrigins( {
 	disabled = false,
-	value: valueProp,      // controlled: provided origins array
-	onChange: onChangeProp, // controlled: called on add/remove
-	onSave: onSaveProp,     // controlled: called when Save is clicked
-	saving: savingProp,     // controlled: external save loading state
+	value: valueProp,
+	onChange: onChangeProp,
+	onSave: onSaveProp,
+	saving: savingProp,
 	maxEntries,
 } ) {
 	const { __ } = wp.i18n || {};
@@ -59,7 +59,6 @@ export default function AllowedOrigins( {
 
     const atLimit = maxEntries !== undefined && allowedOrigins.length >= maxEntries;
 
-    // Keep internal state in sync when parent changes controlled value
     useEffect( () => {
         if ( isControlled ) {
             setAllowedOrigins( valueProp || [] );

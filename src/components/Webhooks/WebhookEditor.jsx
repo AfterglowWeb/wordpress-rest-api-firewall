@@ -193,7 +193,6 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 	const isInbound = type === 'inbound';
 
-	// Fetch automations list for the inbound automation selector.
 	useEffect( () => {
 		const appId = selectedApplicationId || webhook.application_id || '';
 		fetch( adminData.ajaxurl, {

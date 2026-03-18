@@ -189,7 +189,6 @@ export default function ApplicationEditor( { application, onBack } ) {
 
 	const [ appUsers, setAppUsers ] = useState( [] );
 
-	// Security defaults — loaded from application settings
 	const [ serverSettings, setServerSettings ] = useState( {} );
 	const [ appAllowedIps, setAppAllowedIps ] = useState( [] );
 	const [ appAllowedAuthMethods, setAppAllowedAuthMethods ] = useState( [] );
@@ -356,8 +355,6 @@ export default function ApplicationEditor( { application, onBack } ) {
 		loadUsers();
 	}, [ isNew, loadEntry, loadUsers ] );
 
-	// Build the full settings object from all current state.
-	// Used by the main Save and all per-section save buttons.
 	const buildCurrentSettings = useCallback( () => ( {
 		...serverSettings,
 		description,

@@ -41,7 +41,6 @@ export function NavigationProvider( { children } ) {
 	const [ location, setLocation ] = useState( parseHash );
 	const isRevertingRef = useRef( false );
 
-	// Ensure the URL has a hash on first load.
 	useEffect( () => {
 		if ( ! window.location.hash ) {
 			history.replaceState(

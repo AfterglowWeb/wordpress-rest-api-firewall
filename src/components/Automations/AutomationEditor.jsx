@@ -184,7 +184,6 @@ export default function AutomationEditor( { automation, onBack } ) {
 
 	const [ title, setTitle ] = useState( automation.title || '' );
 
-	// Multi-event: use `events` array; fall back to legacy `event` string.
 	const [ events, setEvents ] = useState( () => {
 		if ( automation.events && automation.events.length ) return automation.events;
 		if ( automation.event ) return [ automation.event ];
@@ -238,13 +237,11 @@ export default function AutomationEditor( { automation, onBack } ) {
 			}
 			setEventOptions( options );
 
-			// Only show outbound webhooks in the webhook checklist.
 			if ( wj.success ) {
 				setWebhooks( ( wj.data.entries || [] ).filter( ( w ) => w.type !== 'inbound' ) );
 			}
 			if ( mj.success ) setMails( mj.data.entries || [] );
 
-			// Automations available for chaining (exclude self).
 			if ( aj.success ) {
 				setAutomations( ( aj.data.entries || [] ).filter( ( a ) => a.id !== automation.id ) );
 			}
@@ -278,7 +275,6 @@ export default function AutomationEditor( { automation, onBack } ) {
 	const buildPayload = () => ( {
 		nonce,
 		title,
-		// Legacy single-event field (first event) for backward compat with older query paths.
 		event: events[ 0 ] || '',
 		events: JSON.stringify( events ),
 		conditions: JSON.stringify( conditions ),

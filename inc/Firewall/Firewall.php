@@ -37,9 +37,7 @@ class Firewall {
 
 	public static function is_test_request(): bool {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- test token validated via transient below
-		$token = isset( $_GET['_firewall_test'] )
-			? sanitize_text_field( wp_unslash( $_GET['_firewall_test'] ) )
-			: '';
+		$token = isset( $_GET['_firewall_test'] ) ? sanitize_text_field( wp_unslash( $_GET['_firewall_test'] ) ) : '';
 
 		if ( empty( $token ) ) {
 			return false;
@@ -53,9 +51,7 @@ class Firewall {
 
 	public static function get_test_application_id(): ?string {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- token validated via transient
-		$token = isset( $_GET['_firewall_test'] )
-			? sanitize_text_field( wp_unslash( $_GET['_firewall_test'] ) )
-			: '';
+		$token = isset( $_GET['_firewall_test'] ) ? sanitize_text_field( wp_unslash( $_GET['_firewall_test'] ) ) : '';
 
 		if ( empty( $token ) ) {
 			return null;
@@ -174,12 +170,14 @@ class Firewall {
 		$method = $options['firewall_auth_method'] ?? 'wp_auth';
 
 		if ( 'jwt' === $method ) {
-			return AuthJWT::validate_bearer_jwt( array(
-				'algorithm'  => $options['firewall_jwt_algorithm'] ?? 'RS256',
-				'public_key' => $options['firewall_jwt_public_key'] ?? '',
-				'audience'   => $options['firewall_jwt_audience'] ?? '',
-				'issuer'     => $options['firewall_jwt_issuer'] ?? '',
-			) );
+			return AuthJWT::validate_bearer_jwt(
+				array(
+					'algorithm'  => $options['firewall_jwt_algorithm'] ?? 'RS256',
+					'public_key' => $options['firewall_jwt_public_key'] ?? '',
+					'audience'   => $options['firewall_jwt_audience'] ?? '',
+					'issuer'     => $options['firewall_jwt_issuer'] ?? '',
+				)
+			);
 		}
 
 		return WordpressAuth::validate_wp_application_password();

@@ -38,7 +38,6 @@ export default function ConfirmWithInputDialog( {
 	const { __ } = wp.i18n || {};
 	const [ input, setInput ] = useState( '' );
 
-	// Reset input whenever the dialog is opened/closed
 	useEffect( () => {
 		if ( ! open ) {
 			setInput( '' );
