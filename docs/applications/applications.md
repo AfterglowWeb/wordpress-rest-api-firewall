@@ -38,7 +38,7 @@ Each module can be toggled on or off at the application level. A module must als
 | Module | Description | Doc |
 |---|---|---|
 | **Auth & Rate Limiting** | Auth methods, allowed origins & IPs, HTTP methods, users and per-user overrides | [→ Auth & Rate Limit](/users/users) |
-| **IP Filtering** | Whitelist / blacklist, CIDR ranges, country blocking | [→ IP Filtering](/ipsfilter/ipsfilter) |
+| **IP Filtering** | Additional application-scoped blocks: CIDR ranges, country blocking, retention time | [→ IP Filtering](/ipsfilter/ipsfilter) |
 | **Routes Policy** | Per-route auth, rate limit, disable, user restriction | [→ Routes](/routes/routes) |
 | **Properties & Models** | Response transforms, per-property control, custom schemas | [→ Properties & Models](/models/models) |
 | **Collections** | Per-page limits, drag-and-drop sort order | [→ Collections](/collections/collections) |
@@ -56,11 +56,10 @@ See the dedicated [Auth & Rate Limiting](/users/users) page for full documentati
 
 ## IP Filtering Module
 
-Manages IP-based access control for this application.
+Manages application-scoped IP blocking, layered on top of the [Global IP Filtering](/global-ip-filtering/global-ip-filtering) module. Entries here only apply to this application.
 
-- **Whitelist mode** — only requests from listed IPs or CIDR ranges are allowed through.
-- **Blacklist mode** — listed IPs or ranges are blocked. Configurable retention time.
-- **Country blocking** — block or allow requests by country using GeoIP data.
+- **Blacklist** — listed IPs or CIDR ranges are blocked for this application. Configurable retention time.
+- **Country blocking** — block requests by country using GeoIP data, scoped to this application.
 - **CIDR support** — define ranges in addition to individual addresses.
 
 See the dedicated [IP Filtering](/ipsfilter/ipsfilter) page for full documentation.
@@ -71,7 +70,7 @@ See the dedicated [IP Filtering](/ipsfilter/ipsfilter) page for full documentati
 
 **Can multiple applications share the same origin?**
 
-Yes. The firewall matches the first enabled application whose origin matches the request. List order determines priority.
+Yes. The firewall resolves the application through a combination of identification steps: authenticated user, client IP, origin header, and custom header. It never relies on origin alone, as the origin header can be spoofed. Multiple applications can share the same origin provided they are distinguished by another identifier.
 
 **What happens when no application matches a request?**
 

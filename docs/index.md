@@ -156,8 +156,10 @@ Serve content in multiple languages across separate websites or applications, ea
 | Webhook (single, post lifecycle events) | ✅ | ✅ |
 | Hooks & Filters API | ✅ | ✅ |
 | Multiple Applications | — | ✅ |
-| IP Filtering (blacklist) | ✅ | ✅ |
-| IP Filtering whitelist + CIDR + country blocking | — | ✅ |
+| Global IP Filtering (shared blocklist, runs before app resolution) | ✅ | ✅ |
+| Global IP Filtering: CIDR ranges + country blocking | — | ✅ |
+| Per-Application IP Filtering (additional app-scoped blocks) | ✅ | ✅ |
+| Per-Application IP Filtering: CIDR + country blocking + retention time | — | ✅ |
 | Collections & Sort Order | — | ✅ |
 | Properties & Models (per-property control + custom schemas) | — | ✅ |
 | Settings Route schema editor (ACF options, menus) | — | ✅ |

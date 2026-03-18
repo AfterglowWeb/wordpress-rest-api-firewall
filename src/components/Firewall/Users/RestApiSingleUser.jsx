@@ -1,20 +1,30 @@
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 
-import Stack from '@mui/material/Stack';
+import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
 import FormHelperText from '@mui/material/FormHelperText';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
+import AllowedIps from '../IpFilter/AllowedIps';
+import AllowedOrigins from '../IpFilter/AllowedOrigins';
+
 export default function RestApiSingleUser( { form, setField } ) {
 	const { __, sprintf } = wp.i18n || {};
 	const { adminData } = useAdminData();
+	const nonce = adminData?.nonce;
+
 	const [ restApiUser, setRestApiUser ] = useState( [] );
+	const [ allowedIps, setAllowedIps ] = useState( [] );
+	const [ allowedOrigins, setAllowedOrigins ] = useState( [] );
+	const [ saving, setSaving ] = useState( false );
+	const [ settingsLoaded, setSettingsLoaded ] = useState( false );
 
 	const adminUrl = adminData?.ajaxurl?.split( 'admin-ajax.php' )[ 0 ] || '';
 	const usersPageUrl = `${ adminUrl }users.php`;
@@ -30,13 +40,49 @@ export default function RestApiSingleUser( { form, setField } ) {
 		}
 	}, [ adminData?.users, form.firewall_user_id ] );
 
+	useEffect( () => {
+		if ( ! adminData?.ajaxurl || ! nonce ) return;
+		fetch( adminData.ajaxurl, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+			body: new URLSearchParams( { action: 'get_firewall_global_settings', nonce } ),
+		} )
+			.then( ( res ) => res.json() )
+			.then( ( result ) => {
+				if ( result?.success && result?.data ) {
+					setAllowedIps( result.data.allowed_ips || [] );
+					setAllowedOrigins( result.data.allowed_origins || [] );
+				}
+				setSettingsLoaded( true );
+			} )
+			.catch( () => setSettingsLoaded( true ) );
+	}, [ adminData?.ajaxurl, nonce ] );
+
+	const saveSetting = useCallback( async ( field, value ) => {
+		setSaving( true );
+		try {
+			await fetch( adminData.ajaxurl, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+				body: new URLSearchParams( {
+					action: 'save_firewall_global_settings',
+					nonce,
+					field,
+					value: JSON.stringify( value ),
+				} ),
+			} );
+		} catch {} // eslint-disable-line no-empty
+		setSaving( false );
+	}, [ adminData?.ajaxurl, nonce ] );
+
 	return (
-		<Stack
-			direction={ { xs: 'column', lg: 'row' } }
-			gap={ 2 }
-			justifyContent={ 'space-between' }
-		>
-			<FormControl sx={ { flex: 1, maxWidth: 270 } }>
+		<Stack spacing={ 3 }>
+			<Stack
+				direction={ { xs: 'column', lg: 'row' } }
+				gap={ 2 }
+				justifyContent={ 'space-between' }
+			>
+				<FormControl sx={ { flex: 1, maxWidth: 270 } }>
 				<InputLabel id="user-id-label">
 					{ __( 'REST API User', 'rest-api-firewall' ) }
 				</InputLabel>
@@ -125,5 +171,42 @@ export default function RestApiSingleUser( { form, setField } ) {
 				</FormHelperText>
 			</FormControl>
 		</Stack>
+
+		{ settingsLoaded && (
+			<>
+				<Divider />
+				<Stack spacing={ 2 } sx={ { maxWidth: 760 } }>
+					<Stack spacing={ 0.75 }>
+						<Typography variant="body2" fontWeight={ 600 }>
+							{ __( 'Allowed IPs', 'rest-api-firewall' ) }
+						</Typography>
+						<Typography variant="caption" color="text.secondary">
+							{ __( 'In whitelist mode, only requests from these IPs will be accepted globally.', 'rest-api-firewall' ) }
+						</Typography>
+						<AllowedIps
+							value={ allowedIps }
+							onChange={ setAllowedIps }
+							onSave={ () => saveSetting( 'allowed_ips', allowedIps ) }
+							saving={ saving }
+						/>
+					</Stack>
+					<Stack spacing={ 0.75 }>
+						<Typography variant="body2" fontWeight={ 600 }>
+							{ __( 'Allowed Origins', 'rest-api-firewall' ) }
+						</Typography>
+						<Typography variant="caption" color="text.secondary">
+							{ __( 'Restrict REST API requests by Origin header. Applies globally.', 'rest-api-firewall' ) }
+						</Typography>
+						<AllowedOrigins
+							value={ allowedOrigins }
+							onChange={ setAllowedOrigins }
+							onSave={ () => saveSetting( 'allowed_origins', allowedOrigins ) }
+							saving={ saving }
+						/>
+					</Stack>
+				</Stack>
+			</>
+		) }
+	</Stack>
 	);
 }

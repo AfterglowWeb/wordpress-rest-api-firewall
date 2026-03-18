@@ -5,6 +5,17 @@ import { useApplication } from '../../../contexts/ApplicationContext';
 import { useDialog, DIALOG_TYPES } from '../../../contexts/DialogContext';
 import { isValidOrigin } from '../../../utils/sanitizeHost';
 
+/**
+ * Allowed Origins component. Supports two modes:
+ *
+ * Uncontrolled (self-contained): omit value/onChange/onSave — the component
+ * manages its own state and AJAX load/save using the selected application from context.
+ *
+ * Controlled: pass value, onChange, and onSave — the component calls these
+ * instead of running its own AJAX. Used when the parent controls persistence
+ * (e.g. ApplicationEditor per-section saves).
+ */
+
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -20,7 +31,13 @@ import Divider from '@mui/material/Divider';
 import AddIcon from '@mui/icons-material/Add';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 
-export default function AllowedOrigins( { disabled = false } ) {
+export default function AllowedOrigins( {
+	disabled = false,
+	value: valueProp,      // controlled: provided origins array
+	onChange: onChangeProp, // controlled: called on add/remove
+	onSave: onSaveProp,     // controlled: called when Save is clicked
+	saving: savingProp,     // controlled: external save loading state
+} ) {
 	const { __ } = wp.i18n || {};
     const { adminData } = useAdminData();
     const { proNonce } = useLicense();
@@ -29,13 +46,22 @@ export default function AllowedOrigins( { disabled = false } ) {
 
     const { openDialog } = useDialog();
 
-    const [ allowedOrigins, setAllowedOrigins ] = useState( [] );
+    const isControlled = valueProp !== undefined;
+
+    const [ allowedOrigins, setAllowedOrigins ] = useState( isControlled ? valueProp : [] );
     const [ originInput, setOriginInput ] = useState( '' );
     const [ originError, setOriginError ] = useState( '' );
     const [ originsSaving, setOriginsSaving ] = useState( false );
     const [ dirty, setDirty ] = useState( false );
     const [ anchorEl, setAnchorEl ] = useState( null );
     const open = Boolean( anchorEl );
+
+    // Keep internal state in sync when parent changes controlled value
+    useEffect( () => {
+        if ( isControlled ) {
+            setAllowedOrigins( valueProp || [] );
+        }
+    }, [ valueProp, isControlled ] );
 
     const loadAllowedOrigins = useCallback( async () => {
         if ( ! selectedApplicationId ) {
@@ -94,13 +120,23 @@ export default function AllowedOrigins( { disabled = false } ) {
             setOriginError( __( 'Already added.', 'rest-api-firewall' ) );
             return;
         }
-        setAllowedOrigins( [ ...allowedOrigins, val ] );
+        const next = [ ...allowedOrigins, val ];
+        if ( isControlled ) {
+            onChangeProp?.( next );
+        } else {
+            setAllowedOrigins( next );
+            setDirty( true );
+        }
         setOriginInput( '' );
         setOriginError( '' );
-        setDirty( true );
-    }, [ originInput, allowedOrigins, __ ] );
+    }, [ isControlled, onChangeProp, originInput, allowedOrigins, __ ] );
 
     const handleSave = useCallback( () => {
+        if ( isControlled ) {
+            onSaveProp?.();
+            setAnchorEl( null );
+            return;
+        }
         openDialog( {
             type: DIALOG_TYPES.CONFIRM,
             title: __( 'Save Allowed Origins', 'rest-api-firewall' ),
@@ -111,19 +147,24 @@ export default function AllowedOrigins( { disabled = false } ) {
                 setDirty( false );
             },
         } );
-    }, [ openDialog, allowedOrigins, saveAllowedOrigins, __ ] );
+    }, [ isControlled, onSaveProp, openDialog, allowedOrigins, saveAllowedOrigins, __ ] );
 
     useEffect( () => {
-        loadAllowedOrigins();
-    }, [ loadAllowedOrigins ] );
+        if ( ! isControlled ) {
+            loadAllowedOrigins();
+        }
+    }, [ loadAllowedOrigins, isControlled ] );
 
     const originsLabel = allowedOrigins.length > 0
         ? `${ allowedOrigins.length } ${ __( 'origin(s)', 'rest-api-firewall' ) }`
         : '';
 
+    const isSaving = isControlled ? ( savingProp || false ) : originsSaving;
+    const isSaveDisabled = isControlled ? isSaving : ( ! dirty || originsSaving );
+
     return (
         <>
-            <Tooltip title={ disabled ? __( 'Allowed origins are only enforced in whitelist mode.', 'rest-api-firewall' ) : '' }>
+            <Tooltip title={ ( ! isControlled && disabled ) ? __( 'Allowed origins are only enforced in whitelist mode.', 'rest-api-firewall' ) : '' }>
                 <Stack direction="row" alignItems="center" gap={ 1 }>
                     { originsLabel && (
                         <Chip size="small" variant="outlined" label={ originsLabel } />
@@ -131,7 +172,7 @@ export default function AllowedOrigins( { disabled = false } ) {
                     <Button
                         size="small"
                         variant="text"
-                        disabled={ disabled }
+                        disabled={ ! isControlled && disabled }
                         onClick={ ( e ) => setAnchorEl( e.currentTarget ) }
                     >
                         { __( 'Set Allowed Origins', 'rest-api-firewall' ) }
@@ -184,8 +225,13 @@ export default function AllowedOrigins( { disabled = false } ) {
                                         variant="outlined"
                                         sx={ { fontFamily: 'monospace' } }
                                         onDelete={ () => {
-                                            setAllowedOrigins( allowedOrigins.filter( ( o ) => o !== origin ) );
-                                            setDirty( true );
+                                            const next = allowedOrigins.filter( ( o ) => o !== origin );
+                                            if ( isControlled ) {
+                                                onChangeProp?.( next );
+                                            } else {
+                                                setAllowedOrigins( next );
+                                                setDirty( true );
+                                            }
                                         } }
                                     />
                                 ) ) }
@@ -200,9 +246,9 @@ export default function AllowedOrigins( { disabled = false } ) {
                                 variant="contained"
                                 disableElevation
                                 onClick={ handleSave }
-                                disabled={ ! dirty || originsSaving }
+                                disabled={ isSaveDisabled }
                             >
-                                { originsSaving ? __( 'Saving…', 'rest-api-firewall' ) : __( 'Save', 'rest-api-firewall' ) }
+                                { isSaving ? __( 'Saving…', 'rest-api-firewall' ) : __( 'Save', 'rest-api-firewall' ) }
                             </Button>
                         </Stack>
 

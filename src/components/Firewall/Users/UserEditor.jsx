@@ -256,7 +256,7 @@ export default function UserEditor( { user, onBack, appAllowedAuthMethods = [] }
 				saving={ saving }
 				enabled={ isNew ? null : enabled }
 				setEnabled={ isNew ? null : ( checked ) => setEnabled( checked ) }
-				breadcrumb={ [ appTitle, __( 'Auth. & Rate Limit', 'rest-api-firewall' ), __( 'User', 'rest-api-firewall' ) ] }
+				breadcrumb={ [ __( 'User', 'rest-api-firewall' ) ] }
 				docPage="users"
 			/>
 

@@ -1,237 +1,123 @@
-import { useState, useEffect, useCallback } from '@wordpress/element';
-import { useAdminData } from '../../../contexts/AdminDataContext';
-import { useDialog, DIALOG_TYPES } from '../../../contexts/DialogContext';
 import { useLicense } from '../../../contexts/LicenseContext';
+import { useNavigation } from '../../../contexts/NavigationContext';
+import { useApplication } from '../../../contexts/ApplicationContext';
 import Alert from '@mui/material/Alert';
-import FormControl from '@mui/material/FormControl';
-import FormHelperText from '@mui/material/FormHelperText';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
+import AlertTitle from '@mui/material/AlertTitle';
+import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import Divider from '@mui/material/Divider';
 
 import PublicIcon from '@mui/icons-material/Public';
 import TableViewIcon from '@mui/icons-material/TableView';
 import LockOutlineIcon from '@mui/icons-material/LockOutline';
+import VpnLockOutlinedIcon from '@mui/icons-material/VpnLockOutlined';
 
 import IpDataGrid from './IpDataGrid';
 import CountryBlockList from './CountryBlockList';
-import LoadingMessage from '../../LoadingMessage';
-export default function IpFilter() {
-	const { adminData } = useAdminData();
+
+export default function IpFilter( { scope = 'app' } ) {
 	const { __ } = wp.i18n || {};
-	const [ loading, setLoading ] = useState( true );
-	const [ errorMessage, setErrorMessage ] = useState( '' );
-	const [ settings, setSettings ] = useState( {
-		enabled: false,
-		mode: 'blacklist',
-	} );
-	const [ currentTab, setCurrentTab ] = useState( 0 );
-	const { hasValidLicense, proNonce } = useLicense();
-	const nonce = proNonce || adminData.nonce;
-	const { openDialog, updateDialog } = useDialog();
-	const isIpFilterDisabled = ! settings.enabled;
-	const isDisabled = ! hasValidLicense || isIpFilterDisabled;
+	const { subKey, navigate } = useNavigation();
+	const { selectedApplication } = useApplication();
+	const isGlobal   = scope === 'global';
+	const listType   = isGlobal ? 'global_blacklist' : 'blacklist';
+	const panelKey   = isGlobal ? 'global-ip-filtering' : 'ip-filtering';
+	const currentTab = subKey === 'countries' ? 1 : 0;
+	const { hasValidLicense } = useLicense();
 
-	const activeListKey =
-		settings.mode === 'whitelist' ? 'whitelist' : 'blacklist';
-
-	const loadSettings = useCallback( async () => {
-		setLoading( true );
-		try {
-			const response = await fetch( adminData.ajaxurl, {
-				method: 'POST',
-				headers: {
-					'Content-Type':
-						'application/x-www-form-urlencoded; charset=UTF-8',
-				},
-				body: new URLSearchParams( {
-					action: 'get_ip_filter',
-					nonce,
-				} ),
-			} );
-
-			const result = await response.json();
-
-			if ( result?.success && result?.data ) {
-				setSettings( {
-					enabled: result.data.enabled ?? false,
-					mode: result.data.mode ?? 'blacklist',
-				} );
-			}
-		} catch ( error ) {
-			setErrorMessage(
-				'Error loading IP filter settings:' + JSON.stringify( error )
-			);
-		} finally {
-			setLoading( false );
-		}
-	}, [ adminData ] );
-
-	useEffect( () => {
-		loadSettings();
-	}, [ loadSettings ] );
-
-	const saveIpFilter = useCallback(
-		async ( updates ) => {
-			try {
-				await fetch( adminData.ajaxurl, {
-					method: 'POST',
-					headers: {
-						'Content-Type':
-							'application/x-www-form-urlencoded; charset=UTF-8',
-					},
-					body: new URLSearchParams( {
-						action: 'save_ip_filter',
-						nonce,
-						...updates,
-					} ),
-				} );
-			} catch ( error ) {
-				setErrorMessage(
-					'Error saving IP filter:' + JSON.stringify( error )
-				);
-			}
-		},
-		[ adminData ]
-	);
-
-	const handleModeChange = ( e ) => {
-		const newMode = e.target.value;
-
-		openDialog( {
-			type: DIALOG_TYPES.CONFIRM,
-			title: __( 'Change Filter Mode', 'rest-api-firewall' ),
-			content:
-				newMode === 'whitelist'
-					? __(
-							'Switching to whitelist mode will only allow listed IPs to access the REST API. All other IPs will be blocked.',
-							'rest-api-firewall'
-					  )
-					: __(
-							'Switching to blacklist mode will block listed IPs from accessing the REST API. All other IPs will be allowed.',
-							'rest-api-firewall'
-					  ),
-			onConfirm: async () => {
-				updateDialog( {
-					type: DIALOG_TYPES.LOADING,
-					title: __( 'Saving', 'rest-api-firewall' ),
-					content: __( 'Updating filter mode…', 'rest-api-firewall' ),
-				} );
-
-				setSettings( ( prev ) => ( { ...prev, mode: newMode } ) );
-				await saveIpFilter( { mode: newMode } );
-
-				updateDialog( {
-					type: DIALOG_TYPES.SUCCESS,
-					title: __( 'Mode Updated', 'rest-api-firewall' ),
-					content:
-						newMode === 'whitelist'
-							? __(
-									'Whitelist mode is now active.',
-									'rest-api-firewall'
-							  )
-							: __(
-									'Blacklist mode is now active.',
-									'rest-api-firewall'
-							  ),
-					autoClose: 2000,
-				} );
-			},
-		} );
-	};
-
-	if ( loading ) {
-		return <LoadingMessage />;
-	}
+	const appLabel = selectedApplication?.title
+		? selectedApplication.title
+		: __( 'current application', 'rest-api-firewall' );
 
 	return (
 		<Stack p={ 4 } flexGrow={ 1 } spacing={ 3 }>
-			
 			{ ! hasValidLicense && (
 				<Alert
 					severity="info"
 					icon={ <LockOutlineIcon /> }
-					sx={ { mb: 2 } }
 				>
 					{ __(
-						'Buy a licence for advanced IP management: White List, Block by CIDR, Block by Country, Bulk Delete, Set Retention Time, Export and More…',
+						'Buy a licence for advanced IP management: Block by CIDR, Block by Country, Bulk Delete, Set Retention Time, Export and More…',
 						'rest-api-firewall'
 					) }
 				</Alert>
 			) }
-			<Stack
-				direction={ { xs: 'column', sm: 'row' } }
-				justifyContent="space-between"
-				spacing={ 3 }
-				alignItems={ { xs: 'stretch', sm: 'flex-start' } }
-			>
 
-				<FormControl
-				sx={ { flex: 1, maxWidth: 240, position: 'relative' } }
-				disabled={ isDisabled }
+			{ isGlobal ? (
+				<Alert
+					severity="info"
+					icon={ <VpnLockOutlinedIcon /> }
+					sx={ { bgcolor: 'grey.100', color: 'text.primary', '& .MuiAlert-icon': { color: 'text.secondary' } } }
 				>
-					<InputLabel id="ip-mode-label">
-						{ __( 'Filter Mode', 'rest-api-firewall' ) }
-					</InputLabel>
-					<Select
-						labelId="ip-mode-label"
-						value={ settings.mode }
-						onChange={ handleModeChange }
-						label={ __( 'Filter Mode', 'rest-api-firewall' ) }
-						size="small"
+					<AlertTitle sx={ { fontWeight: 600 } }>
+						{ __( 'Global IP Filtering', 'rest-api-firewall' ) }
+					</AlertTitle>
+					{ __( 'These rules apply to all applications before any request reaches application logic. Use this list for shared threats: known bots, scrapers, and unwanted geographies.', 'rest-api-firewall' ) }
+					{ selectedApplication && (
+						<>
+							{ ' ' }
+							{ __( 'To add blocks specific to', 'rest-api-firewall' ) }{ ' ' }
+							<Link
+								component="button"
+								underline="always"
+								sx={ { verticalAlign: 'baseline', fontSize: 'inherit', color: 'inherit' } }
+								onClick={ () => navigate( 'ip-filtering' ) }
+							>
+								{ appLabel }
+							</Link>
+							{ ', ' }
+							{ __( 'use the per-application IP Filtering panel.', 'rest-api-firewall' ) }
+						</>
+					) }
+				</Alert>
+			) : (
+				<Alert
+					severity="info"
+					icon={ <VpnLockOutlinedIcon /> }
+					sx={ { bgcolor: 'grey.100', color: 'text.primary', '& .MuiAlert-icon': { color: 'text.secondary' } } }
+				>
+					<AlertTitle sx={ { fontWeight: 600 } }>
+						{ __( 'Additional blocks for this application', 'rest-api-firewall' ) }
+					</AlertTitle>
+					{ __( 'These rules layer on top of the', 'rest-api-firewall' ) }{ ' ' }
+					<Link
+						component="button"
+						underline="always"
+						sx={ { verticalAlign: 'baseline', fontSize: 'inherit', color: 'inherit' } }
+						onClick={ () => navigate( 'global-ip-filtering' ) }
 					>
-						<MenuItem value="blacklist">
-							{ __( 'Blacklist', 'rest-api-firewall' ) }
-						</MenuItem>
-						{ hasValidLicense && (
-							<MenuItem value="whitelist">
-								{ __( 'Whitelist', 'rest-api-firewall' ) }
-							</MenuItem>
-						) }
-					</Select>
-					<FormHelperText>
-						{ settings.mode === 'blacklist'
-							? __( 'Block listed IPs', 'rest-api-firewall' )
-							: __(
-									'Allow only listed IPs',
-									'rest-api-firewall'
-							  ) }
-					</FormHelperText>
-				</FormControl>
-
-
-			</Stack>
+						{ __( 'Global IP Filtering', 'rest-api-firewall' ) }
+					</Link>
+					{ '. ' }
+					{ __( 'An IP blocked globally never reaches this application. Use this list for rules specific to', 'rest-api-firewall' ) }{ ' ' }
+					{ appLabel }{ '.' }
+				</Alert>
+			) }
 
 			<Tabs
-			value={ currentTab }
-			onChange={ ( e, v ) => setCurrentTab( v ) }
-			sx={ {
-				mb: 2,
-				borderBottom: 1,
-				borderColor: 'divider',
-			} }
+				value={ currentTab }
+				onChange={ ( _, v ) => navigate( panelKey, v === 1 ? 'countries' : 'ips' ) }
+				sx={ {
+					mb: 2,
+					borderBottom: 1,
+					borderColor: 'divider',
+				} }
 			>
 				<Tab
 					icon={ <TableViewIcon /> }
 					iconPosition="start"
-					label={ settings.mode === 'blacklist' ? __( 'Block IPs', 'rest-api-firewall' ) : __('Allow IPs', 'rest-api-firewall') }
+					label={ __( 'Block IPs', 'rest-api-firewall' ) }
 				/>
 				<Tab
 					icon={ <PublicIcon /> }
 					iconPosition="start"
-					label={ settings.mode === 'blacklist' ? __( 'Block Country', 'rest-api-firewall' ) : __( 'Allow Country', 'rest-api-firewall' ) }
+					label={ __( 'Block Country', 'rest-api-firewall' ) }
 				/>
 			</Tabs>
 
-			{ currentTab === 0 && <IpDataGrid listType={ activeListKey } /> }
-
-			{ currentTab === 1 && (
-				<CountryBlockList listType={ activeListKey } />
-			) }
+			{ currentTab === 0 && <IpDataGrid listType={ listType } /> }
+			{ currentTab === 1 && <CountryBlockList listType={ listType } /> }
 		</Stack>
 	);
 }

@@ -348,7 +348,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 				saving={ saving }
 				enabled={ enabled }
 				setEnabled={ setEnabled }
-				breadcrumb={ [__( 'Webhooks', 'rest-api-firewall' ), __( 'Webhook', 'rest-api-firewall' ) ] }
+				breadcrumb={ [__( 'Webhook', 'rest-api-firewall' ) ] }
 				docPage="webhooks"
 			/>
 

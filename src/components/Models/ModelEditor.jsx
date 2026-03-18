@@ -335,7 +335,7 @@ export default function ModelEditor( { model, onBack } ) {
 				enabled={ enabled }
 				setEnabled={ setEnabled }
 				dirtyFlag={ dirtyFlag }
-				breadcrumb={ [ __( 'Properties', 'rest-api-firewall' ), __( 'Model', 'rest-api-firewall' ) ] }
+				breadcrumb={ [ __( 'Properties', 'rest-api-firewall' ) ] }
 				docPage="models"
 				titleSuffix={
 					<Stack direction="row" gap={ 0.75 } alignItems="center">

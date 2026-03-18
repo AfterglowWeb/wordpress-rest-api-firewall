@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useLicense } from '../../../contexts/LicenseContext';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useApplication } from '../../../contexts/ApplicationContext';
+import { useNavigation } from '../../../contexts/NavigationContext';
 import useProActions from '../../../hooks/useProActions';
 
 import Alert from '@mui/material/Alert';
@@ -22,10 +23,9 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
 	const { save } = useProActions();
 	const nonce = proNonce || adminData?.nonce;
 	const { __ } = wp.i18n || {};
-
+	const { subKey, navigate: navCtx } = useNavigation();
+	const currentTab = subKey === 'routes' ? 1 : 0;
 	const isModuleEnabled = !! adminData?.admin_options?.firewall_routes_policy_enabled;
-
-	const [ currentTab, setCurrentTab ] = useState( 0 );
 	const [ appEntry, setAppEntry ] = useState( null );
 	const [ proSettings, setProSettings ] = useState( {
 		enforce_auth:             false,
@@ -131,7 +131,7 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
 		<Stack p={4} flexGrow={ 1 } spacing={ 3 }>
 			<Tabs
             value={ currentTab }
-            onChange={ ( e, v ) => setCurrentTab( v ) }
+            onChange={ ( e, v ) => navCtx( 'per-route-settings', v === 1 ? 'routes' : 'global' ) }
             sx={ {
                 mb: 2,
                 borderBottom: 1,
