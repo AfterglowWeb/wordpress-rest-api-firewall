@@ -36,7 +36,52 @@ class CoreOptions {
 		$options = array(
 
 			// Firewall - Authentication & Rate Limiting.
-			'firewall_user_id'                          => array(
+			'firewall_auth_method'                        => array(
+				'default_value'     => 'wp_auth',
+				'type'              => 'string',
+				'sanitize_callback' => static fn( $v ) => in_array( $v, array( 'wp_auth', 'jwt' ), true ) ? $v : 'wp_auth',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_auth_rate',
+			),
+
+			'firewall_jwt_algorithm'                      => array(
+				'default_value'     => 'RS256',
+				'type'              => 'string',
+				'sanitize_callback' => static fn( $v ) => in_array( $v, array( 'HS256', 'HS384', 'HS512', 'RS256', 'RS384', 'RS512', 'ES256' ), true ) ? $v : 'RS256',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_auth_rate',
+			),
+
+			'firewall_jwt_public_key'                     => array(
+				'default_value'     => '',
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_textarea_field',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_auth_rate',
+			),
+
+			'firewall_jwt_audience'                       => array(
+				'default_value'     => '',
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_auth_rate',
+			),
+
+			'firewall_jwt_issuer'                         => array(
+				'default_value'     => '',
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_auth_rate',
+			),
+
+			'firewall_user_id'                            => array(
 				'default_value'     => 0,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -45,7 +90,7 @@ class CoreOptions {
 				'group'             => 'firewall_auth_rate',
 			),
 
-			'rate_limit'                                => array(
+			'rate_limit'                                  => array(
 				'default_value'     => 30,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -54,7 +99,7 @@ class CoreOptions {
 				'group'             => 'firewall_auth_rate',
 			),
 
-			'rate_limit_time'                           => array(
+			'rate_limit_time'                             => array(
 				'default_value'     => 60,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -63,7 +108,7 @@ class CoreOptions {
 				'group'             => 'firewall_auth_rate',
 			),
 
-			'rate_limit_release'                        => array(
+			'rate_limit_release'                          => array(
 				'default_value'     => 300,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -72,7 +117,7 @@ class CoreOptions {
 				'group'             => 'firewall_auth_rate',
 			),
 
-			'rate_limit_blacklist'                      => array(
+			'rate_limit_blacklist'                        => array(
 				'default_value'     => 5,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -81,7 +126,7 @@ class CoreOptions {
 				'group'             => 'firewall_auth_rate',
 			),
 
-			'rate_limit_blacklist_time'                 => array(
+			'rate_limit_blacklist_time'                   => array(
 				'default_value'     => 3600,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -91,7 +136,7 @@ class CoreOptions {
 			),
 
 			// Firewall - Routes & Policies.
-			'firewall_routes_policy_enabled'            => array(
+			'firewall_routes_policy_enabled'              => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -100,7 +145,7 @@ class CoreOptions {
 				'group'             => 'firewall_routes_policy',
 			),
 
-			'enforce_auth'                              => array(
+			'enforce_auth'                                => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -109,7 +154,7 @@ class CoreOptions {
 				'group'             => 'firewall_routes_policy',
 			),
 
-			'enforce_rate_limit'                        => array(
+			'enforce_rate_limit'                          => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -118,7 +163,7 @@ class CoreOptions {
 				'group'             => 'firewall_routes_policy',
 			),
 
-			'hide_user_routes'                          => array(
+			'hide_user_routes'                            => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -127,7 +172,7 @@ class CoreOptions {
 				'group'             => 'firewall_routes_policy',
 			),
 
-			'hide_oembed_routes'                        => array(
+			'hide_oembed_routes'                          => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -136,7 +181,7 @@ class CoreOptions {
 				'group'             => 'firewall_routes_policy',
 			),
 
-			'hide_batch_routes'                         => array(
+			'hide_batch_routes'                           => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -145,7 +190,7 @@ class CoreOptions {
 				'group'             => 'firewall_routes_policy',
 			),
 
-			'firewall_policy'                           => array(
+			'firewall_policy'                             => array(
 				'default_value'     => array(
 					'nodes'  => array(),
 					'routes' => array(),
@@ -158,7 +203,7 @@ class CoreOptions {
 			),
 
 			// Collections.
-			'rest_collections_per_page_enabled'         => array(
+			'rest_collections_per_page_enabled'           => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -167,7 +212,7 @@ class CoreOptions {
 				'group'             => 'collections',
 			),
 
-			'rest_collections_posts_per_page'           => array(
+			'rest_collections_posts_per_page'             => array(
 				'default_value'     => 100,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -176,7 +221,7 @@ class CoreOptions {
 				'group'             => 'collections',
 			),
 
-			'rest_collections_attachments_per_page'     => array(
+			'rest_collections_attachments_per_page'       => array(
 				'default_value'     => 100,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -186,7 +231,7 @@ class CoreOptions {
 			),
 
 			// Settings Route.
-			'rest_models_embed_menus_enabled'           => array(
+			'rest_models_embed_menus_enabled'             => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -195,7 +240,7 @@ class CoreOptions {
 				'group'             => 'settings_route',
 			),
 
-			'rest_models_acf_options_page_enabled'      => array(
+			'rest_models_acf_options_page_enabled'        => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -204,7 +249,7 @@ class CoreOptions {
 				'group'             => 'settings_route',
 			),
 
-			'rest_models_acf_options_page_endpoint'     => array(
+			'rest_models_acf_options_page_endpoint'       => array(
 				'default_value'     => '',
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
@@ -213,7 +258,7 @@ class CoreOptions {
 				'group'             => 'settings_route',
 			),
 
-			'rest_models_embed_menus_endpoint'          => array(
+			'rest_models_embed_menus_endpoint'            => array(
 				'default_value'     => '',
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
@@ -222,7 +267,7 @@ class CoreOptions {
 				'group'             => 'settings_route',
 			),
 
-			'application_webhook_endpoint'              => array(
+			'application_webhook_endpoint'                => array(
 				'default_value'     => '',
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
@@ -231,7 +276,7 @@ class CoreOptions {
 				'group'             => 'webhook',
 			),
 
-			'application_webhook_custom_secret_enabled' => array(
+			'application_webhook_custom_secret_enabled'   => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -240,7 +285,7 @@ class CoreOptions {
 				'group'             => 'webhook',
 			),
 
-			'application_webhook_auto_trigger_events'   => array(
+			'application_webhook_auto_trigger_events'     => array(
 				'default_value'     => array(),
 				'type'              => 'array',
 				'sanitize_callback' => 'sanitize_key',
@@ -250,7 +295,7 @@ class CoreOptions {
 			),
 
 			// Global security.
-			'theme_disable_xmlrpc'                      => array(
+			'theme_disable_xmlrpc'                        => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -259,7 +304,7 @@ class CoreOptions {
 				'group'             => 'global_security',
 			),
 
-			'theme_disable_filedit'                     => array(
+			'theme_disable_filedit'                       => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -268,7 +313,7 @@ class CoreOptions {
 				'group'             => 'global_security',
 			),
 
-			'theme_disable_comments'                    => array(
+			'theme_disable_comments'                      => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -277,7 +322,7 @@ class CoreOptions {
 				'group'             => 'global_security',
 			),
 
-			'theme_disable_pingbacks'                   => array(
+			'theme_disable_pingbacks'                     => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -286,7 +331,7 @@ class CoreOptions {
 				'group'             => 'global_security',
 			),
 
-			'theme_disable_rss'                         => array(
+			'theme_disable_rss'                           => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -295,7 +340,7 @@ class CoreOptions {
 				'group'             => 'global_security',
 			),
 
-			'theme_disable_sitemap'                     => array(
+			'theme_disable_sitemap'                       => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -304,7 +349,7 @@ class CoreOptions {
 				'group'             => 'global_security',
 			),
 
-			'theme_enforce_wpconfig_permissions'        => array(
+			'theme_enforce_wpconfig_permissions'          => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -313,7 +358,7 @@ class CoreOptions {
 				'group'             => 'global_security',
 			),
 
-			'theme_secure_uploads_dir'                  => array(
+			'theme_secure_uploads_dir'                    => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -322,7 +367,7 @@ class CoreOptions {
 				'group'             => 'global_security',
 			),
 
-			'theme_secure_http_headers'                 => array(
+			'theme_secure_http_headers'                   => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -331,7 +376,7 @@ class CoreOptions {
 				'group'             => 'global_security',
 			),
 
-			'theme_compression_http_headers'            => array(
+			'theme_compression_http_headers'              => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -340,7 +385,7 @@ class CoreOptions {
 				'group'             => 'global_security',
 			),
 
-			'theme_wp_http_headers'                     => array(
+			'theme_wp_http_headers'                       => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -349,7 +394,7 @@ class CoreOptions {
 				'group'             => 'global_security',
 			),
 
-			'theme_redirect_templates_enabled'          => array(
+			'theme_redirect_templates_enabled'            => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -359,7 +404,7 @@ class CoreOptions {
 			),
 
 			// Theme.
-			'theme_redirect_templates_preset_url'       => array(
+			'theme_redirect_templates_preset_url'         => array(
 				'default_value'     => '',
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_key',
@@ -368,7 +413,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_redirect_templates_free_url_enabled' => array(
+			'theme_redirect_templates_free_url_enabled'   => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -377,7 +422,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_redirect_templates_free_url'         => array(
+			'theme_redirect_templates_free_url'           => array(
 				'default_value'     => '',
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_url',
@@ -386,7 +431,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_remove_empty_p_tags_enabled'         => array(
+			'theme_remove_empty_p_tags_enabled'           => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -395,7 +440,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_remove_emoji_scripts'                => array(
+			'theme_remove_emoji_scripts'                  => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -404,7 +449,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_svg_webp_support_enabled'            => array(
+			'theme_svg_webp_support_enabled'              => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -413,7 +458,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_max_upload_weight'                   => array(
+			'theme_max_upload_weight'                     => array(
 				'default_value'     => 1024, // KB.
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
@@ -422,7 +467,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_max_upload_weight_enabled'           => array(
+			'theme_max_upload_weight_enabled'             => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -431,7 +476,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_json_acf_fields_enabled'             => array(
+			'theme_json_acf_fields_enabled'               => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -440,7 +485,7 @@ class CoreOptions {
 				'group'             => 'theme',
 			),
 
-			'theme_disable_gutenberg'                   => array(
+			'theme_disable_gutenberg'                     => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -450,7 +495,7 @@ class CoreOptions {
 			),
 
 			// Module enable toggles — visible in free (as locked), functional with PRO licence.
-			'user_rate_limit_enabled'                   => array(
+			'user_rate_limit_enabled'                     => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -459,7 +504,7 @@ class CoreOptions {
 				'group'             => 'user_rate_limit',
 			),
 
-			'rest_models_enabled'                       => array(
+			'rest_models_enabled'                         => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -469,7 +514,7 @@ class CoreOptions {
 			),
 
 			// Global output filters (Post Types & Taxonomies).
-			'rest_models_relative_url_enabled'          => array(
+			'rest_models_relative_url_enabled'            => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -487,7 +532,7 @@ class CoreOptions {
 				'group'             => 'models_properties',
 			),
 
-			'rest_models_remove_links_prop'             => array(
+			'rest_models_remove_links_prop'               => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -496,7 +541,7 @@ class CoreOptions {
 				'group'             => 'models_properties',
 			),
 
-			'rest_models_remove_embed_prop'             => array(
+			'rest_models_remove_embed_prop'               => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -505,7 +550,7 @@ class CoreOptions {
 				'group'             => 'models_properties',
 			),
 
-			'rest_models_remove_empty_props'            => array(
+			'rest_models_remove_empty_props'              => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -514,7 +559,7 @@ class CoreOptions {
 				'group'             => 'models_properties',
 			),
 
-			'rest_models_remove_empty_props_recursively' => array(
+			'rest_models_remove_empty_props_recursively'  => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -524,7 +569,7 @@ class CoreOptions {
 			),
 
 			// Global output filters (Post Types only).
-			'rest_models_resolve_rendered_props'        => array(
+			'rest_models_resolve_rendered_props'          => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -542,7 +587,7 @@ class CoreOptions {
 				'group'             => 'models_properties',
 			),
 
-			'rest_models_embed_post_attachments_enabled' => array(
+			'rest_models_embed_post_attachments_enabled'  => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -551,7 +596,7 @@ class CoreOptions {
 				'group'             => 'models_properties',
 			),
 
-			'rest_models_embed_terms_enabled'           => array(
+			'rest_models_embed_terms_enabled'             => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -560,7 +605,7 @@ class CoreOptions {
 				'group'             => 'models_properties',
 			),
 
-			'rest_models_embed_author_enabled'          => array(
+			'rest_models_embed_author_enabled'            => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -569,7 +614,7 @@ class CoreOptions {
 				'group'             => 'models_properties',
 			),
 
-			'rest_settings_route_enabled'               => array(
+			'rest_settings_route_enabled'                 => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -578,7 +623,7 @@ class CoreOptions {
 				'group'             => 'settings_route',
 			),
 
-			'rest_collections_enabled'                  => array(
+			'rest_collections_enabled'                    => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -587,7 +632,7 @@ class CoreOptions {
 				'group'             => 'collections',
 			),
 
-			'automations_enabled'                       => array(
+			'automations_enabled'                         => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -596,7 +641,7 @@ class CoreOptions {
 				'group'             => 'automations',
 			),
 
-			'webhooks_enabled'                          => array(
+			'webhooks_enabled'                            => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
@@ -605,7 +650,7 @@ class CoreOptions {
 				'group'             => 'webhook',
 			),
 
-			'mails_enabled'                             => array(
+			'mails_enabled'                               => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',

@@ -32,7 +32,7 @@ Incoming REST request
 └────────────┬────────────┘
              │
 ┌────────────▼────────────┐
-│  Authentication Check   │  ← JWT / WP App Passwords (OAuth: Pro)
+│  Authentication Check   │  ← JWT / WP App Passwords
 └────────────┬────────────┘
              │
 ┌────────────▼────────────┐
@@ -56,7 +56,9 @@ Incoming REST request
 
 Alongside this pipeline, **webhooks and email notifications** run independently of REST requests. Any WordPress event (post transitions, user actions, WooCommerce hooks, custom CRON, REST API hits) can trigger an outbound webhook and/or an email notification — scoped per application in Pro.
 
-**Webhook / push pipeline:**
+The flow also works in reverse: **incoming webhooks** let external services push events into WordPress and trigger automations directly (Pro).
+
+**Outbound (push) pipeline:**
 
 ```
 WordPress Event (post publish, order created, cron, …)
@@ -74,13 +76,36 @@ WordPress Event (post publish, order created, cron, …)
 └────────────┘  └────────────┘
 ```
 
+**Incoming (pull) pipeline:** <span style="display:inline-block;padding:1px 6px;border-radius:3px;background:#1565c0;color:#fff;font-size:10px;font-weight:600">PRO</span>
+
+```
+External Service (Stripe, GitHub, CRM, IoT, …)
+       │  POST + HMAC signature
+       ▼
+┌─────────────────────────┐
+│  Incoming Webhook URL   │  ← Unique endpoint per entry, signature verified
+└────────────┬────────────┘
+             │  valid → fire automation
+             ▼
+┌─────────────────────────┐
+│  Automation / Trigger   │  ← Payload fields available in conditions & actions
+└────────────┬────────────┘
+             │
+       ┌─────┴──────┐
+       ▼            ▼
+┌────────────┐  ┌────────────┐
+│  Webhook   │  │   Email    │
+│  (push)    │  │ Notification│
+└────────────┘  └────────────┘
+```
+
 ---
 
 ## Free Features
 
 | Feature | Description |
 |---|---|
-| **Authentication** | WordPress Application Password (hardened to a single authorised user) and JWT. OAuth requires Pro |
+| **Authentication** | WordPress Application Password (hardened to a single authorised user) and JWT |
 | **Rate Limiting** | Global request quotas with configurable time windows |
 | **Global IP Filtering** | Shared blocklist that runs before application resolution. Manual IPv4 blacklisting. Auto-blacklist from rate limit violations. Read-only GeoIP stats. CIDR ranges and country blocking require Pro |
 | **Routes** | Enforce auth and rate limiting globally. Disable the default `/users` routes to prevent user enumeration |

@@ -26,7 +26,7 @@ import { isValidIpOrCidr } from '../../../utils/sanitizeIp';
  * @param {boolean}  props.saving  - Shows loading state on the Save button.
  * @param {Function} props.onSave  - Called when the user clicks Save inside the popover.
  */
-export default function AllowedIps( { value = [], onChange, saving = false, onSave } ) {
+export default function AllowedIps( { value = [], onChange, saving = false, onSave, maxEntries } ) {
 	const { __ } = wp.i18n || {};
 
 	const [ input, setInput ] = useState( '' );
@@ -34,9 +34,12 @@ export default function AllowedIps( { value = [], onChange, saving = false, onSa
 	const [ anchorEl, setAnchorEl ] = useState( null );
 	const open = Boolean( anchorEl );
 
+	const atLimit = maxEntries !== undefined && value.length >= maxEntries;
+
 	const handleAdd = useCallback( () => {
 		const val = input.trim();
 		if ( ! val ) return;
+		if ( atLimit ) return;
 		if ( ! isValidIpOrCidr( val, true ) ) {
 			setInputError( __( 'Invalid IP address or CIDR range.', 'rest-api-firewall' ) );
 			return;
@@ -48,7 +51,7 @@ export default function AllowedIps( { value = [], onChange, saving = false, onSa
 		onChange?.( [ ...value, val ] );
 		setInput( '' );
 		setInputError( '' );
-	}, [ input, value, onChange, __ ] );
+	}, [ input, value, onChange, atLimit, __ ] );
 
 	const countLabel = value.length > 0
 		? `${ value.length } ${ __( 'IP(s)', 'rest-api-firewall' ) }`
@@ -97,13 +100,18 @@ export default function AllowedIps( { value = [], onChange, saving = false, onSa
 								variant="outlined"
 								size="small"
 								onClick={ handleAdd }
-								disabled={ ! input.trim() || saving }
+								disabled={ ! input.trim() || saving || atLimit }
 								sx={ { flexShrink: 0, mt: '2px' } }
 								startIcon={ <AddIcon /> }
 							>
 								{ __( 'Add', 'rest-api-firewall' ) }
 							</Button>
 						</Stack>
+						{ atLimit && maxEntries !== undefined && (
+							<Typography variant="caption" color="warning.main">
+								{ `Max ${ maxEntries } IP${ maxEntries === 1 ? '' : 's' } allowed on free tier` }
+							</Typography>
+						) }
 
 						{ value.length > 0 && (
 							<Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 1 } }>

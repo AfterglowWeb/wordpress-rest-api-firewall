@@ -12,11 +12,13 @@ import { useDialog, DIALOG_TYPES } from './DialogContext';
 const NavigationContext = createContext( null );
 
 const DEFAULT_PANEL = window?.restApiFirewallPro?.isValid ? 'applications' : 'user-rate-limiting';
+const LS_PANEL_KEY = 'raf_panel';
 
 function parseHash() {
 	const raw = window.location.hash.replace( /^#/, '' );
 	if ( ! raw ) {
-		return { panel: DEFAULT_PANEL, subKey: null };
+		const saved = localStorage.getItem( LS_PANEL_KEY );
+		return { panel: saved || DEFAULT_PANEL, subKey: null };
 	}
 	const slash = raw.indexOf( '/' );
 	if ( slash === -1 ) {
@@ -39,7 +41,6 @@ export function NavigationProvider( { children } ) {
 	const [ location, setLocation ] = useState( parseHash );
 	const isRevertingRef = useRef( false );
 
-	// Ensure the URL has a hash on first load.
 	useEffect( () => {
 		if ( ! window.location.hash ) {
 			history.replaceState(
@@ -59,12 +60,17 @@ export function NavigationProvider( { children } ) {
 				history.pushState( null, '', hash );
 			}
 			setLocation( { panel, subKey: subKey || null } );
+			if ( ! subKey ) {
+				try {
+					localStorage.setItem( LS_PANEL_KEY, panel );
+				} catch ( e ) {}
+			}
 		},
 		[]
 	);
 
 	const navigateGuarded = useCallback(
-		( panel, subKey = null ) => {
+		( panel, subKey = null, onAfterNavigate = null ) => {
 			if ( dirtyFlag.has ) {
 				openDialog( {
 					type: DIALOG_TYPES.CONFIRM,
@@ -80,11 +86,13 @@ export function NavigationProvider( { children } ) {
 					onConfirm: () => {
 						setDirtyFlag( { has: false, message: '' } );
 						navigate( panel, subKey );
+						onAfterNavigate?.();
 					},
 				} );
 				return;
 			}
 			navigate( panel, subKey );
+			onAfterNavigate?.();
 		},
 		[ dirtyFlag, openDialog, navigate, setDirtyFlag, __ ]
 	);

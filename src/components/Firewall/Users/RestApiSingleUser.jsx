@@ -14,6 +14,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import AllowedIps from '../IpFilter/AllowedIps';
 import AllowedOrigins from '../IpFilter/AllowedOrigins';
+import { JwtConfig } from './AuthManager';
 
 export default function RestApiSingleUser( { form, setField } ) {
 	const { __, sprintf } = wp.i18n || {};
@@ -74,6 +75,17 @@ export default function RestApiSingleUser( { form, setField } ) {
 		} catch {} // eslint-disable-line no-empty
 		setSaving( false );
 	}, [ adminData?.ajaxurl, nonce ] );
+
+	const jwtConfig = {
+		algorithm: form.firewall_jwt_algorithm || 'RS256',
+		public_key: form.firewall_jwt_public_key || '',
+		audience: form.firewall_jwt_audience || '',
+		issuer: form.firewall_jwt_issuer || '',
+	};
+
+	const handleJwtConfigChange = ( key, value ) => {
+		setField( 'firewall_jwt_' + key, value );
+	};
 
 	return (
 		<Stack spacing={ 3 }>
@@ -170,6 +182,40 @@ export default function RestApiSingleUser( { form, setField } ) {
 					) }
 				</FormHelperText>
 			</FormControl>
+		</Stack>
+
+		<Divider />
+
+		<Stack spacing={ 2 }>
+			<Stack spacing={ 0.5 }>
+				<Typography variant="body2" fontWeight={ 600 }>
+					{ __( 'Authentication Method', 'rest-api-firewall' ) }
+				</Typography>
+				<Typography variant="caption" color="text.secondary">
+					{ __( 'Choose how clients authenticate to the REST API.', 'rest-api-firewall' ) }
+				</Typography>
+			</Stack>
+			<FormControl size="small" sx={ { maxWidth: 280 } }>
+				<InputLabel>
+					{ __( 'Authentication Method', 'rest-api-firewall' ) }
+				</InputLabel>
+				<Select
+					name="firewall_auth_method"
+					value={ form.firewall_auth_method || 'wp_auth' }
+					label={ __( 'Authentication Method', 'rest-api-firewall' ) }
+					onChange={ setField }
+				>
+					<MenuItem value="wp_auth">
+						{ __( 'WordPress Application Password', 'rest-api-firewall' ) }
+					</MenuItem>
+					<MenuItem value="jwt">
+						{ __( 'JWT', 'rest-api-firewall' ) }
+					</MenuItem>
+				</Select>
+			</FormControl>
+			{ form.firewall_auth_method === 'jwt' && (
+				<JwtConfig config={ jwtConfig } onChange={ handleJwtConfigChange } />
+			) }
 		</Stack>
 
 		{ settingsLoaded && (

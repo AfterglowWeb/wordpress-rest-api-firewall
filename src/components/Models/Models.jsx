@@ -226,7 +226,7 @@ export default function Models() {
 					fontFamily: 'monospace',
 					color: 'primary.main',
 				} }
-				onClick={ () => setEditing( params.row ) }
+				onClick={ ( e ) => { e.preventDefault(); setEditing( params.row ); } }
 			>
 				{ params.value }
 				<OpenInNewIcon

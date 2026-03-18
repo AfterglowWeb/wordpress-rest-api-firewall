@@ -25,6 +25,7 @@ export default function useSettingsForm( { adminData } ) {
 	}, [ optionsConfig ] );
 
 	const [ form, setForm ] = useState( defaults );
+	const [ savedForm, setSavedForm ] = useState( defaults );
 
 	useEffect( () => {
 		if ( ! adminData?.admin_options ) {
@@ -39,6 +40,7 @@ export default function useSettingsForm( { adminData } ) {
 			);
 		}
 		setForm( hydrated );
+		setSavedForm( hydrated );
 	}, [ adminData?.admin_options, optionsConfig ] );
 
 	const setField = useCallback( ( eventOrName, maybeValue ) => {
@@ -99,5 +101,20 @@ export default function useSettingsForm( { adminData } ) {
 		[ form, optionsByGroup ]
 	);
 
-	return { form, setField, setSlider, optionsByGroup, pickGroup };
+	const isGroupDirty = useCallback(
+		( groupName ) => {
+			const keys = optionsByGroup[ groupName ] || [];
+			return keys.some( ( k ) => {
+				const curr = form[ k ];
+				const saved = savedForm[ k ];
+				if ( Array.isArray( curr ) ) {
+					return JSON.stringify( curr ) !== JSON.stringify( saved );
+				}
+				return curr !== saved;
+			} );
+		},
+		[ form, savedForm, optionsByGroup ]
+	);
+
+	return { form, setField, setSlider, optionsByGroup, pickGroup, isGroupDirty };
 }

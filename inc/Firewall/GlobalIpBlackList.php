@@ -27,7 +27,7 @@ class GlobalIpBlackList {
 	}
 
 	private function __construct() {
-		add_action( 'wp_ajax_get_global_ip_filter',  array( $this, 'ajax_get_global_ip_filter' ) );
+		add_action( 'wp_ajax_get_global_ip_filter', array( $this, 'ajax_get_global_ip_filter' ) );
 		add_action( 'wp_ajax_save_global_ip_filter', array( $this, 'ajax_save_global_ip_filter' ) );
 	}
 

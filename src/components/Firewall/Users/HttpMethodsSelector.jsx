@@ -6,9 +6,12 @@ import Typography from '@mui/material/Typography';
 
 export const HTTP_METHODS = [ 'get', 'post', 'put', 'patch', 'delete' ];
 
-export default function HttpMethodsSelector( { value = [], onChange, onSave, saving = false } ) {
+export default function HttpMethodsSelector( { value = [], onChange, onSave, saving = false, allowedMethods = [] } ) {
 	const { __ } = wp.i18n || {};
 	const toggle = ( method ) => {
+		if ( allowedMethods.length > 0 && ! allowedMethods.includes( method ) ) {
+			return;
+		}
 		const next = value.includes( method )
 			? value.filter( ( m ) => m !== method )
 			: [ ...value, method ];
@@ -33,6 +36,7 @@ export default function HttpMethodsSelector( { value = [], onChange, onSave, sav
 							checked={ value.includes( method ) }
 							onChange={ () => toggle( method ) }
 							size="small"
+							disabled={ allowedMethods.length > 0 && ! allowedMethods.includes( method ) }
 						/>
 					}
 					sx={ {
