@@ -27,7 +27,7 @@ class IpEntryRepository {
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 				'default'           => 'blacklist',
-				'allowed_values'    => array( 'whitelist', 'blacklist' ),
+				'allowed_values'    => array( 'whitelist', 'blacklist', 'global_blacklist' ),
 				'sortable'          => true,
 			),
 			'entry_type'   => array(

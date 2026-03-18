@@ -1,15 +1,15 @@
-import { useState } from '@wordpress/element';
-
 import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 
+import { useNavigation } from '../../contexts/NavigationContext';
 import Mails from './Mails';
 import Smtp from './Smtp';
 
 export default function MailsPanel() {
 	const { __ } = wp.i18n || {};
-	const [ emailTab, setEmailTab ] = useState( 0 );
+	const { subKey, navigate } = useNavigation();
+	const emailTab = subKey === 'smtp' ? 1 : 0;
 
 	return (
 		<Stack spacing={ 0 } p={4} flexGrow={ 1 }>
@@ -20,7 +20,7 @@ export default function MailsPanel() {
 			>
 				<Tabs
 					value={ emailTab }
-					onChange={ ( _, v ) => setEmailTab( v ) }
+					onChange={ ( _, v ) => navigate( 'emails', v === 1 ? 'smtp' : 'templates' ) }
 					sx={ { flex: 1 } }
 				>
 					<Tab

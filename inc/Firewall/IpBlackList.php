@@ -37,7 +37,6 @@ class IpBlackList {
 	public static function default_options(): array {
 		return array(
 			'enabled'        => false,
-			'mode'           => 'blacklist',
 			'expiry_seconds' => 0,
 		);
 	}
@@ -60,13 +59,10 @@ class IpBlackList {
 	}
 
 	public static function sanitize_options( array $options ): array {
-		$defaults      = self::default_options();
-		$allowed_modes = array( 'blacklist', 'whitelist' );
-		$mode          = sanitize_text_field( $options['mode'] ?? $defaults['mode'] );
+		$defaults = self::default_options();
 
 		return array(
 			'enabled'        => (bool) ( $options['enabled'] ?? $defaults['enabled'] ),
-			'mode'           => in_array( $mode, $allowed_modes, true ) ? $mode : 'blacklist',
 			'expiry_seconds' => absint( $options['expiry_seconds'] ?? $defaults['expiry_seconds'] ),
 		);
 	}
@@ -234,7 +230,6 @@ class IpBlackList {
 		wp_send_json_success(
 			array(
 				'enabled'        => $options['enabled'],
-				'mode'           => $options['mode'],
 				'expiry_seconds' => $options['expiry_seconds'],
 				'client_ip'      => self::get_client_ip(),
 			),

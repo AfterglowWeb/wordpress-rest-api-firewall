@@ -43,6 +43,7 @@ import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import ShieldIcon from '@mui/icons-material/Shield';
 
+import { useNavigation } from '../contexts/NavigationContext';
 import AppIdentity from './AppIdentity';
 import ApplicationSelector from './ApplicationSelector';
 import Documentation from './Documentation/Documentation';
@@ -56,8 +57,6 @@ export const WP_MENU_WIDTH_MD = 36;
 export const WP_MENU_WIDTH_LG = 160;
 
 export default function Navigation( {
-	panelGroup,
-	onPanelChange,
 	migrationNeeded,
 	migrationDone,
 	schemaUpdateNeeded,
@@ -68,8 +67,9 @@ export default function Navigation( {
 } ) {
 	const { hasValidLicense } = useLicense();
 	const { adminData, updateAdminData } = useAdminData();
-	const { dirtyFlag } = useApplication();
+	const { dirtyFlag, selectedApplication } = useApplication();
 	const { save } = useProActions();
+	const { panel, navigateGuarded } = useNavigation();
 	const { __ } = wp.i18n || {};
 	const theme = useTheme();
 	const isMobile = useMediaQuery( theme.breakpoints.down( 'md' ) );
@@ -77,23 +77,29 @@ export default function Navigation( {
 	const [ mobileOpen, setMobileOpen ] = useState( false );
 
 	const moduleKey = {
-		'user-rate-limiting': { module: 'users',          optionKey: 'user_rate_limit_enabled',           label: __( 'Active', 'rest-api-firewall' ) },
-		'per-route-settings': { module: 'routes_policy',  optionKey: 'firewall_routes_policy_enabled',    label: __( 'Active', 'rest-api-firewall' ) },
-		'ip-filtering':       { module: 'ip_filter',      optionKey: null,                                label: __( 'Active', 'rest-api-firewall' ) },
-		'collections':        { module: 'collections',    optionKey: 'rest_collections_enabled',          label: __( 'Active', 'rest-api-firewall' ) },
-		'models-properties':  { module: 'models',         optionKey: 'rest_models_enabled',               label: __( 'Active', 'rest-api-firewall' ) },
-		'settings-route':     { module: 'settings_route', optionKey: 'rest_settings_route_enabled',       label: __( 'Active', 'rest-api-firewall' ) },
-		'webhook':            { module: 'webhooks',       optionKey: 'webhooks_enabled',                  label: __( 'Active', 'rest-api-firewall' ) },
-		'emails':             { module: 'mails',          optionKey: 'mails_enabled',                     label: __( 'Active', 'rest-api-firewall' ) },
-		'automations':        { module: 'automations',    optionKey: 'automations_enabled',               label: __( 'Active', 'rest-api-firewall' ) },
+		'user-rate-limiting':  { module: 'users',           optionKey: 'user_rate_limit_enabled',           label: __( 'Active', 'rest-api-firewall' ) },
+		'per-route-settings':  { module: 'routes_policy',   optionKey: 'firewall_routes_policy_enabled',    label: __( 'Active', 'rest-api-firewall' ) },
+		'ip-filtering':        { module: 'ip_filter',       optionKey: null,                                label: __( 'Active', 'rest-api-firewall' ) },
+		'global-ip-filtering': { module: 'global_ip_filter', optionKey: null,                               label: __( 'Active', 'rest-api-firewall' ) },
+		'collections':         { module: 'collections',     optionKey: 'rest_collections_enabled',          label: __( 'Active', 'rest-api-firewall' ) },
+		'models-properties':   { module: 'models',          optionKey: 'rest_models_enabled',               label: __( 'Active', 'rest-api-firewall' ) },
+		'settings-route':      { module: 'settings_route',  optionKey: 'rest_settings_route_enabled',       label: __( 'Active', 'rest-api-firewall' ) },
+		'webhook':             { module: 'webhooks',         optionKey: 'webhooks_enabled',                  label: __( 'Active', 'rest-api-firewall' ) },
+		'emails':              { module: 'mails',            optionKey: 'mails_enabled',                     label: __( 'Active', 'rest-api-firewall' ) },
+		'automations':         { module: 'automations',      optionKey: 'automations_enabled',               label: __( 'Active', 'rest-api-firewall' ) },
 	};
 
 	const [ ipFilterEnabled, setIpFilterEnabled ] = useState(
 		() => !! adminData?.ip_filter_enabled
 	);
 
+	const [ globalIpFilterEnabled, setGlobalIpFilterEnabled ] = useState(
+		() => !! adminData?.global_ip_filter_enabled
+	);
+
 	const getModuleEnabled = ( pg ) => {
 		if ( pg === 'ip-filtering' ) return ipFilterEnabled;
+		if ( pg === 'global-ip-filtering' ) return globalIpFilterEnabled;
 		const key = moduleKey[ pg ]?.optionKey;
 		return key ? !! adminData?.admin_options?.[ key ] : null;
 	};
@@ -126,6 +132,8 @@ export default function Navigation( {
 					onSuccess: () => {
 						if ( pg === 'ip-filtering' ) {
 							setIpFilterEnabled( checked );
+						} else if ( pg === 'global-ip-filtering' ) {
+							setGlobalIpFilterEnabled( checked );
 						} else {
 							updateAdminData( {
 								admin_options: {
@@ -145,17 +153,23 @@ export default function Navigation( {
 		{
 			key: 'applications',
 			label: __( 'Applications', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'Pro',
+			breadcrumbPrefix: '',
 			icon: AppsOutlinedIcon,
 			disabled: ! hasValidLicense,
+			hidden: true,
 		},
+		{ type: 'app-selector' },
 		{
 			type: 'section',
 			label: __( 'REST API Firewall', 'rest-api-firewall' ),
+			breadcrumbPrefix: '',
+			icon:'',
 		},
 		{
 			key: 'user-rate-limiting',
-			label: __( 'Auth. & Rate Limit', 'rest-api-firewall' ),
+			label: hasValidLicense
+				? __( 'Users', 'rest-api-firewall' )
+				: __( 'Auth. & Rate Limit', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'REST API Firewall',
 			icon: SecurityOutlined,
 		},
@@ -233,6 +247,12 @@ export default function Navigation( {
 
 		{ type: 'section', label: __( '', 'rest-api-firewall' ) },
 		{
+			key: 'global-ip-filtering',
+			label: __( 'Global IP Filtering', 'rest-api-firewall' ),
+			breadcrumbPrefix: 'Modules',
+			icon: VpnLockOutlinedIcon,
+		},
+		{
 			key: 'global_security',
 			label: __( 'Global Security', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Modules',
@@ -271,7 +291,7 @@ export default function Navigation( {
 	];
 
 	const activeMenuItem =
-		menuItems.find( ( m ) => m.key === panelGroup ) || null;
+		menuItems.find( ( m ) => m.key === panel ) || null;
 
 	return (
 		<>
@@ -341,9 +361,18 @@ export default function Navigation( {
 							);
 						}
 
-						const isActive = panelGroup === item.key;
-						const Icon = item.icon;
+					if ( item.hidden ) return null;
 
+					if ( item.type === 'app-selector' ) {
+						if ( ! hasValidLicense ) return null;
+						return (
+							<Box key="app-selector" sx={ { py: 0.5 } }>
+								<ApplicationSelector />
+							</Box>
+						);
+					}
+
+						const Icon = item.icon;
 						return (
 							<Tooltip
 								key={ item.key }
@@ -361,7 +390,7 @@ export default function Navigation( {
 									<ListItemButton
 										sx={ {
 											px: 3,
-											backgroundColor: isActive
+											backgroundColor: !! item.disabled
 												? 'grey.100'
 												: '',
 										} }
@@ -370,7 +399,7 @@ export default function Navigation( {
 											if ( item.action ) {
 												item.action();
 											} else {
-											onPanelChange( item.key );
+													navigateGuarded( item.key );
 											}
 											setMobileOpen( false );
 										} }
@@ -380,7 +409,7 @@ export default function Navigation( {
 												sx={ {
 													px: 1,
 													minWidth: 32,
-													color: isActive
+													color: !! item.disabled
 														? 'primary.main'
 														: 'text.secondary',
 												} }
@@ -465,19 +494,29 @@ export default function Navigation( {
 							</IconButton>
 						) }
 
-{ hasValidLicense && [
-							'applications', 'user-rate-limiting', 'per-route-settings',
-							'ip-filtering', 'collections', 'models-properties',
-							'settings-route', 'webhook', 'emails', 'automations',
-						].includes( panelGroup ) && (
-								<ApplicationSelector />
-							) }
 
-						
 						<Stack direction="row" alignItems="center" gap={ 2 }>
 
-							<Stack>
-								{ activeMenuItem?.breadcrumbPrefix && (
+							{ hasValidLicense && moduleKey[ panel ] !== undefined && (
+							<Stack direction="row" alignItems="center" gap={ 2 }>
+								<FormControlLabel
+								control={
+								<Switch
+									size="small"
+									checked={ !! getModuleEnabled( panel ) }
+									onChange={ ( e ) => handleModuleToggle( panel, e.target.checked ) }
+									/>
+								}
+								sx={{ 
+									flex: 0,
+									'.MuiFormControlLabel-label': { color: 'text.primary' } }}
+								label={ 'Enable' }
+								/>
+							</Stack>
+							) }
+
+							<Stack minWidth={150}>
+								{ selectedApplication && (
 									<Typography
 										variant="caption"
 										color="text.secondary"
@@ -487,7 +526,7 @@ export default function Navigation( {
 											letterSpacing: 0.5,
 										} }
 									>
-										{ activeMenuItem.breadcrumbPrefix }
+										{ selectedApplication.title }
 									</Typography>
 								) }
 								<Typography
@@ -497,35 +536,9 @@ export default function Navigation( {
 									sx={ { lineHeight: 1.2 } }
 								>
 									{ activeMenuItem?.label || '' }
-									{ activeMenuItem?.secondary && (
-										<Typography
-											variant="caption"
-											color="text.secondary"
-											sx={ { ml: 1 } }
-										>
-											{ activeMenuItem.secondary }
-										</Typography>
-									) }
 								</Typography>
 							</Stack>
 
-							<Divider variant="middle" flexItem orientation="vertical" />
-
-							{ hasValidLicense && moduleKey[ panelGroup ] !== undefined && (
-								<FormControlLabel
-								control={
-									<Switch
-										size="small"
-										checked={ !! getModuleEnabled( panelGroup ) }
-										onChange={ ( e ) => handleModuleToggle( panelGroup, e.target.checked ) }
-									/>
-								}
-								sx={{ 
-									flex: 0,
-									'.MuiFormControlLabel-label': { color: 'text.primary' } }}
-								label={ 'Enable' }
-								/>
-							) }
 							
 						</Stack>
 

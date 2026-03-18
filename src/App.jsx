@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from '@wordpress/element';
+import { useState, useEffect } from '@wordpress/element';
 import { useAdminData } from './contexts/AdminDataContext';
-import { DialogProvider, useDialog, DIALOG_TYPES } from './contexts/DialogContext';
+import { DialogProvider } from './contexts/DialogContext';
 import { useLicense } from './contexts/LicenseContext';
 import { ApplicationProvider, useApplication } from './contexts/ApplicationContext';
+import { NavigationProvider, useNavigation } from './contexts/NavigationContext';
 
 import useSettingsForm from './hooks/useSettingsForm';
 import useSaveOptions from './hooks/useSaveOptions';
@@ -57,10 +58,9 @@ function AppContent() {
 	const { save, saving } = useSaveOptions();
 	const { hasValidLicense } = useLicense();
 	const { dirtyFlag } = useApplication();
-	const { openDialog } = useDialog();
+	const { panel, navigate } = useNavigation();
 
 	const [ postTypes, setPostTypes ] = useState( [] );
-	const [ panelGroup, setPanelGroup ] = useState( 'user-rate-limiting' );
 	const [ themeStatus, setThemeStatus ] = useState( null );
 
 	const migrationNeeded = !! window.restApiFirewallPro?.migrationNeeded;
@@ -76,51 +76,10 @@ function AppContent() {
 	} );
 
 	useEffect( () => {
-		const lastTab = window.localStorage.getItem( 'rest_api_firewall_last_tab' ) || null;
-		if ( lastTab && isNaN( Number( lastTab ) ) ) {
-			setPanelGroup( lastTab );
-		}
-	}, [] );
-
-	useEffect( () => {
 		if ( Array.isArray( adminData?.post_types ) ) {
 			setPostTypes( adminData.post_types );
 		}
 	}, [ adminData ] );
-
-	const navigateTo = useCallback( ( newIndex ) => {
-		setPanelGroup( newIndex );
-		window.localStorage.setItem( 'rest_api_firewall_last_tab', newIndex );
-	}, [] );
-
-	const handleMenuClick = useCallback(
-		( newIndex ) => {
-			if ( newIndex === undefined ) {
-				return false;
-			}
-			if ( panelGroup === newIndex ) {
-				return;
-			}
-			if ( dirtyFlag.has ) {
-				openDialog( {
-					type: DIALOG_TYPES.CONFIRM,
-					title: __( 'Unsaved Changes', 'rest-api-firewall' ),
-					content:
-						dirtyFlag.message ||
-						__(
-							'You have unsaved changes. Leave anyway?',
-							'rest-api-firewall'
-						),
-					confirmLabel: __( 'Leave', 'rest-api-firewall' ),
-					cancelLabel: __( 'Stay', 'rest-api-firewall' ),
-					onConfirm: () => navigateTo( newIndex ),
-				} );
-				return;
-			}
-			navigateTo( newIndex );
-		},
-		[ panelGroup, dirtyFlag, openDialog, navigateTo, __ ]
-	);
 
 	const SAVE_CONFIG = {
 		firewall_auth_rate: {
@@ -218,7 +177,7 @@ function AppContent() {
 		delete PANEL_SAVE_GROUP[ 'webhook' ];
 	}
 
-	const activeSaveGroup = PANEL_SAVE_GROUP[ panelGroup ] ?? null;
+	const activeSaveGroup = PANEL_SAVE_GROUP[ panel ] ?? null;
 	const showSaveButton = activeSaveGroup !== null;
 
 	const handleSave = () => {
@@ -233,8 +192,7 @@ function AppContent() {
 		<>
 			<Box sx={ { display: 'flex' } }>
 				<Navigation
-					panelGroup={ panelGroup }
-					onPanelChange={ handleMenuClick }
+
 					migrationNeeded={ migrationNeeded }
 					migrationDone={ migrationDone }
 					schemaUpdateNeeded={ schemaUpdateNeeded }
@@ -269,9 +227,9 @@ function AppContent() {
 						bgcolor: 'background.paper',
 					} }
 				>
-					{ hasValidLicense && panelGroup === 'applications' && <Applications onNavigate={ navigateTo } /> }
+{ hasValidLicense && panel === 'applications' && <Applications /> }
 
-					{ panelGroup === 'user-rate-limiting' && (
+							{ panel === 'user-rate-limiting' && (
 						<>
 							{ hasValidLicense ? (
 								<Users />
@@ -295,15 +253,19 @@ function AppContent() {
 						</>
 					) }
 
-					{ panelGroup === 'per-route-settings' && (<RoutesPanel
-						form={ form }
-						setField={ setField }
-						onNavigate={ navigateTo }
-					/>) }
+{ panel === 'per-route-settings' && (
+								<RoutesPanel
+									form={ form }
+									setField={ setField }
+									onNavigate={ ( v ) => navigate( { 5: 'models-properties' }[ v ] ?? String( v ) ) }
+								/>
+							) }
 
-					{ panelGroup === 'ip-filtering' && <IpFilter /> }
+{ panel === 'ip-filtering' && <IpFilter /> }
 
-					{ panelGroup === 'collections' && (
+{ panel === 'global-ip-filtering' && <IpFilter scope="global" /> }
+
+							{ panel === 'collections' && (
 						<Collections
 							form={ form }
 							setField={ setField }
@@ -311,7 +273,7 @@ function AppContent() {
 						/>
 					) }
 
-					{ panelGroup === 'models-properties' &&
+							{ panel === 'models-properties' &&
 						( hasValidLicense ? (
 							<Models />
 						) : (
@@ -322,31 +284,31 @@ function AppContent() {
 							/>
 						) ) }
 
-					{ panelGroup === 'settings-route' && (
+							{ panel === 'settings-route' && (
 						<SettingsRoute
 							form={ form }
 							setField={ setField }
 						/>
 					) }
 
-					{ panelGroup === 'webhook' &&
+					{ panel === 'webhook' &&
 						( hasValidLicense ? (
 							<Webhooks />
 						) : (
 							<Webhook form={ form } setField={ setField } />
 						) ) }
 
-					{ panelGroup === 'emails' && hasValidLicense && <MailsPanel /> }
+{ panel === 'emails' && hasValidLicense && <MailsPanel /> }
 
-					{ panelGroup === 'logs' && hasValidLicense && <Logs /> }
+{ panel === 'logs' && hasValidLicense && <Logs /> }
 
-					{ panelGroup === 'automations' && hasValidLicense && <Automations /> }
+{ panel === 'automations' && hasValidLicense && <Automations /> }
 
-					{ panelGroup === 'global_security' && (
+							{ panel === 'global_security' && (
 					<GlobalSecurity form={ form } setField={ setField } />
 				) }
 
-					{ panelGroup === 'theme' && (
+					{ panel === 'theme' && (
 						<ThemeSettings
 							form={ form }
 							setField={ setField }
@@ -356,9 +318,9 @@ function AppContent() {
 						/>
 					) }
 
-					{ panelGroup === 'license' && <License /> }
+{ panel === 'license' && <License /> }
 
-					{ panelGroup === 'configuration' && (
+							{ panel === 'configuration' && (
 						<ConfigurationPanel
 							form={ form }
 							setField={ setField }
@@ -395,8 +357,10 @@ export default function App() {
 	return (
 		<DialogProvider>
 			<ApplicationProvider>
-				<AppContent />
-				<ConfirmDialog />
+						<NavigationProvider>
+								<AppContent />
+								<ConfirmDialog />
+						</NavigationProvider>
 			</ApplicationProvider>
 		</DialogProvider>
 	);
