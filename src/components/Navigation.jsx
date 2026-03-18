@@ -42,7 +42,6 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import ShieldIcon from '@mui/icons-material/Shield';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
 import { useNavigation } from '../contexts/NavigationContext';
 import AppIdentity from './AppIdentity';
@@ -149,9 +148,9 @@ export default function Navigation( {
 			breadcrumbPrefix: 'Pro',
 			icon: AppsOutlinedIcon,
 			disabled: ! hasValidLicense,
+			hidden: true,
 		},
 		{ type: 'app-selector' },
-		{ type: 'current-app' },
 		{
 			type: 'section',
 			label: __( 'REST API Firewall', 'rest-api-firewall' ),
@@ -346,42 +345,16 @@ export default function Navigation( {
 							);
 						}
 
+					if ( item.hidden ) return null;
+
 					if ( item.type === 'app-selector' ) {
 						if ( ! hasValidLicense ) return null;
 						return (
-							<Box key="app-selector" sx={ { px: 2, pt: 0.5, pb: 1 } }>
+							<Box key="app-selector" sx={ { py: 0.5 } }>
 								<ApplicationSelector />
 							</Box>
 						);
 					}
-
-					if ( item.type === 'current-app' ) {
-						if ( ! selectedApplication ) return null;
-						return (
-							<ListItemButton
-								key="current-app"
-								onClick={ () => navigateGuarded( 'applications', selectedApplication.id ) }
-								sx={ { pl: 3, py: 0.5 } }
-							>
-								<Typography
-									variant="body2"
-									sx={ {
-										color: 'primary.main',
-										textDecoration: 'underline',
-										overflow: 'hidden',
-										textOverflow: 'ellipsis',
-										whiteSpace: 'nowrap',
-										flex: 1,
-										mr: 0.5,
-									} }
-								>
-									{ selectedApplication.title }
-								</Typography>
-								<ArrowForwardIosIcon sx={ { fontSize: 9, color: 'primary.main', flexShrink: 0 } } />
-							</ListItemButton>
-						);
-					}
-
 
 						const Icon = item.icon;
 						return (
