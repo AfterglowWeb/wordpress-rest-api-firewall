@@ -7,6 +7,8 @@ import useProActions from '../../../hooks/useProActions';
 import formatDate from '../../../utils/formatDate';
 
 import Alert from '@mui/material/Alert';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
@@ -19,6 +21,8 @@ import Typography from '@mui/material/Typography';
 import AuthManager from './AuthManager';
 import LoadingMessage from '../../LoadingMessage';
 import EntryToolbar from '../../shared/EntryToolbar';
+import AllowedIps from '../IpFilter/AllowedIps';
+import AllowedOrigins from '../IpFilter/AllowedOrigins';
 import HttpMethodsSelector from './HttpMethodsSelector';
 import { UserRateLimitFields } from './RateLimit';
 
@@ -37,7 +41,7 @@ function SectionHeader( { title, description } ) {
 	);
 }
 
-export default function UserEditor( { user, onBack, appAllowedAuthMethods = [] } ) {
+export default function UserEditor( { user, onBack, appSettings = {} } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
 	const { selectedApplicationId, setDirtyFlag } = useApplication();
@@ -90,6 +94,13 @@ export default function UserEditor( { user, onBack, appAllowedAuthMethods = [] }
 	const [ rateLimitBlacklistWindow, setRateLimitBlacklistWindow ] = useState(
 		user.rate_limit_blacklist_window ?? 3600
 	);
+	const [ rateLimitEnabled, setRateLimitEnabled ] = useState( user.rate_limit_enabled !== false );
+	const [ userAllowedIps, setUserAllowedIps ] = useState( user.allowed_ips || [] );
+	const [ userAllowedOrigins, setUserAllowedOrigins ] = useState( user.allowed_origins || [] );
+
+	const appAllowedAuthMethods = appSettings?.allowed_auth_methods || [];
+
+	const appRateLimit = appSettings?.rate_limit || {};
 
 	const loadEntry = useCallback( async () => {
 		setLoading( true );
@@ -137,6 +148,9 @@ export default function UserEditor( { user, onBack, appAllowedAuthMethods = [] }
 				setRateLimitRelease( e.rate_limit_release_seconds ?? 300 );
 				setRateLimitBlacklistAfter( e.rate_limit_blacklist_after ?? 0 );
 				setRateLimitBlacklistWindow( e.rate_limit_blacklist_window ?? 0 );
+				setRateLimitEnabled( e.rate_limit_enabled !== false );
+				setUserAllowedIps( e.allowed_ips || [] );
+				setUserAllowedOrigins( e.allowed_origins || [] );
 				
 			} else {
 				setLoadError(
@@ -164,21 +178,14 @@ export default function UserEditor( { user, onBack, appAllowedAuthMethods = [] }
 		auth_method: authMethod,
 		auth_config: JSON.stringify( authConfig ),
 		allowed_methods: JSON.stringify( allowedMethods ),
-		rate_limit_max_requests: String(
-			parseInt( rateLimitRequests, 10 ) || 100
-		),
-		rate_limit_window_seconds: String(
-			parseInt( rateLimitWindow, 10 ) || 60
-		),
-		rate_limit_release: String(
-			parseInt( rateLimitRelease, 10 ) || 300
-		),
-		rate_limit_blacklist_after: String(
-			parseInt( rateLimitBlacklistAfter, 10 ) || 0
-		),
-		rate_limit_blacklist_window: String(
-			parseInt( rateLimitBlacklistWindow, 10 ) || 0
-		),
+		rate_limit_enabled: rateLimitEnabled ? '1' : '0',
+		allowed_ips: JSON.stringify( userAllowedIps ),
+		allowed_origins: JSON.stringify( userAllowedOrigins ),
+		rate_limit_max_requests: rateLimitEnabled ? String( parseInt( rateLimitRequests, 10 ) || 100 ) : '',
+		rate_limit_window_seconds: rateLimitEnabled ? String( parseInt( rateLimitWindow, 10 ) || 60 ) : '',
+		rate_limit_release: rateLimitEnabled ? String( parseInt( rateLimitRelease, 10 ) || 300 ) : '',
+		rate_limit_blacklist_after: rateLimitEnabled ? String( parseInt( rateLimitBlacklistAfter, 10 ) || 0 ) : '',
+		rate_limit_blacklist_window: rateLimitEnabled ? String( parseInt( rateLimitBlacklistWindow, 10 ) || 0 ) : '',
 	};
 
 	const handleSave = () => {
@@ -313,6 +320,44 @@ export default function UserEditor( { user, onBack, appAllowedAuthMethods = [] }
 
 				<Stack spacing={ 2 }>
 					<SectionHeader
+						title={ __( 'Allowed IPs', 'rest-api-firewall' ) }
+						description={ __( 'Restrict this user to specific IP addresses. Must be within the application\'s allowed IPs.', 'rest-api-firewall' ) }
+					/>
+					<AllowedIps
+						value={ userAllowedIps }
+						onChange={ ( newIps ) => {
+							const appIps = appSettings?.allowed_ips || [];
+							const filtered = appIps.length > 0
+								? newIps.filter( ( ip ) => appIps.includes( ip ) )
+								: newIps;
+							setUserAllowedIps( filtered );
+						} }
+						/>
+				</Stack>
+
+				<Divider />
+
+				<Stack spacing={ 2 }>
+					<SectionHeader
+						title={ __( 'Allowed Origins', 'rest-api-firewall' ) }
+						description={ __( 'Restrict this user to specific origins. Must be within the application\'s allowed origins.', 'rest-api-firewall' ) }
+					/>
+					<AllowedOrigins
+						value={ userAllowedOrigins }
+						onChange={ ( newOrigins ) => {
+							const appOrigins = appSettings?.allowed_origins || [];
+							const filtered = appOrigins.length > 0
+								? newOrigins.filter( ( o ) => appOrigins.includes( o ) )
+								: newOrigins;
+							setUserAllowedOrigins( filtered );
+						} }
+					/>
+				</Stack>
+
+				<Divider />
+
+				<Stack spacing={ 2 }>
+					<SectionHeader
 						title={ __(
 							'Authentication Method',
 							'rest-api-firewall'
@@ -343,38 +388,60 @@ export default function UserEditor( { user, onBack, appAllowedAuthMethods = [] }
 					<HttpMethodsSelector
 						value={ allowedMethods }
 						onChange={ setAllowedMethods }
+						allowedMethods={ appSettings?.default_http_methods || [] }
 					/>
 				</Stack>
 
 				<Divider />
 
 				<Stack spacing={ 2 }>
-					<SectionHeader
-						title={ __( 'Rate Limiting', 'rest-api-firewall' ) }
-						description={ __(
-							'Per-user request cap. Overrides the application-level rate limit.',
-							'rest-api-firewall'
-						) }
-					/>
-					<UserRateLimitFields
-						values={ {
-							max_requests: rateLimitRequests,
-							window_seconds: rateLimitWindow,
-							release_seconds: rateLimitRelease,
-							blacklist_after: rateLimitBlacklistAfter,
-							blacklist_window: rateLimitBlacklistWindow,
-						} }
-						onChange={ ( key, val ) => {
-							const setters = {
-								max_requests: setRateLimitRequests,
-								window_seconds: setRateLimitWindow,
-								release_seconds: setRateLimitRelease,
-								blacklist_after: setRateLimitBlacklistAfter,
-								blacklist_window: setRateLimitBlacklistWindow,
-							};
-							setters[ key ]?.( val );
-						} }
-					/>
+					<Stack direction="row" alignItems="flex-start" justifyContent="space-between">
+						<SectionHeader
+							title={ __( 'Rate Limiting', 'rest-api-firewall' ) }
+							description={ __(
+								'Per-user request cap. When disabled, the application-level rate limit applies.',
+								'rest-api-firewall'
+							) }
+						/>
+						<FormControlLabel
+							control={
+								<Switch
+									size="small"
+									checked={ rateLimitEnabled }
+									onChange={ ( e ) => setRateLimitEnabled( e.target.checked ) }
+								/>
+							}
+							label=""
+							sx={ { mr: 0 } }
+						/>
+					</Stack>
+					{ rateLimitEnabled && (
+						<UserRateLimitFields
+							values={ {
+								max_requests: rateLimitRequests,
+								window_seconds: rateLimitWindow,
+								release_seconds: rateLimitRelease,
+								blacklist_after: rateLimitBlacklistAfter,
+								blacklist_window: rateLimitBlacklistWindow,
+							} }
+							onChange={ ( key, val ) => {
+								const setters = {
+									max_requests: setRateLimitRequests,
+									window_seconds: setRateLimitWindow,
+									release_seconds: setRateLimitRelease,
+									blacklist_after: setRateLimitBlacklistAfter,
+									blacklist_window: setRateLimitBlacklistWindow,
+								};
+								setters[ key ]?.( val );
+							} }
+						/>
+					) }
+					{ ! rateLimitEnabled && appRateLimit.max_requests && (
+						<Typography variant="body2" color="text.secondary">
+							{ __( 'Using application default:', 'rest-api-firewall' ) }{ ' ' }
+							{ appRateLimit.max_requests } { __( 'req /', 'rest-api-firewall' ) } { appRateLimit.window_seconds }s
+						</Typography>
+					) }
 				</Stack>
 			</Stack>
 		</Stack>

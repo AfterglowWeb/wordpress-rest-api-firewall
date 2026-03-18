@@ -1,6 +1,7 @@
 import { useState, useEffect } from '@wordpress/element';
 
 import Alert from '@mui/material/Alert';
+import Chip from '@mui/material/Chip';
 import FormControl from '@mui/material/FormControl';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -9,6 +10,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -16,8 +18,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 export const AUTH_METHODS = [
 	{ value: 'any', label: 'Any (no restriction)' },
 	{ value: 'jwt', label: 'JWT' },
-	{ value: 'oauth', label: 'oAuth' },
-	{ value: 'sso', label: 'SSO' },
+	{ value: 'oauth', label: 'OAuth 2.0', comingSoon: true },
 	{ value: 'wp_auth', label: 'WordPress Application Password' },
 ];
 
@@ -31,7 +32,7 @@ const JWT_ALGORITHMS = [
 	'ES256',
 ];
 
-function JwtConfig( { config, onChange } ) {
+export function JwtConfig( { config, onChange } ) {
 	const { __ } = wp.i18n || {};
 
 	return (
@@ -192,82 +193,6 @@ function OAuthConfig( { config, onChange } ) {
 	);
 }
 
-function SsoConfig( { config, onChange } ) {
-	const { __ } = wp.i18n || {};
-
-	return (
-		<Stack spacing={ 2 }>
-			<Stack
-				direction={ { xs: 'column', sm: 'row' } }
-				spacing={ 2 }
-				flexWrap="wrap"
-			>
-				<TextField
-					label={ __( 'Entity ID', 'rest-api-firewall' ) }
-					size="small"
-					value={ config.entity_id || '' }
-					onChange={ ( e ) =>
-						onChange( 'entity_id', e.target.value )
-					}
-					placeholder="https://idp.example.com/entity"
-					sx={ { maxWidth: 340 } }
-					helperText={ __(
-						'IdP Entity ID (SAML) or Issuer (OIDC)',
-						'rest-api-firewall'
-					) }
-				/>
-
-				<TextField
-					label={ __( 'SSO URL', 'rest-api-firewall' ) }
-					size="small"
-					value={ config.sso_url || '' }
-					onChange={ ( e ) => onChange( 'sso_url', e.target.value ) }
-					placeholder="https://idp.example.com/sso"
-					sx={ { maxWidth: 340 } }
-					helperText={ __(
-						'IdP single sign-on endpoint',
-						'rest-api-firewall'
-					) }
-				/>
-			</Stack>
-
-			<TextField
-				label={ __( 'User Identifier Attribute', 'rest-api-firewall' ) }
-				size="small"
-				value={ config.identifier_attribute || '' }
-				onChange={ ( e ) =>
-					onChange( 'identifier_attribute', e.target.value )
-				}
-				placeholder="email"
-				sx={ { maxWidth: 200 } }
-				helperText={ __(
-					'SAML attribute or OIDC claim used to identify the user',
-					'rest-api-firewall'
-				) }
-			/>
-
-			<TextField
-				label={ __( 'IdP Certificate', 'rest-api-firewall' ) }
-				size="small"
-				multiline
-				rows={ 5 }
-				value={ config.certificate || '' }
-				onChange={ ( e ) => onChange( 'certificate', e.target.value ) }
-				placeholder={
-					'-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----'
-				}
-				helperText={ __(
-					'X.509 certificate from your identity provider',
-					'rest-api-firewall'
-				) }
-				inputProps={ {
-					sx: { fontFamily: 'monospace', fontSize: '0.8rem' },
-				} }
-			/>
-		</Stack>
-	);
-}
-
 function WpAuthInfo() {
 	const { __ } = wp.i18n || {};
 
@@ -339,9 +264,22 @@ export default function AuthManager( {
 				//displayEmpty={ multiEnforcement }
 				>
 					{ visibleMethods.map( ( opt ) => (
-						<MenuItem key={ opt.value } value={ opt.value }>
-							{ opt.label }
-						</MenuItem>
+						<Tooltip
+							key={ opt.value }
+							title={ opt.comingSoon ? __( 'Coming soon', 'rest-api-firewall' ) : '' }
+							placement="right"
+						>
+							<span>
+								<MenuItem value={ opt.value } disabled={ !! opt.comingSoon }>
+									<Stack direction="row" alignItems="center" gap={ 1 }>
+										{ opt.label }
+										{ opt.comingSoon && (
+											<Chip label={ __( 'Soon', 'rest-api-firewall' ) } size="small" sx={ { height: 16, fontSize: '0.65rem' } } />
+										) }
+									</Stack>
+								</MenuItem>
+							</span>
+						</Tooltip>
 					) ) }
 				</Select>
 			</FormControl>
@@ -351,9 +289,6 @@ export default function AuthManager( {
 			) }
 			{ authMethod === 'oauth' && (
 				<OAuthConfig config={ authConfig } onChange={ updateConfig } />
-			) }
-			{ authMethod === 'sso' && (
-				<SsoConfig config={ authConfig } onChange={ updateConfig } />
 			) }
 			{ authMethod === 'wp_auth' && <WpAuthInfo /> }
 		</Stack>

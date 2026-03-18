@@ -27,13 +27,17 @@ export default function ApplicationSelector() {
 		applicationsLoading,
 		setSelectedApplicationId,
 	} = useApplication();
-	const { navigateGuarded } = useNavigation();
+	const { navigateGuarded, subKey } = useNavigation();
 	const [ menuAnchor, setMenuAnchor ] = useState( null );
 	const [ snackOpen, setSnackOpen ] = useState( false );
 
 	const handleSelectApp = ( id ) => {
 		setMenuAnchor( null );
-		if ( id !== selectedApplicationId ) {
+		if ( id === selectedApplicationId ) return;
+
+		if ( subKey ) {
+			navigateGuarded( 'applications', id, () => setSelectedApplicationId( id ) );
+		} else {
 			setSelectedApplicationId( id );
 			setSnackOpen( true );
 		}

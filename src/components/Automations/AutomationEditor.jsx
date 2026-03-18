@@ -3,13 +3,17 @@ import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
 
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import InputLabel from '@mui/material/InputLabel';
+import ListItemText from '@mui/material/ListItemText';
 import MenuItem from '@mui/material/MenuItem';
+import OutlinedInput from '@mui/material/OutlinedInput';
 import Paper from '@mui/material/Paper';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
@@ -19,12 +23,15 @@ import Typography from '@mui/material/Typography';
 
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import CallSplitIcon from '@mui/icons-material/CallSplit';
+import WebhookIcon from '@mui/icons-material/Webhook';
 
 import JsonSchemaBuilder from '../shared/JsonSchemaBuilder';
 import useProActions from '../../hooks/useProActions';
 import formatDate from '../../utils/formatDate';
 import EntryToolbar from '../shared/EntryToolbar';
 import LoadingMessage from '../LoadingMessage';
+import IconButton from '@mui/material/IconButton';
 
 const CONDITION_OPERATORS = [
 	{ value: 'eq', label: '=' },
@@ -47,6 +54,9 @@ const BASE_BINDINGS = [
 	{ key: 'event.post_status', label: 'Post status', type: 'string' },
 	{ key: 'event.term_id', label: 'Term ID', type: 'number' },
 	{ key: 'event.taxonomy', label: 'Taxonomy', type: 'string' },
+	{ key: 'event.user_id', label: 'User ID', type: 'number' },
+	{ key: 'event.user_login', label: 'User login', type: 'string' },
+	{ key: 'event.email', label: 'User email', type: 'string' },
 	{ key: 'application.id', label: 'Application ID', type: 'string' },
 	{ key: 'application.title', label: 'Application name', type: 'string' },
 	{ key: 'site.url', label: 'Site URL', type: 'string' },
@@ -64,18 +74,18 @@ function ConditionRow( { condition, onChange, onRemove } ) {
 					onChange( { ...condition, field: e.target.value } )
 				}
 				placeholder={ __( 'field', 'rest-api-firewall' ) }
-				sx={ { 
-					flex: 1, 
-					'.MuiInputBase-input': { 
+				sx={ {
+					flex: 1,
+					'.MuiInputBase-input': {
 						padding: '10.5px 14px!important',
 						minHeight: 'unset!important',
 						height: '25px!important',
-						fontFamily: 'monospace', 
-						fontSize: '0.82rem' 
-					}
+						fontFamily: 'monospace',
+						fontSize: '0.82rem',
+					},
 				} }
 			/>
-			<FormControl size="small" sx={ { width: 110} }>
+			<FormControl size="small" sx={ { width: 110 } }>
 				<Select
 					value={ condition.operator || 'eq' }
 					onChange={ ( e ) =>
@@ -96,15 +106,15 @@ function ConditionRow( { condition, onChange, onRemove } ) {
 					onChange( { ...condition, value: e.target.value } )
 				}
 				placeholder={ __( 'value', 'rest-api-firewall' ) }
-				sx={ { 
-					flex: 1, 
-					'.MuiInputBase-input': { 
+				sx={ {
+					flex: 1,
+					'.MuiInputBase-input': {
 						padding: '10.5px 14px!important',
 						minHeight: 'unset!important',
 						height: '25px!important',
-						fontFamily: 'monospace', 
-						fontSize: '0.82rem' 
-					}
+						fontFamily: 'monospace',
+						fontSize: '0.82rem',
+					},
 				} }
 			/>
 			<IconButton size="small" color="error" onClick={ onRemove }>
@@ -114,25 +124,22 @@ function ConditionRow( { condition, onChange, onRemove } ) {
 	);
 }
 
-function WebhookCheckList( { webhooks, selectedIds, onChange } ) {
+function ItemCheckList( { items, selectedIds, onChange, emptyText, renderLabel } ) {
 	const { __ } = wp.i18n || {};
-	if ( ! webhooks.length ) {
+	if ( ! items.length ) {
 		return (
 			<Typography variant="body2" color="text.secondary">
-				{ __(
-					'No webhooks available. Create a webhook first.',
-					'rest-api-firewall'
-				) }
+				{ emptyText || __( 'No items available.', 'rest-api-firewall' ) }
 			</Typography>
 		);
 	}
 	return (
 		<Stack spacing={ 0.5 }>
-			{ webhooks.map( ( w ) => {
-				const checked = selectedIds.includes( w.id );
+			{ items.map( ( item ) => {
+				const checked = selectedIds.includes( item.id );
 				return (
 					<FormControlLabel
-						key={ w.id }
+						key={ item.id }
 						control={
 							<Switch
 								size="small"
@@ -140,90 +147,13 @@ function WebhookCheckList( { webhooks, selectedIds, onChange } ) {
 								onChange={ () =>
 									onChange(
 										checked
-											? selectedIds.filter(
-													( id ) => id !== w.id
-											  )
-											: [ ...selectedIds, w.id ]
+											? selectedIds.filter( ( id ) => id !== item.id )
+											: [ ...selectedIds, item.id ]
 									)
 								}
 							/>
 						}
-						label={
-							<Stack
-								direction="row"
-								spacing={ 1 }
-								alignItems="center"
-							>
-								<Typography variant="body2">
-									{ w.title || w.id }
-								</Typography>
-								<Typography
-									variant="caption"
-									color="text.secondary"
-									sx={ { fontFamily: 'monospace' } }
-								>
-									{ w.endpoint }
-								</Typography>
-							</Stack>
-						}
-					/>
-				);
-			} ) }
-		</Stack>
-	);
-}
-
-function MailCheckList( { mails, selectedIds, onChange } ) {
-	const { __ } = wp.i18n || {};
-	if ( ! mails.length ) {
-		return (
-			<Typography variant="body2" color="text.secondary">
-				{ __(
-					'No mail templates available. Create one first.',
-					'rest-api-firewall'
-				) }
-			</Typography>
-		);
-	}
-	return (
-		<Stack spacing={ 0.5 }>
-			{ mails.map( ( m ) => {
-				const checked = selectedIds.includes( m.id );
-				return (
-					<FormControlLabel
-						key={ m.id }
-						control={
-							<Switch
-								size="small"
-								checked={ checked }
-								onChange={ () =>
-									onChange(
-										checked
-											? selectedIds.filter(
-													( id ) => id !== m.id
-											  )
-											: [ ...selectedIds, m.id ]
-									)
-								}
-							/>
-						}
-						label={
-							<Stack
-								direction="row"
-								spacing={ 1 }
-								alignItems="center"
-							>
-								<Typography variant="body2">
-									{ m.title || m.id }
-								</Typography>
-								<Typography
-									variant="caption"
-									color="text.secondary"
-								>
-									→ { m.recipient }
-								</Typography>
-							</Stack>
-						}
+						label={ renderLabel( item ) }
 					/>
 				);
 			} ) }
@@ -253,210 +183,144 @@ export default function AutomationEditor( { automation, onBack } ) {
 	);
 
 	const [ title, setTitle ] = useState( automation.title || '' );
-	const [ event, setEvent ] = useState( automation.event || '' );
-	const [ conditions, setConditions ] = useState(
-		automation.conditions || []
-	);
-	const [ payloadMap, setPayloadMap ] = useState(
-		automation.payload_map || {}
-	);
-	const [ webhookIds, setWebhookIds ] = useState(
-		automation.webhook_ids || []
-	);
+
+	const [ events, setEvents ] = useState( () => {
+		if ( automation.events && automation.events.length ) return automation.events;
+		if ( automation.event ) return [ automation.event ];
+		return [];
+	} );
+
+	const [ conditions, setConditions ] = useState( automation.conditions || [] );
+	const [ payloadMap, setPayloadMap ] = useState( automation.payload_map || {} );
+	const [ webhookIds, setWebhookIds ] = useState( automation.webhook_ids || [] );
 	const [ mailIds, setMailIds ] = useState( automation.mail_ids || [] );
+	const [ chainAutomationIds, setChainAutomationIds ] = useState( automation.chain_automation_ids || [] );
+	const [ apiConnectIds, setApiConnectIds ] = useState( automation.api_connect_ids || [] );
 	const [ enabled, setEnabled ] = useState( automation.enabled !== false );
 
 	const [ eventOptions, setEventOptions ] = useState( [] );
 	const [ webhooks, setWebhooks ] = useState( [] );
 	const [ mails, setMails ] = useState( [] );
+	const [ automations, setAutomations ] = useState( [] );
+	const [ apiConnections, setApiConnections ] = useState( [] );
 	const [ loaded, setLoaded ] = useState( false );
 
 	useEffect( () => {
 		const fetchAll = async () => {
-			const [ eventsRes, registryRes, webhooksRes, mailsRes ] = await Promise.all( [
-				fetch( adminData.ajaxurl, {
-					method: 'POST',
-					body: new URLSearchParams( {
-						action: 'get_automation_events',
-						nonce,
-					} ),
-				} ),
-				fetch( adminData.ajaxurl, {
-					method: 'POST',
-					body: new URLSearchParams( {
-						action: 'get_hook_registry',
-						nonce,
-					} ),
-				} ),
-				fetch( adminData.ajaxurl, {
-					method: 'POST',
-					body: new URLSearchParams( {
-						action: 'get_webhook_entries',
-						nonce,
-					} ),
-				} ),
-				fetch( adminData.ajaxurl, {
-					method: 'POST',
-					body: new URLSearchParams( {
-						action: 'get_mail_entries',
-						nonce,
-					} ),
-				} ),
+			const appId = selectedApplicationId || automation.application_id || '';
+			const commonParams = { nonce, application_id: appId };
+
+			const [ eventsRes, registryRes, webhooksRes, mailsRes, automationsRes, connectionsRes ] = await Promise.all( [
+				fetch( adminData.ajaxurl, { method: 'POST', body: new URLSearchParams( { action: 'get_automation_events', nonce } ) } ),
+				fetch( adminData.ajaxurl, { method: 'POST', body: new URLSearchParams( { action: 'get_hook_registry', nonce } ) } ),
+				fetch( adminData.ajaxurl, { method: 'POST', body: new URLSearchParams( { action: 'get_webhook_entries', ...commonParams } ) } ),
+				fetch( adminData.ajaxurl, { method: 'POST', body: new URLSearchParams( { action: 'get_mail_entries', ...commonParams } ) } ),
+				fetch( adminData.ajaxurl, { method: 'POST', body: new URLSearchParams( { action: 'get_automation_entries', ...commonParams } ) } ),
+				fetch( adminData.ajaxurl, { method: 'POST', body: new URLSearchParams( { action: 'get_api_connection_entries', ...commonParams } ) } ),
 			] );
-			const [ ej, rj, wj, mj ] = await Promise.all( [
-				eventsRes.json(),
-				registryRes.json(),
-				webhooksRes.json(),
-				mailsRes.json(),
+
+			const [ ej, rj, wj, mj, aj, cj ] = await Promise.all( [
+				eventsRes.json(), registryRes.json(), webhooksRes.json(),
+				mailsRes.json(), automationsRes.json(), connectionsRes.json(),
 			] );
 
 			const options = [];
 			if ( ej.success ) {
 				for ( const ev of ej.data.events || [] ) {
-					options.push( {
-						label: ev.label || ev.key,
-						value: ev.key,
-						group: ev.group || 'wordpress',
-					} );
+					options.push( { label: ev.label || ev.key, value: ev.key, group: ev.group || 'wordpress' } );
 				}
 			}
 			if ( rj.success ) {
 				for ( const entry of rj.data.registry || [] ) {
-					options.push( {
-						label: entry.label || entry.hook,
-						value: entry.hook,
-						group: __( 'custom', 'rest-api-firewall' ),
-					} );
+					options.push( { label: entry.label || entry.hook, value: entry.hook, group: __( 'custom', 'rest-api-firewall' ) } );
 				}
 			}
 			setEventOptions( options );
 
 			if ( wj.success ) {
-				setWebhooks( wj.data.entries || [] );
+				setWebhooks( ( wj.data.entries || [] ).filter( ( w ) => w.type !== 'inbound' ) );
 			}
-			if ( mj.success ) {
-				setMails( mj.data.entries || [] );
+			if ( mj.success ) setMails( mj.data.entries || [] );
+
+			if ( aj.success ) {
+				setAutomations( ( aj.data.entries || [] ).filter( ( a ) => a.id !== automation.id ) );
 			}
+			if ( cj.success ) setApiConnections( cj.data.entries || [] );
 
 			if ( ! isNew ) {
 				const entryRes = await fetch( adminData.ajaxurl, {
 					method: 'POST',
-					body: new URLSearchParams( {
-						action: 'get_automation_entry',
-						nonce,
-						id: automation.id,
-					} ),
+					body: new URLSearchParams( { action: 'get_automation_entry', nonce, id: automation.id } ),
 				} );
 				const entryJson = await entryRes.json();
 				if ( entryJson.success ) {
 					const e = entryJson.data.entry;
 					setTitle( e.title || '' );
-					setEvent( e.event || '' );
+					const loadedEvents = e.events && e.events.length ? e.events : ( e.event ? [ e.event ] : [] );
+					setEvents( loadedEvents );
 					setConditions( e.conditions || [] );
 					setPayloadMap( e.payload_map || {} );
 					setWebhookIds( e.webhook_ids || [] );
 					setMailIds( e.mail_ids || [] );
+					setChainAutomationIds( e.chain_automation_ids || [] );
+					setApiConnectIds( e.api_connect_ids || [] );
 					setEnabled( e.enabled !== false );
 				}
 			}
 			setLoaded( true );
 		};
 		fetchAll();
-	}, [ isNew, automation.id, adminData, nonce ] );
+	}, [ isNew, automation.id, adminData, nonce ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const buildPayload = () => ( {
 		nonce,
 		title,
-		event,
+		event: events[ 0 ] || '',
+		events: JSON.stringify( events ),
 		conditions: JSON.stringify( conditions ),
 		payload_map: JSON.stringify( payloadMap ),
 		enabled: enabled ? '1' : '0',
 		webhook_ids: JSON.stringify( webhookIds ),
 		mail_ids: JSON.stringify( mailIds ),
+		chain_automation_ids: JSON.stringify( chainAutomationIds ),
+		api_connect_ids: JSON.stringify( apiConnectIds ),
 		application_id: selectedApplicationId || automation.application_id || '',
 	} );
 
 	const handleSave = useCallback( () => {
 		if ( isNew ) {
-			save(
-				{ action: 'add_automation_entry', ...buildPayload() },
-				{
-					onSuccess: ( data ) => {
-						if ( data?.entry ) {
-							onBack();
-						}
-					},
-				}
-			);
+			save( { action: 'add_automation_entry', ...buildPayload() }, { onSuccess: ( data ) => { if ( data?.entry ) onBack(); } } );
 		} else {
-			save(
-				{
-					action: 'update_automation_entry',
-					id: automation.id,
-					...buildPayload(),
-				},
-				{}
-			);
+			save( { action: 'update_automation_entry', id: automation.id, ...buildPayload() }, {} );
 		}
-	}, [
-		isNew,
-		automation.id,
-		title,
-		event,
-		conditions,
-		payloadMap,
-		webhookIds,
-		mailIds,
-		enabled,
-		nonce,
-	] );
+	}, [ isNew, automation.id, title, events, conditions, payloadMap, webhookIds, mailIds, chainAutomationIds, apiConnectIds, enabled, nonce ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const handleDelete = useCallback( () => {
 		remove(
 			{ action: 'delete_automation_entry', id: automation.id },
 			{
 				confirmTitle: __( 'Delete Automation', 'rest-api-firewall' ),
-				confirmMessage: `${ __(
-					'Permanently delete this automation?',
-					'rest-api-firewall'
-				) } ${ __(
-					'This action cannot be undone.',
-					'rest-api-firewall'
-				) }`,
+				confirmMessage: `${ __( 'Permanently delete this automation?', 'rest-api-firewall' ) } ${ __( 'This action cannot be undone.', 'rest-api-firewall' ) }`,
 				confirmLabel: __( 'Delete', 'rest-api-firewall' ),
 				onSuccess: () => { clearDirty(); onBack(); },
 			}
 		);
 	}, [ remove, automation.id, onBack, clearDirty, __ ] );
 
-	const handleAddAnd = () => {
-		setConditions( ( prev ) => [
-			...prev,
-			{ field: '', operator: 'eq', value: '' },
-		] );
-	};
-
-	const handleAddOr = () => {
-		setConditions( ( prev ) => [
-			...prev,
-			{ type: 'or' },
-			{ field: '', operator: 'eq', value: '' },
-		] );
-	};
+	const handleAddAnd = () => setConditions( ( prev ) => [ ...prev, { field: '', operator: 'eq', value: '' } ] );
+	const handleAddOr  = () => setConditions( ( prev ) => [ ...prev, { type: 'or' }, { field: '', operator: 'eq', value: '' } ] );
 
 	const groupedEventOptions = eventOptions.reduce( ( acc, opt ) => {
 		const g = opt.group || 'other';
-		if ( ! acc[ g ] ) {
-			acc[ g ] = [];
-		}
+		if ( ! acc[ g ] ) acc[ g ] = [];
 		acc[ g ].push( opt );
 		return acc;
 	}, {} );
 
+	const hasInboundEvent = events.includes( 'inbound_webhook' );
+
 	if ( ! loaded ) {
-		return (
-			<LoadingMessage message={ isNew ? __( 'Creating new automation...', 'rest-api-firewall' ) : __( 'Loading automation...', 'rest-api-firewall' ) } />
-		);
+		return <LoadingMessage message={ isNew ? __( 'Creating new automation...', 'rest-api-firewall' ) : __( 'Loading automation...', 'rest-api-firewall' ) } />;
 	}
 
 	return (
@@ -484,197 +348,88 @@ export default function AutomationEditor( { automation, onBack } ) {
 					sx={ { maxWidth: 400 } }
 					required
 				/>
-				{ /* 1. Trigger Event */ }
+
+				{ /* 1. Trigger Events — multi-select */ }
 				<Paper variant="outlined" sx={ { p: 2 } }>
-					<Typography
-						variant="caption"
-						sx={ {
-							textTransform: 'uppercase',
-							letterSpacing: 0.5,
-							color: 'text.secondary',
-							display: 'block',
-							mb: 1.5,
-						} }
-					>
-						{ __( '1 · Trigger Event', 'rest-api-firewall' ) }
+					<Typography variant="caption" sx={ { textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary', display: 'block', mb: 1.5 } }>
+						{ __( '1 · Trigger Events', 'rest-api-firewall' ) }
 					</Typography>
 
 					<FormControl size="small" fullWidth>
-						<InputLabel>
-							{ __( 'Trigger Hook', 'rest-api-firewall' ) }
-						</InputLabel>
+						<InputLabel>{ __( 'Trigger Hooks', 'rest-api-firewall' ) }</InputLabel>
 						<Select
-							value={ event }
-							label={ __( 'Trigger Hook', 'rest-api-firewall' ) }
-							onChange={ ( e ) => setEvent( e.target.value ) }
-							renderValue={ ( value ) => {
-								const opt = eventOptions.find(
-									( o ) => o.value === value
-								);
-								return (
-									<Stack>
-										{ opt && opt.label !== opt.value && (
-											<Typography variant="body2">
-												{ opt.label }
-											</Typography>
-										) }
-										<Typography
-											variant="body2"
-											sx={ {
-												fontFamily: 'monospace',
-												fontSize: '0.85rem',
-												color: 'text.secondary',
-											} }
-										>
-											{ value }
-										</Typography>
-									</Stack>
-								);
-							} }
-						>
-							{ Object.entries( groupedEventOptions ).flatMap(
-								( [ group, opts ] ) => [
-									<MenuItem
-										key={ `__g_${ group }` }
-										disabled
-										sx={ {
-											fontWeight: 700,
-											fontSize: '0.72rem',
-											textTransform: 'uppercase',
-											letterSpacing: 0.5,
-										} }
-									>
-										{ group }
-									</MenuItem>,
-									...opts.map( ( opt ) => (
-										<MenuItem
-											key={ opt.value }
-											value={ opt.value }
-										>
-											<Stack>
-												<Typography variant="body2">
-													{ opt.label }
-												</Typography>
-												{ opt.label !== opt.value && (
-													<Typography
-														variant="caption"
-														color="text.secondary"
-														sx={ {
-															fontFamily:
-																'monospace',
-														} }
-													>
-														{ opt.value }
-													</Typography>
-												) }
-											</Stack>
-										</MenuItem>
-									) ),
-								]
+							multiple
+							value={ events }
+							onChange={ ( e ) => setEvents( typeof e.target.value === 'string' ? e.target.value.split( ',' ) : e.target.value ) }
+							input={ <OutlinedInput label={ __( 'Trigger Hooks', 'rest-api-firewall' ) } /> }
+							renderValue={ ( selected ) => (
+								<Stack direction="row" spacing={ 0.5 } flexWrap="wrap" gap={ 0.5 }>
+									{ selected.map( ( val ) => {
+										const opt = eventOptions.find( ( o ) => o.value === val );
+										return <Chip key={ val } label={ opt ? opt.label : val } size="small" sx={ { height: 20, fontSize: '0.75rem' } } />;
+									} ) }
+								</Stack>
 							) }
+						>
+							{ Object.entries( groupedEventOptions ).flatMap( ( [ group, opts ] ) => [
+								<MenuItem key={ `__g_${ group }` } disabled sx={ { fontWeight: 700, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: 0.5 } }>
+									{ group }
+								</MenuItem>,
+								...opts.map( ( opt ) => (
+									<MenuItem key={ opt.value } value={ opt.value }>
+										<Checkbox checked={ events.includes( opt.value ) } size="small" />
+										<ListItemText
+											primary={ opt.label }
+											secondary={ opt.label !== opt.value ? opt.value : null }
+											primaryTypographyProps={ { variant: 'body2' } }
+											secondaryTypographyProps={ { variant: 'caption', sx: { fontFamily: 'monospace' } } }
+										/>
+									</MenuItem>
+								) ),
+							] ) }
 						</Select>
 					</FormControl>
+
+					{ hasInboundEvent && (
+						<Alert severity="info" icon={ <WebhookIcon /> } sx={ { mt: 1.5 } }>
+							{ __( 'This automation is triggered by an incoming webhook. Configure the linked webhook in the Webhooks panel and set this automation as its target.', 'rest-api-firewall' ) }
+						</Alert>
+					) }
 				</Paper>
 
 				{ /* 2. Conditions */ }
 				<Paper variant="outlined" sx={ { p: 2 } }>
-					<Typography
-						variant="caption"
-						sx={ {
-							textTransform: 'uppercase',
-							letterSpacing: 0.5,
-							color: 'text.secondary',
-							display: 'block',
-							mb: 1.5,
-						} }
-					>
+					<Typography variant="caption" sx={ { textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary', display: 'block', mb: 1.5 } }>
 						{ __( '2 · Conditions', 'rest-api-firewall' ) }
 					</Typography>
 
 					<Stack spacing={ 1 }>
 						{ conditions.map( ( item, i ) =>
 							item.type === 'or' ? (
-								<Stack
-									key={ i }
-									direction="row"
-									alignItems="center"
-									spacing={ 1 }
-								>
-									<Box
-										sx={ {
-											flex: 1,
-											height: '1px',
-											bgcolor: 'divider',
-										} }
-									/>
-									<Chip
-										label={ __( 'OR', 'rest-api-firewall' ) }
-										size="small"
-										variant="outlined"
-										onDelete={ () =>
-											setConditions( ( prev ) =>
-												prev.filter(
-													( _, idx ) => idx !== i
-												)
-											)
-										}
-										sx={ { height: 22, fontSize: '0.7rem' } }
-									/>
-									<Box
-										sx={ {
-											flex: 1,
-											height: '1px',
-											bgcolor: 'divider',
-										} }
-									/>
+								<Stack key={ i } direction="row" alignItems="center" spacing={ 1 }>
+									<Box sx={ { flex: 1, height: '1px', bgcolor: 'divider' } } />
+									<Chip label={ __( 'OR', 'rest-api-firewall' ) } size="small" variant="outlined" onDelete={ () => setConditions( ( prev ) => prev.filter( ( _, idx ) => idx !== i ) ) } sx={ { height: 22, fontSize: '0.7rem' } } />
+									<Box sx={ { flex: 1, height: '1px', bgcolor: 'divider' } } />
 								</Stack>
 							) : (
 								<ConditionRow
 									key={ i }
 									condition={ item }
-									onChange={ ( updated ) =>
-										setConditions( ( prev ) =>
-											prev.map( ( c, idx ) =>
-												idx === i ? updated : c
-											)
-										)
-									}
-									onRemove={ () =>
-										setConditions( ( prev ) =>
-											prev.filter(
-												( _, idx ) => idx !== i
-											)
-										)
-									}
+									onChange={ ( updated ) => setConditions( ( prev ) => prev.map( ( c, idx ) => idx === i ? updated : c ) ) }
+									onRemove={ () => setConditions( ( prev ) => prev.filter( ( _, idx ) => idx !== i ) ) }
 								/>
 							)
 						) }
 
 						<Stack direction="row" spacing={ 1 } sx={ { mt: 0.5 } }>
 							{ conditions.length === 0 ? (
-								<Button
-									size="small"
-									startIcon={ <AddIcon /> }
-									onClick={ handleAddAnd }
-								>
+								<Button size="small" startIcon={ <AddIcon /> } onClick={ handleAddAnd }>
 									{ __( 'Add condition', 'rest-api-firewall' ) }
 								</Button>
 							) : (
 								<>
-									<Button
-										size="small"
-										startIcon={ <AddIcon /> }
-										onClick={ handleAddAnd }
-									>
-										{ __( 'AND', 'rest-api-firewall' ) }
-									</Button>
-									<Button
-										size="small"
-										startIcon={ <AddIcon /> }
-										onClick={ handleAddOr }
-									>
-										{ __( 'OR', 'rest-api-firewall' ) }
-									</Button>
+									<Button size="small" startIcon={ <AddIcon /> } onClick={ handleAddAnd }>{ __( 'AND', 'rest-api-firewall' ) }</Button>
+									<Button size="small" startIcon={ <AddIcon /> } onClick={ handleAddOr }>{ __( 'OR', 'rest-api-firewall' ) }</Button>
 								</>
 							) }
 						</Stack>
@@ -683,96 +438,102 @@ export default function AutomationEditor( { automation, onBack } ) {
 
 				{ /* 3. Payload mapping */ }
 				<Paper variant="outlined" sx={ { p: 2 } }>
-					<Typography
-						variant="caption"
-						sx={ {
-							textTransform: 'uppercase',
-							letterSpacing: 0.5,
-							color: 'text.secondary',
-							display: 'block',
-							mb: 1.5,
-						} }
-					>
+					<Typography variant="caption" sx={ { textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary', display: 'block', mb: 1.5 } }>
 						{ __( '3 · Payload Mapping', 'rest-api-firewall' ) }
 					</Typography>
-					<JsonSchemaBuilder
-						value={ payloadMap }
-						onChange={ setPayloadMap }
-						availableBindings={ BASE_BINDINGS }
-					/>
+					<JsonSchemaBuilder value={ payloadMap } onChange={ setPayloadMap } availableBindings={ BASE_BINDINGS } />
 				</Paper>
 
-				{ /* 4. Actions — Webhooks */ }
+				{ /* 4. Actions — Outbound Webhooks */ }
 				<Paper variant="outlined" sx={ { p: 2 } }>
-					<Stack
-						direction="row"
-						alignItems="center"
-						spacing={ 1 }
-						sx={ { mb: 1.5 } }
-					>
-						<Typography
-							variant="caption"
-							sx={ {
-								textTransform: 'uppercase',
-								letterSpacing: 0.5,
-								color: 'text.secondary',
-							} }
-						>
-							{ __(
-								'4 · Send to Webhooks',
-								'rest-api-firewall'
-							) }
+					<Stack direction="row" alignItems="center" spacing={ 1 } sx={ { mb: 1.5 } }>
+						<Typography variant="caption" sx={ { textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' } }>
+							{ __( '4 · Send to Webhooks', 'rest-api-firewall' ) }
 						</Typography>
-						{ webhookIds.length > 0 && (
-							<Chip
-								label={ webhookIds.length }
-								size="small"
-								color="primary"
-								sx={ { height: 20 } }
-							/>
-						) }
+						{ webhookIds.length > 0 && <Chip label={ webhookIds.length } size="small" color="primary" sx={ { height: 20 } } /> }
 					</Stack>
-					<WebhookCheckList
-						webhooks={ webhooks }
+					<ItemCheckList
+						items={ webhooks }
 						selectedIds={ webhookIds }
 						onChange={ setWebhookIds }
+						emptyText={ __( 'No outbound webhooks available. Create a webhook first.', 'rest-api-firewall' ) }
+						renderLabel={ ( w ) => (
+							<Stack direction="row" spacing={ 1 } alignItems="center">
+								<Typography variant="body2">{ w.title || w.id }</Typography>
+								<Typography variant="caption" color="text.secondary" sx={ { fontFamily: 'monospace' } }>{ w.endpoint }</Typography>
+							</Stack>
+						) }
 					/>
 				</Paper>
 
 				{ /* 5. Actions — Emails */ }
 				<Paper variant="outlined" sx={ { p: 2 } }>
-					<Stack
-						direction="row"
-						alignItems="center"
-						spacing={ 1 }
-						sx={ { mb: 1.5 } }
-					>
-						<Typography
-							variant="caption"
-							sx={ {
-								textTransform: 'uppercase',
-								letterSpacing: 0.5,
-								color: 'text.secondary',
-							} }
-						>
-							{ __(
-								'5 · Send Email Notifications',
-								'rest-api-firewall'
-							) }
+					<Stack direction="row" alignItems="center" spacing={ 1 } sx={ { mb: 1.5 } }>
+						<Typography variant="caption" sx={ { textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' } }>
+							{ __( '5 · Send Email Notifications', 'rest-api-firewall' ) }
 						</Typography>
-						{ mailIds.length > 0 && (
-							<Chip
-								label={ mailIds.length }
-								size="small"
-								color="secondary"
-								sx={ { height: 20 } }
-							/>
-						) }
+						{ mailIds.length > 0 && <Chip label={ mailIds.length } size="small" color="secondary" sx={ { height: 20 } } /> }
 					</Stack>
-					<MailCheckList
-						mails={ mails }
+					<ItemCheckList
+						items={ mails }
 						selectedIds={ mailIds }
 						onChange={ setMailIds }
+						emptyText={ __( 'No mail templates available. Create one first.', 'rest-api-firewall' ) }
+						renderLabel={ ( m ) => (
+							<Stack direction="row" spacing={ 1 } alignItems="center">
+								<Typography variant="body2">{ m.title || m.id }</Typography>
+								<Typography variant="caption" color="text.secondary">→ { m.recipient }</Typography>
+							</Stack>
+						) }
+					/>
+				</Paper>
+
+				{ /* 6. Chain Automations */ }
+				<Paper variant="outlined" sx={ { p: 2 } }>
+					<Stack direction="row" alignItems="center" spacing={ 1 } sx={ { mb: 1.5 } }>
+						<Typography variant="caption" sx={ { textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' } }>
+							{ __( '6 · Chain Automations', 'rest-api-firewall' ) }
+						</Typography>
+						{ chainAutomationIds.length > 0 && <Chip label={ chainAutomationIds.length } size="small" icon={ <CallSplitIcon sx={ { fontSize: '0.9rem!important' } } /> } sx={ { height: 20 } } /> }
+					</Stack>
+					<ItemCheckList
+						items={ automations }
+						selectedIds={ chainAutomationIds }
+						onChange={ setChainAutomationIds }
+						emptyText={ __( 'No other automations available to chain.', 'rest-api-firewall' ) }
+						renderLabel={ ( a ) => (
+							<Stack direction="row" spacing={ 1 } alignItems="center">
+								<Typography variant="body2">{ a.title || a.id }</Typography>
+								{ a.events && a.events.length > 0 && (
+									<Typography variant="caption" color="text.secondary" sx={ { fontFamily: 'monospace' } }>{ a.events.join( ', ' ) }</Typography>
+								) }
+							</Stack>
+						) }
+					/>
+				</Paper>
+
+				{ /* 7. API Connect Actions */ }
+				<Paper variant="outlined" sx={ { p: 2 } }>
+					<Stack direction="row" alignItems="center" spacing={ 1 } sx={ { mb: 1.5 } }>
+						<Typography variant="caption" sx={ { textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' } }>
+							{ __( '7 · API Connect', 'rest-api-firewall' ) }
+						</Typography>
+						{ apiConnectIds.length > 0 && <Chip label={ apiConnectIds.length } size="small" color="success" sx={ { height: 20 } } /> }
+					</Stack>
+					<ItemCheckList
+						items={ apiConnections }
+						selectedIds={ apiConnectIds }
+						onChange={ setApiConnectIds }
+						emptyText={ __( 'No API connections available. Configure one in the API Connect panel.', 'rest-api-firewall' ) }
+						renderLabel={ ( c ) => (
+							<Stack direction="row" spacing={ 1 } alignItems="center">
+								<Typography variant="body2">{ c.title || c.id }</Typography>
+								<Chip label={ c.provider } size="small" variant="outlined" sx={ { height: 18, fontSize: '0.7rem' } } />
+								{ c.config?.action && (
+									<Typography variant="caption" color="text.secondary" sx={ { fontFamily: 'monospace' } }>{ c.config.action }</Typography>
+								) }
+							</Stack>
+						) }
 					/>
 				</Paper>
 			</Stack>

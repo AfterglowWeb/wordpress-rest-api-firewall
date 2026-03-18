@@ -57,7 +57,7 @@ function AppContent() {
 	const { __ } = wp.i18n || {};
 	const { save, saving } = useSaveOptions();
 	const { hasValidLicense } = useLicense();
-	const { dirtyFlag } = useApplication();
+	const { dirtyFlag, setDirtyFlag } = useApplication();
 	const { panel, navigate } = useNavigation();
 
 	const [ postTypes, setPostTypes ] = useState( [] );
@@ -71,7 +71,7 @@ function AppContent() {
 	);
 	const [ migrationDone, setMigrationDone ] = useState( false );
 
-	const { form, setField, setSlider, pickGroup } = useSettingsForm( {
+	const { form, setField, setSlider, pickGroup, isGroupDirty } = useSettingsForm( {
 		adminData,
 	} );
 
@@ -179,10 +179,18 @@ function AppContent() {
 
 	const activeSaveGroup = PANEL_SAVE_GROUP[ panel ] ?? null;
 	const showSaveButton = activeSaveGroup !== null;
+	const activeFormDirty = activeSaveGroup ? isGroupDirty( activeSaveGroup ) : false;
 
 	const handleSave = () => {
 		save( pickGroup( activeSaveGroup ), SAVE_CONFIG[ activeSaveGroup ] );
 	};
+
+	useEffect( () => {
+		if ( ! showSaveButton ) {
+			return;
+		}
+		setDirtyFlag( { has: activeFormDirty, message: '' } );
+	}, [ activeFormDirty, showSaveButton ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	if ( ! adminData ) {
 		return null;
@@ -200,6 +208,7 @@ function AppContent() {
 					showSaveButton={ showSaveButton }
 					onSave={ handleSave }
 					saving={ saving }
+					formDirty={ activeFormDirty }
 				/>
 
 				<Stack

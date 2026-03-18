@@ -17,6 +17,7 @@
   ],
   "require": {
     "php": ">=7.4",
+    "firebase/php-jwt": "^6.10",
     "league/commonmark": "^2.8",
     "league/iso3166": "^4.4"
   },

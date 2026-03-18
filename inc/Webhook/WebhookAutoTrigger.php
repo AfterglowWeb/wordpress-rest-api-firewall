@@ -98,6 +98,44 @@ class WebhookAutoTrigger {
 				'context'       => array( 'pro' ),
 				'accepted_args' => 5, // term_id, tt_id, taxonomy, deleted_term, object_ids.
 			),
+
+			'user_register'      => array(
+				'label'         => __( 'User registered', 'rest-api-firewall' ),
+				'description'   => __( 'Triggered when a new user account is created', 'rest-api-firewall' ),
+				'group'         => 'users',
+				'context'       => array( 'pro' ),
+				'accepted_args' => 2, // user_id, userdata.
+			),
+			'wp_login'           => array(
+				'label'         => __( 'User logged in', 'rest-api-firewall' ),
+				'description'   => __( 'Triggered after a successful login', 'rest-api-firewall' ),
+				'group'         => 'users',
+				'context'       => array( 'pro' ),
+				'accepted_args' => 2, // user_login, WP_User.
+			),
+			'profile_update'     => array(
+				'label'         => __( 'User updated', 'rest-api-firewall' ),
+				'description'   => __( 'Triggered when a user profile is updated', 'rest-api-firewall' ),
+				'group'         => 'users',
+				'context'       => array( 'pro' ),
+				'accepted_args' => 3, // user_id, old_user_data, userdata.
+			),
+			'delete_user'        => array(
+				'label'         => __( 'User deleted', 'rest-api-firewall' ),
+				'description'   => __( 'Triggered before a user is deleted', 'rest-api-firewall' ),
+				'group'         => 'users',
+				'context'       => array( 'pro' ),
+				'accepted_args' => 3, // user_id, reassign, old_user_data.
+			),
+
+			'inbound_webhook'    => array(
+				'label'         => __( 'Incoming webhook received', 'rest-api-firewall' ),
+				'description'   => __( 'Triggered when an external service sends a signed request to an inbound webhook endpoint', 'rest-api-firewall' ),
+				'group'         => 'inbound',
+				'context'       => array( 'pro' ),
+				'accepted_args' => 0, // Dispatched programmatically — not a real WP hook.
+				'virtual'       => true,
+			),
 		);
 
 		return apply_filters( 'rest_api_firewall_webhook_available_events', $events );
@@ -108,6 +146,8 @@ class WebhookAutoTrigger {
 			'posts'       => __( 'Posts', 'rest-api-firewall' ),
 			'attachments' => __( 'Attachments', 'rest-api-firewall' ),
 			'terms'       => __( 'Terms', 'rest-api-firewall' ),
+			'users'       => __( 'Users', 'rest-api-firewall' ),
+			'inbound'     => __( 'Incoming Webhooks', 'rest-api-firewall' ),
 		);
 
 		return apply_filters( 'rest_api_firewall_webhook_event_groups', $groups );
@@ -140,12 +180,21 @@ class WebhookAutoTrigger {
 				continue;
 			}
 
-			$event_key = $automation['event'] ?? '';
-			if ( empty( $event_key ) || ! isset( $available_events[ $event_key ] ) ) {
-				continue;
-			}
+			// Support multi-event automations; fall back to legacy single-event column.
+			$event_keys = ! empty( $automation['events'] ) && is_array( $automation['events'] )
+				? $automation['events']
+				: ( ! empty( $automation['event'] ) ? array( $automation['event'] ) : array() );
 
-			$this->register_automation_hook( $automation, $webhooks, $event_key, $available_events[ $event_key ] );
+			foreach ( $event_keys as $event_key ) {
+				if ( empty( $event_key ) || ! isset( $available_events[ $event_key ] ) ) {
+					continue;
+				}
+				// Virtual events (e.g. inbound_webhook) are dispatched programmatically — no WP hook.
+				if ( ! empty( $available_events[ $event_key ]['virtual'] ) ) {
+					continue;
+				}
+				$this->register_automation_hook( $automation, $webhooks, $event_key, $available_events[ $event_key ] );
+			}
 		}
 	}
 

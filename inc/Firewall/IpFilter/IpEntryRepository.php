@@ -131,18 +131,21 @@ class IpEntryRepository {
 
 		$count_sql = "SELECT COUNT(*) FROM {$table} WHERE {$where_clause}";
 		if ( ! empty( $values ) ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- SQL built from whitelisted column names and %s/%d placeholders only
 			$count_sql = $wpdb->prepare( $count_sql, $values );
 		}
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 		$total = (int) $wpdb->get_var( $count_sql );
 
 		$sql      = "SELECT * FROM {$table} WHERE {$where_clause} ORDER BY {$order_by} {$order} LIMIT %d OFFSET %d";
 		$values[] = $per_page;
 		$values[] = $offset;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 		$entries = $wpdb->get_results( $wpdb->prepare( $sql, $values ), ARRAY_A );
 
 		return array(
-			'entries'     => array_map( array( self::class, 'normalize' ), $entries ?: array() ),
+			'entries'     => array_map( array( self::class, 'normalize' ), is_array( $entries ) ? $entries : array() ),
 			'total'       => $total,
 			'page'        => $page,
 			'per_page'    => $per_page,
@@ -154,6 +157,7 @@ class IpEntryRepository {
 		global $wpdb;
 
 		$sql = 'SELECT * FROM ' . self::table() . ' WHERE ip = %s AND list_type = %s LIMIT 1';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 		$row = $wpdb->get_row( $wpdb->prepare( $sql, $ip, $list_type ), ARRAY_A );
 
 		return $row ? self::normalize( $row ) : null;
@@ -166,6 +170,7 @@ class IpEntryRepository {
 				WHERE ip = %s AND list_type = %s
 				AND (expires_at IS NULL OR expires_at > NOW())';
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 		return (int) $wpdb->get_var( $wpdb->prepare( $sql, $ip, $list_type ) ) > 0;
 	}
 
@@ -178,7 +183,8 @@ class IpEntryRepository {
 		}
 
 		// Slow path: CIDR entries.
-		$sql   = 'SELECT ip FROM ' . self::table() . ' WHERE list_type = %s AND ip LIKE %s AND (expires_at IS NULL OR expires_at > NOW())';
+		$sql = 'SELECT ip FROM ' . self::table() . ' WHERE list_type = %s AND ip LIKE %s AND (expires_at IS NULL OR expires_at > NOW())';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 		$cidrs = $wpdb->get_col( $wpdb->prepare( $sql, $list_type, '%/%' ) );
 
 		foreach ( $cidrs as $cidr ) {
@@ -206,6 +212,7 @@ class IpEntryRepository {
 			$sanitized['blocked_at'] = $now;
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$result = $wpdb->insert( self::table(), $sanitized );
 
 		return $result ? $wpdb->insert_id : false;
@@ -221,11 +228,13 @@ class IpEntryRepository {
 
 		$sanitized['updated_at'] = current_time( 'mysql' );
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return (bool) $wpdb->update( self::table(), $sanitized, array( 'id' => $id ) );
 	}
 
 	public static function delete( int $id ): bool {
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return (bool) $wpdb->delete( self::table(), array( 'id' => $id ) );
 	}
 
@@ -240,6 +249,7 @@ class IpEntryRepository {
 		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 		$sql          = 'DELETE FROM ' . self::table() . " WHERE id IN ({$placeholders})";
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- placeholders generated from validated integer IDs
 		return (int) $wpdb->query( $wpdb->prepare( $sql, $ids ) );
 	}
 
@@ -259,12 +269,12 @@ class IpEntryRepository {
 
 		if ( null === $expires_at ) {
 			$values = array_merge( array( $now ), $ids );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			return (int) $wpdb->query( $wpdb->prepare( 'UPDATE ' . self::table() . " SET expires_at = NULL, updated_at = %s WHERE id IN ({$placeholders})", $values ) );
 		}
 
 		$values = array_merge( array( $expires_at, $now ), $ids );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 		return (int) $wpdb->query( $wpdb->prepare( 'UPDATE ' . self::table() . " SET expires_at = %s, updated_at = %s WHERE id IN ({$placeholders})", $values ) );
 	}
 
@@ -275,6 +285,7 @@ class IpEntryRepository {
 			? gmdate( 'Y-m-d H:i:s', time() + $expiry_seconds )
 			: null;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return (int) $wpdb->update(
 			self::table(),
 			array(
@@ -287,9 +298,8 @@ class IpEntryRepository {
 
 	public static function delete_expired(): int {
 		global $wpdb;
-		return (int) $wpdb->query(
-			'DELETE FROM ' . self::table() . ' WHERE expires_at IS NOT NULL AND expires_at < NOW()'
-		);
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- static SQL, no user input
+		return (int) $wpdb->query( 'DELETE FROM ' . self::table() . ' WHERE expires_at IS NOT NULL AND expires_at < NOW()' );
 	}
 
 	public static function get_country_stats( string $list_type = 'blacklist' ): array {
@@ -303,7 +313,9 @@ class IpEntryRepository {
 				GROUP BY country_code, country_name
 				ORDER BY count DESC';
 
-		return $wpdb->get_results( $wpdb->prepare( $sql, $list_type ), ARRAY_A ) ?: array();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$results = $wpdb->get_results( $wpdb->prepare( $sql, $list_type ), ARRAY_A );
+		return is_array( $results ) ? $results : array();
 	}
 
 	protected static function sanitize_entry( array $data, bool $require_ip = true ): ?array {
