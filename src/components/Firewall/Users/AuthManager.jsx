@@ -32,7 +32,7 @@ const JWT_ALGORITHMS = [
 	'ES256',
 ];
 
-function JwtConfig( { config, onChange } ) {
+export function JwtConfig( { config, onChange } ) {
 	const { __ } = wp.i18n || {};
 
 	return (

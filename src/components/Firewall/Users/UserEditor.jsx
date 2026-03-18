@@ -43,7 +43,7 @@ function SectionHeader( { title, description } ) {
 
 export default function UserEditor( { user, onBack, appSettings = {} } ) {
 	const { adminData } = useAdminData();
-	const { proNonce, hasValidLicense } = useLicense();
+	const { proNonce } = useLicense();
 	const { selectedApplicationId, setDirtyFlag } = useApplication();
 	
 	const nonce = proNonce || adminData.nonce;
@@ -98,15 +98,7 @@ export default function UserEditor( { user, onBack, appSettings = {} } ) {
 	const [ userAllowedIps, setUserAllowedIps ] = useState( user.allowed_ips || [] );
 	const [ userAllowedOrigins, setUserAllowedOrigins ] = useState( user.allowed_origins || [] );
 
-	const appAllowedAuthMethods = (() => {
-		if ( ! hasValidLicense ) {
-			// Free tier: only WordPress Application Password and JWT
-			return appSettings?.allowed_auth_methods?.length > 0
-				? appSettings.allowed_auth_methods.filter( ( m ) => [ 'wp_auth', 'jwt' ].includes( m ) )
-				: [ 'wp_auth', 'jwt' ];
-		}
-		return appSettings?.allowed_auth_methods || [];
-	})();
+	const appAllowedAuthMethods = appSettings?.allowed_auth_methods || [];
 
 	const appRateLimit = appSettings?.rate_limit || {};
 
@@ -340,8 +332,7 @@ export default function UserEditor( { user, onBack, appSettings = {} } ) {
 								: newIps;
 							setUserAllowedIps( filtered );
 						} }
-						maxEntries={ ! hasValidLicense ? 1 : undefined }
-					/>
+						/>
 				</Stack>
 
 				<Divider />
@@ -360,7 +351,6 @@ export default function UserEditor( { user, onBack, appSettings = {} } ) {
 								: newOrigins;
 							setUserAllowedOrigins( filtered );
 						} }
-						maxEntries={ ! hasValidLicense ? 1 : undefined }
 					/>
 				</Stack>
 

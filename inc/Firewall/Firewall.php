@@ -4,6 +4,7 @@ namespace cmk\RestApiFirewall\Firewall;
 defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Core\CoreOptions;
+use cmk\RestApiFirewall\Firewall\AuthJWT;
 use cmk\RestApiFirewall\Firewall\WordpressAuth;
 use cmk\RestApiFirewall\Firewall\GlobalIpBlackList;
 use cmk\RestApiFirewall\Firewall\IpBlackList;
@@ -126,7 +127,7 @@ class Firewall {
 			$enforce_auth_global = CoreOptions::read_option( 'enforce_auth' );
 
 			if ( $policy['protect'] && ! $enforce_auth_global && ! self::$pro_auth_owner ) {
-				if ( ! WordpressAuth::validate_wp_application_password() ) {
+				if ( ! self::authenticate( CoreOptions::read_options() ) ) {
 					return new WP_Error(
 						'rest_forbidden',
 						esc_html__( 'Authentication required.', 'rest-api-firewall' ),
@@ -169,6 +170,21 @@ class Firewall {
 		return $result;
 	}
 
+	private static function authenticate( array $options ): bool {
+		$method = $options['firewall_auth_method'] ?? 'wp_auth';
+
+		if ( 'jwt' === $method ) {
+			return AuthJWT::validate_bearer_jwt( array(
+				'algorithm'  => $options['firewall_jwt_algorithm'] ?? 'RS256',
+				'public_key' => $options['firewall_jwt_public_key'] ?? '',
+				'audience'   => $options['firewall_jwt_audience'] ?? '',
+				'issuer'     => $options['firewall_jwt_issuer'] ?? '',
+			) );
+		}
+
+		return WordpressAuth::validate_wp_application_password();
+	}
+
 	private static function wordpress_auth( $result ) {
 
 		if ( is_wp_error( $result ) ) {
@@ -186,7 +202,7 @@ class Firewall {
 			return $result;
 		}
 
-		$auth_valid = WordpressAuth::validate_wp_application_password();
+		$auth_valid = self::authenticate( CoreOptions::read_options() );
 
 		if ( false === $auth_valid ) {
 			return new WP_Error(

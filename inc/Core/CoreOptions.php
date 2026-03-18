@@ -36,6 +36,51 @@ class CoreOptions {
 		$options = array(
 
 			// Firewall - Authentication & Rate Limiting.
+			'firewall_auth_method'                      => array(
+				'default_value'     => 'wp_auth',
+				'type'              => 'string',
+				'sanitize_callback' => static fn( $v ) => in_array( $v, array( 'wp_auth', 'jwt' ), true ) ? $v : 'wp_auth',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_auth_rate',
+			),
+
+			'firewall_jwt_algorithm'                    => array(
+				'default_value'     => 'RS256',
+				'type'              => 'string',
+				'sanitize_callback' => static fn( $v ) => in_array( $v, array( 'HS256', 'HS384', 'HS512', 'RS256', 'RS384', 'RS512', 'ES256' ), true ) ? $v : 'RS256',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_auth_rate',
+			),
+
+			'firewall_jwt_public_key'                   => array(
+				'default_value'     => '',
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_textarea_field',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_auth_rate',
+			),
+
+			'firewall_jwt_audience'                     => array(
+				'default_value'     => '',
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_auth_rate',
+			),
+
+			'firewall_jwt_issuer'                       => array(
+				'default_value'     => '',
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_auth_rate',
+			),
+
 			'firewall_user_id'                          => array(
 				'default_value'     => 0,
 				'type'              => 'integer',
