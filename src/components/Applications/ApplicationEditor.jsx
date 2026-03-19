@@ -426,7 +426,7 @@ export default function ApplicationEditor( { application, onBack } ) {
 
 	const updateToolbar = useRegisterToolbar( {
 		isNew,
-		breadcrumb: [ __( 'Application', 'rest-api-firewall' ) ],
+		breadcrumb: [ __( 'Applications', 'rest-api-firewall' ) ],
 		docPage: 'applications',
 		showAppLink: false,
 		handleBack: () => { clearDirty(); onBack(); },

@@ -6,6 +6,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Switch from '@mui/material/Switch';
+import Button from '@mui/material/Button';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import Tooltip from '@mui/material/Tooltip';
@@ -14,7 +15,11 @@ import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Divider from '@mui/material/Divider';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import FilterListIcon from '@mui/icons-material/FilterList';
 
 import CopyButton from '../CopyButton';
 import ObjectTypeSelect from '../ObjectTypeSelect';
@@ -34,6 +39,251 @@ const TYPE_LABELS = {
 	taxonomy: 'Taxonomy',
 	author: 'User',
 };
+
+/**
+ * Resolve the effective global value for a given filter key + property name.
+ * Used to show inherited (read-only) filter state in the Filters menu.
+ */
+function resolveGlobalFilterValue( filterKey, propName, globalForm ) {
+	if ( ! globalForm ) return false;
+	switch ( filterKey ) {
+		case 'relative_url':
+			return !! globalForm.rest_models_relative_url_enabled;
+		case 'rendered':
+			return !! globalForm.rest_models_resolve_rendered_props;
+		case 'embed':
+			if ( 'featured_media' === propName ) return !! globalForm.rest_models_embed_featured_attachment_enabled;
+			if ( 'author' === propName )         return !! globalForm.rest_models_embed_author_enabled;
+			return !! globalForm.rest_models_embed_terms_enabled;
+		default:
+			return false;
+	}
+}
+
+/**
+ * Filters menu button + MUI Menu for a single PropertyRow.
+ * Shows filter checkboxes (and the Search & Replace form) in a dropdown.
+ * When isInherit=true, values are read-only with a "global" tag and an
+ * "Apply local overrides" action to unlock editing.
+ */
+function FiltersMenu( {
+	filters,
+	propName,
+	isInherit,
+	globalForm,
+	onToggleInherit,
+	setField,
+	basePath,
+	disabled,
+	hasValidLicense,
+	__,
+} ) {
+	const [ anchorEl, setAnchorEl ] = useState( null );
+	const open = Boolean( anchorEl );
+
+	const handleOpen = ( e ) => setAnchorEl( e.currentTarget );
+	const handleClose = () => setAnchorEl( null );
+
+	const activeCount = filters.filter( ( f ) => {
+		if ( f.type === 'search_replace' ) {
+			return !! ( f.value?.search );
+		}
+		return isInherit
+			? !! resolveGlobalFilterValue( f.key, propName, globalForm )
+			: !! f.value;
+	} ).length;
+
+	const renderBooleanFilter = ( filter ) => {
+		const displayValue = isInherit
+			? resolveGlobalFilterValue( filter.key, propName, globalForm )
+			: !! filter.value;
+
+		return (
+			<MenuItem
+				key={ filter.key }
+				dense
+				disableRipple={ isInherit }
+				sx={ { gap: 1, cursor: isInherit ? 'default' : 'pointer' } }
+				onClick={
+					isInherit
+						? undefined
+						: () =>
+							setField( {
+								target: {
+									name: `${ basePath }.settings.filters.${ filter.key }`,
+									value: ! filter.value,
+								},
+							} )
+				}
+			>
+				<Checkbox
+					size="small"
+					checked={ displayValue }
+					disabled={ isInherit || disabled || ! hasValidLicense }
+					tabIndex={ -1 }
+					disableRipple
+					sx={ { p: 0.25 } }
+				/>
+				<Typography
+					variant="body2"
+					sx={ { flex: 1 } }
+					color={
+						( isInherit || disabled || ! hasValidLicense )
+							? 'text.disabled'
+							: 'text.primary'
+					}
+				>
+					{ filter.tooltip || filter.label }
+				</Typography>
+				{ isInherit && (
+					<Typography
+						variant="caption"
+						color="text.disabled"
+						sx={ { fontStyle: 'italic', ml: 0.5 } }
+					>
+						{ __( 'global', 'rest-api-firewall' ) }
+					</Typography>
+				) }
+			</MenuItem>
+		);
+	};
+
+	const renderSearchReplaceFilter = ( filter ) => {
+		const val = ( filter.value && typeof filter.value === 'object' ) ? filter.value : {};
+		const isDisabled = isInherit || disabled || ! hasValidLicense;
+
+		const patch = ( changes ) =>
+			setField( {
+				target: {
+					name: `${ basePath }.settings.filters.${ filter.key }`,
+					value: { ...val, ...changes },
+				},
+			} );
+
+		return (
+			<Box key={ filter.key } sx={ { px: 2, py: 1 } }>
+				<Typography
+					variant="caption"
+					color="text.secondary"
+					sx={ { display: 'block', mb: 0.75, fontWeight: 500 } }
+				>
+					{ filter.tooltip || filter.label }
+				</Typography>
+				<Stack spacing={ 0.75 }>
+					<TextField
+						size="small"
+						placeholder={ __( 'Search', 'rest-api-firewall' ) }
+						value={ val.search || '' }
+						disabled={ isDisabled }
+						onChange={ ( e ) => patch( { search: e.target.value } ) }
+						inputProps={ { style: { fontSize: '0.8rem' } } }
+						fullWidth
+					/>
+					<TextField
+						size="small"
+						placeholder={ __( 'Replace with', 'rest-api-firewall' ) }
+						value={ val.replace || '' }
+						disabled={ isDisabled }
+						onChange={ ( e ) => patch( { replace: e.target.value } ) }
+						inputProps={ { style: { fontSize: '0.8rem' } } }
+						fullWidth
+					/>
+					<Stack direction="row" flexWrap="wrap">
+						{ [
+							{ key: 'case_sensitive', label: __( 'Case sensitive', 'rest-api-firewall' ) },
+							{ key: 'whole_word',     label: __( 'Whole word',     'rest-api-firewall' ) },
+							{ key: 'regex',          label: __( 'Regex',          'rest-api-firewall' ) },
+						].map( ( opt ) => (
+							<FormControlLabel
+								key={ opt.key }
+								disabled={ isDisabled }
+								control={
+									<Checkbox
+										size="small"
+										checked={ !! val[ opt.key ] }
+										onChange={ ( e ) => patch( { [ opt.key ]: e.target.checked } ) }
+									/>
+								}
+								label={
+									<Typography variant="caption">{ opt.label }</Typography>
+								}
+								sx={ { mr: 1 } }
+							/>
+						) ) }
+					</Stack>
+				</Stack>
+			</Box>
+		);
+	};
+
+	return (
+		<>
+			<Button
+				size="small"
+				variant={ activeCount > 0 ? 'contained' : 'outlined' }
+				disableElevation
+				startIcon={ <FilterListIcon sx={ { fontSize: 14 } } /> }
+				onClick={ handleOpen }
+				disabled={ disabled || ! hasValidLicense }
+				sx={ {
+					fontSize: '0.7rem',
+					py: 0.25,
+					px: 1,
+					minWidth: 0,
+					textTransform: 'none',
+					lineHeight: 1.5,
+				} }
+			>
+				{ __( 'Filters', 'rest-api-firewall' ) }
+				{ activeCount > 0 && ` (${ activeCount })` }
+			</Button>
+
+			<Menu
+				anchorEl={ anchorEl }
+				open={ open }
+				onClose={ handleClose }
+				PaperProps={ { sx: { minWidth: 300, maxWidth: 380 } } }
+				transformOrigin={ { horizontal: 'right', vertical: 'top' } }
+				anchorOrigin={ { horizontal: 'right', vertical: 'bottom' } }
+			>
+				{ filters.map( ( filter ) =>
+					filter.type === 'search_replace'
+						? renderSearchReplaceFilter( filter )
+						: renderBooleanFilter( filter )
+				) }
+
+				{ onToggleInherit && (
+					<>
+						<Divider sx={ { my: 0.5 } } />
+						{ isInherit ? (
+							<MenuItem
+								dense
+								onClick={ () => { onToggleInherit(); handleClose(); } }
+							>
+								<Typography
+									variant="body2"
+									color="primary.main"
+									fontWeight={ 500 }
+								>
+									{ __( 'Apply local overrides', 'rest-api-firewall' ) }
+								</Typography>
+							</MenuItem>
+						) : (
+							<MenuItem
+								dense
+								onClick={ () => { onToggleInherit(); handleClose(); } }
+							>
+								<Typography variant="body2" color="text.secondary">
+									{ __( 'Revert to inherited', 'rest-api-firewall' ) }
+								</Typography>
+							</MenuItem>
+						) }
+					</>
+				) }
+			</Menu>
+		</>
+	);
+}
 
 export default function Properties( { setField, postTypes, form } ) {
 	const { hasValidLicense } = useLicense();
@@ -149,6 +399,9 @@ export function PropertyRow( {
 	basePath = '',
 	alwaysExpanded = false,
 	disabled = false,
+	isInherit = undefined,
+	onToggleInherit = null,
+	globalForm = null,
 } ) {
 	const [ expanded, setExpanded ] = useState( false );
 	const [ detailsOpen, setDetailsOpen ] = useState( false );
@@ -291,98 +544,80 @@ export function PropertyRow( {
 				</Stack>
 
 				{ ( depth === 0 || 'disable' in settings ) && (
-					<Tooltip
-						followCursor
-						title={
-							! hasValidLicense
-								? __( 'Licence required', 'rest-api-firewall' )
-								: ''
-						}
+					<Stack
+						direction="row"
+						gap={ 0.5 }
+						alignItems="center"
+						justifyContent="flex-end"
+						sx={ { flexShrink: 0 } }
 					>
-						<Stack
-							direction="row"
-							gap={ 1 }
-							alignItems="center"
-							justifyContent="flex-end"
-							sx={ { flexShrink: 0 } }
+						<Tooltip
+							followCursor
+							title={
+								! hasValidLicense
+									? __( 'Licence required', 'rest-api-firewall' )
+									: ''
+							}
 						>
-							{ depth === 0 &&
-								hasFilters &&
-								settings.filters.map( ( filter ) => (
-									<FormControlLabel
-										key={ filter.key }
-										sx={ { flex: 0 } }
-									disabled={ disabled || ! hasValidLicense }
-										control={
-											<Checkbox
-												size="small"
-												checked={ !! filter.value }
-												onChange={ ( e ) =>
-													setField( {
-														target: {
-															name: `${ basePath }.settings.filters.${ filter.key }`,
-															value: e.target.checked,
-														},
-													} )
-												}
-											/>
-										}
-										label={
-											<Typography
-												sx={ {
-													width: 55,
-													whiteSpace: 'nowrap',
-												} }
-												fontSize="0.75rem"
-												color={
-													( disabled || ! hasValidLicense )
-														? 'text.disabled'
-														: 'text.primary'
-												}
-											>
-												{ filter.label }
-											</Typography>
-										}
+							<Stack
+								direction="row"
+								gap={ 1 }
+								alignItems="center"
+								justifyContent="flex-end"
+							>
+								{ depth === 0 && hasFilters && (
+									<FiltersMenu
+										filters={ settings.filters }
+										propName={ propName }
+										isInherit={ isInherit }
+										globalForm={ globalForm }
+										onToggleInherit={ onToggleInherit }
+										setField={ setField }
+										basePath={ basePath }
+										disabled={ disabled }
+										hasValidLicense={ hasValidLicense }
+										__={ __ }
 									/>
-								) ) }
+								) }
 
-							<FormControlLabel
-								disabled={ disabled || ! hasValidLicense }
-								control={
-									<Switch
-										size="small"
-										checked={ localDisable }
-										onChange={ ( e ) => {
-											const next = e.target.checked;
-											setLocalDisable( next );
-											setField( {
-												target: {
-													name: `${ basePath }.settings.disable`,
-													value: next,
-												},
-											} );
-										} }
-									/>
-								}
-								label={
-									<Typography
-										sx={ {
-											width: 55,
-											whiteSpace: 'nowrap',
-										} }
-										fontSize="0.75rem"
-										color={
-											( disabled || ! hasValidLicense )
-												? 'text.disabled'
-												: 'text.primary'
-										}
-									>
-										{ __( 'Disable', 'rest-api-firewall' ) }
-									</Typography>
-								}
-							/>
-						</Stack>
-					</Tooltip>
+								<FormControlLabel
+									disabled={ disabled || ! hasValidLicense }
+									control={
+										<Switch
+											size="small"
+											checked={ localDisable }
+											onChange={ ( e ) => {
+												const next = e.target.checked;
+												setLocalDisable( next );
+												setField( {
+													target: {
+														name: `${ basePath }.settings.disable`,
+														value: next,
+													},
+												} );
+											} }
+										/>
+									}
+									label={
+										<Typography
+											sx={ {
+												width: 55,
+												whiteSpace: 'nowrap',
+											} }
+											fontSize="0.75rem"
+											color={
+												( disabled || ! hasValidLicense )
+													? 'text.disabled'
+													: 'text.primary'
+											}
+										>
+											{ __( 'Disable', 'rest-api-firewall' ) }
+										</Typography>
+									}
+								/>
+							</Stack>
+						</Tooltip>
+					</Stack>
 				) }
 			</Box>
 
