@@ -19,7 +19,6 @@ class Permissions {
 
 		$valid = wp_verify_nonce( $nonce, 'rest_api_firewall_update_options_nonce' );
 
-		// Accept the pro nonce only when the pro plugin is loaded and licensed.
 		if ( ! $valid && self::is_pro_active() ) {
 			$valid = wp_verify_nonce( $nonce, self::PRO_NONCE_ACTION );
 		}

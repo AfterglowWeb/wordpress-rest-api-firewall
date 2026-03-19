@@ -271,6 +271,44 @@ export default function ModelEditor( { model, onBack } ) {
 			setIsCustom( newMode === 'custom' );
 		}
 	};
+	handleSaveRef.current = handleSave;
+	handleDeleteRef.current = handleDelete;
+
+	const updateToolbar = useRegisterToolbar( {
+		isNew,
+		breadcrumb: [ __( 'Properties', 'rest-api-firewall' ) ],
+		docPage: 'models',
+		handleBack,
+		handleSave: () => handleSaveRef.current?.(),
+		handleDelete: () => handleDeleteRef.current?.(),
+		setEnabled,
+	} );
+
+	useEffect( () => {
+		updateToolbar( {
+			title,
+			author,
+			dateCreated,
+			dateModified,
+			saving,
+			enabled,
+			dirtyFlag: { has: true, message: __( 'You are editing a model. Unsaved changes will be lost.', 'rest-api-firewall' ) },
+			titleSuffix: (
+				<Stack direction="row" gap={ 0.75 } alignItems="center">
+					{ objectType && (
+						<Chip label={ objectType } size="small" variant="outlined" sx={ { fontFamily: 'monospace', fontSize: '0.7rem' } } />
+					) }
+					<Chip
+						label={ isCustom ? __( 'Custom', 'rest-api-firewall' ) : __( 'WP Schema', 'rest-api-firewall' ) }
+						size="small"
+						color={ isCustom ? 'secondary' : 'primary' }
+						variant="outlined"
+						sx={ { fontSize: '0.7rem' } }
+					/>
+				</Stack>
+			),
+		} );
+	}, [ title, author, dateCreated, dateModified, saving, enabled, objectType, isCustom ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	if ( ! loaded ) {
 		return (

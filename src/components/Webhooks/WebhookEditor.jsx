@@ -392,7 +392,6 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 			<Stack p={ { xs: 2, sm: 4 } } spacing={ 3 } sx={ { maxWidth: 760 } }>
 
-				{ /* Identity — always shown */ }
 				<Stack spacing={ 2 }>
 					<SectionHeader
 						title={ isInbound ? __( 'Incoming Webhook', 'rest-api-firewall' ) : __( 'Webhook', 'rest-api-firewall' ) }
@@ -427,7 +426,6 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 				{ isInbound ? (
 					<>
-						{ /* Inbound — Endpoint URL (read-only) */ }
 						<Stack spacing={ 2 }>
 							<SectionHeader
 								title={ __( 'Endpoint URL', 'rest-api-firewall' ) }
@@ -459,7 +457,6 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 						<Divider />
 
-						{ /* Inbound — Automation selector */ }
 						<Stack spacing={ 2 }>
 							<SectionHeader
 								title={ __( 'Linked Automation', 'rest-api-firewall' ) }
@@ -482,7 +479,6 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 						<Divider />
 
-						{ /* Inbound — HMAC verification key */ }
 						<Stack spacing={ 2 }>
 							<SectionHeader
 								title={ __( 'Signing Secret', 'rest-api-firewall' ) }
@@ -496,7 +492,6 @@ export default function WebhookEditor( { webhook, onBack } ) {
 					</>
 				) : (
 					<>
-						{ /* Outbound — URL + Method */ }
 						<Stack spacing={ 2 }>
 							<SectionHeader
 								title={ __( 'Endpoint', 'rest-api-firewall' ) }
@@ -529,7 +524,6 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 						<Divider />
 
-						{ /* Outbound — HMAC signing */ }
 						<Stack spacing={ 2 }>
 							<SectionHeader
 								title={ __( 'Authentication', 'rest-api-firewall' ) }
@@ -543,7 +537,6 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 						<Divider />
 
-						{ /* Outbound — Headers */ }
 						<Stack spacing={ 2 }>
 							<SectionHeader
 								title={ __( 'Headers', 'rest-api-firewall' ) }
@@ -554,7 +547,6 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 						<Divider />
 
-						{ /* Outbound — Body Payload */ }
 						<Stack spacing={ 2 }>
 							<SectionHeader
 								title={ __( 'Body Payload', 'rest-api-firewall' ) }
@@ -575,7 +567,6 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 						<Divider />
 
-						{ /* Outbound — Advanced */ }
 						<Stack spacing={ 2 }>
 							<SectionHeader
 								title={ __( 'Advanced', 'rest-api-firewall' ) }
