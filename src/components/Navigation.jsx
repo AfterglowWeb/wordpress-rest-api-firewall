@@ -44,6 +44,7 @@ import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import ShieldIcon from '@mui/icons-material/Shield';
 
 import { useNavigation } from '../contexts/NavigationContext';
+import { useEntryToolbarContext } from '../contexts/EntryToolbarContext';
 import AppIdentity from './AppIdentity';
 import ApplicationSelector from './ApplicationSelector';
 import Documentation from './Documentation/Documentation';
@@ -68,9 +69,10 @@ export default function Navigation( {
 } ) {
 	const { hasValidLicense } = useLicense();
 	const { adminData, updateAdminData } = useAdminData();
-	const { dirtyFlag, selectedApplication } = useApplication();
+	const { selectedApplication } = useApplication();
 	const { save } = useProActions();
 	const { panel, navigateGuarded } = useNavigation();
+	const { toolbarConfig } = useEntryToolbarContext();
 	const { __ } = wp.i18n || {};
 	const theme = useTheme();
 	const isMobile = useMediaQuery( theme.breakpoints.down( 'md' ) );
@@ -393,12 +395,6 @@ export default function Navigation( {
 										sx={ {
 											px: 3,
 											backgroundColor: !! item.disabled ? 'grey.100' : '',
-											'&.Mui-selected': {
-												bgcolor: 'primary.main',
-												color: 'primary.contrastText',
-												'& .MuiListItemIcon-root': { color: 'primary.contrastText' },
-												'&:hover': { bgcolor: 'primary.dark' },
-											},
 										} }
 										disabled={ panel === item.key || !! item.disabled }
 										onClick={ () => {
@@ -455,7 +451,7 @@ export default function Navigation( {
 				</List>
 			</Drawer>
 
-			<Slide in={ !dirtyFlag.has } direction="down">
+			<Slide in={ !toolbarConfig } direction="down">
 				<AppBar
 					elevation={ 0 }
 					sx={ {

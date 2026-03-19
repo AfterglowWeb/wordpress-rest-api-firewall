@@ -243,12 +243,9 @@ export default function AuthManager( {
 	};
 
 	const renderValue = ( value ) => {
-		if ( multiEnforcement ) {
-			const method = visibleMethods.find( ( m ) => m.value === value );
-			return method ? method.label : value;
-		}
-		return value;
-	}
+		const method = visibleMethods.find( ( m ) => m.value === value );
+		return method ? method.label : ( value || __( 'Select…', 'rest-api-firewall' ) );
+	};
 
 	return (
 		<Stack spacing={ 2 }>
@@ -257,29 +254,24 @@ export default function AuthManager( {
 					{ __( 'Select Authentication Method', 'rest-api-firewall' ) }
 				</InputLabel>
 				<Select
-				value={ selectValue }
-				onChange={ ( e ) => onAuthMethodChange( e.target.value ) }
-				label={ __( 'Select Authentication Method', 'rest-api-firewall' ) }
-				disabled={ singleEnforcement }
-				//displayEmpty={ multiEnforcement }
+					value={ selectValue }
+					onChange={ ( e ) => onAuthMethodChange( e.target.value ) }
+					label={ __( 'Select Authentication Method', 'rest-api-firewall' ) }
+					disabled={ singleEnforcement }
+					displayEmpty={ multiEnforcement }
+					renderValue={ renderValue }
 				>
 					{ visibleMethods.map( ( opt ) => (
-						<Tooltip
-							key={ opt.value }
-							title={ opt.comingSoon ? __( 'Coming soon', 'rest-api-firewall' ) : '' }
-							placement="right"
-						>
-							<span>
-								<MenuItem value={ opt.value } disabled={ !! opt.comingSoon }>
-									<Stack direction="row" alignItems="center" gap={ 1 }>
-										{ opt.label }
-										{ opt.comingSoon && (
-											<Chip label={ __( 'Soon', 'rest-api-firewall' ) } size="small" sx={ { height: 16, fontSize: '0.65rem' } } />
-										) }
-									</Stack>
-								</MenuItem>
-							</span>
-						</Tooltip>
+						<MenuItem key={ opt.value } value={ opt.value } disabled={ !! opt.comingSoon }>
+							<Stack direction="row" alignItems="center" gap={ 1 }>
+								{ opt.label }
+								{ opt.comingSoon && (
+									<Tooltip title={ __( 'Coming soon', 'rest-api-firewall' ) } placement="right">
+										<Chip label={ __( 'Soon', 'rest-api-firewall' ) } size="small" sx={ { height: 16, fontSize: '0.65rem' } } />
+									</Tooltip>
+								) }
+							</Stack>
+						</MenuItem>
 					) ) }
 				</Select>
 			</FormControl>

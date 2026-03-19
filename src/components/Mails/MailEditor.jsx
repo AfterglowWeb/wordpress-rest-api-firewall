@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from '@wordpress/element';
+import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
@@ -18,7 +18,7 @@ import SendIcon from '@mui/icons-material/Send';
 
 import useProActions from '../../hooks/useProActions';
 import formatDate from '../../utils/formatDate';
-import EntryToolbar from '../shared/EntryToolbar';
+import useRegisterToolbar from '../../hooks/useRegisterToolbar';
 
 const TEMPLATE_VARS = [
 	'{{event.type}}',
@@ -41,10 +41,12 @@ export default function MailEditor( { mail, onBack } ) {
 
 	const isNew = ! mail.id;
 
+	const handleSaveRef = useRef( null );
+	const handleDeleteRef = useRef( null );
+
 	useEffect( () => {
 		setDirtyFlag( { has: true, message: __( 'You are editing a mail template. Unsaved changes will be lost.', 'rest-api-firewall' ) } );
-		return () => setDirtyFlag( { has: false, message: '' } );
-	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps — cleanup handled by useRegisterToolbar
 
 	const clearDirty = useCallback(
 		() => setDirtyFlag( { has: false, message: '' } ),
@@ -209,35 +211,29 @@ export default function MailEditor( { mail, onBack } ) {
 		}
 	}, [ adminData, nonce, mail.id, __ ] );
 
-	if ( ! loaded ) {
-		return (
-			<Stack
-				alignItems="center"
-				justifyContent="center"
-				sx={ { height: 200 } }
-			>
-				<CircularProgress size={ 32 } />
-			</Stack>
-		);
-	}
+	handleSaveRef.current = handleSave;
+	handleDeleteRef.current = handleDelete;
 
-	return (
-		<Stack spacing={ 3 } flexGrow={ 1 }>
-			<EntryToolbar
-				isNew={ isNew }
-				title={ title }
-				author={ author }
-				dateCreated={ dateCreated }
-				dateModified={ dateModified }
-				handleBack={ () => { clearDirty(); onBack(); } }
-				handleSave={ handleSave }
-				handleDelete={ handleDelete }
-				saving={ saving }
-				enabled={ isNew ? null : enabled }
-				setEnabled={ isNew ? null : ( checked ) => { setEnabled( checked ); setDirty( true ); } }
-				breadcrumb={ [ __( 'Email', 'rest-api-firewall' ) ] }
-				docPage="mails"
-			>
+	const updateToolbar = useRegisterToolbar( {
+		isNew,
+		breadcrumb: [ __( 'Email', 'rest-api-firewall' ) ],
+		docPage: 'mails',
+		handleBack: () => { clearDirty(); onBack(); },
+		handleSave: () => handleSaveRef.current?.(),
+		handleDelete: () => handleDeleteRef.current?.(),
+		setEnabled: isNew ? null : ( checked ) => { setEnabled( checked ); setDirty( true ); },
+	} );
+
+	useEffect( () => {
+		updateToolbar( {
+			title,
+			author,
+			dateCreated,
+			dateModified,
+			saving,
+			enabled: isNew ? null : enabled,
+			dirtyFlag: { has: true, message: __( 'You are editing a mail template. Unsaved changes will be lost.', 'rest-api-firewall' ) },
+			children: (
 				<Tooltip
 					title={
 						dirty || isNew
@@ -263,7 +259,24 @@ export default function MailEditor( { mail, onBack } ) {
 						</Button>
 					</span>
 				</Tooltip>
-			</EntryToolbar>
+			),
+		} );
+	}, [ title, author, dateCreated, dateModified, saving, enabled, dirty, isNew, testLoading ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
+	if ( ! loaded ) {
+		return (
+			<Stack
+				alignItems="center"
+				justifyContent="center"
+				sx={ { height: 200 } }
+			>
+				<CircularProgress size={ 32 } />
+			</Stack>
+		);
+	}
+
+	return (
+		<Stack spacing={ 3 } flexGrow={ 1 }>
 
 			{ testStatus && (
 				<Alert

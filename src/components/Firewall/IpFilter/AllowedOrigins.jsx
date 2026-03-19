@@ -38,6 +38,7 @@ export default function AllowedOrigins( {
 	onSave: onSaveProp,
 	saving: savingProp,
 	maxEntries,
+	inline = false,
 } ) {
 	const { __ } = wp.i18n || {};
     const { adminData } = useAdminData();
@@ -163,6 +164,49 @@ export default function AllowedOrigins( {
 
     const isSaving = isControlled ? ( savingProp || false ) : originsSaving;
     const isSaveDisabled = isControlled ? isSaving : ( ! dirty || originsSaving );
+
+    if ( inline && isControlled ) {
+        return (
+            <Stack spacing={ 1.5 }>
+                <Stack direction="row" gap={ 1 } alignItems="flex-start">
+                    <TextField
+                        size="small"
+                        fullWidth
+                        placeholder="https://app.example.com"
+                        value={ originInput }
+                        onChange={ ( e ) => { setOriginInput( e.target.value ); setOriginError( '' ); } }
+                        onKeyDown={ ( e ) => { if ( e.key === 'Enter' ) handleAddOrigin(); } }
+                        error={ !! originError }
+                        helperText={ originError || __( 'https://domain.com or https://domain.com:port', 'rest-api-firewall' ) }
+                    />
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={ handleAddOrigin }
+                        disabled={ ! originInput.trim() || atLimit }
+                        sx={ { flexShrink: 0, mt: '2px' } }
+                        startIcon={ <AddIcon /> }
+                    >
+                        { __( 'Add', 'rest-api-firewall' ) }
+                    </Button>
+                </Stack>
+                { allowedOrigins.length > 0 && (
+                    <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 1 } }>
+                        { allowedOrigins.map( ( origin ) => (
+                            <Chip
+                                key={ origin }
+                                label={ origin }
+                                size="small"
+                                variant="outlined"
+                                sx={ { fontFamily: 'monospace' } }
+                                onDelete={ () => onChangeProp?.( allowedOrigins.filter( ( o ) => o !== origin ) ) }
+                            />
+                        ) ) }
+                    </Box>
+                ) }
+            </Stack>
+        );
+    }
 
     return (
         <>
