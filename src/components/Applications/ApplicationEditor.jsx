@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from '@wordpress/element';
+import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { useLicense } from '../../contexts/LicenseContext';
@@ -32,7 +32,7 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
 import formatDate from '../../utils/formatDate';
 import LoadingMessage from '../LoadingMessage';
-import EntryToolbar from '../shared/EntryToolbar';
+import useRegisterToolbar from '../../hooks/useRegisterToolbar';
 import ConfirmWithInputDialog from '../ConfirmWithInputDialog';
 import AllowedIps from '../Firewall/IpFilter/AllowedIps';
 import AllowedOrigins from '../Firewall/IpFilter/AllowedOrigins';
@@ -154,10 +154,12 @@ export default function ApplicationEditor( { application, onBack } ) {
 
 	const isNew = ! application.id;
 
+	const handleSaveRef = useRef( null );
+	const handleDeleteRef = useRef( null );
+
 	useEffect( () => {
 		setDirtyFlag( { has: true, message: __( 'You are editing an application. Unsaved changes will be lost.', 'rest-api-firewall' ) } );
-		return () => setDirtyFlag( { has: false, message: '' } );
-	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps — cleanup handled by useRegisterToolbar
 
 	const clearDirty = useCallback(
 		() => setDirtyFlag( { has: false, message: '' } ),
@@ -419,27 +421,39 @@ export default function ApplicationEditor( { application, onBack } ) {
 		);
 	};
 
+	handleSaveRef.current = handleSave;
+	handleDeleteRef.current = handleDelete;
+
+	const updateToolbar = useRegisterToolbar( {
+		isNew,
+		breadcrumb: [ __( 'Application', 'rest-api-firewall' ) ],
+		docPage: 'applications',
+		showAppLink: false,
+		handleBack: () => { clearDirty(); onBack(); },
+		handleSave: () => handleSaveRef.current?.(),
+		handleDelete: () => handleDeleteRef.current?.(),
+		setEnabled,
+	} );
+
+	useEffect( () => {
+		updateToolbar( {
+			title,
+			author,
+			dateCreated,
+			dateModified,
+			saving,
+			enabled,
+			dirtyFlag: { has: true, message: __( 'You are editing an application. Unsaved changes will be lost.', 'rest-api-firewall' ) },
+		} );
+	}, [ title, author, dateCreated, dateModified, saving, enabled ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
 	if ( loading ) {
 		return <LoadingMessage message={ isNew ? __( 'Creating new application...', 'rest-api-firewall' ) : __( 'Loading application...', 'rest-api-firewall' ) } />;
 	}
 
 	return (
 		<Stack spacing={ 0 }>
-			<EntryToolbar
-				isNew={ isNew }
-				title={ title }
-				author={ author }
-				dateCreated={ dateCreated }
-				dateModified={ dateModified }
-				handleBack={ () => { clearDirty(); onBack(); } }
-				handleSave={ handleSave }
-				handleDelete={ handleDelete }
-				saving={ saving }
-				enabled={ enabled }
-				setEnabled={ setEnabled }
-				breadcrumb={ [ __( 'Application', 'rest-api-firewall' ) ] }
-				docPage="applications"
-			/>
+
 
 			{ loadError && <Alert severity="error">{ loadError }</Alert> }
 
@@ -484,6 +498,8 @@ export default function ApplicationEditor( { application, onBack } ) {
 						/>
 						</Stack>
 
+						<Divider />
+
 						{ /* Allowed Origins */ }
 						<Stack spacing={ 0.75 }>
 						<Typography variant="subtitle1" fontWeight={ 600 }>
@@ -497,6 +513,8 @@ export default function ApplicationEditor( { application, onBack } ) {
 							onChange={ setAllowedOrigins }
 						/>
 						</Stack>
+
+						<Divider />
 
 						{ /* Allowed Auth Methods */ }
 						<Stack spacing={ 0.75 }>
@@ -528,7 +546,8 @@ export default function ApplicationEditor( { application, onBack } ) {
 							</Stack>
 						</Stack>
 
-						{ /* Default HTTP Methods */ }
+						<Divider />
+
 						<Stack spacing={ 0.75 }>
 						<Typography variant="subtitle1" fontWeight={ 600 }>
 							{ __( 'Default HTTP Methods', 'rest-api-firewall' ) }
@@ -542,7 +561,8 @@ export default function ApplicationEditor( { application, onBack } ) {
 						/>
 						</Stack>
 
-						{ /* Rate Limit */ }
+						<Divider />
+
 						<Stack spacing={ 0.75 }>
 						<Stack direction="row" alignItems="flex-start" justifyContent="space-between">
 							<Box>

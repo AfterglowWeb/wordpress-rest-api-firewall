@@ -19,7 +19,7 @@ import Typography from '@mui/material/Typography';
 import formatDate from '../../utils/formatDate';
 import { PropertyRow } from './Properties';
 import JsonSchemaBuilder from '../shared/JsonSchemaBuilder';
-import EntryToolbar from '../shared/EntryToolbar';
+import useRegisterToolbar from '../../hooks/useRegisterToolbar';
 import LoadingMessage from '../LoadingMessage';
 
 const FALLBACK_BINDINGS = [
@@ -42,7 +42,7 @@ const FALLBACK_BINDINGS = [
 export default function ModelEditor( { model, onBack } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
-	const { selectedApplicationId, setDirtyFlag, dirtyFlag } = useApplication();
+	const { selectedApplicationId, setDirtyFlag } = useApplication();
 	const nonce = proNonce || adminData.nonce;
 	const { __ } = wp.i18n || {};
 
@@ -77,6 +77,9 @@ export default function ModelEditor( { model, onBack } ) {
 	const properties = isCustom ? customProperties : wpProperties;
 	const setProperties = isCustom ? setCustomProperties : setWpProperties;
 
+	const handleSaveRef = useRef( null );
+	const handleDeleteRef = useRef( null );
+
 	useEffect( () => {
 		setDirtyFlag( {
 			has: true,
@@ -85,8 +88,7 @@ export default function ModelEditor( { model, onBack } ) {
 				'rest-api-firewall'
 			),
 		} );
-		return () => setDirtyFlag( { has: false, message: '' } );
-	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps — cleanup handled by useRegisterToolbar
 
 	useEffect( () => {
 		if ( isNew ) {
@@ -320,38 +322,47 @@ export default function ModelEditor( { model, onBack } ) {
 		  } )
 		: FALLBACK_BINDINGS;
 
+	handleSaveRef.current = handleSave;
+	handleDeleteRef.current = handleDelete;
+
+	const updateToolbar = useRegisterToolbar( {
+		isNew,
+		breadcrumb: [ __( 'Properties', 'rest-api-firewall' ) ],
+		docPage: 'models',
+		handleBack,
+		handleSave: () => handleSaveRef.current?.(),
+		handleDelete: () => handleDeleteRef.current?.(),
+		setEnabled,
+	} );
+
+	useEffect( () => {
+		updateToolbar( {
+			title,
+			author,
+			dateCreated,
+			dateModified,
+			saving,
+			enabled,
+			dirtyFlag: { has: true, message: __( 'You are editing a model. Unsaved changes will be lost.', 'rest-api-firewall' ) },
+			titleSuffix: (
+				<Stack direction="row" gap={ 0.75 } alignItems="center">
+					{ objectType && (
+						<Chip label={ objectType } size="small" variant="outlined" sx={ { fontFamily: 'monospace', fontSize: '0.7rem' } } />
+					) }
+					<Chip
+						label={ isCustom ? __( 'Custom', 'rest-api-firewall' ) : __( 'WP Schema', 'rest-api-firewall' ) }
+						size="small"
+						color={ isCustom ? 'secondary' : 'primary' }
+						variant="outlined"
+						sx={ { fontSize: '0.7rem' } }
+					/>
+				</Stack>
+			),
+		} );
+	}, [ title, author, dateCreated, dateModified, saving, enabled, objectType, isCustom ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
 	return (
 		<Stack spacing={ 0 } sx={ { height: '100%' } }>
-			<EntryToolbar
-				isNew={ isNew }
-				title={ title }
-				author={ author }
-				dateCreated={ dateCreated }
-				dateModified={ dateModified }
-				handleBack={ handleBack }
-				handleSave={ handleSave }
-				handleDelete={ handleDelete }
-				saving={ saving }
-				enabled={ enabled }
-				setEnabled={ setEnabled }
-				dirtyFlag={ dirtyFlag }
-				breadcrumb={ [ __( 'Properties', 'rest-api-firewall' ) ] }
-				docPage="models"
-				titleSuffix={
-					<Stack direction="row" gap={ 0.75 } alignItems="center">
-						{ objectType && (
-							<Chip label={ objectType } size="small" variant="outlined" sx={ { fontFamily: 'monospace', fontSize: '0.7rem' } } />
-						) }
-						<Chip
-							label={ isCustom ? __( 'Custom', 'rest-api-firewall' ) : __( 'WP Schema', 'rest-api-firewall' ) }
-							size="small"
-							color={ isCustom ? 'secondary' : 'primary' }
-							variant="outlined"
-							sx={ { fontSize: '0.7rem' } }
-						/>
-					</Stack>
-				}
-			/>
 
 			<Stack p={ 4 } spacing={ 3 } sx={ { overflowY: 'auto', flex: 1 } }>
 

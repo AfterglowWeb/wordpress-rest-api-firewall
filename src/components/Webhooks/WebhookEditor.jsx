@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from '@wordpress/element';
+import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
 import useProActions from '../../hooks/useProActions';
 import formatDate from '../../utils/formatDate';
-import EntryToolbar from '../shared/EntryToolbar';
+import useRegisterToolbar from '../../hooks/useRegisterToolbar';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -152,10 +152,12 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 	const isNew = ! webhook.id;
 
+	const handleSaveRef = useRef( null );
+	const handleDeleteRef = useRef( null );
+
 	useEffect( () => {
 		setDirtyFlag( { has: true, message: __( 'You are editing a webhook. Unsaved changes will be lost.', 'rest-api-firewall' ) } );
-		return () => setDirtyFlag( { has: false, message: '' } );
-	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps — cleanup handled by useRegisterToolbar
 
 	const clearDirty = useCallback(
 		() => setDirtyFlag( { has: false, message: '' } ),
@@ -353,6 +355,30 @@ export default function WebhookEditor( { webhook, onBack } ) {
 		);
 	};
 
+	handleSaveRef.current = handleSave;
+	handleDeleteRef.current = handleDelete;
+
+	const updateToolbar = useRegisterToolbar( {
+		isNew,
+		breadcrumb: [ __( 'Webhook', 'rest-api-firewall' ) ],
+		docPage: 'webhooks',
+		handleBack: () => { clearDirty(); onBack(); },
+		handleSave: () => handleSaveRef.current?.(),
+		handleDelete: () => handleDeleteRef.current?.(),
+		setEnabled,
+	} );
+
+	useEffect( () => {
+		updateToolbar( {
+			title,
+			dateCreated,
+			dateModified,
+			saving,
+			enabled,
+			dirtyFlag: { has: true, message: __( 'You are editing a webhook. Unsaved changes will be lost.', 'rest-api-firewall' ) },
+		} );
+	}, [ title, dateCreated, dateModified, saving, enabled ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
 	if ( loading ) {
 		return (
 			<LoadingMessage message={ isNew ? __( 'Creating new webhook...', 'rest-api-firewall' ) : __( 'Loading webhook...', 'rest-api-firewall' ) } />
@@ -361,20 +387,6 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 	return (
 		<Stack spacing={ 0 }>
-			<EntryToolbar
-				isNew={ isNew }
-				title={ title }
-				dateCreated={ dateCreated }
-				dateModified={ dateModified }
-				handleBack={ () => { clearDirty(); onBack(); } }
-				handleSave={ handleSave }
-				handleDelete={ handleDelete }
-				saving={ saving }
-				enabled={ enabled }
-				setEnabled={ setEnabled }
-				breadcrumb={ [__( 'Webhook', 'rest-api-firewall' ) ] }
-				docPage="webhooks"
-			/>
 
 			{ loadError && <Alert severity="error">{ loadError }</Alert> }
 
