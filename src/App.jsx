@@ -4,6 +4,7 @@ import { DialogProvider } from './contexts/DialogContext';
 import { useLicense } from './contexts/LicenseContext';
 import { ApplicationProvider, useApplication } from './contexts/ApplicationContext';
 import { NavigationProvider, useNavigation } from './contexts/NavigationContext';
+import { EntryToolbarProvider, useEntryToolbarContext } from './contexts/EntryToolbarContext';
 
 import useSettingsForm from './hooks/useSettingsForm';
 import useSaveOptions from './hooks/useSaveOptions';
@@ -13,6 +14,7 @@ import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
 
 import ConfirmDialog from './components/ConfirmDialog';
+import EntryToolbar from './components/shared/EntryToolbar';
 import MigrationDialog from './components/Migration/MigrationDialog';
 import Navigation, {
 	APP_BAR_HEIGHT,
@@ -59,6 +61,8 @@ function AppContent() {
 	const { hasValidLicense } = useLicense();
 	const { dirtyFlag, setDirtyFlag } = useApplication();
 	const { panel, navigate } = useNavigation();
+	const { toolbarConfig } = useEntryToolbarContext();
+	const editorOpen = toolbarConfig !== null;
 
 	const [ postTypes, setPostTypes ] = useState( [] );
 	const [ themeStatus, setThemeStatus ] = useState( null );
@@ -216,16 +220,16 @@ function AppContent() {
 						flexGrow: 1,
 						minWidth: 0,
 						pl: { xs: 0, md: DRAWER_WIDTH + 'px' },
-					pt: dirtyFlag.has ? 0 : APP_BAR_HEIGHT + 'px',
+						pt: editorOpen ? 0 : APP_BAR_HEIGHT + 'px',
 						minHeight: {
-							xs: dirtyFlag.has
+							xs: editorOpen
 								? `calc(100svh - ${ APP_FOOTER_HEIGHT + WP_ADMIN_BAR_HEIGHT_MOBILE }px)`
 								: `calc(100svh - ${
 										APP_FOOTER_HEIGHT +
 										APP_BAR_HEIGHT +
 										WP_ADMIN_BAR_HEIGHT_MOBILE
 								  }px)`,
-							md: dirtyFlag.has
+							md: editorOpen
 								? `calc(100svh - ${ APP_FOOTER_HEIGHT + WP_ADMIN_BAR_HEIGHT_DESKTOP }px)`
 								: `calc(100svh - ${
 										APP_FOOTER_HEIGHT +
@@ -236,6 +240,8 @@ function AppContent() {
 						bgcolor: 'background.paper',
 					} }
 				>
+				{ editorOpen && <EntryToolbar { ...toolbarConfig } /> }
+
 { hasValidLicense && panel === 'applications' && <Applications /> }
 
 							{ panel === 'user-rate-limiting' && (
@@ -366,10 +372,12 @@ export default function App() {
 	return (
 		<DialogProvider>
 			<ApplicationProvider>
-						<NavigationProvider>
-								<AppContent />
-								<ConfirmDialog />
-						</NavigationProvider>
+				<EntryToolbarProvider>
+					<NavigationProvider>
+						<AppContent />
+						<ConfirmDialog />
+					</NavigationProvider>
+				</EntryToolbarProvider>
 			</ApplicationProvider>
 		</DialogProvider>
 	);

@@ -26,7 +26,7 @@ import { isValidIpOrCidr } from '../../../utils/sanitizeIp';
  * @param {boolean}  props.saving  - Shows loading state on the Save button.
  * @param {Function} props.onSave  - Called when the user clicks Save inside the popover.
  */
-export default function AllowedIps( { value = [], onChange, saving = false, onSave, maxEntries } ) {
+export default function AllowedIps( { value = [], onChange, saving = false, onSave, maxEntries, inline = false } ) {
 	const { __ } = wp.i18n || {};
 
 	const [ input, setInput ] = useState( '' );
@@ -56,6 +56,49 @@ export default function AllowedIps( { value = [], onChange, saving = false, onSa
 	const countLabel = value.length > 0
 		? `${ value.length } ${ __( 'IP(s)', 'rest-api-firewall' ) }`
 		: '';
+
+	if ( inline ) {
+		return (
+			<Stack spacing={ 1.5 }>
+				<Stack direction="row" gap={ 1 } alignItems="flex-start">
+					<TextField
+						size="small"
+						fullWidth
+						placeholder="192.168.1.1 or 10.0.0.0/24"
+						value={ input }
+						onChange={ ( e ) => { setInput( e.target.value ); setInputError( '' ); } }
+						onKeyDown={ ( e ) => { if ( e.key === 'Enter' ) handleAdd(); } }
+						error={ !! inputError }
+						helperText={ inputError || __( 'IPv4, IPv6, or CIDR range', 'rest-api-firewall' ) }
+					/>
+					<Button
+						variant="outlined"
+						size="small"
+						onClick={ handleAdd }
+						disabled={ ! input.trim() || saving || atLimit }
+						sx={ { flexShrink: 0, mt: '2px' } }
+						startIcon={ <AddIcon /> }
+					>
+						{ __( 'Add', 'rest-api-firewall' ) }
+					</Button>
+				</Stack>
+				{ value.length > 0 && (
+					<Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 1 } }>
+						{ value.map( ( ip ) => (
+							<Chip
+								key={ ip }
+								label={ ip }
+								size="small"
+								variant="outlined"
+								sx={ { fontFamily: 'monospace' } }
+								onDelete={ () => onChange?.( value.filter( ( v ) => v !== ip ) ) }
+							/>
+						) ) }
+					</Box>
+				) }
+			</Stack>
+		);
+	}
 
 	return (
 		<>

@@ -51,6 +51,10 @@ export default function Users() {
 		ids: new Set( [] ),
 	} );
 	const [ fetchError, setFetchError ] = useState( '' );
+	const [ appDefaultMethods, setAppDefaultMethods ] = useState( [] );
+	const [ appAllowedAuthMethods, setAppAllowedAuthMethods ] = useState( [] );
+	const [ appEntry, setAppEntry ] = useState( null );
+
 	const editingUser = subKey === 'new'
 		? {
 			id: null,
@@ -62,10 +66,6 @@ export default function Users() {
 			rate_limit_window_seconds: 60,
 		}
 		: subKey ? { id: subKey } : null;
-
-	const [ appDefaultMethods, setAppDefaultMethods ] = useState( [] );
-	const [ appAllowedAuthMethods, setAppAllowedAuthMethods ] = useState( [] );
-	const [ appEntry, setAppEntry ] = useState( null );
 
 	const loadAppSettings = useCallback( async () => {
 		if ( ! selectedApplicationId ) return;
