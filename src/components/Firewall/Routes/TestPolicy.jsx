@@ -226,7 +226,6 @@ export default function TestPolicy( {
 							</Stack>
 						) }
 
-						{ /* Policy summary */ }
 						<Stack
 							direction="row"
 							spacing={ 0.5 }
@@ -263,7 +262,6 @@ export default function TestPolicy( {
 							) }
 						</Stack>
 
-						{ /* Tests table — no vertical borders */ }
 						<Table
 							size="small"
 							sx={ {
@@ -302,7 +300,6 @@ export default function TestPolicy( {
 							</TableBody>
 						</Table>
 
-						{ /* Raw + Result panels */ }
 						<Stack direction="row" spacing={ 1.5 }>
 							<DataPanel
 								label={ __( 'Raw', 'rest-api-firewall' ) }
@@ -350,7 +347,6 @@ export default function TestPolicy( {
 					},
 				} }
 			>
-				{ /* Header */ }
 				<Stack
 					direction="row"
 					alignItems="center"
@@ -390,7 +386,6 @@ export default function TestPolicy( {
 					</IconButton>
 				</Stack>
 
-				{ /* Scrollable content */ }
 				<Box sx={ { flex: 1, overflowY: 'auto', p: 2.5 } }>
 					<Stack spacing={ 2 }>
 						{ ( hasChildren || hasUsers ) && (
@@ -443,7 +438,6 @@ export default function TestPolicy( {
 					</Stack>
 				</Box>
 
-				{ /* Footer */ }
 				<Stack
 					direction="row"
 					justifyContent="flex-end"

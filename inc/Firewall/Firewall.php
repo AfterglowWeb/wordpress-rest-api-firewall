@@ -146,13 +146,11 @@ class Firewall {
 			return $result;
 		}
 
-		// Global check runs before application resolution.
 		$global_check = GlobalIpBlackList::check_request();
 		if ( is_wp_error( $global_check ) ) {
 			return $global_check;
 		}
 
-		// Per-application check.
 		if ( false === CoreOptions::read_option( 'enforce_ip_blacklist' ) ) {
 			return $result;
 		}

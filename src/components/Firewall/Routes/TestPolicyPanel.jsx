@@ -233,7 +233,6 @@ export default function TestPolicyPanel( {
 							</Stack>
 						) }
 
-						{ /* Policy summary */ }
 						<Stack
 							direction="row"
 							spacing={ 0.5 }
@@ -286,7 +285,6 @@ export default function TestPolicyPanel( {
 							) }
 						</Stack>
 
-						{ /* Tests table */ }
 						<Table
 							size="small"
 							sx={ {
@@ -325,7 +323,6 @@ export default function TestPolicyPanel( {
 							</TableBody>
 						</Table>
 
-						{ /* Raw + Result panels */ }
 						<Stack direction="row" spacing={ 1.5 }>
 							<DataPanel
 								label={ __( 'Raw', 'rest-api-firewall' ) }

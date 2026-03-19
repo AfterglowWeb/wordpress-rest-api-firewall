@@ -198,7 +198,6 @@ export default function HookRegistry() {
 										p: 1,
 									} }
 								>
-									{ /* Label + Hook + Delete */ }
 									<Stack
 										direction="row"
 										spacing={ 1 }
@@ -239,7 +238,6 @@ export default function HookRegistry() {
 										</IconButton>
 									</Stack>
 
-									{ /* Args row */ }
 									<Stack
 										direction="row"
 										spacing={ 0.5 }
