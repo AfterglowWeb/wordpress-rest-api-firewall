@@ -180,7 +180,6 @@ class WebhookAutoTrigger {
 				continue;
 			}
 
-			// Support multi-event automations; fall back to legacy single-event column.
 			$event_keys = ! empty( $automation['events'] ) && is_array( $automation['events'] )
 				? $automation['events']
 				: ( ! empty( $automation['event'] ) ? array( $automation['event'] ) : array() );
@@ -189,7 +188,6 @@ class WebhookAutoTrigger {
 				if ( empty( $event_key ) || ! isset( $available_events[ $event_key ] ) ) {
 					continue;
 				}
-				// Virtual events (e.g. inbound_webhook) are dispatched programmatically — no WP hook.
 				if ( ! empty( $available_events[ $event_key ]['virtual'] ) ) {
 					continue;
 				}

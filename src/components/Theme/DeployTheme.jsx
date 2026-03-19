@@ -654,7 +654,6 @@ export default function DeployTheme( { setStatus, status } ) {
 				</Box>
 			</Collapse>
 
-			{ /* Activate prompt dialog - after deploy */ }
 			<Dialog
 				open={ showActivateDialog }
 				onClose={ () => setShowActivateDialog( false ) }
@@ -690,7 +689,6 @@ export default function DeployTheme( { setStatus, status } ) {
 				</DialogActions>
 			</Dialog>
 
-			{ /* Activate success dialog */ }
 			<Dialog
 				open={ showActivateSuccess }
 				onClose={ () => setShowActivateSuccess( false ) }
@@ -719,7 +717,6 @@ export default function DeployTheme( { setStatus, status } ) {
 				</DialogActions>
 			</Dialog>
 
-			{ /* Redeploy confirm dialog */ }
 			<Dialog
 				open={ showRedeployConfirm }
 				onClose={ () => setShowRedeployConfirm( false ) }
@@ -752,7 +749,6 @@ export default function DeployTheme( { setStatus, status } ) {
 				</DialogActions>
 			</Dialog>
 
-			{ /* Redeploy result dialog */ }
 			<Dialog
 				open={ showRedeployResult }
 				onClose={ () => setShowRedeployResult( false ) }

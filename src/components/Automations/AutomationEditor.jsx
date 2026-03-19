@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from '@wordpress/element';
+import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
@@ -29,7 +29,7 @@ import WebhookIcon from '@mui/icons-material/Webhook';
 import JsonSchemaBuilder from '../shared/JsonSchemaBuilder';
 import useProActions from '../../hooks/useProActions';
 import formatDate from '../../utils/formatDate';
-import EntryToolbar from '../shared/EntryToolbar';
+import useRegisterToolbar from '../../hooks/useRegisterToolbar';
 import LoadingMessage from '../LoadingMessage';
 import IconButton from '@mui/material/IconButton';
 
@@ -172,10 +172,12 @@ export default function AutomationEditor( { automation, onBack } ) {
 
 	const isNew = ! automation.id;
 
+	const handleSaveRef = useRef( null );
+	const handleDeleteRef = useRef( null );
+
 	useEffect( () => {
 		setDirtyFlag( { has: true, message: __( 'You are editing an automation. Unsaved changes will be lost.', 'rest-api-firewall' ) } );
-		return () => setDirtyFlag( { has: false, message: '' } );
-	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps — cleanup handled by useRegisterToolbar
 
 	const clearDirty = useCallback(
 		() => setDirtyFlag( { has: false, message: '' } ),
@@ -319,25 +321,37 @@ export default function AutomationEditor( { automation, onBack } ) {
 
 	const hasInboundEvent = events.includes( 'inbound_webhook' );
 
+	handleSaveRef.current = handleSave;
+	handleDeleteRef.current = handleDelete;
+
+	const updateToolbar = useRegisterToolbar( {
+		isNew,
+		breadcrumb: [ __( 'Automation', 'rest-api-firewall' ) ],
+		docPage: 'automations',
+		handleBack: () => { clearDirty(); onBack(); },
+		handleSave: () => handleSaveRef.current?.(),
+		handleDelete: () => handleDeleteRef.current?.(),
+		setEnabled: isNew ? null : setEnabled,
+		enabled: isNew ? null : enabled,
+	} );
+
+	useEffect( () => {
+		updateToolbar( {
+			title,
+			dateModified: automation.date_modified ? formatDate( automation.date_modified ) : '',
+			saving,
+			enabled: isNew ? null : enabled,
+			setEnabled: isNew ? null : setEnabled,
+			dirtyFlag: { has: true, message: __( 'You are editing an automation. Unsaved changes will be lost.', 'rest-api-firewall' ) },
+		} );
+	}, [ title, automation.date_modified, saving, enabled, isNew ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
 	if ( ! loaded ) {
 		return <LoadingMessage message={ isNew ? __( 'Creating new automation...', 'rest-api-firewall' ) : __( 'Loading automation...', 'rest-api-firewall' ) } />;
 	}
 
 	return (
 		<Stack spacing={ 0 } sx={ { height: '100%' } }>
-			<EntryToolbar
-				isNew={ isNew }
-				title={ title }
-				dateModified={ automation.date_modified ? formatDate( automation.date_modified ) : '' }
-				handleBack={ () => { clearDirty(); onBack(); } }
-				handleSave={ handleSave }
-				handleDelete={ handleDelete }
-				saving={ saving }
-				enabled={ isNew ? null : enabled }
-				setEnabled={ isNew ? null : setEnabled }
-				breadcrumb={ [ __( 'Automation', 'rest-api-firewall' ) ] }
-				docPage="automations"
-			/>
 
 			<Stack spacing={ 3 } sx={ { overflowY: 'auto', flex: 1, p: 4 } }>
 				<TextField
