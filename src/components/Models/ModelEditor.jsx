@@ -22,6 +22,18 @@ import JsonSchemaBuilder from '../shared/JsonSchemaBuilder';
 import useRegisterToolbar from '../../hooks/useRegisterToolbar';
 import LoadingMessage from '../LoadingMessage';
 
+function mergeFilterSettings( schemaSettings, storedSettings ) {
+	if ( ! storedSettings ) return schemaSettings || {};
+	const schemaFilters = schemaSettings?.filters || [];
+	return {
+		...storedSettings,
+		filters: schemaFilters.map( ( sf ) => {
+			const s = ( storedSettings.filters || [] ).find( ( f ) => f.key === sf.key );
+			return s !== undefined ? { ...sf, value: s.value } : sf;
+		} ),
+	};
+}
+
 const FALLBACK_BINDINGS = [
 	{ key: 'id', label: 'ID', type: 'integer' },
 	{ key: 'slug', label: 'Slug', type: 'string' },
@@ -39,7 +51,7 @@ const FALLBACK_BINDINGS = [
 	{ key: 'meta', label: 'Meta', type: 'object' },
 ];
 
-export default function ModelEditor( { model, onBack } ) {
+export default function ModelEditor( { model, globalForm = null, onBack } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
 	const { selectedApplicationId, setDirtyFlag } = useApplication();
@@ -360,45 +372,6 @@ export default function ModelEditor( { model, onBack } ) {
 		  } )
 		: FALLBACK_BINDINGS;
 
-	handleSaveRef.current = handleSave;
-	handleDeleteRef.current = handleDelete;
-
-	const updateToolbar = useRegisterToolbar( {
-		isNew,
-		breadcrumb: [ __( 'Properties', 'rest-api-firewall' ) ],
-		docPage: 'models',
-		handleBack,
-		handleSave: () => handleSaveRef.current?.(),
-		handleDelete: () => handleDeleteRef.current?.(),
-		setEnabled,
-	} );
-
-	useEffect( () => {
-		updateToolbar( {
-			title,
-			author,
-			dateCreated,
-			dateModified,
-			saving,
-			enabled,
-			dirtyFlag: { has: true, message: __( 'You are editing a model. Unsaved changes will be lost.', 'rest-api-firewall' ) },
-			titleSuffix: (
-				<Stack direction="row" gap={ 0.75 } alignItems="center">
-					{ objectType && (
-						<Chip label={ objectType } size="small" variant="outlined" sx={ { fontFamily: 'monospace', fontSize: '0.7rem' } } />
-					) }
-					<Chip
-						label={ isCustom ? __( 'Custom', 'rest-api-firewall' ) : __( 'WP Schema', 'rest-api-firewall' ) }
-						size="small"
-						color={ isCustom ? 'secondary' : 'primary' }
-						variant="outlined"
-						sx={ { fontSize: '0.7rem' } }
-					/>
-				</Stack>
-			),
-		} );
-	}, [ title, author, dateCreated, dateModified, saving, enabled, objectType, isCustom ] ); // eslint-disable-line react-hooks/exhaustive-deps
-
 	return (
 		<Stack spacing={ 0 } sx={ { height: '100%' } }>
 
@@ -494,21 +467,21 @@ export default function ModelEditor( { model, onBack } ) {
 									</Stack>
 								) }
 							</Stack>
-						) : isCustom ? (
-							<Stack spacing={ 1 }>
-								<Typography variant="subtitle2" fontWeight={ 600 }>
-									{ __( 'Custom Schema', 'rest-api-firewall' ) }
-								</Typography>
-								<Typography variant="caption" color="text.secondary">
-									{ __( 'Define the exact JSON shape your REST endpoint will return for this object type.', 'rest-api-firewall' ) }
-								</Typography>
-								<JsonSchemaBuilder
-									value={ properties }
-									onChange={ setProperties }
-									availableBindings={ availableBindings }
-								/>
-							</Stack>
-						) : (
+							) : isCustom ? (
+								<Stack spacing={ 1 }>
+									<Typography variant="subtitle2" fontWeight={ 600 }>
+										{ __( 'Custom Schema', 'rest-api-firewall' ) }
+									</Typography>
+									<Typography variant="caption" color="text.secondary">
+										{ __( 'Define the exact JSON shape your REST endpoint will return for this object type.', 'rest-api-firewall' ) }
+									</Typography>
+									<JsonSchemaBuilder
+										value={ properties }
+										onChange={ setProperties }
+										availableBindings={ availableBindings }
+									/>
+								</Stack>
+							) : (
 							<Stack>
 								{ schemaProps ? (
 									<Stack spacing={ 0 }>
@@ -517,106 +490,135 @@ export default function ModelEditor( { model, onBack } ) {
 												<PropertyRow
 													key={ propName }
 													propName={ propName }
-													propConfig={ {
-														...propConfig,
-														settings:
-															properties[ propName ]?.settings ||
-															propConfig.settings ||
-															{},
-														properties: propConfig.properties
-															? Object.fromEntries(
-																Object.entries( propConfig.properties ).map(
-																	( [ subName, subConfig ] ) => [
-																		subName,
-																		typeof subConfig === 'object' &&
-																		subConfig !== null
-																			? {
-																				...subConfig,
-																				settings:
-																					properties[ propName ]?.properties?.[ subName ]?.settings ||
-																					subConfig.settings ||
-																					{},
-																			  }
-																			: subConfig,
-																	]
-																)
-															  )
-															: propConfig.properties,
-													} }
-													selectedObjectType={ objectType }
-													setField={ ( e ) => {
-														const path = e.target.name;
-														const parts = path.split( '.' );
-														const propsIdx = parts.indexOf( 'props' );
-														const propKey = parts[ propsIdx + 1 ] || propName;
-														const subPropsIdx = parts.indexOf( 'properties', propsIdx + 2 );
-														const isSubProp = subPropsIdx > -1;
-														const subPropKey = isSubProp ? parts[ subPropsIdx + 1 ] : null;
-														const setting = parts[ parts.length - 2 ];
-														const key = parts[ parts.length - 1 ];
-														setProperties( ( prev ) => {
-															const next = { ...prev };
-															if ( ! next[ propKey ] ) {
-																next[ propKey ] = {
-																	settings: {
-																		disable: false,
-																		filters: ( propConfig.settings?.filters || [] ).map( ( f ) => ( { ...f } ) ),
-																	},
-																};
-															}
-															if ( isSubProp ) {
-																if ( ! next[ propKey ].properties ) {
-																	next[ propKey ] = { ...next[ propKey ], properties: {} };
-																}
-																if ( ! next[ propKey ].properties[ subPropKey ] ) {
-																	const subCfgInit = schemaProps?.[ propKey ]?.properties?.[ subPropKey ];
-																	next[ propKey ].properties[ subPropKey ] = {
-																		settings: {
-																			disable: false,
-																			filters: ( subCfgInit?.settings?.filters || [] ).map( ( f ) => ( { ...f } ) ),
-																		},
-																	};
-																}
-																if ( setting === 'settings' ) {
-																	next[ propKey ].properties[ subPropKey ].settings = {
-																		...next[ propKey ].properties[ subPropKey ].settings,
-																		[ key ]: e.target.value,
-																	};
-																} else if ( setting === 'filters' ) {
-																	const subCfg = schemaProps?.[ propKey ]?.properties?.[ subPropKey ];
-																	const currentFilters =
-																		next[ propKey ].properties[ subPropKey ].settings?.filters ||
-																		subCfg?.settings?.filters ||
-																		[];
-																	next[ propKey ].properties[ subPropKey ].settings = {
-																		...next[ propKey ].properties[ subPropKey ].settings,
-																		filters: currentFilters.map( ( f ) => f.key === key ? { ...f, value: e.target.value } : f ),
-																	};
-																}
-															} else {
-																if ( setting === 'settings' ) {
-																	next[ propKey ].settings = {
-																		...next[ propKey ].settings,
-																		[ key ]: e.target.value,
-																	};
-																} else if ( setting === 'filters' ) {
-																	const currentFilters =
-																		next[ propKey ].settings?.filters ||
-																		propConfig.settings?.filters ||
-																		[];
-																	next[ propKey ].settings = {
-																		...next[ propKey ].settings,
-																		filters: currentFilters.map( ( f ) => f.key === key ? { ...f, value: e.target.value } : f ),
-																	};
-																}
-															}
-															return next;
-														} );
-													} }
-													hasValidLicense={ true }
-													__={ __ }
-													basePath={ `postProperties.${ objectType }.props.${ propName }` }
-												/>
+													isInherit={ ! properties[ propName ] || ! Array.isArray( properties[ propName ]?.settings?.filters ) }
+													onToggleInherit={ () => {
+							const current = properties[ propName ];
+							const hasLocalFilters = Array.isArray( current?.settings?.filters );
+							if ( hasLocalFilters ) {
+								if ( current?.settings?.disable === true ) {
+									setProperties( ( prev ) => ( {
+										...prev,
+										[ propName ]: { settings: { disable: true } },
+									} ) );
+								} else {
+									setProperties( ( prev ) => {
+										const next = { ...prev };
+										delete next[ propName ];
+										return next;
+									} );
+								}
+							} else {
+								setProperties( ( prev ) => ( {
+									...prev,
+									[ propName ]: {
+										...( prev[ propName ] || {} ),
+										settings: {
+											disable: prev[ propName ]?.settings?.disable ?? propConfig.settings?.disable ?? false,
+											filters: ( propConfig.settings?.filters || [] ).map( ( f ) => ( { ...f } ) ),
+										},
+									},
+								} ) );
+							}
+						} }
+					propConfig={ {
+						...propConfig,
+						settings: mergeFilterSettings( propConfig.settings, properties[ propName ]?.settings ),
+						properties: propConfig.properties
+							? Object.fromEntries(
+								Object.entries( propConfig.properties ).map(
+									( [ subName, subConfig ] ) => [
+										subName,
+										typeof subConfig === 'object' &&
+										subConfig !== null
+											? {
+												...subConfig,
+												settings: mergeFilterSettings( subConfig.settings, properties[ propName ]?.properties?.[ subName ]?.settings ),
+												}
+											: subConfig,
+									]
+								)
+								)
+							: propConfig.properties,
+					} }
+					selectedObjectType={ objectType }
+					setField={ ( e ) => {
+						const path = e.target.name;
+						const parts = path.split( '.' );
+						const propsIdx = parts.indexOf( 'props' );
+						const propKey = parts[ propsIdx + 1 ] || propName;
+						const subPropsIdx = parts.indexOf( 'properties', propsIdx + 2 );
+						const isSubProp = subPropsIdx > -1;
+						const subPropKey = isSubProp ? parts[ subPropsIdx + 1 ] : null;
+						const setting = parts[ parts.length - 2 ];
+						const key = parts[ parts.length - 1 ];
+						setProperties( ( prev ) => {
+							const next = { ...prev };
+							if ( ! next[ propKey ] ) {
+								if ( setting === 'settings' && key === 'disable' ) {
+									next[ propKey ] = { settings: { disable: false } };
+								} else {
+									next[ propKey ] = {
+										settings: {
+											disable: false,
+											filters: ( propConfig.settings?.filters || [] ).map( ( f ) => ( { ...f } ) ),
+										},
+									};
+								}
+							}
+							if ( isSubProp ) {
+								if ( ! next[ propKey ].properties ) {
+									next[ propKey ] = { ...next[ propKey ], properties: {} };
+								}
+								if ( ! next[ propKey ].properties[ subPropKey ] ) {
+									const subCfgInit = schemaProps?.[ propKey ]?.properties?.[ subPropKey ];
+									next[ propKey ].properties[ subPropKey ] = {
+										settings: {
+											disable: false,
+											filters: ( subCfgInit?.settings?.filters || [] ).map( ( f ) => ( { ...f } ) ),
+										},
+									};
+								}
+								if ( setting === 'settings' ) {
+									next[ propKey ].properties[ subPropKey ].settings = {
+										...next[ propKey ].properties[ subPropKey ].settings,
+										[ key ]: e.target.value,
+									};
+								} else if ( setting === 'filters' ) {
+									const subCfg = schemaProps?.[ propKey ]?.properties?.[ subPropKey ];
+									const currentFilters =
+										next[ propKey ].properties[ subPropKey ].settings?.filters ||
+										subCfg?.settings?.filters ||
+										[];
+									next[ propKey ].properties[ subPropKey ].settings = {
+										...next[ propKey ].properties[ subPropKey ].settings,
+										filters: currentFilters.map( ( f ) => f.key === key ? { ...f, value: e.target.value } : f ),
+									};
+								}
+							} else {
+								if ( setting === 'settings' ) {
+									next[ propKey ].settings = {
+										...next[ propKey ].settings,
+										[ key ]: e.target.value,
+									};
+								} else if ( setting === 'filters' ) {
+									const currentFilters =
+										next[ propKey ].settings?.filters ||
+										propConfig.settings?.filters ||
+										[];
+									next[ propKey ].settings = {
+										...next[ propKey ].settings,
+										filters: currentFilters.map( ( f ) => f.key === key ? { ...f, value: e.target.value } : f ),
+									};
+								}
+							}
+							return next;
+						} );
+					} }
+					hasValidLicense={ true }
+					globalForm={ globalForm }
+					__={ __ }
+					basePath={ `postProperties.${ objectType }.props.${ propName }` }
+				/>
 											)
 										) }
 									</Stack>

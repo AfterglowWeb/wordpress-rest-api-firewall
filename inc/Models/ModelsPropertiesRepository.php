@@ -6,6 +6,7 @@ use cmk\RestApiFirewall\Core\Utils;
 
 use WP_REST_Settings_Controller;
 use WP_REST_Terms_Controller;
+use WP_REST_Users_Controller;
 use WP_Post_Type;
 use WP_REST_Attachments_Controller;
 use WP_REST_Request;
@@ -36,8 +37,15 @@ class ModelsPropertiesRepository {
 
 	public static function model_properties( string $post_type ): array {
 
-		$filters = self::properties_filters();
-		$data    = self::get_sample_rest_response_data( $post_type );
+		if ( 'author' === $post_type ) {
+			return self::author_properties();
+		}
+
+		$filters             = self::properties_filters();
+		$string_auto_filters = array_values(
+			array_filter( $filters, fn( $f ) => in_array( $f['key'], array( 'search_replace' ), true ) )
+		);
+		$data                = self::get_sample_rest_response_data( $post_type );
 
 		if ( ! empty( $data ) ) {
 			$props = self::build_props_from_data( $data, $filters );
@@ -52,7 +60,7 @@ class ModelsPropertiesRepository {
 					}
 				}
 				if ( ! empty( $all_fields ) ) {
-					$props['acf']['properties'] = self::build_acf_subprops( $all_fields );
+					$props['acf']['properties'] = self::build_acf_subprops( $all_fields, $string_auto_filters );
 				}
 			}
 
@@ -74,7 +82,20 @@ class ModelsPropertiesRepository {
 		$properties = array();
 
 		foreach ( $schema['properties'] as $property_key => $property ) {
-			$property_filters            = self::get_filters_per_property( $property_key, $filters );
+			$property_filters = self::get_filters_per_property( $property_key, $filters );
+			$prop_type        = $property['type'] ?? '';
+			$is_string        = 'string' === $prop_type || ( is_array( $prop_type ) && in_array( 'string', $prop_type, true ) );
+			if ( ! $is_string ) {
+				$property_filters = array_values( array_filter( $property_filters, fn( $f ) => 'search_replace' !== $f['key'] ) );
+			}
+			if ( $is_string ) {
+				$existing_keys = array_column( $property_filters, 'key' );
+				foreach ( $string_auto_filters as $sf ) {
+					if ( ! in_array( $sf['key'], $existing_keys, true ) ) {
+						$property_filters[] = $sf;
+					}
+				}
+			}
 			$properties[ $property_key ] = array_merge(
 				$property,
 				array(
@@ -96,7 +117,16 @@ class ModelsPropertiesRepository {
 				}
 			}
 			if ( ! empty( $all_fields ) ) {
-				$properties['acf']['properties'] = self::build_acf_subprops( $all_fields );
+				$properties['acf']['properties'] = self::build_acf_subprops( $all_fields, $string_auto_filters );
+			}
+		}
+
+		foreach ( array( '_links', '_embedded' ) as $meta_key ) {
+			if ( ! isset( $properties[ $meta_key ] ) ) {
+				$properties[ $meta_key ] = array(
+					'type'     => 'object',
+					'settings' => array( 'disable' => false, 'filters' => array() ),
+				);
 			}
 		}
 
@@ -162,19 +192,22 @@ class ModelsPropertiesRepository {
 	}
 
 	private static function settings_route_properties(): array {
+		$filters = self::properties_filters();
 		$request  = new WP_REST_Request( 'GET', '/wp/v2/settings' );
 		$response = rest_do_request( $request );
 
 		if ( ! is_wp_error( $response ) && 200 === $response->get_status() ) {
 			$data = rest_get_server()->response_to_data( $response, false );
 			if ( ! empty( $data ) ) {
-				return self::build_props_from_data( $data );
+				return self::build_props_from_data( $data, $filters );
 			}
 		}
 
-		// Fallback: derive from schema.
-		$controller = new WP_REST_Settings_Controller();
-		$schema     = $controller->get_item_schema();
+		$controller          = new WP_REST_Settings_Controller();
+		$schema              = $controller->get_item_schema();
+		$string_auto_filters = array_values(
+			array_filter( $filters, fn( $f ) => in_array( $f['key'], array( 'search_replace' ), true ) )
+		);
 
 		if ( empty( $schema['properties'] ) ) {
 			return array();
@@ -182,12 +215,20 @@ class ModelsPropertiesRepository {
 
 		$properties = array();
 		foreach ( $schema['properties'] as $property_key => $property ) {
+			$property_filters = array();
+			$prop_type        = $property['type'] ?? '';
+			$is_string        = 'string' === $prop_type || ( is_array( $prop_type ) && in_array( 'string', $prop_type, true ) );
+			if ( $is_string ) {
+				foreach ( $string_auto_filters as $sf ) {
+					$property_filters[] = $sf;
+				}
+			}
 			$properties[ $property_key ] = array_merge(
 				$property,
 				array(
 					'settings' => array(
 						'disable' => false,
-						'filters' => array(),
+						'filters' => $property_filters,
 					),
 				)
 			);
@@ -199,10 +240,32 @@ class ModelsPropertiesRepository {
 	private static function build_props_from_data( array $data, array $filters = array(), int $depth = 0 ): array {
 		$props = array();
 
+		$string_auto_filters = array_values(
+			array_filter(
+				$filters,
+				function ( $f ) {
+					return in_array( $f['key'], array( 'search_replace' ), true );
+				}
+			)
+		);
+
 		foreach ( $data as $key => $value ) {
 			$str_key          = (string) $key;
 			$type             = self::infer_json_type( $value );
 			$property_filters = 0 === $depth ? self::get_filters_per_property( $str_key, $filters ) : array();
+
+			if ( 'string' !== $type ) {
+				$property_filters = array_values( array_filter( $property_filters, fn( $f ) => 'search_replace' !== $f['key'] ) );
+			}
+
+			if ( 'string' === $type && ! empty( $string_auto_filters ) ) {
+				$existing_keys = array_column( $property_filters, 'key' );
+				foreach ( $string_auto_filters as $sf ) {
+					if ( ! in_array( $sf['key'], $existing_keys, true ) ) {
+						$property_filters[] = $sf;
+					}
+				}
+			}
 
 			$prop = array(
 				'type'     => $type,
@@ -212,8 +275,8 @@ class ModelsPropertiesRepository {
 				),
 			);
 
-			if ( 'object' === $type && $depth < 2 ) {
-				$sub = self::build_props_from_data( (array) $value, array(), $depth + 1 );
+			if ( 'object' === $type && ! in_array( $str_key, array( '_links', '_embedded' ), true ) ) {
+				$sub = self::build_props_from_data( (array) $value, $filters, $depth + 1 );
 				if ( ! empty( $sub ) ) {
 					$prop['properties'] = $sub;
 				}
@@ -252,30 +315,33 @@ class ModelsPropertiesRepository {
 		return 'object';
 	}
 
-	private static function build_acf_subprops( array $fields ): array {
-		$props        = array();
-		$sub_settings = array(
-			'disable' => false,
-			'filters' => array(),
-		);
+	private static function build_acf_subprops( array $fields, array $string_filters = array() ): array {
+		$props = array();
+
+		$acf_string_types = array( 'text', 'textarea', 'wysiwyg', 'oembed', 'url', 'email', 'password', 'link' );
 
 		foreach ( $fields as $field ) {
 			if ( ! isset( $field['name'], $field['type'] ) ) {
 				continue;
 			}
 
-			$key        = sanitize_key( $field['name'] );
+			$key      = sanitize_key( $field['name'] );
+			$acf_type = $field['type'];
+
 			$field_data = array(
-				'type'        => sanitize_text_field( $field['type'] ),
+				'type'        => sanitize_text_field( $acf_type ),
 				'description' => sanitize_text_field( $field['label'] ?? '' ),
-				'settings'    => $sub_settings,
+				'settings'    => array(
+					'disable' => false,
+					'filters' => in_array( $acf_type, $acf_string_types, true ) ? $string_filters : array(),
+				),
 			);
 
 			if ( ! empty( $field['sub_fields'] ) && is_array( $field['sub_fields'] ) ) {
-				$field_data['properties'] = self::build_acf_subprops( $field['sub_fields'] );
+				$field_data['properties'] = self::build_acf_subprops( $field['sub_fields'], $string_filters );
 			}
 
-			if ( 'flexible_content' === $field['type'] && ! empty( $field['layouts'] ) && is_array( $field['layouts'] ) ) {
+			if ( 'flexible_content' === $acf_type && ! empty( $field['layouts'] ) && is_array( $field['layouts'] ) ) {
 				$layout_props = array();
 				foreach ( $field['layouts'] as $layout ) {
 					$layout_key = sanitize_key( $layout['name'] ?? '' );
@@ -285,8 +351,8 @@ class ModelsPropertiesRepository {
 					$layout_props[ $layout_key ] = array(
 						'type'        => 'object',
 						'description' => sanitize_text_field( $layout['label'] ?? '' ),
-						'settings'    => $sub_settings,
-						'properties'  => self::build_acf_subprops( $layout['sub_fields'] ?? array() ),
+						'settings'    => array( 'disable' => false, 'filters' => array() ),
+						'properties'  => self::build_acf_subprops( $layout['sub_fields'] ?? array(), $string_filters ),
 					);
 				}
 				$field_data['properties'] = $layout_props;
@@ -392,23 +458,6 @@ class ModelsPropertiesRepository {
 				),
 			),
 			array(
-				'key'        => 'relative_url',
-				'tooltip'    => 'Relative URL',
-				'label'      => 'URL',
-				'properties' => array_merge(
-					array(
-						'featured_media',
-						'link',
-						'guid',
-						'source_url',
-						'media_details',
-						'_embedded',
-						'_links',
-					),
-					$taxonomy_values
-				),
-			),
-			array(
 				'key'        => 'date_format',
 				'tooltip'    => 'Date Format',
 				'label'      => 'Format',
@@ -417,8 +466,114 @@ class ModelsPropertiesRepository {
 					'date_gmt',
 					'modified',
 					'modified_gmt',
+					'registered_date',
+				),
+			),
+			array(
+				'key'        => 'search_replace',
+				'type'       => 'search_replace',
+				'tooltip'    => 'Search & Replace',
+				'label'      => 'S&R',
+				'properties' => array(
+					'title',
+					'content',
+					'excerpt',
+					'guid',
+					'link',
+					'source_url',
+					'description',
+					'name',
 				),
 			),
 		);
 	}
+	private static function author_properties(): array {
+
+		$filters             = self::properties_filters();
+		$string_auto_filters = array_values(
+			array_filter( $filters, fn( $f ) => in_array( $f['key'], array( 'search_replace' ), true ) )
+		);
+
+		$users = get_users( array( 'number' => 1, 'fields' => 'ids' ) );
+		if ( ! empty( $users ) ) {
+			$id       = (int) $users[0];
+			$request  = new WP_REST_Request( 'GET', "/wp/v2/users/{$id}" );
+			$response = rest_do_request( $request );
+			if ( ! is_wp_error( $response ) && 200 === $response->get_status() ) {
+				$data = rest_get_server()->response_to_data( $response, false );
+				if ( ! empty( $data ) ) {
+					return self::apply_author_security_flags(
+						self::build_props_from_data( $data, $filters )
+					);
+				}
+			}
+		}
+
+		$controller = new WP_REST_Users_Controller();
+		$schema     = $controller->get_item_schema();
+
+		if ( empty( $schema['properties'] ) ) {
+			return array();
+		}
+
+		$props = array();
+		foreach ( $schema['properties'] as $key => $property ) {
+			$property_filters = self::get_filters_per_property( $key, $filters );
+			$prop_type        = $property['type'] ?? '';
+			$is_string        = 'string' === $prop_type || ( is_array( $prop_type ) && in_array( 'string', $prop_type, true ) );
+			if ( ! $is_string ) {
+				$property_filters = array_values( array_filter( $property_filters, fn( $f ) => 'search_replace' !== $f['key'] ) );
+			}
+			if ( $is_string ) {
+				$existing_keys = array_column( $property_filters, 'key' );
+				foreach ( $string_auto_filters as $sf ) {
+					if ( ! in_array( $sf['key'], $existing_keys, true ) ) {
+						$property_filters[] = $sf;
+					}
+				}
+			}
+			$props[ $key ] = array_merge(
+				$property,
+				array(
+					'settings' => array(
+						'disable' => false,
+						'filters' => $property_filters,
+					),
+				)
+			);
+		}
+
+		foreach ( array( '_links', '_embedded' ) as $meta_key ) {
+			if ( ! isset( $props[ $meta_key ] ) ) {
+				$props[ $meta_key ] = array(
+					'type'     => 'object',
+					'settings' => array( 'disable' => false, 'filters' => array() ),
+				);
+			}
+		}
+
+		return self::apply_author_security_flags( $props );
+	}
+
+	private static function apply_author_security_flags( array $props ): array {
+
+		$locked = array( 'username', 'email', 'capabilities', 'extra_capabilities' );
+		foreach ( $locked as $key ) {
+			if ( isset( $props[ $key ] ) ) {
+				$props[ $key ]['settings']['disable'] = true;
+				$props[ $key ]['settings']['locked']  = true;
+				$props[ $key ]['settings']['filters'] = array();
+			}
+		}
+
+		$disabled_default = array( 'registered_date', 'roles', 'locale' );
+		foreach ( $disabled_default as $key ) {
+			if ( isset( $props[ $key ] ) ) {
+				$props[ $key ]['settings']['disable'] = true;
+			}
+		}
+
+		return $props;
+	}
+
 }

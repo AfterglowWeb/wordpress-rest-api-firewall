@@ -326,7 +326,7 @@ export default function AutomationEditor( { automation, onBack } ) {
 
 	const updateToolbar = useRegisterToolbar( {
 		isNew,
-		breadcrumb: [ __( 'Automation', 'rest-api-firewall' ) ],
+		breadcrumb: [ __( 'Automations', 'rest-api-firewall' ) ],
 		docPage: 'automations',
 		handleBack: () => { clearDirty(); onBack(); },
 		handleSave: () => handleSaveRef.current?.(),
