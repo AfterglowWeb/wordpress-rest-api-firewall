@@ -493,7 +493,11 @@ export function NodeContent( {
 						e.stopPropagation();
 						openUsersPopover( node.id, e.currentTarget );
 					} }
-					sx={ { fontSize: '0.75rem', minWidth: 0, px: 1 } }
+					sx={ { 
+						textDecoration: 'underline',
+						textTransform: 'none',
+						'&:hover': { textDecoration: 'underline' } 
+					} }
 				>
 					{ buttonUserCount > 0
 						? `${ buttonUserCount } user${
