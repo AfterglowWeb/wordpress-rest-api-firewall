@@ -360,7 +360,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 	const updateToolbar = useRegisterToolbar( {
 		isNew,
-		breadcrumb: [ __( 'Webhooks', 'rest-api-firewall' ) ],
+		breadcrumb: __( 'Webhooks', 'rest-api-firewall' ),
 		docPage: 'webhooks',
 		handleBack: () => { clearDirty(); onBack(); },
 		handleSave: () => handleSaveRef.current?.(),

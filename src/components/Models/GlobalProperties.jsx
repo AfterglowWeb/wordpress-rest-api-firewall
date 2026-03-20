@@ -1,6 +1,7 @@
 import { useLicense } from '../../contexts/LicenseContext';
 
 import Checkbox from '@mui/material/Checkbox';
+import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
@@ -16,8 +17,17 @@ export default function GlobalProperties( { form, setField } ) {
 	const { hasValidLicense } = useLicense();
 	const { __ } = wp.i18n || {};
 
-	const Item = ( { name, label, tip, disabled = false, indent = false } ) => {
-		const isDisabled = ! hasValidLicense || disabled === true;
+	const Item = ( { name, label, tip, disabled = false, indent = false, pro = false } ) => {
+		const isDisabled = ( pro && ! hasValidLicense ) || disabled === true;
+
+		const labelNode = pro && ! hasValidLicense
+			? (
+				<Box component="span" sx={ { display: 'inline-flex', alignItems: 'center', gap: 0.75 } }>
+					{ label }
+					<Chip label="Pro" size="small" color="primary" sx={ { height: 16, fontSize: '0.65rem', pointerEvents: 'none' } } />
+				</Box>
+			)
+			: label;
 
 		return (
 		<Tooltip title={ tip || '' } placement="bottom-start" followCursor>
@@ -31,7 +41,7 @@ export default function GlobalProperties( { form, setField } ) {
 						onChange={ setField }
 					/>
 				}
-				label={label}
+				label={ labelNode }
 				sx={ {
 					width: '50%',
 					minWidth: 360,
@@ -51,7 +61,6 @@ export default function GlobalProperties( { form, setField } ) {
 					<Typography
 						variant="subtitle1"
 						fontWeight={ 600 }
-						color={ ! hasValidLicense ? 'text.disabled' : 'text.primary' }
 					>
 						{ __( 'Post Types and Taxonomies', 'rest-api-firewall' ) }
 					</Typography>
@@ -70,21 +79,25 @@ export default function GlobalProperties( { form, setField } ) {
 						name="rest_models_relative_attachment_url_enabled"
 						label={ __( 'Relative Attachment URLs', 'rest-api-firewall' ) }
 						tip={ __( 'Remove the host and upload path from attachment URLs.', 'rest-api-firewall' ) }
+						pro
 					/>
 					<Item
 						name="rest_models_remove_links_prop"
 						label={ __( 'Remove `_links`', 'rest-api-firewall' ) }
 						tip={ __( 'Remove the `_links` property from REST responses.', 'rest-api-firewall' ) }
+						pro
 					/>
 					<Item
 						name="rest_models_remove_embed_prop"
 						label={ __( 'Remove `_embed`', 'rest-api-firewall' ) }
 						tip={ __( 'Remove the `_embed` property from REST responses.', 'rest-api-firewall' ) }
+						pro
 					/>
 					<Item
 						name="rest_models_remove_empty_props"
 						label={ __( 'Remove Empty Properties', 'rest-api-firewall' ) }
 						tip={ __( 'Remove properties with empty values from REST responses.', 'rest-api-firewall' ) }
+						pro
 					/>
 					<Item
 						disabled={ !form.rest_models_remove_empty_props }
@@ -92,6 +105,7 @@ export default function GlobalProperties( { form, setField } ) {
 						label={ __( 'Apply to Nested Properties', 'rest-api-firewall' ) }
 						tip={ __( 'Also remove empty properties from nested objects.', 'rest-api-firewall' ) }
 						indent
+						pro
 					/>
 				</FormGroup>
 			</Stack>
@@ -103,7 +117,6 @@ export default function GlobalProperties( { form, setField } ) {
 					<Typography
 						variant="subtitle1"
 						fontWeight={ 600 }
-						color={ ! hasValidLicense ? 'text.disabled' : 'text.primary' }
 					>
 						{ __( 'Post Types Only', 'rest-api-firewall' ) }
 					</Typography>
@@ -122,6 +135,7 @@ export default function GlobalProperties( { form, setField } ) {
 						name="rest_models_embed_featured_attachment_enabled"
 						label={ __( 'Resolve Featured Attachments', 'rest-api-firewall' ) }
 						tip={ __( 'Replace the featured attachment ID with its configured properties.', 'rest-api-firewall' ) }
+						pro
 					/>
 					<Item
 						name="rest_models_embed_post_attachments_enabled"
@@ -145,15 +159,20 @@ export default function GlobalProperties( { form, setField } ) {
 
 		<Stack spacing={ 2 }>
 			<Stack spacing={ 0 }>
-				<Typography
-					variant="subtitle1"
-					fontWeight={ 600 }
-					color={ ! hasValidLicense ? 'text.disabled' : 'text.primary' }
-				>
-					{ __( 'Date Format', 'rest-api-firewall' ) }
-				</Typography>
+				<Box sx={ { display: 'flex', alignItems: 'center', gap: 1 } }>
+					<Typography
+						variant="subtitle1"
+						fontWeight={ 600 }
+						color={ ! hasValidLicense ? 'text.disabled' : 'text.primary' }
+					>
+						{ __( 'Date Format', 'rest-api-firewall' ) }
+					</Typography>
+					{ ! hasValidLicense && (
+						<Chip label="Pro" size="small" color="primary" sx={ { height: 16, fontSize: '0.65rem' } } />
+					) }
+				</Box>
 				<Typography variant="body2" color="text.secondary">
-					{ __( 'Format date properties.', 'rest-api-firewall' ) }
+					{ __( 'Format date properties. Can be overridden per model.', 'rest-api-firewall' ) }<br/>
 					{ __( 'Default REST API format is ISO 8601 — e.g. 2024-01-15T14:30:00', 'rest-api-firewall' ) }
 				</Typography>
 			</Stack>

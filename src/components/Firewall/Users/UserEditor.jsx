@@ -300,7 +300,7 @@ export default function UserEditor( { user, onBack, appSettings = {} } ) {
 
 	const updateToolbar = useRegisterToolbar( {
 		isNew,
-		breadcrumb: [ __( 'Users', 'rest-api-firewall' ) ],
+		breadcrumb: __( 'Users', 'rest-api-firewall' ),
 		docPage: 'users',
 		handleBack: () => { clearDirty(); onBack(); },
 		handleSave: () => handleSaveRef.current?.(),

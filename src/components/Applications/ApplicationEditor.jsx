@@ -19,7 +19,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
 import SecurityOutlined from '@mui/icons-material/SecurityOutlined';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import VpnLockOutlinedIcon from '@mui/icons-material/VpnLockOutlined';
 import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined';
 import ApiIcon from '@mui/icons-material/Api';
@@ -426,7 +426,7 @@ export default function ApplicationEditor( { application, onBack } ) {
 
 	const updateToolbar = useRegisterToolbar( {
 		isNew,
-		breadcrumb: [ __( 'Applications', 'rest-api-firewall' ) ],
+		breadcrumb: __( 'Applications', 'rest-api-firewall' ),
 		docPage: 'applications',
 		showAppLink: false,
 		handleBack: () => { clearDirty(); onBack(); },
@@ -674,7 +674,7 @@ export default function ApplicationEditor( { application, onBack } ) {
 				{ /* Routes */ }
 				<PanelCard
 					title={ __( 'Routes', 'rest-api-firewall' ) }
-					Icon={ AccountTreeIcon }
+					Icon={ AccountTreeOutlinedIcon }
 					panel={ 2 }
 					module="routes_policy"
 					onNavigate={ handlePanelNavigate }

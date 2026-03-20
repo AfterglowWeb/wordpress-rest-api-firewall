@@ -19,8 +19,8 @@ Transformations run server-side before the response is sent, removing the need f
   <li><strong>Embedded attachments</strong> — inlines all post attachments</li>
   <li><strong>Resolve rendered props</strong> — unwraps <code>rendered</code> wrappers (e.g. <code>title.rendered</code> → <code>title</code>)</li>
   <li><strong>Remove empty props</strong> <span style="display:inline-block;padding:1px 6px;border-radius:3px;background:#1565c0;color:#fff;font-size:10px;font-weight:600">PRO</span> — strips null and empty string fields</li>
-  <li><strong>Remove <code>_links</code></strong> — removes the HAL links object</li>
-  <li><strong>Remove <code>_embedded</code></strong> — removes sideloaded embed data</li>
+  <li><strong>Remove <code>_links</code></strong> <span style="display:inline-block;padding:1px 6px;border-radius:3px;background:#1565c0;color:#fff;font-size:10px;font-weight:600">PRO</span> — removes the HAL links object</li>
+  <li><strong>Remove <code>_embedded</code></strong> <span style="display:inline-block;padding:1px 6px;border-radius:3px;background:#1565c0;color:#fff;font-size:10px;font-weight:600">PRO</span> — removes sideloaded embed data</li>
 </ul>
 
 </details>

@@ -3,38 +3,36 @@ import { useApplication } from '../contexts/ApplicationContext';
 import { useNavigation } from '../contexts/NavigationContext';
 
 import Alert from '@mui/material/Alert';
-import Box from '@mui/material/Box';
+import Collapse from '@mui/material/Collapse';
 import Divider from '@mui/material/Divider';
-import Button from '@mui/material/Button';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
+import List from '@mui/material/List';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
 import Snackbar from '@mui/material/Snackbar';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
 
 import AddIcon from '@mui/icons-material/Add';
 import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import Tooltip from '@mui/material/Tooltip';
+import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined';
+const listItemIconSx = { px: 1, minWidth: 32, color: 'text.secondary' };
+const listItemTextSx = { '& .MuiListItemText-primary': { fontSize: '0.9rem', lineHeight: 'normal' } };
 
 export default function ApplicationSelector() {
 	const { __ } = wp.i18n || {};
 	const {
 		applications,
 		selectedApplicationId,
-		selectedApplication,
 		applicationsLoading,
 		setSelectedApplicationId,
 	} = useApplication();
-	const { navigateGuarded, subKey } = useNavigation();
-	const [ menuAnchor, setMenuAnchor ] = useState( null );
+	const { navigateGuarded, panel, subKey } = useNavigation();
+	const [ open, setOpen ] = useState( false );
 	const [ snackOpen, setSnackOpen ] = useState( false );
 
 	const handleSelectApp = ( id ) => {
-		setMenuAnchor( null );
 		if ( id === selectedApplicationId ) return;
-
 		if ( subKey ) {
 			navigateGuarded( 'applications', id, () => setSelectedApplicationId( id ) );
 		} else {
@@ -43,117 +41,105 @@ export default function ApplicationSelector() {
 		}
 	};
 
-	const navigateToApp = () =>
-		selectedApplication &&
-		navigateGuarded( 'applications', selectedApplication.id );
-
 	return (
 		<>
-			<Stack
-				direction="row"
-				alignItems="center"
-				sx={ { px: 3, pt: 1, gap: 0.5 } }
-			>
-				<Tooltip title={ selectedApplication ? __( 'Manage applications', 'rest-api-firewall' ) : __( 'Select an application to manage', 'rest-api-firewall' ) }>
-					<Button
-						size="small"
-						onClick={ ( e ) => setMenuAnchor( e.currentTarget ) }
-						sx={ { 
-							color: 'text.secondary', 
-							flexShrink: 0, 
-							gap: 0.5, 
-							px: 0.5, 
-							minWidth: 40, 
-							justifyContent: 'space-between' 
-						} }
-					>
-						<AppsOutlinedIcon fontSize="small" />
-						<ExpandMoreIcon sx={ { fontSize: '14px' } } />
-					</Button>
-				</Tooltip>
-		
-				<Stack
-					flex={ 1 }
-					spacing={ 0 }
-					onClick={ selectedApplication && navigateToApp }
-					sx={ { 
-						cursor: 'pointer', 
-						minWidth: 100, 
-					} }
-				>
-					<Typography
-						variant="body2"
-						noWrap
-					>
-						{ selectedApplication && selectedApplication.title }
-					</Typography>
-					<Typography
-						variant="caption"
-						color="text.secondary"
-						noWrap
-					>
-						{ selectedApplication ? __( 'Current application', 'rest-api-firewall' ) : __( 'Select Application', 'rest-api-firewall' ) }
-					</Typography>
-				</Stack>
-	
-			</Stack>
+			<ListItemButton onClick={ () => setOpen( ( o ) => ! o ) } sx={ { px: 3 } }>
+				<ListItemIcon sx={ listItemIconSx }>
+					<AppsOutlinedIcon fontSize="small" />
+				</ListItemIcon>
+				<ListItemText
+					sx={ listItemTextSx }
+					primary={ __( 'Applications', 'rest-api-firewall' ) }
+				/>
+				{ open
+					? <ExpandLessIcon fontSize="small" sx={ { color: 'text.secondary' } } />
+					: <ExpandMoreIcon fontSize="small" sx={ { color: 'text.secondary' } } />
+				}
+			</ListItemButton>
 
-			<Menu
-				anchorEl={ menuAnchor }
-				open={ Boolean( menuAnchor ) }
-				onClose={ () => setMenuAnchor( null ) }
-				anchorOrigin={ { vertical: 'bottom', horizontal: 'left' } }
+			<Collapse in={ open } timeout="auto" unmountOnExit>
+				<List component="div" disablePadding>
+					<ListItemButton
+						selected={ panel === 'applications' && ! subKey }
+						disabled={ panel === 'applications' && ! subKey }
+						onClick={ () => navigateGuarded( 'applications' ) }
+						sx={ { pl: 6, pr: 3 } }
+					>
+						<ListItemText
+							sx={ listItemTextSx }
+							primary={ __( 'Manage', 'rest-api-firewall' ) }
+						/>
+					</ListItemButton>
+
+					<ListItemButton
+						onClick={ () => navigateGuarded( 'applications', 'new' ) }
+						sx={ { pl: 6, pr: 3 } }
+					>
+						
+						<ListItemText
+							sx={ listItemTextSx }
+							primary={ __( 'New', 'rest-api-firewall' ) }
+						/>
+						<AddIcon fontSize="small" />
+					</ListItemButton>
+
+					{ applications.length > 0 && <Divider /> }
+
+					{ applicationsLoading ? (
+						<ListItemButton disabled sx={ { pl: 6, pr: 3 } }>
+							<ListItemText
+								sx={ listItemTextSx }
+								primary={ __( 'Loading…', 'rest-api-firewall' ) }
+							/>
+						</ListItemButton>
+					) : (
+						applications.map( ( app ) => (
+							<ListItemButton
+								key={ app.id }
+								disabled={ app.id === selectedApplicationId }
+								selected={ app.id === selectedApplicationId }
+								onClick={ () => handleSelectApp( app.id ) }
+								sx={ { pl: 6, pr: 3 } }
+							>
+								<ListItemText
+									sx={listItemTextSx}
+									primary={ app.title }
+								/>
+							</ListItemButton>
+						) )
+					) }
+				</List>
+			</Collapse>
+
+			<ListItemButton
+				selected={ !!selectedApplicationId }
+				onClick={ selectedApplicationId ? () => navigateGuarded( 'applications', selectedApplicationId ) : null }
+				sx={ { px: 3 } }
 			>
-				<MenuItem
-					dense
-					onClick={ () => {
-						setMenuAnchor( null );
-						navigateGuarded( 'applications' );
+				<ListItemIcon
+					sx={ {
+						px: 1,
+						minWidth: 32,
+						color: !! selectedApplicationId
+							? 'primary.main'
+							: 'text.secondary',
 					} }
 				>
-					{ __( 'Manage applications', 'rest-api-firewall' ) }
-				</MenuItem>
-				<MenuItem
-					dense
-					onClick={ () => {
-						setMenuAnchor( null );
-						navigateGuarded( 'applications', 'new' );
-					} }
-				>
-					<AddIcon
-						fontSize="small"
-						sx={ { mr: 1.5, color: 'text.secondary' } }
-					/>
-					{ __( 'New application', 'rest-api-firewall' ) }
-				</MenuItem>
-				{ applications.length > 0 && <Divider /> }
-				{ applicationsLoading ? (
-					<MenuItem disabled dense>
-						{ __( 'Loading…', 'rest-api-firewall' ) }
-					</MenuItem>
-				) : (
-					applications.map( ( app ) => (
-						<MenuItem
-							key={ app.id }
-							dense
-							selected={ app.id === selectedApplicationId }
-							onClick={ () => handleSelectApp( app.id ) }
-						>
-							{ app.title }
-						</MenuItem>
-					) )
-				) }
-			</Menu>
+					<CreateOutlinedIcon fontSize="small" />
+				</ListItemIcon>
+				<ListItemText
+					sx={{ ...listItemTextSx, color:'primary.main' }}
+					primary={ applications.find( ( app ) => app.id === selectedApplicationId )?.title || __( 'No application selected', 'rest-api-firewall' ) }
+				/>
+			</ListItemButton>
 
 			<Snackbar
 				open={ snackOpen }
 				autoHideDuration={ 2000 }
 				onClose={ () => setSnackOpen( false ) }
-				anchorOrigin={ { vertical: 'bottom', horizontal: 'center' } }
 			>
 				<Alert
 					severity="success"
-					variant="filled"
 					onClose={ () => setSnackOpen( false ) }
 				>
 					{ __( 'Application changed', 'rest-api-firewall' ) }
