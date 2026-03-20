@@ -485,6 +485,22 @@ class ModelsPropertiesRepository {
 					'name',
 				),
 			),
+			array(
+				'key'        => 'search_replace',
+				'type'       => 'search_replace',
+				'tooltip'    => 'Search & Replace',
+				'label'      => 'S&R',
+				'properties' => array(
+					'title',
+					'content',
+					'excerpt',
+					'guid',
+					'link',
+					'source_url',
+					'description',
+					'name',
+				),
+			),
 		);
 	}
 	private static function author_properties(): array {

@@ -251,19 +251,30 @@ export default function GlobalSecurity( { form, setField } ) {
 						{ __( 'Files', 'rest-api-firewall' ) }
 					</Typography>
 
-					<FormControl>
-						<FormControlLabel
-							control={
-								<Switch
-									size="small"
-									checked={ !! form.theme_disable_filedit }
-									name="theme_disable_filedit"
-									onChange={ setField }
-								/>
-							}
-							label={ __( 'Disable theme file editor', 'rest-api-firewall' ) }
-						/>
-					</FormControl>
+					<Box>
+						<Typography variant="body2" fontWeight={ 500 } gutterBottom>
+							{ __( 'Disable theme file editor', 'rest-api-firewall' ) }
+						</Typography>
+						<FormHelperText sx={ { mt: 0, mb: 1 } }>
+							{ __( 'Add the following constant to your wp-config.php to disable the theme and plugin file editor in WordPress admin.', 'rest-api-firewall' ) }
+						</FormHelperText>
+						<Box sx={ { position: 'relative', bgcolor: 'grey.900', borderRadius: 1, p: 1.5, mb: 1 } }>
+							<Box sx={ { position: 'absolute', top: 4, right: 4 } }>
+								<CopyButton toCopy="define('DISALLOW_FILE_EDIT', true);" sx={ { color: 'grey.400' } } />
+							</Box>
+							<Typography
+								component="pre"
+								variant="caption"
+								sx={ { m: 0, color: 'grey.100', fontFamily: 'monospace', whiteSpace: 'pre', display: 'block' } }
+							>
+								{ "define('DISALLOW_FILE_EDIT', true);" }
+							</Typography>
+						</Box>
+						{ adminData.disallow_file_edit
+							? <Alert severity="success" sx={ { fontSize: '0.75rem' } }>{ __( 'DISALLOW_FILE_EDIT is defined and active.', 'rest-api-firewall' ) }</Alert>
+							: <Alert severity="warning" sx={ { fontSize: '0.75rem' } }>{ __( 'Constant not detected — editor is currently accessible.', 'rest-api-firewall' ) }</Alert>
+						}
+					</Box>
 
 					<FileActionSwitch
 						checked={ !! form.theme_enforce_wpconfig_permissions }
