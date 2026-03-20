@@ -4,6 +4,10 @@ import Checkbox from '@mui/material/Checkbox';
 import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
@@ -27,9 +31,7 @@ export default function GlobalProperties( { form, setField } ) {
 						onChange={ setField }
 					/>
 				}
-				label={
-					<Typography variant="body2" color={ isDisabled ? 'text.disabled' : 'text.primary' }>{ label }</Typography>
-				}
+				label={label}
 				sx={ {
 					width: '50%',
 					minWidth: 360,
@@ -139,6 +141,70 @@ export default function GlobalProperties( { form, setField } ) {
 				</FormGroup>
 			</Stack>
 
+		<Divider />
+
+		<Stack spacing={ 2 }>
+			<Stack spacing={ 0 }>
+				<Typography
+					variant="subtitle1"
+					fontWeight={ 600 }
+					color={ ! hasValidLicense ? 'text.disabled' : 'text.primary' }
+				>
+					{ __( 'Date Format', 'rest-api-firewall' ) }
+				</Typography>
+				<Typography variant="body2" color="text.secondary">
+					{ __( 'Format date properties.', 'rest-api-firewall' ) }
+					{ __( 'Default REST API format is ISO 8601 — e.g. 2024-01-15T14:30:00', 'rest-api-firewall' ) }
+				</Typography>
+			</Stack>
+			<Box sx={ { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5 } }>
+				<FormControlLabel
+					disabled={ ! hasValidLicense }
+					control={
+						<Checkbox
+							size="small"
+							checked={ !! form.rest_models_date_format_enabled }
+							name="rest_models_date_format_enabled"
+							onChange={ setField }
+						/>
+					}
+					label={ __( 'Format Dates', 'rest-api-firewall' ) }
+					sx={ { mr: 0 } }
+				/>
+				<RadioGroup
+					row
+					name="rest_models_date_format"
+					value={ form.rest_models_date_format || 'wordpress' }
+					onChange={ setField }
+					sx={ { display: 'flex', flexWrap: 'wrap', gap: 0 } }
+				>
+					<Tooltip title={ __( 'Uses the date and time format from WordPress General Settings', 'rest-api-firewall' ) } placement="top">
+						<FormControlLabel
+							value="wordpress"
+							disabled={ ! form.rest_models_date_format_enabled || ! hasValidLicense }
+							control={ <Radio size="small" /> }
+							label={ __( 'WordPress', 'rest-api-firewall' ) }
+						/>
+					</Tooltip>
+					<FormControlLabel
+						value="custom"
+						disabled={ ! form.rest_models_date_format_enabled || ! hasValidLicense }
+						control={ <Radio size="small" /> }
+						label={ __( 'Custom', 'rest-api-firewall' ) }
+					/>
+				</RadioGroup>
+				<TextField
+					size="small"
+					placeholder="Y-m-d H:i:s"
+					name="rest_models_date_format_custom"
+					value={ form.rest_models_date_format_custom || '' }
+					onChange={ setField }
+					disabled={ ! form.rest_models_date_format_enabled || form.rest_models_date_format !== 'custom' || ! hasValidLicense }
+					slotProps={ {input: { pattern: 'Y|y|m|n|d|j|H|h|i|s|a|A|\\W' } } }
+					sx={ { width: 160 } }
+				/>
+			</Box>
+		</Stack>
 		</Stack>
 	);
 }

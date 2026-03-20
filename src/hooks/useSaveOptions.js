@@ -22,6 +22,7 @@ export default function useSaveOptions() {
 					'Are you sure you want to save these settings?',
 					'rest-api-firewall'
 				),
+				confirmLabel = __( 'Confirm', 'rest-api-firewall' ),
 				skipConfirm = false,
 				onSuccess,
 			} = config;
@@ -112,6 +113,7 @@ export default function useSaveOptions() {
 				type: DIALOG_TYPES.CONFIRM,
 				title: confirmTitle,
 				content: confirmMessage,
+				confirmLabel,
 				onConfirm: doSave,
 			} );
 		},

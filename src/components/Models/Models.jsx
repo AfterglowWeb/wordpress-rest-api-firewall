@@ -153,6 +153,7 @@ export default function Models() {
 		return (
 			<ModelEditor
 				model={ editing }
+				globalForm={ outputForm }
 				onBack={ () => {
 					setEditing( null );
 					fetchModels();

@@ -614,6 +614,33 @@ class CoreOptions {
 				'group'             => 'models_properties',
 			),
 
+			'rest_models_date_format_enabled'             => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'models_properties',
+			),
+
+			'rest_models_date_format'                     => array(
+				'default_value'     => 'rest_api',
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'models_properties',
+			),
+
+			'rest_models_date_format_custom'              => array(
+				'default_value'     => '',
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'models_properties',
+			),
+
 			'rest_settings_route_enabled'                 => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
