@@ -43,7 +43,7 @@ class ModelsPropertiesRepository {
 
 		$filters             = self::properties_filters();
 		$string_auto_filters = array_values(
-			array_filter( $filters, fn( $f ) => in_array( $f['key'], array( 'search_replace', 'relative_url' ), true ) )
+			array_filter( $filters, fn( $f ) => in_array( $f['key'], array( 'search_replace' ), true ) )
 		);
 		$data                = self::get_sample_rest_response_data( $post_type );
 
@@ -85,6 +85,9 @@ class ModelsPropertiesRepository {
 			$property_filters = self::get_filters_per_property( $property_key, $filters );
 			$prop_type        = $property['type'] ?? '';
 			$is_string        = 'string' === $prop_type || ( is_array( $prop_type ) && in_array( 'string', $prop_type, true ) );
+			if ( ! $is_string ) {
+				$property_filters = array_values( array_filter( $property_filters, fn( $f ) => 'search_replace' !== $f['key'] ) );
+			}
 			if ( $is_string ) {
 				$existing_keys = array_column( $property_filters, 'key' );
 				foreach ( $string_auto_filters as $sf ) {
@@ -115,6 +118,15 @@ class ModelsPropertiesRepository {
 			}
 			if ( ! empty( $all_fields ) ) {
 				$properties['acf']['properties'] = self::build_acf_subprops( $all_fields, $string_auto_filters );
+			}
+		}
+
+		foreach ( array( '_links', '_embedded' ) as $meta_key ) {
+			if ( ! isset( $properties[ $meta_key ] ) ) {
+				$properties[ $meta_key ] = array(
+					'type'     => 'object',
+					'settings' => array( 'disable' => false, 'filters' => array() ),
+				);
 			}
 		}
 
@@ -191,11 +203,10 @@ class ModelsPropertiesRepository {
 			}
 		}
 
-		// Fallback: derive from schema.
 		$controller          = new WP_REST_Settings_Controller();
 		$schema              = $controller->get_item_schema();
 		$string_auto_filters = array_values(
-			array_filter( $filters, fn( $f ) => in_array( $f['key'], array( 'search_replace', 'relative_url' ), true ) )
+			array_filter( $filters, fn( $f ) => in_array( $f['key'], array( 'search_replace' ), true ) )
 		);
 
 		if ( empty( $schema['properties'] ) ) {
@@ -229,12 +240,11 @@ class ModelsPropertiesRepository {
 	private static function build_props_from_data( array $data, array $filters = array(), int $depth = 0 ): array {
 		$props = array();
 
-		// Filters that apply to any string-type property regardless of key name.
 		$string_auto_filters = array_values(
 			array_filter(
 				$filters,
 				function ( $f ) {
-					return in_array( $f['key'], array( 'search_replace', 'relative_url' ), true );
+					return in_array( $f['key'], array( 'search_replace' ), true );
 				}
 			)
 		);
@@ -244,7 +254,10 @@ class ModelsPropertiesRepository {
 			$type             = self::infer_json_type( $value );
 			$property_filters = 0 === $depth ? self::get_filters_per_property( $str_key, $filters ) : array();
 
-			// Auto-add search_replace and relative_url to any string-type property at any depth.
+			if ( 'string' !== $type ) {
+				$property_filters = array_values( array_filter( $property_filters, fn( $f ) => 'search_replace' !== $f['key'] ) );
+			}
+
 			if ( 'string' === $type && ! empty( $string_auto_filters ) ) {
 				$existing_keys = array_column( $property_filters, 'key' );
 				foreach ( $string_auto_filters as $sf ) {
@@ -262,7 +275,7 @@ class ModelsPropertiesRepository {
 				),
 			);
 
-			if ( 'object' === $type && $depth < 2 ) {
+			if ( 'object' === $type && ! in_array( $str_key, array( '_links', '_embedded' ), true ) ) {
 				$sub = self::build_props_from_data( (array) $value, $filters, $depth + 1 );
 				if ( ! empty( $sub ) ) {
 					$prop['properties'] = $sub;
@@ -445,23 +458,6 @@ class ModelsPropertiesRepository {
 				),
 			),
 			array(
-				'key'        => 'relative_url',
-				'tooltip'    => 'Relative URL',
-				'label'      => 'URL',
-				'properties' => array_merge(
-					array(
-						'featured_media',
-						'link',
-						'guid',
-						'source_url',
-						'media_details',
-						'_embedded',
-						'_links',
-					),
-					$taxonomy_values
-				),
-			),
-			array(
 				'key'        => 'date_format',
 				'tooltip'    => 'Date Format',
 				'label'      => 'Format',
@@ -495,10 +491,9 @@ class ModelsPropertiesRepository {
 
 		$filters             = self::properties_filters();
 		$string_auto_filters = array_values(
-			array_filter( $filters, fn( $f ) => in_array( $f['key'], array( 'search_replace', 'relative_url' ), true ) )
+			array_filter( $filters, fn( $f ) => in_array( $f['key'], array( 'search_replace' ), true ) )
 		);
 
-		// Try a real REST response to capture registered meta fields too.
 		$users = get_users( array( 'number' => 1, 'fields' => 'ids' ) );
 		if ( ! empty( $users ) ) {
 			$id       = (int) $users[0];
@@ -514,7 +509,6 @@ class ModelsPropertiesRepository {
 			}
 		}
 
-		// Fallback: derive from schema.
 		$controller = new WP_REST_Users_Controller();
 		$schema     = $controller->get_item_schema();
 
@@ -527,6 +521,9 @@ class ModelsPropertiesRepository {
 			$property_filters = self::get_filters_per_property( $key, $filters );
 			$prop_type        = $property['type'] ?? '';
 			$is_string        = 'string' === $prop_type || ( is_array( $prop_type ) && in_array( 'string', $prop_type, true ) );
+			if ( ! $is_string ) {
+				$property_filters = array_values( array_filter( $property_filters, fn( $f ) => 'search_replace' !== $f['key'] ) );
+			}
 			if ( $is_string ) {
 				$existing_keys = array_column( $property_filters, 'key' );
 				foreach ( $string_auto_filters as $sf ) {
@@ -546,12 +543,20 @@ class ModelsPropertiesRepository {
 			);
 		}
 
+		foreach ( array( '_links', '_embedded' ) as $meta_key ) {
+			if ( ! isset( $props[ $meta_key ] ) ) {
+				$props[ $meta_key ] = array(
+					'type'     => 'object',
+					'settings' => array( 'disable' => false, 'filters' => array() ),
+				);
+			}
+		}
+
 		return self::apply_author_security_flags( $props );
 	}
 
 	private static function apply_author_security_flags( array $props ): array {
 
-		// Locked: always disabled, never publishable. Must match AuthorModel::LOCKED_FIELDS.
 		$locked = array( 'username', 'email', 'capabilities', 'extra_capabilities' );
 		foreach ( $locked as $key ) {
 			if ( isset( $props[ $key ] ) ) {
@@ -561,7 +566,6 @@ class ModelsPropertiesRepository {
 			}
 		}
 
-		// Disabled by default but not locked: user can enable via model configuration.
 		$disabled_default = array( 'registered_date', 'roles', 'locale' );
 		foreach ( $disabled_default as $key ) {
 			if ( isset( $props[ $key ] ) ) {

@@ -28,6 +28,11 @@ class DisableBase {
 			add_filter( 'xmlrpc_enabled', '__return_false' );
 		}
 
+		if ( true === CoreOptions::read_option( 'theme_disable_sitemap' ) ) {
+			add_filter( 	'wp_sitemaps_enabled', '__return_false' );
+			remove_action( 	'init', 'wp_sitemaps_get_server' );
+		}
+
 		if ( true === CoreOptions::read_option( 'theme_disable_pingbacks' ) ) {
 			add_filter(
 				'wp_headers',

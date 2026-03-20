@@ -19,7 +19,9 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import Badge from '@mui/material/Badge';
+
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import TuneIcon from '@mui/icons-material/Tune';
 import LockIcon from '@mui/icons-material/Lock';
 
 import CopyButton from '../CopyButton';
@@ -41,10 +43,6 @@ const TYPE_LABELS = {
 	author: 'User',
 };
 
-/**
- * Resolve the effective global value for a given filter key + property name.
- * Used to show inherited (read-only) filter state in the Filters menu.
- */
 function resolveGlobalFilterValue( filterKey, propName, globalForm ) {
 	if ( ! globalForm ) return false;
 	switch ( filterKey ) {
@@ -61,12 +59,6 @@ function resolveGlobalFilterValue( filterKey, propName, globalForm ) {
 	}
 }
 
-/**
- * Filters menu button + MUI Menu for a single PropertyRow.
- * Uses local temp state: changes are committed on Save, discarded on Cancel.
- * When isInherit=true the menu initialises from the global values so the user
- * can edit immediately; clicking Save also creates local overrides automatically.
- */
 function FiltersMenu( {
 	filters,
 	propName,
@@ -82,17 +74,15 @@ function FiltersMenu( {
 	const [ anchorEl, setAnchorEl ] = useState( null );
 	const open = Boolean( anchorEl );
 
-	// Local temp state — source of truth for all filter values while the menu is open.
 	const [ localFilters, setLocalFilters ] = useState( [] );
 
-	// Badge count: only committed (non-inherited) active filters.
 	const activeCount = isInherit ? 0 : filters.filter( ( f ) => {
 		if ( f.type === 'search_replace' ) return !! ( f.value?.search );
-		return !! f.value;
+		const globalValue = !! resolveGlobalFilterValue( f.key, propName, globalForm );
+		return !! f.value !== globalValue;
 	} ).length;
 
 	const handleOpen = ( e ) => {
-		// Seed local state from current values (or global defaults when inherited).
 		setLocalFilters(
 			filters.map( ( f ) => {
 				if ( f.type === 'search_replace' ) {
@@ -234,11 +224,9 @@ function FiltersMenu( {
 				size="small"
 				variant="text"
 				startIcon={
-					<Badge
-						badgeContent={ activeCount }
-						color="primary"
-						
-					/>
+					<Badge badgeContent={ activeCount } color="primary" anchorOrigin="left">
+						<TuneIcon sx={{fontSize:'14px'}} />
+					</Badge>
 				}
 				onClick={ handleOpen }
 				sx={ {
@@ -258,11 +246,29 @@ function FiltersMenu( {
 				transformOrigin={ { horizontal: 'right', vertical: 'top' } }
 				anchorOrigin={ { horizontal: 'right', vertical: 'bottom' } }
 			>
-				{ localFilters.map( ( filter ) =>
-					filter.type === 'search_replace'
-						? renderSearchReplaceFilter( filter )
-						: renderBooleanFilter( filter )
-				) }
+				{ ( () => {
+					const BOOL_ORDER = [ 'embed', 'rendered', 'date_format' ];
+					const boolFilters = [ ...localFilters ]
+						.filter( ( f ) => f.type !== 'search_replace' )
+						.sort( ( a, b ) => {
+							const ai = BOOL_ORDER.indexOf( a.key );
+							const bi = BOOL_ORDER.indexOf( b.key );
+							if ( ai !== -1 && bi !== -1 ) return ai - bi;
+							if ( ai !== -1 ) return -1;
+							if ( bi !== -1 ) return 1;
+							return a.key.localeCompare( b.key );
+						} );
+					const srFilters = localFilters.filter( ( f ) => f.type === 'search_replace' );
+					return (
+						<>
+							{ boolFilters.map( ( f ) => renderBooleanFilter( f ) ) }
+							{ boolFilters.length > 0 && srFilters.length > 0 && (
+								<Divider sx={ { my: 0.5 } } />
+							) }
+							{ srFilters.map( ( f ) => renderSearchReplaceFilter( f ) ) }
+						</>
+					);
+				} )() }
 
 				<Divider sx={ { mt: 0.5 } } />
 
@@ -400,6 +406,7 @@ export default function Properties( { setField, postTypes, form } ) {
 				<ModelProperties
 					selectedObjectType={ selectedObjectType }
 					setField={ setField }
+					globalForm={ form }
 				/>
 			</Stack>
 		</Stack>
@@ -435,6 +442,10 @@ export function PropertyRow( {
 		! propContext.includes( 'embed' );
 	const settings = propConfig.settings || {};
 	const isLocked  = settings.locked ?? false;
+	const isGloballyLocked =
+		( '_links'    === propName && !! globalForm?.rest_models_remove_links_prop ) ||
+		( '_embedded' === propName && !! globalForm?.rest_models_remove_embed_prop );
+	const effectivelyLocked = isLocked || isGloballyLocked;
 
 	const [ localDisable, setLocalDisable ] = useState(
 		settings.disable ?? false
@@ -569,7 +580,7 @@ export function PropertyRow( {
 						alignItems="center"
 						justifyContent="flex-end"
 					>
-						{ depth === 0 && isLocked && (
+						{ depth === 0 && effectivelyLocked && (
 							<Tooltip
 								title={ __( 'This property cannot be published', 'rest-api-firewall' ) }
 								placement="top"
@@ -578,7 +589,7 @@ export function PropertyRow( {
 							</Tooltip>
 						) }
 
-						{ depth === 0 && hasFilters && ! isLocked && (
+						{ hasFilters && ! effectivelyLocked && (
 							<FiltersMenu
 								filters={ settings.filters }
 								propName={ propName }
@@ -594,11 +605,11 @@ export function PropertyRow( {
 						) }
 
 						<FormControlLabel
-							disabled={ disabled || ! hasValidLicense || isLocked }
+							disabled={ disabled || ! hasValidLicense || effectivelyLocked }
 							control={
 								<Switch
 									size="small"
-									checked={ isLocked ? true : localDisable }
+									checked={ effectivelyLocked ? true : localDisable }
 									onChange={ ( e ) => {
 										const next = e.target.checked;
 										setLocalDisable( next );
@@ -737,7 +748,7 @@ export function PropertyRow( {
 	);
 }
 
-function ModelProperties( { selectedObjectType, setField } ) {
+function ModelProperties( { selectedObjectType, setField, globalForm } ) {
 	const { __ } = wp.i18n || {};
 	const { hasValidLicense } = useLicense();
 	const { adminData } = useAdminData();
@@ -760,6 +771,7 @@ function ModelProperties( { selectedObjectType, setField } ) {
 								hasValidLicense={ hasValidLicense }
 								__={ __ }
 								basePath={ `postProperties.${ selectedObjectType }.props.${ propName }` }
+							globalForm={ globalForm }
 							/>
 						) ) }
 					</Stack>
