@@ -18,12 +18,6 @@ class DisableBase {
 
 	private function __construct() {
 
-		if ( true === CoreOptions::read_option( 'theme_disable_filedit' ) ) {
-			if ( ! defined( 'DISALLOW_FILE_EDIT' ) ) {
-				define( 'DISALLOW_FILE_EDIT', true );
-			}
-		}
-
 		if ( true === CoreOptions::read_option( 'theme_disable_xmlrpc' ) ) {
 			add_filter( 'xmlrpc_enabled', '__return_false' );
 		}

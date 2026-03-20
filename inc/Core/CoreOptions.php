@@ -304,15 +304,6 @@ class CoreOptions {
 				'group'             => 'global_security',
 			),
 
-			'theme_disable_filedit'                       => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'global_security',
-			),
-
 			'theme_disable_comments'                      => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
