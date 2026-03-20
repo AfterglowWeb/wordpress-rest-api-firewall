@@ -216,7 +216,7 @@ export default function MailEditor( { mail, onBack } ) {
 
 	const updateToolbar = useRegisterToolbar( {
 		isNew,
-		breadcrumb: [ __( 'Emails', 'rest-api-firewall' ) ],
+		breadcrumb: __( 'Emails', 'rest-api-firewall' ),
 		docPage: 'mails',
 		handleBack: () => { clearDirty(); onBack(); },
 		handleSave: () => handleSaveRef.current?.(),

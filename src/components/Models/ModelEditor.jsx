@@ -81,6 +81,11 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 
 	const [ loaded, setLoaded ] = useState( isNew );
 
+	const [ customRoute, setCustomRoute ] = useState(
+		objectType === 'custom_route' ? ( model.properties?._route || '' ) : ''
+	);
+	const [ fetchedCustomRouteProps, setFetchedCustomRouteProps ] = useState( null );
+
 	const [ testMode, setTestMode ] = useState( false );
 	const [ testStatus, setTestStatus ] = useState( 'idle' ); // 'idle' | 'running' | 'done' | 'error'
 	const [ testResult, setTestResult ] = useState( null );
@@ -139,10 +144,14 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 					
 					setObjectType( e.object_type || '' );
 					setIsCustom( e.is_custom || false );
+					if ( e.object_type === 'custom_route' ) {
+						setCustomRoute( e.properties?._route || '' );
+					}
 					if ( e.is_custom ) {
 						setCustomProperties( e.properties || {} );
 					} else {
-						setWpProperties( e.properties || {} );
+						const { _route: _r, ...restProps } = e.properties || {};
+						setWpProperties( restProps );
 					}
 				}
 			} finally {
@@ -157,7 +166,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 		object_type: objectType,
 		is_custom: isCustom ? '1' : '0',
 		enabled: enabled ? '1' : '0',
-		properties: JSON.stringify( properties ),
+		properties: JSON.stringify( objectType === 'custom_route' ? { _route: customRoute, ...properties } : properties ),
 		application_id: selectedApplicationId || model.application_id || '',
 	} );
 
@@ -202,6 +211,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 		isCustom,
 		enabled,
 		properties,
+		customRoute,
 		nonce,
 		selectedApplicationId,
 		clearDirty,
@@ -263,6 +273,26 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 		}
 	}, [ isNew, model.id, adminData, nonce, __ ] );
 
+	useEffect( () => {
+		if ( objectType !== 'custom_route' || isCustom || ! customRoute ) {
+			return;
+		}
+		const params = new URLSearchParams( {
+			action: 'get_custom_route_schema',
+			nonce,
+			route: customRoute,
+		} );
+		fetch( adminData.ajaxurl, { method: 'POST', body: params } )
+			.then( ( r ) => r.json() )
+			.then( ( res ) => {
+				if ( res?.success && res.data?.props ) {
+					setFetchedCustomRouteProps( res.data.props );
+				}
+			} )
+			.catch( () => {} );
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ objectType, isCustom, customRoute ] );
+
 	const handleModeChange = ( _, newMode ) => {
 		if ( newMode === null ) {
 			return;
@@ -288,7 +318,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 
 	const updateToolbar = useRegisterToolbar( {
 		isNew,
-		breadcrumb: [ __( 'Properties', 'rest-api-firewall' ) ],
+		breadcrumb: __( 'Properties', 'rest-api-firewall' ),
 		docPage: 'models',
 		handleBack,
 		handleSave: () => handleSaveRef.current?.(),
@@ -328,8 +358,9 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 		);
 	}
 
-	const schemaProps =
-		adminData?.models_properties?.[ objectType ]?.props || null;
+	const schemaProps = objectType === 'custom_route'
+		? fetchedCustomRouteProps
+		: ( adminData?.models_properties?.[ objectType ]?.props || null );
 
 	const availableBindings = schemaProps
 		? Object.entries( schemaProps ).flatMap( ( [ key, cfg ] ) => {
@@ -430,6 +461,18 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 						) }
 					</Stack>
 				</Stack>
+
+				{ objectType === 'custom_route' && (
+					<TextField
+						label={ __( 'Route', 'rest-api-firewall' ) }
+						value={ customRoute }
+						onChange={ ( e ) => setCustomRoute( e.target.value ) }
+						size="small"
+						helperText={ __( 'Full REST API path, e.g. /my-plugin/v1/jobs', 'rest-api-firewall' ) }
+						slotProps={ { input: { pattern: '(\/[a-z0-9_\/-]+)+' } } }
+						sx={ { maxWidth: 360 } }
+					/>
+				) }
 
 				{ objectType && (
 					<>

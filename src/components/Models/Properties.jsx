@@ -59,7 +59,7 @@ function resolveGlobalFilterValue( filterKey, propName, globalForm ) {
 	}
 }
 
-function FiltersMenu( {
+export function FiltersMenu( {
 	filters,
 	propName,
 	isInherit,
@@ -69,6 +69,7 @@ function FiltersMenu( {
 	basePath,
 	disabled,
 	hasValidLicense,
+	onSaveFilters = null,
 	__,
 } ) {
 	const [ anchorEl, setAnchorEl ] = useState( null );
@@ -101,14 +102,21 @@ function FiltersMenu( {
 	const handleCancel = () => setAnchorEl( null );
 
 	const handleSave = () => {
-		localFilters.forEach( ( f ) => {
-			setField( {
-				target: {
-					name: `${ basePath }.settings.filters.${ f.key }`,
-					value: f.value ?? ( f.type === 'search_replace' ? {} : false ),
-				},
+		if ( onSaveFilters ) {
+			onSaveFilters( localFilters.map( ( f ) => ( {
+				...f,
+				value: f.value ?? ( f.type === 'search_replace' ? {} : false ),
+			} ) ) );
+		} else {
+			localFilters.forEach( ( f ) => {
+				setField( {
+					target: {
+						name: `${ basePath }.settings.filters.${ f.key }`,
+						value: f.value ?? ( f.type === 'search_replace' ? {} : false ),
+					},
+				} );
 			} );
-		} );
+		}
 		setAnchorEl( null );
 	};
 

@@ -12,11 +12,6 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
-
-import Checkbox from '@mui/material/Checkbox';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Tooltip from '@mui/material/Tooltip';
 
 import AddIcon from '@mui/icons-material/Add';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -24,6 +19,8 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useState } from '@wordpress/element';
 import ListItemText from '@mui/material/ListItemText';
+
+import { FiltersMenu } from '../Models/Properties';
 
 const TYPE_COLORS = {
     string: 'default',
@@ -280,34 +277,28 @@ function PropertyRow( {
                     />
                 ) : null }
 
-                { bindingFilters.map( ( filter ) => (
-                    <Tooltip key={ filter.key } title={ filter.tooltip || filter.label }>
-                        <FormControlLabel
-                            control={
-                                <Checkbox
-                                    size="small"
-                                    checked={ propDef.filters?.[ filter.key ] ?? false }
-                                    onChange={ ( e ) =>
-                                        update( {
-                                            filters: {
-                                                ...propDef.filters,
-                                                [ filter.key ]: e.target.checked,
-                                            },
-                                        } )
-                                    }
-                                    disabled={ readOnly }
-                                    sx={ { p: 0.5 } }
-                                />
-                            }
-                            label={
-                                <Typography variant="caption">
-                                    { filter.label }
-                                </Typography>
-                            }
-                            sx={ { m: 0, gap: 0.25, flexShrink: 0 } }
-                        />
-                    </Tooltip>
-                ) ) }
+                { bindingFilters.length > 0 && (
+                    <FiltersMenu
+                        filters={ bindingFilters.map( ( f ) => ( {
+                            ...f,
+                            value: propDef.filters?.[ f.key ] ?? ( f.type === 'search_replace' ? {} : false ),
+                        } ) ) }
+                        propName={ propKey }
+                        isInherit={ false }
+                        globalForm={ null }
+                        onToggleInherit={ null }
+                        setField={ null }
+                        basePath=""
+                        disabled={ readOnly }
+                        hasValidLicense={ true }
+                        onSaveFilters={ ( savedFilters ) => {
+                            const filters = {};
+                            savedFilters.forEach( ( f ) => { filters[ f.key ] = f.value; } );
+                            update( { filters } );
+                        } }
+                        __={ __ }
+                    />
+                ) }
 
                 { propDef.isStatic && (
                     type === 'boolean' ? (

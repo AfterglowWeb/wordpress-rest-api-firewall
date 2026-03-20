@@ -2,7 +2,6 @@ import { useState, useEffect } from '@wordpress/element';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useApplication } from '../../contexts/ApplicationContext';
-import { PropertyRow } from './Properties';
 
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
@@ -14,8 +13,6 @@ import FormHelperText from '@mui/material/FormHelperText';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
-import Divider from '@mui/material/Divider';
-import Typography from '@mui/material/Typography';
 
 export default function SettingsRoute( { form, setField } ) {
 	const { hasValidLicense } = useLicense();
@@ -64,6 +61,7 @@ function SettingsRouteFree( { form, setField } ) {
 						value={ form.rest_models_embed_menus_endpoint || '' }
 						onChange={ setField }
 						disabled={ ! hasValidLicense || ! form.rest_models_embed_menus_enabled }
+						slotProps={ { input: { pattern: '(\/[a-z0-9_\/-]+)+' } } }
 					/>
 				</Stack>
 			</Tooltip>
@@ -99,26 +97,11 @@ function SettingsRouteFree( { form, setField } ) {
 						value={ form.rest_models_acf_options_page_endpoint || '' }
 						onChange={ setField }
 						disabled={ ! hasValidLicense || ! form.rest_models_acf_options_page_enabled }
+						slotProps={ { input: { pattern: '(\/[a-z0-9_\/-]+)+' } } }
 					/>
 				</Stack>
 			</Tooltip>
 
-			<Divider />
-
-			<Typography
-				variant="caption"
-				sx={ {
-					display: 'block',
-					textTransform: 'uppercase',
-					letterSpacing: 0.5,
-					fontSize: '0.75rem',
-					color: 'text.secondary',
-				} }
-			>
-				{ __( 'Per-Property Settings', 'rest-api-firewall' ) }
-			</Typography>
-
-			<SettingsRouteProperties setField={ setField } disabled={ true } />
 		</Stack>
 	);
 }
@@ -208,6 +191,7 @@ function SettingsRoutePro() {
 					value={ localForm.rest_models_embed_menus_endpoint || '' }
 					onChange={ localSetField }
 					disabled={ ! localForm.rest_models_embed_menus_enabled }
+					slotProps={ { input: { pattern: '(\/[a-z0-9_\/-]+)+' } } }
 				/>
 			</Stack>
 
@@ -238,29 +222,10 @@ function SettingsRoutePro() {
 					value={ localForm.rest_models_acf_options_page_endpoint || '' }
 					onChange={ localSetField }
 					disabled={ ! localForm.rest_models_acf_options_page_enabled }
+					slotProps={ { input: { pattern: '(\/[a-z0-9_\/-]+)+' } } }
 				/>
 			</Stack>
 
-			<Divider />
-
-			<Typography
-				variant="caption"
-				sx={ {
-					display: 'block',
-					textTransform: 'uppercase',
-					letterSpacing: 0.5,
-					fontSize: '0.75rem',
-					color: 'text.secondary',
-				} }
-			>
-				{ __( 'Per-Property Settings', 'rest-api-firewall' ) }
-			</Typography>
-
-			<SettingsRouteProperties
-				setField={ localSetField }
-				disabled={ false }
-				localForm={ localForm }
-			/>
 
 			{ saveError && <Alert severity="error">{ saveError }</Alert> }
 
@@ -278,51 +243,6 @@ function SettingsRoutePro() {
 						: __( 'Save', 'rest-api-firewall' ) }
 				</Button>
 			</Stack>
-		</Stack>
-	);
-}
-
-function SettingsRouteProperties( { setField, disabled = false, localForm } ) {
-	const { __ } = wp.i18n || {};
-	const { hasValidLicense } = useLicense();
-	const { adminData } = useAdminData();
-
-	const schemaProps = adminData?.models_properties?.settings_route?.props || {};
-	const entries = Object.entries( schemaProps );
-
-	if ( entries.length === 0 ) {
-		return null;
-	}
-
-	return (
-		<Stack spacing={ 0 }>
-			{ entries.map( ( [ propName, propConfig ] ) => {
-				const mergedConfig = localForm
-					? {
-						...propConfig,
-						settings: {
-							...( propConfig.settings || {} ),
-							...( localForm[ `postProperties.settings_route.props.${ propName }.settings.disable` ] !== undefined
-								? { disable: localForm[ `postProperties.settings_route.props.${ propName }.settings.disable` ] }
-								: {} ),
-						},
-					  }
-					: propConfig;
-
-				return (
-					<PropertyRow
-						key={ propName }
-						propName={ propName }
-						propConfig={ mergedConfig }
-						selectedPostType="settings_route"
-						setField={ setField }
-						hasValidLicense={ hasValidLicense }
-						disabled={ disabled }
-						__={ __ }
-						basePath={ `postProperties.settings_route.props.${ propName }` }
-					/>
-				);
-			} ) }
 		</Stack>
 	);
 }

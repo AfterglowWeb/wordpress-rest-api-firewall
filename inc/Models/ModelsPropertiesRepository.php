@@ -237,6 +237,21 @@ class ModelsPropertiesRepository {
 		return $properties;
 	}
 
+	public static function fetch_route_properties( string $route ): array {
+		$filters  = self::properties_filters();
+		$request  = new WP_REST_Request( 'GET', $route );
+		$response = rest_do_request( $request );
+
+		if ( ! is_wp_error( $response ) && 200 === $response->get_status() ) {
+			$data = rest_get_server()->response_to_data( $response, false );
+			if ( ! empty( $data ) && is_array( $data ) ) {
+				return self::build_props_from_data( $data, $filters );
+			}
+		}
+
+		return array();
+	}
+
 	private static function build_props_from_data( array $data, array $filters = array(), int $depth = 0 ): array {
 		$props = array();
 

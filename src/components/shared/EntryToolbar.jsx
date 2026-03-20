@@ -2,27 +2,19 @@ import { useEffect, useRef } from '@wordpress/element';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-
 import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
-import { useApplication } from '../../contexts/ApplicationContext';
-import { useNavigation } from '../../contexts/NavigationContext';
 import { WP_ADMIN_BAR_HEIGHT_DESKTOP, WP_ADMIN_BAR_HEIGHT_MOBILE, APP_BAR_HEIGHT } from '../Navigation';
 import Documentation from '../Documentation/Documentation';
+import PanelBreadcrumb from './PanelBreadcrumb';
 
 export default function EntryToolbar( { isNew, title, author, dateCreated, dateModified, handleBack, handleSave, handleDelete, saving, enabled = null, setEnabled = null, dirtyFlag = null, breadcrumb = null, docPage = null, titleSuffix = null, showAppLink = true, canSave = undefined, children } ) {
     const { __ } = wp.i18n || {};
     const { openDialog } = useDialog();
-    const { selectedApplication, selectedApplicationId } = useApplication();
-    const { navigateGuarded } = useNavigation();
 
     const handleBackClick = () => {
         if ( dirtyFlag?.has ) {
@@ -53,8 +45,6 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
         return () => window.removeEventListener( 'popstate', onPopState );
     }, [] ); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const appLink = showAppLink && selectedApplication && selectedApplicationId;
-
     return (
             <Toolbar
                 sx={ {
@@ -72,66 +62,55 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
                     zIndex: 'appBar',
                 } }
             >
-                <Stack direction="row" gap={ 2 } alignItems="flex-end" sx={ { minWidth: 0 } }>
-                    <IconButton
-                        size="small"
-                        onClick={ handleBackClick }
-                        aria-label={ __( 'Back', 'rest-api-firewall' ) }
-                    >
-                        <ArrowBackIcon />
-                    </IconButton>
+            
 
-                    <Divider orientation="vertical" flexItem />
+                
+                <Stack direction={{ xs: 'column', sm: 'row' }} gap={ 2 } sx={ { minWidth: 0 } }>
+                    { typeof enabled === 'boolean' && setEnabled && (
 
-                    <Stack direction="row" alignItems="center" gap={ 2 } maxWidth={200} sx={{transition:'all 1s', opacity: appLink ? 1 : 0.5}}>
-                        <Button
-                            disabled={ saving }
-                            variant="text"
-                            onClick={ selectedApplicationId ? () => navigateGuarded( 'applications', selectedApplicationId ) : () => navigateGuarded( 'applications' ) }
-                            sx={ {
-                                color: saving ? 'text.disabled' : 'text.primary',
-                                fontSize: '20px',
-                                maxWidth: '200px',
-                                textOverflow: 'ellipsis',
-                                overflow: 'hidden',
-                                whiteSpace: 'nowrap',
-                                textTransform: 'none',
-                                lineHeight: 'normal',
-                                fontWeight: 600,
-                                '&:hover': { textDecoration: 'underline', bgcolor: 'transparent' },
-                                cursor: saving ? 'default' : 'pointer',
-                            } }
-                        >
-                            { selectedApplication && selectedApplication.title ? selectedApplication.title : __( 'Applications', 'rest-api-firewall' ) }
-                        </Button>
-                    </Stack>
-
-                    <Divider orientation="vertical" flexItem />
-
-                    <Stack spacing={-0.4} sx={ { minWidth: 0 } }>
-                        { breadcrumb && breadcrumb.length > 0 && (
-                            <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={ {
-                                    display: 'block',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: 0.5,
-                                } }
-                            >
-                                { breadcrumb.join( ' / ' ) }
-                            </Typography>
+                    <FormControlLabel
+                        sx={{marginRight: 0}}
+                        control={
+                            <Switch
+                                checked={ enabled }
+                                onChange={ ( e ) =>
+                                    setEnabled( e.target.checked )
+                                }
+                                size="small"
+                            />
+                        }
+                        label={ __(
+                            'Active',
+                            'rest-api-firewall'
                         ) }
-                        <Typography
-                            variant="h6"
-                            fontWeight={ 600 }
-                            color="text.primary"
-                            sx={ { lineHeight: 1.2 } }
-                        >
-                            { title || ( isNew ? `${ __( 'New', 'rest-api-firewall' ) } ${ breadcrumb?.at( -1 ) ?? __( 'Entry', 'rest-api-firewall' ) }` : __( 'Entry', 'rest-api-firewall' ) ) }
-                        </Typography>
-                        { titleSuffix && titleSuffix }
+                    />
+                    ) }
+                    { typeof enabled === 'boolean' && setEnabled && (
+                    <Divider sx={{display:{ xs: 'none', sm: 'block' }}} orientation="vertical" flexItem />
+                    ) }
+                    <Stack>
+                        <PanelBreadcrumb
+                            label={ breadcrumb || null }
+                            navigable={ !! breadcrumb }
+                            disabled={ saving }
+                            showAppLink={ showAppLink }
+                        />
+
+                        <Stack sx={ { minWidth: 0 } }>
+                            <Typography
+                                variant="h6"
+                                fontWeight={ 600 }
+                                color="text.primary"
+                                sx={ { lineHeight: 'normal' } }
+                            >
+                                { title || ( isNew ? `${ __( 'New', 'rest-api-firewall' ) } ${ breadcrumb ?? __( 'Entry', 'rest-api-firewall' ) }` : __( 'Entry', 'rest-api-firewall' ) ) }
+                            </Typography>
+                            { titleSuffix && titleSuffix }
+                        </Stack>
+
                     </Stack>
+
+                    <Divider sx={{display:{ xs: 'none', sm: 'block' }}} orientation="vertical" flexItem />
 
                     { ( author || dateCreated || dateModified ) && (                      
                         <Typography
@@ -164,24 +143,7 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
                     
                     { children }
 
-                    { typeof enabled === 'boolean' && setEnabled && (
-                        <FormControlLabel
-                            control={
-                                <Switch
-                                    checked={ enabled }
-                                    onChange={ ( e ) =>
-                                        setEnabled( e.target.checked )
-                                    }
-                                    size="small"
-                                />
-                            }
-                            label={ __(
-                                'Active',
-                                'rest-api-firewall'
-                            ) }
-                        />
-                    ) }
-
+                    
                     <Button
                         variant="contained"
                         size="small"
@@ -192,6 +154,18 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
                         { isNew ? __( 'Create', 'rest-api-firewall' ) : __( 'Save', 'rest-api-firewall' ) }
                     </Button>
 
+
+                    { ! isNew && (
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            size="small"
+                            onClick={ handleDelete }
+                        >
+                            { __( 'Delete', 'rest-api-firewall' ) }
+                        </Button>
+                    ) }
+
                      <Button
                         variant="outlined"
                         size="small"
@@ -201,18 +175,6 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
                     >
                         { __( 'Cancel', 'rest-api-firewall' ) }
                     </Button>
-
-
-                    { ! isNew && (
-                        <Button
-                            color="error"
-                            size="small"
-                            startIcon={ <DeleteOutlineIcon /> }
-                            onClick={ handleDelete }
-                        >
-                            { __( 'Delete', 'rest-api-firewall' ) }
-                        </Button>
-                    ) }
 
 
                    { docPage && <Documentation page={ docPage } /> }
