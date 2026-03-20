@@ -16,7 +16,7 @@ const GROUP_LABELS = {
 	author: ( __ ) => __( 'Users', 'rest-api-firewall' ),
 };
 
-function buildOptions( items, types, visibility, __ ) {
+function buildOptions( items, types, visibility, __, extraGroups = [] ) {
 	const result = [];
 
 	for ( const typeKey of types ) {
@@ -70,6 +70,11 @@ function buildOptions( items, types, visibility, __ ) {
 		if ( privateItems.length ) {
 			pushItems( privateItems, __( 'Private', 'rest-api-firewall' ) );
 		}
+	}
+
+	for ( const group of extraGroups ) {
+		result.push( { groupLabel: group.groupLabel } );
+		group.items.forEach( ( item ) => result.push( { value: item.value, label: item.label } ) );
 	}
 
 	return result;
@@ -128,6 +133,7 @@ function renderGroupedChildren( options ) {
 export default function ObjectTypeSelect( {
 	types = [ 'post_type', 'taxonomy' ],
 	visibility = [ 'public', 'private' ],
+	extraGroups = [],
 	isSingle = false,
 	name,
 	label,
@@ -144,7 +150,7 @@ export default function ObjectTypeSelect( {
 		return null;
 	}
 
-	const options = buildOptions( adminData.post_types, types, visibility, __ );
+	const options = buildOptions( adminData.post_types, types, visibility, __, extraGroups );
 
 	if ( isSingle ) {
 		return (

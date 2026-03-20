@@ -9,7 +9,6 @@ import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
 import { DataGrid } from '@mui/x-data-grid';
 
 import Dialog from '@mui/material/Dialog';
@@ -24,11 +23,9 @@ import useSaveOptions from '../../hooks/useSaveOptions';
 import GlobalProperties from './GlobalProperties';
 
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import useProActions from '../../hooks/useProActions';
-import formatDate from '../../utils/formatDate';
 import ModelEditor from './ModelEditor';
 import ObjectTypeSelect from '../ObjectTypeSelect';
 
@@ -285,7 +282,7 @@ export default function Models() {
 	return (
 		<Stack p={4} spacing={ 2 } sx={ { height: '100%', flexGrow: 1 } }>
 			
-			<Stack spacing={ 2 } sx={ { maxWidth: 720 } }>
+			<Stack spacing={ 2 } sx={ { maxWidth: 600 } }>
 			
 				<GlobalProperties form={ outputForm } setField={ setOutputField } />
 
@@ -309,7 +306,7 @@ export default function Models() {
 							} );
 						} }
 					>
-						{ __( 'Apply to all models', 'rest-api-firewall' ) }
+						{ __( 'Apply', 'rest-api-firewall' ) }
 					</Button>
 				</Stack>
 			</Stack>
@@ -322,6 +319,15 @@ export default function Models() {
 			>
 				<ObjectTypeSelect
 					types={ [ 'post_type', 'taxonomy', 'author' ] }
+					extraGroups={ [
+						{
+							groupLabel: __( 'Special', 'rest-api-firewall' ),
+							items: [
+								{ value: 'settings_route', label: __( 'Settings Route', 'rest-api-firewall' ) },
+								{ value: 'custom_route',   label: __( 'Custom Route',   'rest-api-firewall' ) },
+							],
+						},
+					] }
 					value={ newModelObjectType }
 					defaultValue=""
 					label={ __( 'Object Type', 'rest-api-firewall' ) }

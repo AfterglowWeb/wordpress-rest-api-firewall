@@ -1,7 +1,6 @@
 import { useState, useCallback } from '@wordpress/element';
 import { useLicense } from '../contexts/LicenseContext';
 import { useAdminData } from '../contexts/AdminDataContext';
-import { useApplication } from '../contexts/ApplicationContext';
 import useProActions from '../hooks/useProActions';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
@@ -31,7 +30,7 @@ import EmailOutlined from '@mui/icons-material/EmailOutlined';
 import MenuIcon from '@mui/icons-material/Menu';
 import ApiIcon from '@mui/icons-material/Api';
 import WebhookIcon from '@mui/icons-material/Webhook';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import VpnLockOutlinedIcon from '@mui/icons-material/VpnLockOutlined';
 import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined';
 import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
@@ -48,6 +47,7 @@ import { useEntryToolbarContext } from '../contexts/EntryToolbarContext';
 import AppIdentity from './AppIdentity';
 import ApplicationSelector from './ApplicationSelector';
 import Documentation from './Documentation/Documentation';
+import PanelBreadcrumb from './shared/PanelBreadcrumb';
 
 export const DRAWER_WIDTH = 220;
 export const APP_BAR_HEIGHT = 75;
@@ -69,7 +69,6 @@ export default function Navigation( {
 } ) {
 	const { hasValidLicense } = useLicense();
 	const { adminData, updateAdminData } = useAdminData();
-	const { selectedApplication } = useApplication();
 	const { save } = useProActions();
 	const { panel, navigateGuarded } = useNavigation();
 	const { toolbarConfig } = useEntryToolbarContext();
@@ -180,7 +179,7 @@ export default function Navigation( {
 			key: 'per-route-settings',
 			label: __( 'Routes', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'REST API Firewall',
-			icon: AccountTreeIcon,
+			icon: AccountTreeOutlinedIcon,
 		},
 		{
 			key: 'ip-filtering',
@@ -368,11 +367,7 @@ export default function Navigation( {
 
 					if ( item.type === 'app-selector' ) {
 						if ( ! hasValidLicense ) return null;
-						return (
-							<Box key="app-selector" sx={ { py: 0.5 } }>
-								<ApplicationSelector />
-							</Box>
-						);
+						return <ApplicationSelector key="app-selector" />;
 					}
 
 						const Icon = item.icon;
@@ -518,19 +513,9 @@ export default function Navigation( {
 							) }
 
 							<Stack minWidth={150}>
-								{ selectedApplication && (
-									<Typography
-										variant="caption"
-										color="text.secondary"
-										sx={ {
-											display: 'block',
-											textTransform: 'uppercase',
-											letterSpacing: 0.5,
-										} }
-									>
-										{ selectedApplication.title }
-									</Typography>
-								) }
+								<PanelBreadcrumb
+									label={ activeMenuItem?.breadcrumbPrefix || null }
+								/>
 								<Typography
 									variant="h6"
 									fontWeight={ 600 }

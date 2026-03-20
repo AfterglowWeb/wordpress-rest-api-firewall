@@ -11,7 +11,7 @@ import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 
 import GlobalRoutesPolicy from './GlobalRoutesPolicy';
 import RoutesPolicyTree from './RoutesPolicyTree';
@@ -144,7 +144,7 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
 					label={ __( 'Global Options', 'rest-api-firewall' ) }
 				/>
 				<Tab
-					icon={ <AccountTreeIcon /> }
+					icon={ <FormatListBulletedIcon /> }
 					iconPosition="start"
 					label={ __( 'Per Route Settings', 'rest-api-firewall' ) }
 				/>
