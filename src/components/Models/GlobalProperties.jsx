@@ -200,7 +200,7 @@ export default function GlobalProperties( { form, setField } ) {
 					value={ form.rest_models_date_format_custom || '' }
 					onChange={ setField }
 					disabled={ ! form.rest_models_date_format_enabled || form.rest_models_date_format !== 'custom' || ! hasValidLicense }
-					slotProps={ {input: { pattern: 'Y|y|m|n|d|j|H|h|i|s|a|A|\\W' } } }
+					slotProps={ { input: { pattern: '[YymndjHhisaA _:\\-\\/]+' } } }
 					sx={ { width: 160 } }
 				/>
 			</Box>
