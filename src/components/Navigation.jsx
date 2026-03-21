@@ -509,6 +509,7 @@ export default function Navigation( {
 									'.MuiFormControlLabel-label': { color: 'text.primary' } }}
 								label={ 'Enable' }
 								/>
+								<Divider orientation="vertical" flexItem />
 							</Stack>
 							) }
 

@@ -103,7 +103,7 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
                                 color="text.primary"
                                 sx={ { lineHeight: 'normal' } }
                             >
-                                { title || ( isNew ? `${ __( 'New', 'rest-api-firewall' ) } ${ breadcrumb ?? __( 'Entry', 'rest-api-firewall' ) }` : __( 'Entry', 'rest-api-firewall' ) ) }
+                                { title || ( isNew ? `${ __( 'New', 'rest-api-firewall' ) } ${ breadcrumb ?? '...' }` : '...' ) }
                             </Typography>
                             { titleSuffix && titleSuffix }
                         </Stack>
