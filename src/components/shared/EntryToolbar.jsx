@@ -12,7 +12,7 @@ import { WP_ADMIN_BAR_HEIGHT_DESKTOP, WP_ADMIN_BAR_HEIGHT_MOBILE, APP_BAR_HEIGHT
 import Documentation from '../Documentation/Documentation';
 import PanelBreadcrumb from './PanelBreadcrumb';
 
-export default function EntryToolbar( { isNew, title, author, dateCreated, dateModified, handleBack, handleSave, handleDelete, saving, enabled = null, setEnabled = null, dirtyFlag = null, breadcrumb = null, docPage = null, titleSuffix = null, showAppLink = true, canSave = undefined, children } ) {
+export default function EntryToolbar( { isNew, title, author, dateCreated, dateModified, handleBack, handleSave, handleDelete, saving, enabled = null, setEnabled = null, dirtyFlag = null, breadcrumb = null, docPage = null, entryExtraMetas = null, showAppLink = true, canSave = undefined, children } ) {
     const { __ } = wp.i18n || {};
     const { openDialog } = useDialog();
 
@@ -65,7 +65,7 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
             
 
                 
-                <Stack direction={{ xs: 'column', sm: 'row' }} gap={ 2 } sx={ { minWidth: 0 } }>
+                <Stack direction={{ xs: 'column', sm: 'row' }} alignItems="center" gap={ 2 } sx={ { minWidth: 0 } }>
                     { typeof enabled === 'boolean' && setEnabled && (
 
                     <FormControlLabel
@@ -105,38 +105,44 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
                             >
                                 { title || ( isNew ? `${ __( 'New', 'rest-api-firewall' ) } ${ breadcrumb ?? '...' }` : '...' ) }
                             </Typography>
-                            { titleSuffix && titleSuffix }
                         </Stack>
 
                     </Stack>
 
-                    <Divider sx={{display:{ xs: 'none', sm: 'block' }}} orientation="vertical" flexItem />
-
-                    { ( author || dateCreated || dateModified ) && (                      
-                        <Typography
-                            variant="caption"
-                            color="text.secondary"
-                        >
-                            { ( author || dateCreated ) && (
-                                <span>
-                                    { author && author }
-                                    { dateCreated && ` @ ${ dateCreated }` }
-                                </span>
-                            ) }
-                            { dateModified && (
-                                <>
-                                    <br />
-                                    <span>
-                                        { __(
-                                            'Mod.',
-                                            'rest-api-firewall'
-                                        ) }{ ' ' }
-                                        { dateModified }
-                                    </span>
-                                </>
-                            ) }
-                        </Typography>
+                    { entryExtraMetas && (
+                        <Stack direction="row" gap={ 1 } alignItems="center" sx={ { flexWrap: 'wrap' } }>
+                            { entryExtraMetas }
+                        </Stack>
                     ) }
+
+                    { ( author || dateCreated || dateModified ) && (     
+                         <Stack direction="row" gap={ 1 } alignItems="center" sx={ { flexWrap: 'wrap' } }>
+                            <Typography
+                                variant="caption"
+                                color="text.secondary"
+                            >
+                                { ( author || dateCreated ) && (
+                                    <span>
+                                        { author && author }
+                                        { dateCreated && ` @ ${ dateCreated }` }
+                                    </span>
+                                ) }
+                                { dateModified && (
+                                    <>
+                                        <br />
+                                        <span>
+                                            { __(
+                                                'Mod.',
+                                                'rest-api-firewall'
+                                            ) }{ ' ' }
+                                            { dateModified }
+                                        </span>
+                                    </>
+                                ) }
+                            </Typography>
+                        </Stack>
+                    ) }
+
                 </Stack>
 
                 <Stack direction="row" justifyContent="flex-end" alignItems="center" gap={ 2 }>

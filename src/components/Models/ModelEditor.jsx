@@ -307,20 +307,6 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 			saving,
 			enabled,
 			dirtyFlag: { has: true, message: __( 'You are editing a model. Unsaved changes will be lost.', 'rest-api-firewall' ) },
-			titleSuffix: (
-				<Stack direction="row" gap={ 0.75 } alignItems="center">
-					{ objectType && (
-						<Chip label={ objectType } size="small" variant="outlined" sx={ { fontFamily: 'monospace', fontSize: '0.7rem' } } />
-					) }
-					<Chip
-						label={ isCustom ? __( 'Custom', 'rest-api-firewall' ) : __( 'WP Schema', 'rest-api-firewall' ) }
-						size="small"
-						color={ isCustom ? 'secondary' : 'primary' }
-						variant="outlined"
-						sx={ { fontSize: '0.7rem' } }
-					/>
-				</Stack>
-			),
 		} );
 	}, [ title, author, dateCreated, dateModified, saving, enabled, objectType, isCustom ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -330,7 +316,17 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 		);
 	}
 
-	const schemaProps = adminData?.models_properties?.[ objectType ]?.props || null;
+	const schemaProps = ( () => {
+		const props = adminData?.models_properties?.[ objectType ]?.props || null;
+		if ( objectType !== 'settings_route' || ! props ) return props;
+		const result = {};
+		for ( const [ key, cfg ] of Object.entries( props ) ) {
+			if ( key === 'menus' && ! properties._embed_menus ) continue;
+			if ( key === 'acf_options' && ! properties._acf_options_page ) continue;
+			result[ key ] = cfg;
+		}
+		return result;
+	} )();
 
 	const availableBindings = schemaProps
 		? Object.entries( schemaProps ).flatMap( ( [ key, cfg ] ) => {
@@ -377,7 +373,17 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 		<Stack spacing={ 0 } sx={ { height: '100%' } }>
 
 			<Stack p={ 4 } spacing={ 3 } sx={ { overflowY: 'auto', flex: 1 } }>
-
+				<Stack direction="row" gap={2} alignItems="center">
+					{ objectType && (
+						<Chip label={ objectType } variant="outlined" sx={ { fontFamily: 'monospace', fontSize: '0.7rem' } } />
+					) }
+					<Chip
+						label={ isCustom ? __( 'Custom', 'rest-api-firewall' ) : __( 'WP Schema', 'rest-api-firewall' ) }
+						color={ isCustom ? 'secondary' : 'primary' }
+						variant="outlined"
+						sx={ { fontSize: '0.7rem' } }
+					/>
+				</Stack>
 				<Stack direction="row" spacing={ 4 } alignItems="flex-start" flexWrap="wrap">
 					<TextField
 						label={ __( 'Model Name', 'rest-api-firewall' ) }
@@ -444,6 +450,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 								/>
 							}
 						/>
+					{ adminData?.acf_active && (
 						<FormControlLabel
 							label={ __( 'Add ACF Options Pages', 'rest-api-firewall' ) }
 							control={
@@ -454,6 +461,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 								/>
 							}
 						/>
+					) }
 					</Stack>
 				) }
 
