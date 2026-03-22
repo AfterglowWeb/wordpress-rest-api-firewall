@@ -16,7 +16,7 @@ import Typography from '@mui/material/Typography';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
-import ApplicationEditor from './ApplicationEditor';
+import ApplicationEditorPanel from './ApplicationEditorPanel';
 import useProActions from '../../hooks/useProActions';
 import ConfirmWithInputDialog from '../ConfirmWithInputDialog';
 
@@ -259,7 +259,7 @@ export default function Applications() {
 					onConfirm={ handleConfirmDelete }
 					onCancel={ () => setConfirmDelete( { open: false, id: null, title: '' } ) }
 				/>
-				<ApplicationEditor
+				<ApplicationEditorPanel
 				application={ editingApp }
 				onBack={ () => {
 					navigate( 'applications', null, true );
