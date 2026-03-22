@@ -8,11 +8,8 @@ import { DataGrid } from '@mui/x-data-grid';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 import Switch from '@mui/material/Switch';
-import Divider from '@mui/material/Divider';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Toolbar from '@mui/material/Toolbar';
@@ -23,9 +20,6 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import UserEditor from './UserEditor';
 import useProActions from '../../../hooks/useProActions';
-import { DefaultRateLimit } from './RateLimit';
-import { AUTH_METHODS } from './AuthManager';
-import HttpMethodsSelector from './HttpMethodsSelector';
 
 export default function Users() {
 	const { adminData } = useAdminData();
@@ -88,53 +82,6 @@ export default function Users() {
 			}
 		} catch {}
 	}, [ adminData, nonce, selectedApplicationId ] );
-
-	const saveDefaultMethods = useCallback( () => {
-		if ( ! selectedApplicationId || ! appEntry ) return;
-		const existingSettings = appEntry.settings || {};
-		save(
-			{
-				action: 'update_application_entry',
-				id: selectedApplicationId,
-				title: appEntry.title || '',
-				settings: JSON.stringify( {
-					...existingSettings,
-					default_http_methods: appDefaultMethods,
-				} ),
-			},
-			{
-				confirmTitle: __( 'Save Default HTTP Methods', 'rest-api-firewall' ),
-				confirmMessage: __( 'This will update the default HTTP methods pre-selected when creating new users. Existing users will not be affected.', 'rest-api-firewall' ),
-				successTitle: __( 'Default HTTP Methods Saved', 'rest-api-firewall' ),
-				successMessage: __( 'Default HTTP methods updated successfully.', 'rest-api-firewall' ),
-				onSuccess: loadAppSettings,
-			}
-		);
-	}, [ selectedApplicationId, appEntry, appDefaultMethods, save, loadAppSettings, __ ] );
-
-	const saveAppSettings = useCallback( () => {
-		if ( ! selectedApplicationId || ! appEntry ) return;
-		const existingSettings = appEntry.settings || {};
-		save(
-			{
-				action: 'update_application_entry',
-				id: selectedApplicationId,
-				title: appEntry.title || '',
-				settings: JSON.stringify( {
-					...existingSettings,
-					allowed_auth_methods: appAllowedAuthMethods,
-				} ),
-			},
-			{
-				confirmTitle: __( 'Enforce Authentication Methods', 'rest-api-firewall' ),
-				confirmMessage: __( 'This setting will immediately cascade to all existing users of this application and restrict their available authentication methods.', 'rest-api-firewall' ),
-				confirmLabel: __( 'Save & Enforce', 'rest-api-firewall' ),
-				successTitle: __( 'Authentication Methods Enforced', 'rest-api-firewall' ),
-				successMessage: __( 'Allowed authentication methods updated and applied to all users.', 'rest-api-firewall' ),
-				onSuccess: loadAppSettings,
-			}
-		);
-	}, [ selectedApplicationId, appEntry, appAllowedAuthMethods, save, loadAppSettings, __ ] );
 
 	useEffect( () => {
 		loadAppSettings();

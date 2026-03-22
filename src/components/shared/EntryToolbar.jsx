@@ -2,17 +2,40 @@ import { useEffect, useRef } from '@wordpress/element';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import Toolbar from '@mui/material/Toolbar';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+
+import CloseIcon from '@mui/icons-material/Close';
 
 import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
 import { WP_ADMIN_BAR_HEIGHT_DESKTOP, WP_ADMIN_BAR_HEIGHT_MOBILE, APP_BAR_HEIGHT } from '../Navigation';
 import Documentation from '../Documentation/Documentation';
 import PanelBreadcrumb from './PanelBreadcrumb';
 
-export default function EntryToolbar( { isNew, title, author, dateCreated, dateModified, handleBack, handleSave, handleDelete, saving, enabled = null, setEnabled = null, dirtyFlag = null, breadcrumb = null, docPage = null, entryExtraMetas = null, showAppLink = true, canSave = undefined, children } ) {
+export default function EntryToolbar( { 
+    isNew, 
+    title, 
+    author, 
+    dateCreated, 
+    dateModified, 
+    handleBack, 
+    handleSave, 
+    handleDelete, 
+    saving, 
+    canSave = undefined, 
+    enabled = null, 
+    setEnabled = null, 
+    dirtyFlag = null, 
+    breadcrumb = null, 
+    newEntryLabel = null, 
+    docPage = null, 
+    entryExtraMetas = null, 
+    showAppLink = true, 
+    children = null } ) {
     const { __ } = wp.i18n || {};
     const { openDialog } = useDialog();
 
@@ -100,10 +123,10 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
                             <Typography
                                 variant="h6"
                                 fontWeight={ 600 }
-                                color="text.primary"
+                                color={ isNew ? 'text.secondary' : 'text.primary' }
                                 sx={ { lineHeight: 'normal' } }
                             >
-                                { title || ( isNew ? `${ __( 'New', 'rest-api-firewall' ) } ${ breadcrumb ?? '...' }` : '...' ) }
+                                { title || ( isNew ? newEntryLabel : '...' ) }
                             </Typography>
                         </Stack>
 
@@ -147,8 +170,9 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
 
                 <Stack direction="row" justifyContent="flex-end" alignItems="center" gap={ 2 }>
                     
-                    { children }
+                    { children && children }
 
+                    { docPage && <Documentation page={ docPage } /> }
                     
                     <Button
                         variant="contained"
@@ -172,18 +196,12 @@ export default function EntryToolbar( { isNew, title, author, dateCreated, dateM
                         </Button>
                     ) }
 
-                     <Button
-                        variant="outlined"
-                        size="small"
-                        sx={{color: 'text.secondary', borderColor: 'text.disabled'}}
-                        disableElevation
-                        onClick={ handleBackClick }
-                    >
-                        { __( 'Cancel', 'rest-api-firewall' ) }
-                    </Button>
+                    <Tooltip title={ __( 'Close', 'rest-api-firewall' ) }>
+                        <IconButton sx={{border:'1px solid', borderColor: 'divider'}} size="small" onClick={ handleBackClick }>
+                            <CloseIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
 
-
-                   { docPage && <Documentation page={ docPage } /> }
                 </Stack>
             </Toolbar>
     );

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
+import { useState, useEffect, useCallback, useMemo, useRef } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
@@ -66,6 +66,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 	const isNew = ! model.id;
 
 	const [ title, setTitle ] = useState( model.title || '' );
+	const [ description, setDescription ] = useState( model.description || '' );
 	const [ objectType, setObjectType ] = useState( model.object_type || 'post' );
 	const [ isCustom, setIsCustom ] = useState( model.is_custom || false );
 	const [ enabled, setEnabled ] = useState( model.enabled || false );
@@ -93,16 +94,33 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 
 	const handleSaveRef = useRef( null );
 	const handleDeleteRef = useRef( null );
+	const [ savedSnapshot, setSavedSnapshot ] = useState( null );
+
+	const isDirty = useMemo( () => {
+		if ( isNew ) {
+			return !! title.trim();
+		}
+		if ( ! savedSnapshot ) {
+			return false;
+		}
+		const s = savedSnapshot;
+		return (
+			title !== s.title ||
+			description !== s.description ||
+			objectType !== s.objectType ||
+			isCustom !== s.isCustom ||
+			enabled !== s.enabled ||
+			JSON.stringify( properties ) !== s.propertiesJson
+		);
+	}, [ isNew, title, description, objectType, isCustom, enabled, properties, savedSnapshot ] );
 
 	useEffect( () => {
-		setDirtyFlag( {
-			has: true,
-			message: __(
-				'You are editing a model. Unsaved changes will be lost.',
-				'rest-api-firewall'
-			),
-		} );
-	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps — cleanup handled by useRegisterToolbar
+		setDirtyFlag(
+			isDirty
+				? { has: true, message: __( 'You are editing a model. Unsaved changes will be lost.', 'rest-api-firewall' ) }
+				: { has: false, message: '' }
+		);
+	}, [ isDirty ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	useEffect( () => {
 		if ( isNew ) {
@@ -121,8 +139,15 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 				const json = await res.json();
 				if ( json.success ) {
 					const e = json.data.entry;
-					setTitle( e.title || '' );
-					setEnabled( e.enabled ?? true );
+					const loadedTitle       = e.title || '';
+					const loadedDescription = e.description || '';
+					const loadedObjectType  = e.object_type || '';
+					const loadedIsCustom    = e.is_custom || false;
+					const loadedEnabled     = e.enabled ?? true;
+					const loadedProperties  = e.properties || {};
+					setTitle( loadedTitle );
+					setDescription( loadedDescription );
+					setEnabled( loadedEnabled );
 					setAuthor( e.author_name || '' );
 					setDateCreated(
 						formatDate(
@@ -138,14 +163,21 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 							adminData.time_format
 						)
 					);
-					
-					setObjectType( e.object_type || '' );
-					setIsCustom( e.is_custom || false );
-					if ( e.is_custom ) {
-						setCustomProperties( e.properties || {} );
+					setObjectType( loadedObjectType );
+					setIsCustom( loadedIsCustom );
+					if ( loadedIsCustom ) {
+						setCustomProperties( loadedProperties );
 					} else {
-						setWpProperties( e.properties || {} );
+						setWpProperties( loadedProperties );
 					}
+					setSavedSnapshot( {
+						title:          loadedTitle,
+						description:    loadedDescription,
+						objectType:     loadedObjectType,
+						isCustom:       loadedIsCustom,
+						enabled:        loadedEnabled,
+						propertiesJson: JSON.stringify( loadedProperties ),
+					} );
 				}
 			} finally {
 				setLoaded( true );
@@ -156,6 +188,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 	const buildPayload = () => ( {
 		nonce,
 		title: title.trim(),
+		description,
 		object_type: objectType,
 		is_custom: isCustom ? '1' : '0',
 		enabled: enabled ? '1' : '0',
@@ -187,13 +220,21 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 				}
 			);
 		} else {
+			const snapshotAtSave = {
+				title:          title.trim(),
+				description,
+				objectType,
+				isCustom,
+				enabled,
+				propertiesJson: JSON.stringify( properties ),
+			};
 			save(
 				{
 					action: 'update_model_entry',
 					id: model.id,
 					...buildPayload(),
 				},
-				{ onSuccess: clearDirty }
+				{ onSuccess: () => { setSavedSnapshot( snapshotAtSave ); } }
 			);
 		}
 	}, [
@@ -291,6 +332,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 	const updateToolbar = useRegisterToolbar( {
 		isNew,
 		breadcrumb: __( 'Properties', 'rest-api-firewall' ),
+		newEntryLabel: __( 'New Model', 'rest-api-firewall' ),
 		docPage: 'models',
 		handleBack,
 		handleSave: () => handleSaveRef.current?.(),
@@ -306,9 +348,12 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 			dateModified,
 			saving,
 			enabled,
-			dirtyFlag: { has: true, message: __( 'You are editing a model. Unsaved changes will be lost.', 'rest-api-firewall' ) },
+			canSave: isDirty,
+			dirtyFlag: isDirty
+				? { has: true, message: __( 'You are editing a model. Unsaved changes will be lost.', 'rest-api-firewall' ) }
+				: null,
 		} );
-	}, [ title, author, dateCreated, dateModified, saving, enabled, objectType, isCustom ] ); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [ title, author, dateCreated, dateModified, saving, enabled, isDirty, objectType, isCustom ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	if ( ! loaded ) {
 		return (
@@ -394,6 +439,15 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 						required
 						helperText={ __( 'Internal name for this model', 'rest-api-firewall' ) }
 						sx={ { maxWidth: 320 } }
+					/>
+					<TextField
+						label={ __( 'Description', 'rest-api-firewall' ) }
+						value={ description }
+						onChange={ ( e ) => setDescription( e.target.value ) }
+						size="small"
+						multiline
+						rows={ 2 }
+						sx={ { maxWidth: 500 } }
 					/>
 
 					<Stack direction="row" alignItems="center" gap={ 1 } flexWrap="wrap">

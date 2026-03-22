@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
+import { useState, useEffect, useCallback, useMemo, useRef } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
@@ -174,10 +174,7 @@ export default function AutomationEditor( { automation, onBack } ) {
 
 	const handleSaveRef = useRef( null );
 	const handleDeleteRef = useRef( null );
-
-	useEffect( () => {
-		setDirtyFlag( { has: true, message: __( 'You are editing an automation. Unsaved changes will be lost.', 'rest-api-firewall' ) } );
-	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps — cleanup handled by useRegisterToolbar
+	const [ savedSnapshot, setSavedSnapshot ] = useState( null );
 
 	const clearDirty = useCallback(
 		() => setDirtyFlag( { has: false, message: '' } ),
@@ -185,6 +182,7 @@ export default function AutomationEditor( { automation, onBack } ) {
 	);
 
 	const [ title, setTitle ] = useState( automation.title || '' );
+	const [ description, setDescription ] = useState( automation.description || '' );
 
 	const [ events, setEvents ] = useState( () => {
 		if ( automation.events && automation.events.length ) return automation.events;
@@ -200,12 +198,46 @@ export default function AutomationEditor( { automation, onBack } ) {
 	const [ apiConnectIds, setApiConnectIds ] = useState( automation.api_connect_ids || [] );
 	const [ enabled, setEnabled ] = useState( automation.enabled !== false );
 
+	const [ author, setAuthor ] = useState( '' );
+	const [ dateCreated, setDateCreated ] = useState( '' );
+	const [ dateModified, setDateModified ] = useState( '' );
+
 	const [ eventOptions, setEventOptions ] = useState( [] );
 	const [ webhooks, setWebhooks ] = useState( [] );
 	const [ mails, setMails ] = useState( [] );
 	const [ automations, setAutomations ] = useState( [] );
 	const [ apiConnections, setApiConnections ] = useState( [] );
 	const [ loaded, setLoaded ] = useState( false );
+
+	const isDirty = useMemo( () => {
+		if ( isNew ) {
+			return !! title.trim();
+		}
+		if ( ! savedSnapshot ) {
+			return false;
+		}
+		const s = savedSnapshot;
+		return (
+			title !== s.title ||
+			description !== s.description ||
+			enabled !== s.enabled ||
+			JSON.stringify( events ) !== s.eventsJson ||
+			JSON.stringify( conditions ) !== s.conditionsJson ||
+			JSON.stringify( payloadMap ) !== s.payloadMapJson ||
+			JSON.stringify( webhookIds ) !== s.webhookIdsJson ||
+			JSON.stringify( mailIds ) !== s.mailIdsJson ||
+			JSON.stringify( chainAutomationIds ) !== s.chainAutomationIdsJson ||
+			JSON.stringify( apiConnectIds ) !== s.apiConnectIdsJson
+		);
+	}, [ isNew, savedSnapshot, title, description, enabled, events, conditions, payloadMap, webhookIds, mailIds, chainAutomationIds, apiConnectIds ] );
+
+	useEffect( () => {
+		setDirtyFlag(
+			isDirty
+				? { has: true, message: __( 'You are editing an automation. Unsaved changes will be lost.', 'rest-api-firewall' ) }
+				: { has: false, message: '' }
+		);
+	}, [ isDirty ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	useEffect( () => {
 		const fetchAll = async () => {
@@ -257,16 +289,41 @@ export default function AutomationEditor( { automation, onBack } ) {
 				const entryJson = await entryRes.json();
 				if ( entryJson.success ) {
 					const e = entryJson.data.entry;
-					setTitle( e.title || '' );
-					const loadedEvents = e.events && e.events.length ? e.events : ( e.event ? [ e.event ] : [] );
+					const loadedTitle              = e.title || '';
+					const loadedDescription        = e.description || '';
+					const loadedEvents             = e.events && e.events.length ? e.events : ( e.event ? [ e.event ] : [] );
+					const loadedConditions         = e.conditions || [];
+					const loadedPayloadMap         = e.payload_map || {};
+					const loadedWebhookIds         = e.webhook_ids || [];
+					const loadedMailIds            = e.mail_ids || [];
+					const loadedChainAutomationIds = e.chain_automation_ids || [];
+					const loadedApiConnectIds      = e.api_connect_ids || [];
+					const loadedEnabled            = e.enabled !== false;
+					setTitle( loadedTitle );
+					setDescription( loadedDescription );
 					setEvents( loadedEvents );
-					setConditions( e.conditions || [] );
-					setPayloadMap( e.payload_map || {} );
-					setWebhookIds( e.webhook_ids || [] );
-					setMailIds( e.mail_ids || [] );
-					setChainAutomationIds( e.chain_automation_ids || [] );
-					setApiConnectIds( e.api_connect_ids || [] );
-					setEnabled( e.enabled !== false );
+					setConditions( loadedConditions );
+					setPayloadMap( loadedPayloadMap );
+					setWebhookIds( loadedWebhookIds );
+					setMailIds( loadedMailIds );
+					setChainAutomationIds( loadedChainAutomationIds );
+					setApiConnectIds( loadedApiConnectIds );
+					setEnabled( loadedEnabled );
+					setAuthor( e.author_name || '' );
+					setDateCreated( formatDate( e.date_created, adminData.date_format, adminData.time_format ) );
+					setDateModified( formatDate( e.date_modified, adminData.date_format, adminData.time_format ) );
+					setSavedSnapshot( {
+						title:                  loadedTitle,
+						description:            loadedDescription,
+						enabled:                loadedEnabled,
+						eventsJson:             JSON.stringify( loadedEvents ),
+						conditionsJson:         JSON.stringify( loadedConditions ),
+						payloadMapJson:         JSON.stringify( loadedPayloadMap ),
+						webhookIdsJson:         JSON.stringify( loadedWebhookIds ),
+						mailIdsJson:            JSON.stringify( loadedMailIds ),
+						chainAutomationIdsJson: JSON.stringify( loadedChainAutomationIds ),
+						apiConnectIdsJson:      JSON.stringify( loadedApiConnectIds ),
+					} );
 				}
 			}
 			setLoaded( true );
@@ -277,6 +334,7 @@ export default function AutomationEditor( { automation, onBack } ) {
 	const buildPayload = () => ( {
 		nonce,
 		title,
+		description,
 		event: events[ 0 ] || '',
 		events: JSON.stringify( events ),
 		conditions: JSON.stringify( conditions ),
@@ -293,7 +351,19 @@ export default function AutomationEditor( { automation, onBack } ) {
 		if ( isNew ) {
 			save( { action: 'add_automation_entry', ...buildPayload() }, { onSuccess: ( data ) => { if ( data?.entry ) onBack(); } } );
 		} else {
-			save( { action: 'update_automation_entry', id: automation.id, ...buildPayload() }, {} );
+			const snapshotAtSave = {
+				title,
+				description,
+				enabled,
+				eventsJson:             JSON.stringify( events ),
+				conditionsJson:         JSON.stringify( conditions ),
+				payloadMapJson:         JSON.stringify( payloadMap ),
+				webhookIdsJson:         JSON.stringify( webhookIds ),
+				mailIdsJson:            JSON.stringify( mailIds ),
+				chainAutomationIdsJson: JSON.stringify( chainAutomationIds ),
+				apiConnectIdsJson:      JSON.stringify( apiConnectIds ),
+			};
+			save( { action: 'update_automation_entry', id: automation.id, ...buildPayload() }, { onSuccess: () => { setSavedSnapshot( snapshotAtSave ); } } );
 		}
 	}, [ isNew, automation.id, title, events, conditions, payloadMap, webhookIds, mailIds, chainAutomationIds, apiConnectIds, enabled, nonce ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -338,13 +408,18 @@ export default function AutomationEditor( { automation, onBack } ) {
 	useEffect( () => {
 		updateToolbar( {
 			title,
-			dateModified: automation.date_modified ? formatDate( automation.date_modified ) : '',
+			author,
+			dateCreated,
+			dateModified,
 			saving,
 			enabled: isNew ? null : enabled,
 			setEnabled: isNew ? null : setEnabled,
-			dirtyFlag: { has: true, message: __( 'You are editing an automation. Unsaved changes will be lost.', 'rest-api-firewall' ) },
+			canSave: isDirty,
+			dirtyFlag: isDirty
+				? { has: true, message: __( 'You are editing an automation. Unsaved changes will be lost.', 'rest-api-firewall' ) }
+				: null,
 		} );
-	}, [ title, automation.date_modified, saving, enabled, isNew ] ); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [ title, author, dateCreated, dateModified, saving, enabled, isNew, isDirty ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	if ( ! loaded ) {
 		return <LoadingMessage message={ isNew ? __( 'Creating new automation...', 'rest-api-firewall' ) : __( 'Loading automation...', 'rest-api-firewall' ) } />;
@@ -361,6 +436,15 @@ export default function AutomationEditor( { automation, onBack } ) {
 					onChange={ ( e ) => setTitle( e.target.value ) }
 					sx={ { maxWidth: 400 } }
 					required
+				/>
+				<TextField
+					size="small"
+					label={ __( 'Description', 'rest-api-firewall' ) }
+					value={ description }
+					onChange={ ( e ) => setDescription( e.target.value ) }
+					multiline
+					rows={ 2 }
+					sx={ { maxWidth: 600 } }
 				/>
 
 				{ /* 1. Trigger Events — multi-select */ }
