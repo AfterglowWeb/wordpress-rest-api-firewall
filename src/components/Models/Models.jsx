@@ -324,7 +324,6 @@ export default function Models() {
 							groupLabel: __( 'Special', 'rest-api-firewall' ),
 							items: [
 								{ value: 'settings_route', label: __( 'Settings Route', 'rest-api-firewall' ) },
-								{ value: 'custom_route',   label: __( 'Custom Route',   'rest-api-firewall' ) },
 							],
 						},
 					] }

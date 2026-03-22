@@ -252,7 +252,7 @@ class ModelsPropertiesRepository {
 		return array();
 	}
 
-	private static function build_props_from_data( array $data, array $filters = array(), int $depth = 0 ): array {
+	public static function build_props_from_data( array $data, array $filters = array(), int $depth = 0 ): array {
 		$props = array();
 
 		$string_auto_filters = array_values(
@@ -430,7 +430,7 @@ class ModelsPropertiesRepository {
 		return new $controller_class( $object_type );
 	}
 
-	private static function properties_filters(): array {
+	public static function properties_filters(): array {
 
 		$taxonomy_options = Utils::list_taxonomies();
 
