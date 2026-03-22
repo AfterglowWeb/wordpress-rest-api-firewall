@@ -7,7 +7,7 @@ import { useApplication } from '../contexts/ApplicationContext';
  * and clears it (along with the dirty flag) on unmount.
  *
  * Returns an `updateToolbar` function for updating dynamic values
- * (title, enabled, saving, canSave, dirtyFlag, titleSuffix, children, etc.)
+ * (title, enabled, saving, canSave, dirtyFlag, entryExtraMetas, children, etc.)
  * whenever they change.
  *
  * @param {object} staticConfig - Initial config, including stable function refs for

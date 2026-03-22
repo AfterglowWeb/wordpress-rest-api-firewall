@@ -2,29 +2,32 @@ import { useState, useEffect, useCallback, useMemo, useRef } from '@wordpress/el
 import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useLicense } from '../../../contexts/LicenseContext';
 import { useApplication } from '../../../contexts/ApplicationContext';
+import { useNavigation } from '../../../contexts/NavigationContext';
 
 import useProActions from '../../../hooks/useProActions';
 import formatDate from '../../../utils/formatDate';
 
 import Alert from '@mui/material/Alert';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Switch from '@mui/material/Switch';
 import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import InputLabel from '@mui/material/InputLabel';
+import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
+import OutlinedInput from '@mui/material/OutlinedInput';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
+import Switch from '@mui/material/Switch';
+import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
 import AuthManager from './AuthManager';
 import LoadingMessage from '../../LoadingMessage';
 import useRegisterToolbar from '../../../hooks/useRegisterToolbar';
-import AllowedIps from '../IpFilter/AllowedIps';
-import AllowedOrigins from '../IpFilter/AllowedOrigins';
 import HttpMethodsSelector from './HttpMethodsSelector';
-import { UserRateLimitFields } from './RateLimit';
+import { RateLimitFields } from './RateLimit';
 
 function SectionHeader( { title, description } ) {
 	return (
@@ -45,6 +48,7 @@ export default function UserEditor( { user, onBack, appSettings = {} } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
 	const { selectedApplicationId, setDirtyFlag } = useApplication();
+	const { navigate } = useNavigation();
 
 	const nonce = proNonce || adminData.nonce;
 	const { __ } = wp.i18n || {};
@@ -53,18 +57,18 @@ export default function UserEditor( { user, onBack, appSettings = {} } ) {
 
 	const isNew = ! user.id;
 
-	// Snapshot of the last-saved values — used to compute isDirty.
-	const savedRef = useRef( null );
+	const [ savedSnapshot, setSavedSnapshot ] = useState( null );
 
-	// Stable refs for handlers that close over state (prevents stale closures in toolbar).
 	const handleSaveRef = useRef( null );
 	const handleDeleteRef = useRef( null );
 
 	const [ loading, setLoading ] = useState( ! isNew );
 	const [ loadError, setLoadError ] = useState( '' );
 
-	const [ wpUserId, setWpUserId ] = useState( '' );
-	const [ title, setTitle ] = useState( user.display_name || '' );
+	const [ wpUserId, setWpUserId ] = useState( user.wp_user_id || '' );
+	const [ title, setTitle ] = useState( user.title || '' );
+	const [ displayName, setDisplayName ] = useState( user.display_name || '' );
+	const [ description, setDescription ] = useState( user.description || '' );
 	const [ author, setAuthor ] = useState( user.author_name || '' );
 	const [ dateCreated, setDateCreated ] = useState( '' );
 	const [ dateModified, setDateModified ] = useState( '' );
@@ -75,38 +79,40 @@ export default function UserEditor( { user, onBack, appSettings = {} } ) {
 	const [ allowedMethods, setAllowedMethods ] = useState(
 		user.allowed_methods || [ 'get' ]
 	);
+	const appRateLimitDefaults = appSettings?.rate_limit || {};
+
 	const [ rateLimitRequests, setRateLimitRequests ] = useState(
-		user.rate_limit_max_requests ?? 100
+		user.rate_limit_max_requests ?? appRateLimitDefaults.max_requests ?? 100
 	);
 	const [ rateLimitWindow, setRateLimitWindow ] = useState(
-		user.rate_limit_window_seconds ?? 60
+		user.rate_limit_window_seconds ?? appRateLimitDefaults.window_seconds ?? 60
 	);
 	const [ rateLimitRelease, setRateLimitRelease ] = useState(
-		user.rate_limit_release_seconds ?? 300
+		user.rate_limit_release_seconds ?? appRateLimitDefaults.release_seconds ?? 300
 	);
 	const [ rateLimitBlacklistAfter, setRateLimitBlacklistAfter ] = useState(
-		user.rate_limit_blacklist_after ?? 5
+		user.rate_limit_blacklist_after ?? appRateLimitDefaults.blacklist_after ?? 5
 	);
 	const [ rateLimitBlacklistWindow, setRateLimitBlacklistWindow ] = useState(
-		user.rate_limit_blacklist_window ?? 3600
+		user.rate_limit_blacklist_window ?? appRateLimitDefaults.blacklist_window ?? 3600
 	);
 	const [ rateLimitEnabled, setRateLimitEnabled ] = useState( user.rate_limit_enabled !== false );
 	const [ userAllowedIps, setUserAllowedIps ] = useState( user.allowed_ips || [] );
 	const [ userAllowedOrigins, setUserAllowedOrigins ] = useState( user.allowed_origins || [] );
 
 	const appAllowedAuthMethods = appSettings?.allowed_auth_methods || [];
-	const appRateLimit = appSettings?.rate_limit || {};
 
-	// True only when form values have diverged from the last saved snapshot.
 	const isDirty = useMemo( () => {
 		if ( isNew ) {
 			return !! wpUserId;
 		}
-		if ( ! savedRef.current ) {
+		if ( ! savedSnapshot ) {
 			return false;
 		}
-		const s = savedRef.current;
+		const s = savedSnapshot;
 		return (
+			title !== s.title ||
+			description !== s.description ||
 			enabled !== s.enabled ||
 			authMethod !== s.authMethod ||
 			JSON.stringify( authConfig ) !== s.authConfigJson ||
@@ -121,7 +127,7 @@ export default function UserEditor( { user, onBack, appSettings = {} } ) {
 			JSON.stringify( userAllowedOrigins ) !== s.allowedOriginsJson
 		);
 	}, [
-		isNew, wpUserId, enabled, authMethod, authConfig, allowedMethods,
+		isNew, wpUserId, savedSnapshot, title, description, enabled, authMethod, authConfig, allowedMethods,
 		rateLimitEnabled, rateLimitRequests, rateLimitWindow, rateLimitRelease,
 		rateLimitBlacklistAfter, rateLimitBlacklistWindow, userAllowedIps, userAllowedOrigins,
 	] );
@@ -139,8 +145,9 @@ export default function UserEditor( { user, onBack, appSettings = {} } ) {
 		[ setDirtyFlag ]
 	);
 
-	// Build a snapshot from current state (captured in closure at call time).
 	const buildSnapshot = () => ( {
+		title,
+		description,
 		enabled,
 		authMethod,
 		authConfigJson: JSON.stringify( authConfig ),
@@ -173,7 +180,10 @@ export default function UserEditor( { user, onBack, appSettings = {} } ) {
 
 			if ( result?.success && result?.data?.entry ) {
 				const e = result.data.entry;
-				setTitle( e.display_name || '' );
+				setWpUserId( e.wp_user_id || '' );
+				setTitle( e.title || '' );
+				setDisplayName( e.display_name || '' );
+				setDescription( e.description || '' );
 				setAuthor( e.author_name || '' );
 				setEnabled( !! e.enabled );
 				setDateCreated(
@@ -185,30 +195,38 @@ export default function UserEditor( { user, onBack, appSettings = {} } ) {
 				setAuthMethod( e.auth_method || 'any' );
 				setAuthConfig( e.auth_config || {} );
 				setAllowedMethods( e.allowed_methods || [ 'get' ] );
-				setRateLimitRequests( e.rate_limit_max_requests ?? 100 );
-				setRateLimitWindow( e.rate_limit_window_seconds ?? 60 );
-				setRateLimitRelease( e.rate_limit_release_seconds ?? 300 );
-				setRateLimitBlacklistAfter( e.rate_limit_blacklist_after ?? 0 );
-				setRateLimitBlacklistWindow( e.rate_limit_blacklist_window ?? 0 );
+				const appRl = appRateLimitDefaults;
+				const rlRequests       = e.rate_limit_max_requests    ?? appRl.max_requests    ?? 100;
+				const rlWindow         = e.rate_limit_window_seconds  ?? appRl.window_seconds  ?? 60;
+				const rlRelease        = e.rate_limit_release_seconds ?? appRl.release_seconds ?? 300;
+				const rlBlacklistAfter = e.rate_limit_blacklist_after  ?? appRl.blacklist_after ?? 5;
+				const rlBlacklistWin   = e.rate_limit_blacklist_window ?? appRl.blacklist_window ?? 3600;
+
+				setRateLimitRequests( rlRequests );
+				setRateLimitWindow( rlWindow );
+				setRateLimitRelease( rlRelease );
+				setRateLimitBlacklistAfter( rlBlacklistAfter );
+				setRateLimitBlacklistWindow( rlBlacklistWin );
 				setRateLimitEnabled( e.rate_limit_enabled !== false );
 				setUserAllowedIps( e.allowed_ips || [] );
 				setUserAllowedOrigins( e.allowed_origins || [] );
 
-				// Save the snapshot — isDirty will compute to false after this.
-				savedRef.current = {
+				setSavedSnapshot( {
+					title: e.title || '',
+					description: e.description || '',
 					enabled: !! e.enabled,
 					authMethod: e.auth_method || 'any',
 					authConfigJson: JSON.stringify( e.auth_config || {} ),
 					allowedMethodsJson: JSON.stringify( e.allowed_methods || [ 'get' ] ),
 					rateLimitEnabled: e.rate_limit_enabled !== false,
-					rateLimitRequests: e.rate_limit_max_requests ?? 100,
-					rateLimitWindow: e.rate_limit_window_seconds ?? 60,
-					rateLimitRelease: e.rate_limit_release_seconds ?? 300,
-					rateLimitBlacklistAfter: e.rate_limit_blacklist_after ?? 0,
-					rateLimitBlacklistWindow: e.rate_limit_blacklist_window ?? 0,
+					rateLimitRequests:        rlRequests,
+					rateLimitWindow:          rlWindow,
+					rateLimitRelease:         rlRelease,
+					rateLimitBlacklistAfter:  rlBlacklistAfter,
+					rateLimitBlacklistWindow: rlBlacklistWin,
 					allowedIpsJson: JSON.stringify( e.allowed_ips || [] ),
 					allowedOriginsJson: JSON.stringify( e.allowed_origins || [] ),
-				};
+				} );
 			} else {
 				setLoadError(
 					result?.data?.message || __( 'Failed to load user', 'rest-api-firewall' )
@@ -230,6 +248,8 @@ export default function UserEditor( { user, onBack, appSettings = {} } ) {
 
 	const commonPayload = {
 		application_id: selectedApplicationId,
+		title: title,
+		description,
 		enabled: enabled ? '1' : '0',
 		auth_method: authMethod,
 		auth_config: JSON.stringify( authConfig ),
@@ -271,7 +291,7 @@ export default function UserEditor( { user, onBack, appSettings = {} } ) {
 					skipConfirm: true,
 					successTitle: __( 'User Saved', 'rest-api-firewall' ),
 					successMessage: __( 'User settings saved successfully.', 'rest-api-firewall' ),
-					onSuccess: () => { savedRef.current = snapshotAtSave; },
+					onSuccess: () => { setSavedSnapshot( snapshotAtSave ); },
 				}
 			);
 		}
@@ -294,13 +314,13 @@ export default function UserEditor( { user, onBack, appSettings = {} } ) {
 		);
 	};
 
-	// Keep refs up to date so the stable toolbar handlers always call the latest version.
 	handleSaveRef.current = handleSave;
 	handleDeleteRef.current = handleDelete;
 
 	const updateToolbar = useRegisterToolbar( {
 		isNew,
 		breadcrumb: __( 'Users', 'rest-api-firewall' ),
+		newEntryLabel: __( 'New User', 'rest-api-firewall' ),
 		docPage: 'users',
 		handleBack: () => { clearDirty(); onBack(); },
 		handleSave: () => handleSaveRef.current?.(),
@@ -311,7 +331,7 @@ export default function UserEditor( { user, onBack, appSettings = {} } ) {
 
 	useEffect( () => {
 		updateToolbar( {
-			title,
+			title: title || displayName,
 			author,
 			dateCreated,
 			dateModified,
@@ -322,7 +342,7 @@ export default function UserEditor( { user, onBack, appSettings = {} } ) {
 				? { has: true, message: __( 'You are editing a user. Unsaved changes will be lost.', 'rest-api-firewall' ) }
 				: null,
 		} );
-	}, [ title, author, dateCreated, dateModified, saving, enabled, isDirty, isNew ] ); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [ title, displayName, author, dateCreated, dateModified, saving, enabled, isDirty, isNew ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	if ( loading ) {
 		return <LoadingMessage />;
@@ -331,59 +351,63 @@ export default function UserEditor( { user, onBack, appSettings = {} } ) {
 	return (
 		<Stack spacing={ 0 }>
 
-
 			{ loadError && <Alert severity="error">{ loadError }</Alert> }
 
 			<Stack
-				p={ { xs: 2, sm: 4 } }
-				spacing={ 3 }
-				sx={ { maxWidth: 760 } }
+			p={ { xs: 2, sm: 4 } }
+			spacing={ 3 }
+			sx={ { maxWidth: 760 } }
 			>
-				{ isNew && (
-					<Stack spacing={ 2 }>
-						<SectionHeader
-							title={ __( 'WordPress User', 'rest-api-firewall' ) }
-							description={ __( 'Select the WordPress user to link to this application.', 'rest-api-firewall' ) }
-						/>
-						<FormControl size="small" sx={ { maxWidth: 340 } } required>
-							<InputLabel>
-								{ __( 'WordPress User', 'rest-api-firewall' ) }
-							</InputLabel>
-							<Select
-								value={ wpUserId }
-								onChange={ ( e ) => {
-									const selected = ( adminData?.users || [] ).find( ( u ) => u.value === e.target.value );
-									setWpUserId( e.target.value );
-									if ( selected ) setTitle( selected.label );
-								} }
-								label={ __( 'WordPress User', 'rest-api-firewall' ) }
-							>
-								{ ( adminData?.users || [] ).map( ( u ) => (
-									<MenuItem key={ u.value } value={ u.value }>
-										{ u.label }
-									</MenuItem>
-								) ) }
-							</Select>
-						</FormControl>
-
-						<Divider />
-					</Stack>
-				) }
-
 				<Stack spacing={ 2 }>
 					<SectionHeader
-						title={ __( 'Allowed IPs', 'rest-api-firewall' ) }
-						description={ __( 'Restrict this user to specific IP addresses. Must be within the application\'s allowed IPs.', 'rest-api-firewall' ) }
+						title={ __( 'WordPress User', 'rest-api-firewall' ) }
+						description={ __( 'Select the WordPress user to link to this application.', 'rest-api-firewall' ) }
 					/>
-					<AllowedIps
-						inline
-						value={ userAllowedIps }
-						onChange={ ( newIps ) => {
-							const appIps = appSettings?.allowed_ips || [];
-							setUserAllowedIps(
-								appIps.length > 0 ? newIps.filter( ( ip ) => appIps.includes( ip ) ) : newIps
-							);
-						} }
+					<FormControl disabled={ ! isNew } size="small" sx={ { maxWidth: 340 } } required>
+						<InputLabel id="wp-user-select-label">{ __( 'WordPress User', 'rest-api-firewall' ) }</InputLabel>
+						<Select
+							labelId="wp-user-select-label"
+							value={ wpUserId }
+							onChange={ ( e ) => {
+								const selected = ( adminData?.users || [] ).find( ( u ) => u.value === e.target.value );
+								setWpUserId( e.target.value );
+								if ( selected ) setDisplayName( selected.label );
+							} }
+							label={ __( 'WordPress User', 'rest-api-firewall' ) }
+							renderValue={ ( val ) => {
+								const found = ( adminData?.users || [] ).find( ( u ) => u.value === val );
+								return found?.label || displayName || val;
+							} }
+						>
+							{ ( adminData?.users || [] ).map( ( u ) => (
+								<MenuItem key={ u.value } value={ u.value }>
+									{ u.label }
+								</MenuItem>
+							) ) }
+						</Select>
+					</FormControl>
+				</Stack>
+
+				<Divider />
+
+				<Stack spacing={ 3 }>
+					<TextField
+						label={ __( 'Title', 'rest-api-firewall' ) }
+						value={ title }
+						onChange={ ( e ) => setTitle( e.target.value ) }
+						size="small"
+					/>
+					<TextField
+						label={ __( 'Description', 'rest-api-firewall' ) }
+						value={ description }
+						onChange={ ( e ) => setDescription( e.target.value ) }
+						size="small"
+						multiline
+						rows={ 3 }
+						placeholder={ __(
+							'Optional notes about this application, its purpose, or linked services.',
+							'rest-api-firewall'
+						) }
 					/>
 				</Stack>
 
@@ -391,19 +415,76 @@ export default function UserEditor( { user, onBack, appSettings = {} } ) {
 
 				<Stack spacing={ 2 }>
 					<SectionHeader
+						title={ __( 'Allowed IPs', 'rest-api-firewall' ) }
+						description={ __( 'Restrict this user to a subset of the application\'s allowed IPs.', 'rest-api-firewall' ) }
+					/>
+					{ ( appSettings?.allowed_ips || [] ).length === 0 ? (
+						<Link
+							component="button"
+							sx={{display: 'inline-flex', alignItems: 'center', gap: 0.5}}
+							variant="body2"
+							onClick={ () => navigate( 'applications', selectedApplicationId ) }
+						>
+							{ __( 'Configure IPs in the application first', 'rest-api-firewall' ) }
+						</Link>
+					) : (
+						<FormControl size="small" sx={ { maxWidth: 340 } }>
+							<InputLabel>{ __( 'Allowed IPs', 'rest-api-firewall' ) }</InputLabel>
+							<Select
+								multiple
+								value={ userAllowedIps }
+								onChange={ ( e ) => setUserAllowedIps( e.target.value ) }
+								input={ <OutlinedInput label={ __( 'Allowed IPs', 'rest-api-firewall' ) } /> }
+								renderValue={ ( selected ) => (
+									<Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.5 } }>
+										{ selected.map( ( val ) => <Chip key={ val } label={ val } size="small" /> ) }
+									</Box>
+								) }
+							>
+								{ ( appSettings?.allowed_ips || [] ).map( ( ip ) => (
+									<MenuItem key={ ip } value={ ip }>{ ip }</MenuItem>
+								) ) }
+							</Select>
+						</FormControl>
+					) }
+				</Stack>
+
+				<Divider />
+
+				<Stack spacing={ 2 }>
+					<SectionHeader
 						title={ __( 'Allowed Origins', 'rest-api-firewall' ) }
-						description={ __( 'Restrict this user to specific origins. Must be within the application\'s allowed origins.', 'rest-api-firewall' ) }
+						description={ __( 'Restrict this user to a subset of the application\'s allowed origins.', 'rest-api-firewall' ) }
 					/>
-					<AllowedOrigins
-						inline
-						value={ userAllowedOrigins }
-						onChange={ ( newOrigins ) => {
-							const appOrigins = appSettings?.allowed_origins || [];
-							setUserAllowedOrigins(
-								appOrigins.length > 0 ? newOrigins.filter( ( o ) => appOrigins.includes( o ) ) : newOrigins
-							);
-						} }
-					/>
+					{ ( appSettings?.allowed_origins || [] ).length === 0 ? (
+						<Link
+							component="button"
+							sx={{display: 'inline-flex', alignItems: 'center', gap: 0.5}}
+							variant="body2"
+							onClick={ () => navigate( 'applications', selectedApplicationId ) }
+						>
+							{ __( 'Configure origins in the application first', 'rest-api-firewall' ) }
+						</Link>
+					) : (
+						<FormControl size="small" sx={ { maxWidth: 340 } }>
+							<InputLabel>{ __( 'Allowed Origins', 'rest-api-firewall' ) }</InputLabel>
+							<Select
+								multiple
+								value={ userAllowedOrigins }
+								onChange={ ( e ) => setUserAllowedOrigins( e.target.value ) }
+								input={ <OutlinedInput label={ __( 'Allowed Origins', 'rest-api-firewall' ) } /> }
+								renderValue={ ( selected ) => (
+									<Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.5 } }>
+										{ selected.map( ( val ) => <Chip key={ val } label={ val } size="small" /> ) }
+									</Box>
+								) }
+							>
+								{ ( appSettings?.allowed_origins || [] ).map( ( origin ) => (
+									<MenuItem key={ origin } value={ origin }>{ origin }</MenuItem>
+								) ) }
+							</Select>
+						</FormControl>
+					) }
 				</Stack>
 
 				<Divider />
@@ -455,33 +536,41 @@ export default function UserEditor( { user, onBack, appSettings = {} } ) {
 							sx={ { mr: 0 } }
 						/>
 					</Stack>
-					{ rateLimitEnabled && (
-						<UserRateLimitFields
-							values={ {
-								max_requests: rateLimitRequests,
-								window_seconds: rateLimitWindow,
-								release_seconds: rateLimitRelease,
-								blacklist_after: rateLimitBlacklistAfter,
-								blacklist_window: rateLimitBlacklistWindow,
-							} }
-							onChange={ ( key, val ) => {
-								const setters = {
-									max_requests: setRateLimitRequests,
-									window_seconds: setRateLimitWindow,
-									release_seconds: setRateLimitRelease,
-									blacklist_after: setRateLimitBlacklistAfter,
-									blacklist_window: setRateLimitBlacklistWindow,
-								};
-								setters[ key ]?.( val );
-							} }
-						/>
-					) }
-					{ ! rateLimitEnabled && appRateLimit.max_requests && (
+
+					{ ! rateLimitEnabled && appRateLimitDefaults.max_requests && (
 						<Typography variant="body2" color="text.secondary">
 							{ __( 'Using application default:', 'rest-api-firewall' ) }{ ' ' }
-							{ appRateLimit.max_requests } { __( 'req /', 'rest-api-firewall' ) } { appRateLimit.window_seconds }s
+							{ appRateLimitDefaults.max_requests } { __( 'req /', 'rest-api-firewall' ) } { appRateLimitDefaults.window_seconds }s
 						</Typography>
 					) }
+
+					<RateLimitFields
+						values={ {
+							max_requests: rateLimitRequests,
+							window_seconds: rateLimitWindow,
+							release_seconds: rateLimitRelease,
+							blacklist_after: rateLimitBlacklistAfter,
+							blacklist_window: rateLimitBlacklistWindow,
+							enabled: rateLimitEnabled,
+						} }
+						maxValues={ appRateLimitDefaults }
+						onChange={ ( key, val ) => {
+							if ( key === 'enabled' ) { setRateLimitEnabled( val ); return; }
+							const appMax = appRateLimitDefaults[ key ];
+							const numVal = Number( val );
+							const clamped = appMax ? Math.min( numVal, appMax ) : numVal;
+							const setters = {
+								max_requests: setRateLimitRequests,
+								window_seconds: setRateLimitWindow,
+								release_seconds: setRateLimitRelease,
+								blacklist_after: setRateLimitBlacklistAfter,
+								blacklist_window: setRateLimitBlacklistWindow,
+							};
+							setters[ key ]?.( clamped );
+						} }
+					/>
+		
+					
 				</Stack>
 			</Stack>
 		</Stack>

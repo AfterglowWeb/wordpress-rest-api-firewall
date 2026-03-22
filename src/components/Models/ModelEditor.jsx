@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
+import { useState, useEffect, useCallback, useMemo, useRef } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
@@ -10,7 +10,9 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import Stack from '@mui/material/Stack';
+import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
@@ -64,6 +66,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 	const isNew = ! model.id;
 
 	const [ title, setTitle ] = useState( model.title || '' );
+	const [ description, setDescription ] = useState( model.description || '' );
 	const [ objectType, setObjectType ] = useState( model.object_type || 'post' );
 	const [ isCustom, setIsCustom ] = useState( model.is_custom || false );
 	const [ enabled, setEnabled ] = useState( model.enabled || false );
@@ -81,11 +84,6 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 
 	const [ loaded, setLoaded ] = useState( isNew );
 
-	const [ customRoute, setCustomRoute ] = useState(
-		objectType === 'custom_route' ? ( model.properties?._route || '' ) : ''
-	);
-	const [ fetchedCustomRouteProps, setFetchedCustomRouteProps ] = useState( null );
-
 	const [ testMode, setTestMode ] = useState( false );
 	const [ testStatus, setTestStatus ] = useState( 'idle' ); // 'idle' | 'running' | 'done' | 'error'
 	const [ testResult, setTestResult ] = useState( null );
@@ -96,16 +94,33 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 
 	const handleSaveRef = useRef( null );
 	const handleDeleteRef = useRef( null );
+	const [ savedSnapshot, setSavedSnapshot ] = useState( null );
+
+	const isDirty = useMemo( () => {
+		if ( isNew ) {
+			return !! title.trim();
+		}
+		if ( ! savedSnapshot ) {
+			return false;
+		}
+		const s = savedSnapshot;
+		return (
+			title !== s.title ||
+			description !== s.description ||
+			objectType !== s.objectType ||
+			isCustom !== s.isCustom ||
+			enabled !== s.enabled ||
+			JSON.stringify( properties ) !== s.propertiesJson
+		);
+	}, [ isNew, title, description, objectType, isCustom, enabled, properties, savedSnapshot ] );
 
 	useEffect( () => {
-		setDirtyFlag( {
-			has: true,
-			message: __(
-				'You are editing a model. Unsaved changes will be lost.',
-				'rest-api-firewall'
-			),
-		} );
-	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps — cleanup handled by useRegisterToolbar
+		setDirtyFlag(
+			isDirty
+				? { has: true, message: __( 'You are editing a model. Unsaved changes will be lost.', 'rest-api-firewall' ) }
+				: { has: false, message: '' }
+		);
+	}, [ isDirty ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	useEffect( () => {
 		if ( isNew ) {
@@ -124,8 +139,15 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 				const json = await res.json();
 				if ( json.success ) {
 					const e = json.data.entry;
-					setTitle( e.title || '' );
-					setEnabled( e.enabled ?? true );
+					const loadedTitle       = e.title || '';
+					const loadedDescription = e.description || '';
+					const loadedObjectType  = e.object_type || '';
+					const loadedIsCustom    = e.is_custom || false;
+					const loadedEnabled     = e.enabled ?? true;
+					const loadedProperties  = e.properties || {};
+					setTitle( loadedTitle );
+					setDescription( loadedDescription );
+					setEnabled( loadedEnabled );
 					setAuthor( e.author_name || '' );
 					setDateCreated(
 						formatDate(
@@ -141,18 +163,21 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 							adminData.time_format
 						)
 					);
-					
-					setObjectType( e.object_type || '' );
-					setIsCustom( e.is_custom || false );
-					if ( e.object_type === 'custom_route' ) {
-						setCustomRoute( e.properties?._route || '' );
-					}
-					if ( e.is_custom ) {
-						setCustomProperties( e.properties || {} );
+					setObjectType( loadedObjectType );
+					setIsCustom( loadedIsCustom );
+					if ( loadedIsCustom ) {
+						setCustomProperties( loadedProperties );
 					} else {
-						const { _route: _r, ...restProps } = e.properties || {};
-						setWpProperties( restProps );
+						setWpProperties( loadedProperties );
 					}
+					setSavedSnapshot( {
+						title:          loadedTitle,
+						description:    loadedDescription,
+						objectType:     loadedObjectType,
+						isCustom:       loadedIsCustom,
+						enabled:        loadedEnabled,
+						propertiesJson: JSON.stringify( loadedProperties ),
+					} );
 				}
 			} finally {
 				setLoaded( true );
@@ -163,10 +188,11 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 	const buildPayload = () => ( {
 		nonce,
 		title: title.trim(),
+		description,
 		object_type: objectType,
 		is_custom: isCustom ? '1' : '0',
 		enabled: enabled ? '1' : '0',
-		properties: JSON.stringify( objectType === 'custom_route' ? { _route: customRoute, ...properties } : properties ),
+		properties: JSON.stringify( properties ),
 		application_id: selectedApplicationId || model.application_id || '',
 	} );
 
@@ -194,13 +220,21 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 				}
 			);
 		} else {
+			const snapshotAtSave = {
+				title:          title.trim(),
+				description,
+				objectType,
+				isCustom,
+				enabled,
+				propertiesJson: JSON.stringify( properties ),
+			};
 			save(
 				{
 					action: 'update_model_entry',
 					id: model.id,
 					...buildPayload(),
 				},
-				{ onSuccess: clearDirty }
+				{ onSuccess: () => { setSavedSnapshot( snapshotAtSave ); } }
 			);
 		}
 	}, [
@@ -211,7 +245,6 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 		isCustom,
 		enabled,
 		properties,
-		customRoute,
 		nonce,
 		selectedApplicationId,
 		clearDirty,
@@ -273,26 +306,6 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 		}
 	}, [ isNew, model.id, adminData, nonce, __ ] );
 
-	useEffect( () => {
-		if ( objectType !== 'custom_route' || isCustom || ! customRoute ) {
-			return;
-		}
-		const params = new URLSearchParams( {
-			action: 'get_custom_route_schema',
-			nonce,
-			route: customRoute,
-		} );
-		fetch( adminData.ajaxurl, { method: 'POST', body: params } )
-			.then( ( r ) => r.json() )
-			.then( ( res ) => {
-				if ( res?.success && res.data?.props ) {
-					setFetchedCustomRouteProps( res.data.props );
-				}
-			} )
-			.catch( () => {} );
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [ objectType, isCustom, customRoute ] );
-
 	const handleModeChange = ( _, newMode ) => {
 		if ( newMode === null ) {
 			return;
@@ -319,6 +332,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 	const updateToolbar = useRegisterToolbar( {
 		isNew,
 		breadcrumb: __( 'Properties', 'rest-api-firewall' ),
+		newEntryLabel: __( 'New Model', 'rest-api-firewall' ),
 		docPage: 'models',
 		handleBack,
 		handleSave: () => handleSaveRef.current?.(),
@@ -334,23 +348,12 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 			dateModified,
 			saving,
 			enabled,
-			dirtyFlag: { has: true, message: __( 'You are editing a model. Unsaved changes will be lost.', 'rest-api-firewall' ) },
-			titleSuffix: (
-				<Stack direction="row" gap={ 0.75 } alignItems="center">
-					{ objectType && (
-						<Chip label={ objectType } size="small" variant="outlined" sx={ { fontFamily: 'monospace', fontSize: '0.7rem' } } />
-					) }
-					<Chip
-						label={ isCustom ? __( 'Custom', 'rest-api-firewall' ) : __( 'WP Schema', 'rest-api-firewall' ) }
-						size="small"
-						color={ isCustom ? 'secondary' : 'primary' }
-						variant="outlined"
-						sx={ { fontSize: '0.7rem' } }
-					/>
-				</Stack>
-			),
+			canSave: isDirty,
+			dirtyFlag: isDirty
+				? { has: true, message: __( 'You are editing a model. Unsaved changes will be lost.', 'rest-api-firewall' ) }
+				: null,
 		} );
-	}, [ title, author, dateCreated, dateModified, saving, enabled, objectType, isCustom ] ); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [ title, author, dateCreated, dateModified, saving, enabled, isDirty, objectType, isCustom ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	if ( ! loaded ) {
 		return (
@@ -358,9 +361,17 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 		);
 	}
 
-	const schemaProps = objectType === 'custom_route'
-		? fetchedCustomRouteProps
-		: ( adminData?.models_properties?.[ objectType ]?.props || null );
+	const schemaProps = ( () => {
+		const props = adminData?.models_properties?.[ objectType ]?.props || null;
+		if ( objectType !== 'settings_route' || ! props ) return props;
+		const result = {};
+		for ( const [ key, cfg ] of Object.entries( props ) ) {
+			if ( key === 'menus' && ! properties._embed_menus ) continue;
+			if ( key === 'acf_options' && ! properties._acf_options_page ) continue;
+			result[ key ] = cfg;
+		}
+		return result;
+	} )();
 
 	const availableBindings = schemaProps
 		? Object.entries( schemaProps ).flatMap( ( [ key, cfg ] ) => {
@@ -407,7 +418,17 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 		<Stack spacing={ 0 } sx={ { height: '100%' } }>
 
 			<Stack p={ 4 } spacing={ 3 } sx={ { overflowY: 'auto', flex: 1 } }>
-
+				<Stack direction="row" gap={2} alignItems="center">
+					{ objectType && (
+						<Chip label={ objectType } variant="outlined" sx={ { fontFamily: 'monospace', fontSize: '0.7rem' } } />
+					) }
+					<Chip
+						label={ isCustom ? __( 'Custom', 'rest-api-firewall' ) : __( 'WP Schema', 'rest-api-firewall' ) }
+						color={ isCustom ? 'secondary' : 'primary' }
+						variant="outlined"
+						sx={ { fontSize: '0.7rem' } }
+					/>
+				</Stack>
 				<Stack direction="row" spacing={ 4 } alignItems="flex-start" flexWrap="wrap">
 					<TextField
 						label={ __( 'Model Name', 'rest-api-firewall' ) }
@@ -418,6 +439,15 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 						required
 						helperText={ __( 'Internal name for this model', 'rest-api-firewall' ) }
 						sx={ { maxWidth: 320 } }
+					/>
+					<TextField
+						label={ __( 'Description', 'rest-api-firewall' ) }
+						value={ description }
+						onChange={ ( e ) => setDescription( e.target.value ) }
+						size="small"
+						multiline
+						rows={ 2 }
+						sx={ { maxWidth: 500 } }
 					/>
 
 					<Stack direction="row" alignItems="center" gap={ 1 } flexWrap="wrap">
@@ -462,16 +492,31 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 					</Stack>
 				</Stack>
 
-				{ objectType === 'custom_route' && (
-					<TextField
-						label={ __( 'Route', 'rest-api-firewall' ) }
-						value={ customRoute }
-						onChange={ ( e ) => setCustomRoute( e.target.value ) }
-						size="small"
-						helperText={ __( 'Full REST API path, e.g. /my-plugin/v1/jobs', 'rest-api-firewall' ) }
-						slotProps={ { input: { pattern: '(\/[a-z0-9_\/-]+)+' } } }
-						sx={ { maxWidth: 360 } }
-					/>
+				{ objectType === 'settings_route' && ! testMode && (
+					<Stack sx={ { pb: 1 } }>
+						<FormControlLabel
+							label={ __( 'Embed Flattened Menus', 'rest-api-firewall' ) }
+							control={
+								<Switch
+									checked={ !! properties._embed_menus }
+									onChange={ ( e ) => setProperties( ( p ) => ( { ...p, _embed_menus: e.target.checked } ) ) }
+									size="small"
+								/>
+							}
+						/>
+					{ adminData?.acf_active && (
+						<FormControlLabel
+							label={ __( 'Add ACF Options Pages', 'rest-api-firewall' ) }
+							control={
+								<Switch
+									checked={ !! properties._acf_options_page }
+									onChange={ ( e ) => setProperties( ( p ) => ( { ...p, _acf_options_page: e.target.checked } ) ) }
+									size="small"
+								/>
+							}
+						/>
+					) }
+					</Stack>
 				) }
 
 				{ objectType && (

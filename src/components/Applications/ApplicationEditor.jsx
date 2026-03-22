@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
+import { useState, useEffect, useCallback, useMemo, useRef } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { useLicense } from '../../contexts/LicenseContext';
@@ -14,6 +14,8 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
@@ -29,15 +31,27 @@ import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import GridViewOutlinedIcon from '@mui/icons-material/GridViewOutlined';
 
 import formatDate from '../../utils/formatDate';
+import { countAllCustomNodes } from '../Firewall/Routes/routesPolicyUtils';
 import LoadingMessage from '../LoadingMessage';
 import useRegisterToolbar from '../../hooks/useRegisterToolbar';
 import ConfirmWithInputDialog from '../ConfirmWithInputDialog';
 import AllowedIps from '../Firewall/IpFilter/AllowedIps';
 import AllowedOrigins from '../Firewall/IpFilter/AllowedOrigins';
 import HttpMethodsSelector from '../Firewall/Users/HttpMethodsSelector';
+import { RateLimitFields } from '../Firewall/Users/RateLimit';
 import { AUTH_METHODS } from '../Firewall/Users/AuthManager';
+
+const DISABLE_BEHAVIOR_LABELS = {
+	'404':      '404 Not Found',
+	'410':      '410 Gone',
+	'301_url':  '301 Custom URL',
+	'301_page': '301 WP Page',
+	'empty':    'Empty (no response)',
+};
 
 const MODULE_KEY = {
 	1:  { module: 'users',          panelKey: 'user-rate-limiting',  optionKey: 'user_rate_limit_enabled' },
@@ -45,7 +59,6 @@ const MODULE_KEY = {
 	3:  { module: 'ip_filter',      panelKey: 'ip-filtering',        optionKey: null },
 	4:  { module: 'collections',    panelKey: 'collections',         optionKey: 'rest_collections_enabled' },
 	5:  { module: 'models',         panelKey: 'models-properties',   optionKey: 'rest_models_enabled' },
-	6:  { module: 'settings_route', panelKey: 'settings-route',      optionKey: 'rest_settings_route_enabled' },
 	7:  { module: 'webhooks',       panelKey: 'webhook',             optionKey: 'webhooks_enabled' },
 	8:  { module: 'mails',          panelKey: 'emails',              optionKey: 'mails_enabled' },
 	12: { module: 'logs',           panelKey: 'logs',                optionKey: null },
@@ -124,6 +137,56 @@ function PanelCard( { title, Icon, panel, module, onNavigate, enabled, onToggleE
 	);
 }
 
+function UserRow( { user, onClick } ) {
+	const { __ } = wp.i18n || {};
+	const name = user.title || user.display_name || `User #${ user.wp_user_id }`;
+	const methods = user.allowed_methods || [];
+	const ips = user.allowed_ips || [];
+	const origins = user.allowed_origins || [];
+	const authMethod = user.auth_method && user.auth_method !== 'any' ? user.auth_method : null;
+
+	return (
+		<Stack
+			direction="row"
+			alignItems="flex-start"
+			spacing={ 1 }
+			onClick={ onClick }
+			sx={ {
+				py: 0.75,
+				px: 0.5,
+				borderRadius: 1,
+				cursor: 'pointer',
+				'&:hover': { bgcolor: 'action.hover' },
+				'&:not(:last-child)': { borderBottom: '1px solid', borderColor: 'divider' },
+			} }
+		>
+			<Box sx={ { minWidth: 0, flex: 1 } }>
+				<Typography variant="caption" fontWeight={ 600 } display="block" noWrap>
+					{ name }
+				</Typography>
+				<Stack direction="row" flexWrap="wrap" gap={ 0.5 } mt={ 0.5 }>
+					{ authMethod && (
+						<Chip label={ authMethod } size="small" variant="outlined" />
+					) }
+					{ methods.map( ( m ) => (
+						<Chip key={ m } label={ m.toUpperCase() } size="small" color="primary" variant="outlined" sx={ { fontSize: 10 } } />
+					) ) }
+					{ ips.map( ( ip ) => (
+						<Chip key={ ip } label={ ip } size="small" sx={ { fontFamily: 'monospace', fontSize: 10 } } />
+					) ) }
+					{ origins.map( ( o ) => (
+						<Chip key={ o } label={ o } size="small" sx={ { fontFamily: 'monospace', fontSize: 10, maxWidth: 120 } } />
+					) ) }
+					{ ! authMethod && methods.length === 0 && ips.length === 0 && origins.length === 0 && (
+						<Typography variant="caption" color="text.disabled">{ __( 'No restrictions', 'rest-api-firewall' ) }</Typography>
+					) }
+				</Stack>
+			</Box>
+			<ArrowForwardIosIcon sx={ { fontSize: 10, color: 'text.disabled', flexShrink: 0, mt: 0.5 } } />
+		</Stack>
+	);
+}
+
 function DataRow( { label, children } ) {
 	return (
 		<Stack direction="row" spacing={ 1 } py={1} alignItems="center">
@@ -157,10 +220,6 @@ export default function ApplicationEditor( { application, onBack } ) {
 	const handleSaveRef = useRef( null );
 	const handleDeleteRef = useRef( null );
 
-	useEffect( () => {
-		setDirtyFlag( { has: true, message: __( 'You are editing an application. Unsaved changes will be lost.', 'rest-api-firewall' ) } );
-	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps — cleanup handled by useRegisterToolbar
-
 	const clearDirty = useCallback(
 		() => setDirtyFlag( { has: false, message: '' } ),
 		[ setDirtyFlag ]
@@ -190,6 +249,8 @@ export default function ApplicationEditor( { application, onBack } ) {
 	const [ dateModified, setDateModified ] = useState( '' );
 
 	const [ appUsers, setAppUsers ] = useState( [] );
+	const [ activeTab, setActiveTab ] = useState( 0 );
+	const [ routesCustomCount, setRoutesCustomCount ] = useState( null );
 
 	const [ serverSettings, setServerSettings ] = useState( {} );
 	const [ appAllowedIps, setAppAllowedIps ] = useState( [] );
@@ -201,6 +262,36 @@ export default function ApplicationEditor( { application, onBack } ) {
 	const [ rateLimitEnabled, setRateLimitEnabled ] = useState( true );
 
 	const [ confirmDeleteOpen, setConfirmDeleteOpen ] = useState( false );
+	const [ savedSnapshot, setSavedSnapshot ] = useState( null );
+
+	const isDirty = useMemo( () => {
+		if ( isNew ) return !! title.trim();
+		if ( ! savedSnapshot ) return false;
+		const s = savedSnapshot;
+		return (
+			title !== s.title ||
+			enabled !== s.enabled ||
+			description !== s.description ||
+			JSON.stringify( appAllowedIps ) !== s.allowedIpsJson ||
+			JSON.stringify( allowedOrigins ) !== s.allowedOriginsJson ||
+			JSON.stringify( appAllowedAuthMethods ) !== s.allowedAuthMethodsJson ||
+			JSON.stringify( appDefaultHttpMethods ) !== s.defaultHttpMethodsJson ||
+			String( rateLimitRequests ) !== s.rateLimitRequests ||
+			String( rateLimitWindow ) !== s.rateLimitWindow ||
+			String( rateLimitReleaseSeconds ) !== s.rateLimitReleaseSeconds ||
+			String( rateLimitBlacklistAfter ) !== s.rateLimitBlacklistAfter ||
+			String( rateLimitBlacklistWindow ) !== s.rateLimitBlacklistWindow ||
+			rateLimitEnabled !== s.rateLimitEnabled
+		);
+	}, [ isNew, savedSnapshot, title, enabled, description, appAllowedIps, allowedOrigins, appAllowedAuthMethods, appDefaultHttpMethods, rateLimitRequests, rateLimitWindow, rateLimitReleaseSeconds, rateLimitBlacklistAfter, rateLimitBlacklistWindow, rateLimitEnabled ] );
+
+	useEffect( () => {
+		setDirtyFlag(
+			isDirty
+				? { has: true, message: __( 'You are editing an application. Unsaved changes will be lost.', 'rest-api-firewall' ) }
+				: { has: false, message: '' }
+		);
+	}, [ isDirty ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const loadEntry = useCallback( async () => {
 		setLoading( true );
@@ -242,7 +333,7 @@ export default function ApplicationEditor( { application, onBack } ) {
 
 				const s = e.settings || {};
 				setServerSettings( s );
-				setDescription( s.description || '' );
+				setDescription( e.description || '' );
 				setAllowedOrigins( s.allowed_origins || [] );
 				setAppAllowedIps( s.allowed_ips || [] );
 				setAppAllowedAuthMethods( s.allowed_auth_methods || [] );
@@ -253,6 +344,21 @@ export default function ApplicationEditor( { application, onBack } ) {
 				setRateLimitBlacklistAfter( s.rate_limit?.blacklist_after ?? 5 );
 				setRateLimitBlacklistWindow( s.rate_limit?.blacklist_window ?? 3600 );
 				setRateLimitEnabled( s.rate_limit?.enabled !== false );
+				setSavedSnapshot( {
+					title:                    e.title || '',
+					enabled:                  e.enabled ?? true,
+					description:              e.description || '',
+					allowedIpsJson:           JSON.stringify( s.allowed_ips || [] ),
+					allowedOriginsJson:       JSON.stringify( s.allowed_origins || [] ),
+					allowedAuthMethodsJson:   JSON.stringify( s.allowed_auth_methods || [] ),
+					defaultHttpMethodsJson:   JSON.stringify( s.default_http_methods || [ 'get' ] ),
+					rateLimitRequests:        String( s.rate_limit?.max_requests ?? 100 ),
+					rateLimitWindow:          String( s.rate_limit?.window_seconds ?? 60 ),
+					rateLimitReleaseSeconds:  String( s.rate_limit?.release_seconds ?? 300 ),
+					rateLimitBlacklistAfter:  String( s.rate_limit?.blacklist_after ?? 5 ),
+					rateLimitBlacklistWindow: String( s.rate_limit?.blacklist_window ?? 3600 ),
+					rateLimitEnabled:         s.rate_limit?.enabled !== false,
+				} );
 			}
 		} catch ( err ) {
 			setLoadError( err.message );
@@ -288,6 +394,24 @@ export default function ApplicationEditor( { application, onBack } ) {
 			// Silent fail.
 		}
 	}, [ adminData, nonce ] );
+
+	const loadRoutesCount = useCallback( async () => {
+		try {
+			const res = await fetch( adminData.ajaxurl, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+				body: new URLSearchParams( {
+					action: 'get_routes_policy_tree',
+					nonce,
+					application_id: application.id,
+				} ),
+			} );
+			const result = await res.json();
+			if ( result?.success && result?.data?.tree ) {
+				setRoutesCustomCount( countAllCustomNodes( result.data.tree ) );
+			}
+		} catch {}
+	}, [ adminData, nonce, application.id ] );
 
 	const loadUsers = useCallback( async () => {
 		try {
@@ -355,11 +479,11 @@ export default function ApplicationEditor( { application, onBack } ) {
 		}
 		loadEntry();
 		loadUsers();
-	}, [ isNew, loadEntry, loadUsers ] );
+		loadRoutesCount();
+	}, [ isNew, loadEntry, loadUsers, loadRoutesCount ] );
 
 	const buildCurrentSettings = useCallback( () => ( {
 		...serverSettings,
-		description,
 		allowed_ips: appAllowedIps,
 		allowed_origins: allowedOrigins,
 		allowed_auth_methods: appAllowedAuthMethods,
@@ -373,7 +497,7 @@ export default function ApplicationEditor( { application, onBack } ) {
 			blacklist_window: Number( rateLimitBlacklistWindow ) || 0,
 		},
 	} ), [
-		serverSettings, description, appAllowedIps, allowedOrigins,
+		serverSettings, appAllowedIps, allowedOrigins,
 		appAllowedAuthMethods, appDefaultHttpMethods,
 		rateLimitRequests, rateLimitWindow, rateLimitReleaseSeconds,
 		rateLimitBlacklistAfter, rateLimitBlacklistWindow, rateLimitEnabled,
@@ -389,16 +513,31 @@ export default function ApplicationEditor( { application, onBack } ) {
 				action: isNew ? 'add_application_entry' : 'update_application_entry',
 				...( ! isNew && { id: application.id } ),
 				title: title.trim(),
+				description,
 				enabled: enabled ? '1' : '0',
-				settings: JSON.stringify(
-					isNew ? { description } : buildCurrentSettings()
-				),
+				settings: JSON.stringify( isNew ? {} : buildCurrentSettings() ),
 			},
 			{
 				skipConfirm: true,
 				successTitle: __( 'Application Saved', 'rest-api-firewall' ),
 				successMessage: __( 'Application saved successfully.', 'rest-api-firewall' ),
-				onSuccess: isNew ? () => { clearDirty(); onBack(); } : undefined,
+				onSuccess: isNew ? () => { clearDirty(); onBack(); } : () => {
+				setSavedSnapshot( {
+					title,
+					enabled,
+					description,
+					allowedIpsJson:           JSON.stringify( appAllowedIps ),
+					allowedOriginsJson:       JSON.stringify( allowedOrigins ),
+					allowedAuthMethodsJson:   JSON.stringify( appAllowedAuthMethods ),
+					defaultHttpMethodsJson:   JSON.stringify( appDefaultHttpMethods ),
+					rateLimitRequests:        String( rateLimitRequests ),
+					rateLimitWindow:          String( rateLimitWindow ),
+					rateLimitReleaseSeconds:  String( rateLimitReleaseSeconds ),
+					rateLimitBlacklistAfter:  String( rateLimitBlacklistAfter ),
+					rateLimitBlacklistWindow: String( rateLimitBlacklistWindow ),
+					rateLimitEnabled,
+				} );
+			},
 			}
 		);
 	};
@@ -427,6 +566,7 @@ export default function ApplicationEditor( { application, onBack } ) {
 	const updateToolbar = useRegisterToolbar( {
 		isNew,
 		breadcrumb: __( 'Applications', 'rest-api-firewall' ),
+		newEntryLabel: __( 'New Application', 'rest-api-firewall' ),
 		docPage: 'applications',
 		showAppLink: false,
 		handleBack: () => { clearDirty(); onBack(); },
@@ -443,9 +583,12 @@ export default function ApplicationEditor( { application, onBack } ) {
 			dateModified,
 			saving,
 			enabled,
-			dirtyFlag: { has: true, message: __( 'You are editing an application. Unsaved changes will be lost.', 'rest-api-firewall' ) },
+			canSave: isDirty,
+			dirtyFlag: isDirty
+				? { has: true, message: __( 'You are editing an application. Unsaved changes will be lost.', 'rest-api-firewall' ) }
+				: null,
 		} );
-	}, [ title, author, dateCreated, dateModified, saving, enabled ] ); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [ title, author, dateCreated, dateModified, saving, enabled, isDirty ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	if ( loading ) {
 		return <LoadingMessage message={ isNew ? __( 'Creating new application...', 'rest-api-firewall' ) : __( 'Loading application...', 'rest-api-firewall' ) } />;
@@ -454,9 +597,16 @@ export default function ApplicationEditor( { application, onBack } ) {
 	return (
 		<Stack spacing={ 0 }>
 
-
 			{ loadError && <Alert severity="error">{ loadError }</Alert> }
 
+			<Box sx={ { px: { xs: 2, sm: 4 }, borderBottom: 1, borderColor: 'divider' } }>
+				<Tabs value={ activeTab } onChange={ ( e, v ) => setActiveTab( v ) }>
+					<Tab icon={ <SettingsOutlinedIcon /> } iconPosition="start" label={ __( 'Settings', 'rest-api-firewall' ) } />
+					<Tab icon={ <GridViewOutlinedIcon /> } iconPosition="start" label={ __( 'Modules', 'rest-api-firewall' ) } />
+				</Tabs>
+			</Box>
+
+			{ activeTab === 0 && (
 			<Stack spacing={ 3 } maxWidth={780} p={ { xs: 2, sm: 4 } }>
 				<Stack spacing={ 3 }>
 					<TextField
@@ -464,7 +614,6 @@ export default function ApplicationEditor( { application, onBack } ) {
 						value={ title }
 						onChange={ ( e ) => setTitle( e.target.value ) }
 						size="small"
-						sx={ { maxWidth: 340 } }
 					/>
 					<TextField
 						label={ __( 'Description', 'rest-api-firewall' ) }
@@ -484,8 +633,7 @@ export default function ApplicationEditor( { application, onBack } ) {
 
 				<Stack spacing={ 3 }>
 
-						{ /* Allowed IPs */ }
-						<Stack spacing={ 0.75 }>
+					<Stack spacing={ 0.75 }>
 						<Typography variant="subtitle1" fontWeight={ 600 }>
 							{ __( 'Allowed IPs', 'rest-api-firewall' ) }
 						</Typography>
@@ -493,15 +641,15 @@ export default function ApplicationEditor( { application, onBack } ) {
 							{ __( 'In whitelist mode, only these IPs can access this application. Users can be restricted further beyond this list.', 'rest-api-firewall' ) }
 						</Typography>
 						<AllowedIps
+							inline
 							value={ appAllowedIps }
 							onChange={ setAppAllowedIps }
 						/>
-						</Stack>
+					</Stack>
 
-						<Divider />
+					<Divider />
 
-						{ /* Allowed Origins */ }
-						<Stack spacing={ 0.75 }>
+					<Stack spacing={ 0.75 }>
 						<Typography variant="subtitle1" fontWeight={ 600 }>
 							{ __( 'Allowed Origins', 'rest-api-firewall' ) }
 						</Typography>
@@ -509,46 +657,46 @@ export default function ApplicationEditor( { application, onBack } ) {
 							{ __( 'Restrict requests by Origin header. Combine with IP whitelisting for stronger security.', 'rest-api-firewall' ) }
 						</Typography>
 						<AllowedOrigins
+							inline
 							value={ allowedOrigins }
 							onChange={ setAllowedOrigins }
 						/>
+					</Stack>
+
+					<Divider />
+
+					<Stack spacing={ 0.75 }>
+						<Typography variant="subtitle1" fontWeight={ 600 }>
+							{ __( 'Allowed Auth Methods', 'rest-api-firewall' ) }
+						</Typography>
+						<Typography variant="body2" color="text.secondary">
+							{ __( 'Auth methods available to users of this application. Users can only use methods enabled here.', 'rest-api-firewall' ) }
+						</Typography>
+						<Stack direction="row" flexWrap="wrap" gap={ 1 }>
+							{ AUTH_METHODS.filter( ( m ) => m.value !== 'any' ).map( ( method ) => (
+								<FormControlLabel
+									key={ method.value }
+									control={
+										<Checkbox
+											size="small"
+											checked={ appAllowedAuthMethods && appAllowedAuthMethods.length > 0 && appAllowedAuthMethods.includes( method.value ) }
+											onChange={ ( e ) => {
+												const next = e.target.checked
+													? [ ...appAllowedAuthMethods, method.value ]
+													: appAllowedAuthMethods.filter( ( v ) => v !== method.value );
+												setAppAllowedAuthMethods( next );
+											} }
+										/>
+									}
+									label={ <Typography variant="body2">{ method.label }</Typography> }
+								/>
+							) ) }
 						</Stack>
+					</Stack>
 
-						<Divider />
+					<Divider />
 
-						{ /* Allowed Auth Methods */ }
-						<Stack spacing={ 0.75 }>
-							<Typography variant="subtitle1" fontWeight={ 600 }>
-								{ __( 'Allowed Auth Methods', 'rest-api-firewall' ) }
-							</Typography>
-							<Typography variant="body2" color="text.secondary">
-								{ __( 'Auth methods available to users of this application. Users can only use methods enabled here.', 'rest-api-firewall' ) }
-							</Typography>
-							<Stack direction="row" flexWrap="wrap" gap={ 1 }>
-								{ AUTH_METHODS.filter( ( m ) => m.value !== 'any' ).map( ( method ) => (
-									<FormControlLabel
-										key={ method.value }
-										control={
-											<Checkbox
-												size="small"
-												checked={ appAllowedAuthMethods && appAllowedAuthMethods.length > 0 && appAllowedAuthMethods.includes( method.value ) }
-												onChange={ ( e ) => {
-													const next = e.target.checked
-														? [ ...appAllowedAuthMethods, method.value ]
-														: appAllowedAuthMethods.filter( ( v ) => v !== method.value );
-													setAppAllowedAuthMethods( next );
-												} }
-											/>
-										}
-										label={ <Typography variant="body2">{ method.label }</Typography> }
-									/>
-								) ) }
-							</Stack>
-						</Stack>
-
-						<Divider />
-
-						<Stack spacing={ 0.75 }>
+					<Stack spacing={ 0.75 }>
 						<Typography variant="subtitle1" fontWeight={ 600 }>
 							{ __( 'Default HTTP Methods', 'rest-api-firewall' ) }
 						</Typography>
@@ -559,11 +707,11 @@ export default function ApplicationEditor( { application, onBack } ) {
 							value={ appDefaultHttpMethods }
 							onChange={ setAppDefaultHttpMethods }
 						/>
-						</Stack>
+					</Stack>
 
-						<Divider />
+					<Divider />
 
-						<Stack spacing={ 0.75 }>
+					<Stack spacing={ 3 }>
 						<Stack direction="row" alignItems="flex-start" justifyContent="space-between">
 							<Box>
 								<Typography variant="subtitle1" fontWeight={ 600 }>
@@ -579,72 +727,49 @@ export default function ApplicationEditor( { application, onBack } ) {
 								onChange={ ( e ) => setRateLimitEnabled( e.target.checked ) }
 							/>
 						</Stack>
-						{ rateLimitEnabled && (
-						<>
-						<Stack direction={ { xs: 'column', sm: 'row' } } spacing={ 2 }>
-								<TextField
-									size="small"
-									label={ __( 'Max Requests', 'rest-api-firewall' ) }
-									type="number"
-									value={ rateLimitRequests }
-									onChange={ ( e ) => setRateLimitRequests( e.target.value ) }
-									sx={ { flex: 1 } }
-								/>
-								<TextField
-									size="small"
-									label={ __( 'Window (s)', 'rest-api-firewall' ) }
-									type="number"
-									value={ rateLimitWindow }
-									onChange={ ( e ) => setRateLimitWindow( e.target.value ) }
-									sx={ { flex: 1 } }
-								/>
-								<TextField
-									size="small"
-									label={ __( 'Release (s)', 'rest-api-firewall' ) }
-									type="number"
-									value={ rateLimitReleaseSeconds }
-									onChange={ ( e ) => setRateLimitReleaseSeconds( e.target.value ) }
-									sx={ { flex: 1 } }
-								/>
-							</Stack>
-							<Stack direction={ { xs: 'column', sm: 'row' } } spacing={ 2 }>
-								<TextField
-									size="small"
-									label={ __( 'Blacklist After (violations)', 'rest-api-firewall' ) }
-									type="number"
-									value={ rateLimitBlacklistAfter }
-									onChange={ ( e ) => setRateLimitBlacklistAfter( e.target.value ) }
-									sx={ { flex: 1 } }
-								/>
-								<TextField
-									size="small"
-									label={ __( 'Blacklist Window (s)', 'rest-api-firewall' ) }
-									type="number"
-									value={ rateLimitBlacklistWindow }
-									onChange={ ( e ) => setRateLimitBlacklistWindow( e.target.value ) }
-									sx={ { flex: 1 } }
-								/>
-							</Stack>
-						</>
-						) }
-						</Stack>
+
+
+						<RateLimitFields
+							values={ {
+								max_requests: rateLimitRequests,
+								window_seconds: rateLimitWindow,
+								release_seconds: rateLimitReleaseSeconds,
+								blacklist_after: rateLimitBlacklistAfter,
+								blacklist_window: rateLimitBlacklistWindow,
+								enabled: rateLimitEnabled,
+							} }
+							onChange={ ( key, val ) => {
+								const setters = {
+									max_requests: setRateLimitRequests,
+									window_seconds: setRateLimitWindow,
+									release_seconds: setRateLimitReleaseSeconds,
+									blacklist_after: setRateLimitBlacklistAfter,
+									blacklist_window: setRateLimitBlacklistWindow,
+									enabled: setRateLimitEnabled,
+								};
+								setters[ key ]?.( val );
+							} }
+						/>
+					</Stack>
+
 				</Stack>
 
-				<Divider />
 			</Stack>
+			) }
 
+			{ activeTab === 1 && (
 			<Box
 				sx={ {
 					p: { xs: 2, sm: 4 },
 					display: 'grid',
-					gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+					gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
 					gap: 2,
-					maxWidth: 1100,
+					maxWidth: 900,
 				} }
 			>
 				{ /* Auth & Rate Limit */ }
 				<PanelCard
-					title={ __( 'Auth & Rate Limit', 'rest-api-firewall' ) }
+					title={ __( 'Users', 'rest-api-firewall' ) }
 					Icon={ SecurityOutlined }
 					panel={ 1 }
 					module="users"
@@ -652,23 +777,21 @@ export default function ApplicationEditor( { application, onBack } ) {
 					enabled={ getModuleEnabled( 1 ) }
 					onToggleEnabled={ handleModuleToggle }
 				>
-					<DataRow label={ __( 'Users', 'rest-api-firewall' ) }>
-						{ appUsers && appUsers.length > 0 ? (
-							<Typography variant="caption" noWrap>
-								{ appUsers.slice( 0, 2 ).map( ( u ) => u.display_name ).join( ', ' ) }
-								{ appUsers.length > 2 ? ` +${ appUsers.length - 2 }` : '' }
+					{ appUsers.length > 0
+						? appUsers.map( ( u ) => (
+							<UserRow
+								key={ u.id }
+								user={ u }
+								onClick={ () => navigate( 'user-rate-limiting', u.id ) }
+							/>
+						) )
+						: ! isNew && (
+							<Typography variant="caption" color="text.disabled">
+								{ __( 'No users linked to this application.', 'rest-api-firewall' ) }
 							</Typography>
-						) : (
-							<Typography variant="caption" color="text.disabled" fontStyle="italic">
-								{ __( 'No users linked', 'rest-api-firewall' ) }
-							</Typography>
-						) }
-					</DataRow>
-					<DataRow label={ __( 'Rate limit', 'rest-api-firewall' ) }>
-						{ rateLimitRequests & rateLimitWindow && (<Typography variant="caption" sx={ { fontFamily: 'monospace' } }>
-							{ rateLimitRequests } req / { rateLimitWindow }s
-						</Typography>) }
-					</DataRow>
+						)
+					}
+
 				</PanelCard>
 
 				{ /* Routes */ }
@@ -681,14 +804,85 @@ export default function ApplicationEditor( { application, onBack } ) {
 					enabled={ getModuleEnabled( 2 ) }
 					onToggleEnabled={ handleModuleToggle }
 				>
-					<DataRow label={ __( 'Policy', 'rest-api-firewall' ) }>
-						<Chip
-							label={ policyActive ? __( 'Active', 'rest-api-firewall' ) : __( 'None', 'rest-api-firewall' ) }
-							color={ policyActive ? 'success' : 'default' }
-							size="small"
-							variant="outlined"
-						/>
+					{ /* Auth. & Rate Limiting */ }
+					<DataRow label={ __( 'Auth & RL', 'rest-api-firewall' ) }>
+						<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
+							<Chip
+								label={ __( 'Auth', 'rest-api-firewall' ) }
+								size="small"
+								color={ serverSettings.enforce_auth ? 'success' : 'default' }
+								variant={ serverSettings.enforce_auth ? 'filled' : 'outlined' }
+								sx={ { fontSize: 10 } }
+							/>
+							<Chip
+								label={ __( 'Rate limit', 'rest-api-firewall' ) }
+								size="small"
+								color={ serverSettings.enforce_rate_limit ? 'success' : 'default' }
+								variant={ serverSettings.enforce_rate_limit ? 'filled' : 'outlined' }
+								sx={ { fontSize: 10 } }
+							/>
+						</Stack>
 					</DataRow>
+
+					{ /* Disable Routes */ }
+					<DataRow label={ __( 'Disabled routes', 'rest-api-firewall' ) }>
+						<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
+							{ [ serverSettings.hide_user_routes && 'users', serverSettings.hide_oembed_routes && 'oembed', serverSettings.hide_batch_routes && 'batch' ].filter( Boolean ).length > 0
+								? [ serverSettings.hide_user_routes && 'users', serverSettings.hide_oembed_routes && 'oembed', serverSettings.hide_batch_routes && 'batch' ].filter( Boolean ).map( ( r ) => (
+									<Chip key={ r } label={ r } size="small" sx={ { fontFamily: 'monospace', fontSize: 10 } } />
+								) )
+								: <Typography variant="caption" color="text.disabled">{ __( 'None', 'rest-api-firewall' ) }</Typography>
+							}
+						</Stack>
+					</DataRow>
+
+					{ /* Disabled Route Response */ }
+					<DataRow label={ __( 'Response', 'rest-api-firewall' ) }>
+						<Typography variant="caption" noWrap>
+							{ DISABLE_BEHAVIOR_LABELS[ serverSettings.disable_behavior ] || '404 Not Found' }
+						</Typography>
+					</DataRow>
+
+					{ /* Disable HTTP Methods */ }
+					<DataRow label={ __( 'HTTP off', 'rest-api-firewall' ) }>
+						<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
+							{ ( serverSettings.disabled_methods || [] ).length > 0
+								? ( serverSettings.disabled_methods || [] ).map( ( m ) => (
+									<Chip key={ m } label={ m.toUpperCase() } size="small" sx={ { fontFamily: 'monospace', fontSize: 10 } } />
+								) )
+								: <Typography variant="caption" color="text.disabled">{ __( 'None', 'rest-api-firewall' ) }</Typography>
+							}
+						</Stack>
+					</DataRow>
+
+					{ /* Disable Post Types */ }
+					<DataRow label={ __( 'Post types off', 'rest-api-firewall' ) }>
+						<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
+							{ ( serverSettings.disabled_post_types || [] ).length > 0
+								? <>
+									{ ( serverSettings.disabled_post_types || [] ).slice( 0, 3 ).map( ( p ) => (
+										<Chip key={ p } label={ p } size="small" sx={ { fontSize: 10 } } />
+									) ) }
+									{ ( serverSettings.disabled_post_types || [] ).length > 3 && (
+										<Typography variant="caption" color="text.secondary">+{ serverSettings.disabled_post_types.length - 3 }</Typography>
+									) }
+									</>
+								: <Typography variant="caption" color="text.disabled">{ __( 'None', 'rest-api-firewall' ) }</Typography>
+							}
+						</Stack>
+					</DataRow>
+
+					{ /* Custom rules count */ }
+					{ routesCustomCount !== null && (
+						<DataRow label={ __( 'Custom rules', 'rest-api-firewall' ) }>
+							<Chip
+								label={ routesCustomCount }
+								size="small"
+								color={ routesCustomCount > 0 ? 'primary' : 'default' }
+								variant="outlined"
+							/>
+						</DataRow>
+					) }
 				</PanelCard>
 
 				{ /* IP Filtering */ }
@@ -873,6 +1067,7 @@ export default function ApplicationEditor( { application, onBack } ) {
 					</span>
 				</Tooltip>
 			</Box>
+			) }
 
 			<ConfirmWithInputDialog
 				open={ confirmDeleteOpen }

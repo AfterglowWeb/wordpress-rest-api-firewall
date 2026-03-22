@@ -204,7 +204,6 @@ function AppContent() {
 		<>
 			<Box sx={ { display: 'flex' } }>
 				<Navigation
-
 					migrationNeeded={ migrationNeeded }
 					migrationDone={ migrationDone }
 					schemaUpdateNeeded={ schemaUpdateNeeded }
@@ -216,35 +215,36 @@ function AppContent() {
 				/>
 
 				<Stack
-					sx={ {
-						flexGrow: 1,
-						minWidth: 0,
-						pl: { xs: 0, md: DRAWER_WIDTH + 'px' },
-						pt: editorOpen ? 0 : APP_BAR_HEIGHT + 'px',
-						minHeight: {
-							xs: editorOpen
-								? `calc(100svh - ${ APP_FOOTER_HEIGHT + WP_ADMIN_BAR_HEIGHT_MOBILE }px)`
-								: `calc(100svh - ${
-										APP_FOOTER_HEIGHT +
-										APP_BAR_HEIGHT +
-										WP_ADMIN_BAR_HEIGHT_MOBILE
-								  }px)`,
-							md: editorOpen
-								? `calc(100svh - ${ APP_FOOTER_HEIGHT + WP_ADMIN_BAR_HEIGHT_DESKTOP }px)`
-								: `calc(100svh - ${
-										APP_FOOTER_HEIGHT +
-										APP_BAR_HEIGHT +
-										WP_ADMIN_BAR_HEIGHT_DESKTOP
-								  }px)`,
-						},
-						bgcolor: 'background.paper',
-					} }
+				sx={ {
+					flexGrow: 1,
+					minWidth: 0,
+					pl: { xs: 0, md: DRAWER_WIDTH + 'px' },
+					pt: editorOpen ? 0 : APP_BAR_HEIGHT + 'px',
+					minHeight: {
+						xs: editorOpen
+							? `calc(100svh - ${ APP_FOOTER_HEIGHT + WP_ADMIN_BAR_HEIGHT_MOBILE }px)`
+							: `calc(100svh - ${
+									APP_FOOTER_HEIGHT +
+									APP_BAR_HEIGHT +
+									WP_ADMIN_BAR_HEIGHT_MOBILE
+								}px)`,
+						md: editorOpen
+							? `calc(100svh - ${ APP_FOOTER_HEIGHT + WP_ADMIN_BAR_HEIGHT_DESKTOP }px)`
+							: `calc(100svh - ${
+									APP_FOOTER_HEIGHT +
+									APP_BAR_HEIGHT +
+									WP_ADMIN_BAR_HEIGHT_DESKTOP
+								}px)`,
+					},
+					bgcolor: 'background.paper',
+				} }
 				>
-				{ editorOpen && <EntryToolbar { ...toolbarConfig } /> }
 
-{ hasValidLicense && panel === 'applications' && <Applications /> }
+					{ editorOpen && <EntryToolbar { ...toolbarConfig } /> }
 
-							{ panel === 'user-rate-limiting' && (
+					{ hasValidLicense && panel === 'applications' && <Applications /> }
+
+					{ panel === 'user-rate-limiting' && (
 						<>
 							{ hasValidLicense ? (
 								<Users />
@@ -268,19 +268,19 @@ function AppContent() {
 						</>
 					) }
 
-{ panel === 'per-route-settings' && (
-								<RoutesPanel
-									form={ form }
-									setField={ setField }
-									onNavigate={ ( v ) => navigate( { 5: 'models-properties' }[ v ] ?? String( v ) ) }
-								/>
-							) }
+					{ panel === 'per-route-settings' && (
+						<RoutesPanel
+							form={ form }
+							setField={ setField }
+							onNavigate={ ( v ) => navigate( { 5: 'models-properties' }[ v ] ?? String( v ) ) }
+						/>
+					) }
 
-{ panel === 'ip-filtering' && <IpFilter /> }
+					{ panel === 'ip-filtering' && <IpFilter /> }
 
-{ panel === 'global-ip-filtering' && <IpFilter scope="global" /> }
+					{ panel === 'global-ip-filtering' && <IpFilter scope="global" /> }
 
-							{ panel === 'collections' && (
+					{ panel === 'collections' && (
 						<Collections
 							form={ form }
 							setField={ setField }
@@ -288,7 +288,7 @@ function AppContent() {
 						/>
 					) }
 
-							{ panel === 'models-properties' &&
+					{ panel === 'models-properties' &&
 						( hasValidLicense ? (
 							<Models />
 						) : (
@@ -297,9 +297,9 @@ function AppContent() {
 								setField={ setField }
 								postTypes={ postTypes }
 							/>
-						) ) }
+					) ) }
 
-							{ panel === 'settings-route' && (
+					{ panel === 'settings-route' && (
 						<SettingsRoute
 							form={ form }
 							setField={ setField }
@@ -313,15 +313,15 @@ function AppContent() {
 							<Webhook form={ form } setField={ setField } />
 						) ) }
 
-{ panel === 'emails' && hasValidLicense && <MailsPanel /> }
+					{ panel === 'emails' && hasValidLicense && <MailsPanel /> }
 
-{ panel === 'logs' && hasValidLicense && <Logs /> }
+					{ panel === 'logs' && hasValidLicense && <Logs /> }
 
-{ panel === 'automations' && hasValidLicense && <Automations /> }
+					{ panel === 'automations' && hasValidLicense && <Automations /> }
 
-							{ panel === 'global_security' && (
-					<GlobalSecurity form={ form } setField={ setField } />
-				) }
+					{ panel === 'global_security' && (
+						<GlobalSecurity form={ form } setField={ setField } />
+					) }
 
 					{ panel === 'theme' && (
 						<ThemeSettings
@@ -333,9 +333,9 @@ function AppContent() {
 						/>
 					) }
 
-{ panel === 'license' && <License /> }
+					{ panel === 'license' && <License /> }
 
-							{ panel === 'configuration' && (
+					{ panel === 'configuration' && (
 						<ConfigurationPanel
 							form={ form }
 							setField={ setField }
