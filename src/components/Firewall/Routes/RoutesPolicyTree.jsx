@@ -22,7 +22,6 @@ import Toolbar from '@mui/material/Toolbar';
 
 import Typography from '@mui/material/Typography';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import SettingsBackupRestoreOutlinedIcon from '@mui/icons-material/SettingsBackupRestoreOutlined';
 
 import { RichTreeView } from '@mui/x-tree-view/RichTreeView';

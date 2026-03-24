@@ -82,40 +82,60 @@ class Routes {
 
 	private static function set_posts_per_page(): void {
 
-		if ( false === CoreOptions::read_option( 'rest_collections_per_page_enabled' ) ) {
+		$per_page_settings = CoreOptions::read_option( 'rest_collection_per_page_settings' );
+
+		if ( empty( $per_page_settings ) || ! is_array( $per_page_settings ) ) {
 			return;
 		}
 
-		$post_types = get_post_types(
-			array(
-				'show_in_rest' => true,
-			)
-		);
+		// Handle post types.
+		foreach ( get_post_types( array( 'show_in_rest' => true ) ) as $post_type ) {
+			if ( empty( $per_page_settings[ $post_type ]['enabled'] ) ) {
+				continue;
+			}
 
-		if ( empty( $post_types ) ) {
-			return;
-		}
-
-		foreach ( $post_types as $post_type ) {
+			$items_per_page = (int) ( $per_page_settings[ $post_type ]['items_per_page'] ?? 25 );
+			if ( $items_per_page < 1 ) {
+				continue;
+			}
 
 			add_filter(
 				'rest_' . $post_type . '_collection_params',
-				function ( $query_params ) use ( $post_type ) {
-
-					$posts_per_page       = CoreOptions::read_option( 'rest_collections_posts_per_page' );
-					$attachments_per_page = CoreOptions::read_option( 'rest_collections_attachments_per_page' );
-					$per_page             = 'attachment' !== $post_type ? $posts_per_page : $attachments_per_page;
-
-					if ( ! empty( $per_page ) && isset( $query_params['per_page'] ) ) {
-						$query_params['per_page']['default'] = $per_page;
-						$query_params['per_page']['maximum'] = $per_page;
+				static function ( $query_params ) use ( $items_per_page ) {
+					if ( isset( $query_params['per_page'] ) ) {
+						$query_params['per_page']['default'] = $items_per_page;
+						$query_params['per_page']['maximum'] = $items_per_page;
 					}
 					return $query_params;
 				},
 				10,
-				2
+				1
 			);
+		}
 
+		// Handle taxonomies.
+		foreach ( get_taxonomies( array( 'show_in_rest' => true ) ) as $taxonomy ) {
+			if ( empty( $per_page_settings[ $taxonomy ]['enabled'] ) ) {
+				continue;
+			}
+
+			$items_per_page = (int) ( $per_page_settings[ $taxonomy ]['items_per_page'] ?? 25 );
+			if ( $items_per_page < 1 ) {
+				continue;
+			}
+
+			add_filter(
+				'rest_' . $taxonomy . '_collection_params',
+				static function ( $query_params ) use ( $items_per_page ) {
+					if ( isset( $query_params['per_page'] ) ) {
+						$query_params['per_page']['default'] = $items_per_page;
+						$query_params['per_page']['maximum'] = $items_per_page;
+					}
+					return $query_params;
+				},
+				10,
+				1
+			);
 		}
 	}
 

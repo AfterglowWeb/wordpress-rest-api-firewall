@@ -389,9 +389,8 @@ export default function Navigation( {
 										selected={ panel === item.key }
 										sx={ {
 											px: 3,
-											backgroundColor: !! item.disabled ? 'grey.100' : '',
 										} }
-										disabled={ panel === item.key || !! item.disabled }
+										disabled={ !! item.disabled }
 										onClick={ () => {
 											if ( item.action ) {
 												item.action();
@@ -406,9 +405,6 @@ export default function Navigation( {
 												sx={ {
 													px: 1,
 													minWidth: 32,
-													color: !! item.disabled
-														? 'primary.main'
-														: 'text.secondary',
 												} }
 											>
 												<Badge
@@ -416,7 +412,7 @@ export default function Navigation( {
 													variant="dot"
 													invisible={ ! item.badge }
 												>
-													<Icon fontSize="small" />
+													<Icon color={ panel === item.key || !! item.disabled ? 'primary' : ''} fontSize="small" />
 												</Badge>
 											</ListItemIcon>
 										) }
@@ -426,6 +422,7 @@ export default function Navigation( {
 												'& .MuiListItemText-primary': {
 													fontSize: '0.9rem',
 													lineHeight: 'normal',
+													color: panel === item.key || !! item.disabled ? 'primary.main' : 'text.primary'
 												},
 											} }
 											primary={ item.label }

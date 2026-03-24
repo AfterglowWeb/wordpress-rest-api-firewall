@@ -4,6 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Core\MultiSite;
 use cmk\RestApiFirewall\Firewall\WordpressAuth;
+use cmk\RestApiFirewallPro\Collections\CollectionOrderController;
 
 class CoreOptions {
 	protected static $instance = null;
@@ -203,28 +204,19 @@ class CoreOptions {
 			),
 
 			// Collections.
-			'rest_collections_per_page_enabled'           => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
+			'rest_collection_orders'                      => array(
+				'default_value'     => array(),
+				'type'              => 'array',
+				'sanitize_callback' => 'rest_sanitize_json',
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
 				'group'             => 'collections',
 			),
 
-			'rest_collections_posts_per_page'             => array(
-				'default_value'     => 100,
-				'type'              => 'integer',
-				'sanitize_callback' => 'absint',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'collections',
-			),
-
-			'rest_collections_attachments_per_page'       => array(
-				'default_value'     => 100,
-				'type'              => 'integer',
-				'sanitize_callback' => 'absint',
+			'rest_collection_per_page_settings'           => array(
+				'default_value'     => array(),
+				'type'              => 'array',
+				'sanitize_callback' => array( CollectionOrderController::class, 'sanitize_collection_per_page_settings' ),
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
 				'group'             => 'collections',
@@ -856,4 +848,5 @@ class CoreOptions {
 				return (string) call_user_func( $callback, $option_value );
 		}
 	}
+
 }

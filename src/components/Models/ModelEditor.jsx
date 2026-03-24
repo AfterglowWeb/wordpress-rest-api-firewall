@@ -23,6 +23,7 @@ import { PropertyRow } from './Properties';
 import JsonSchemaBuilder from '../shared/JsonSchemaBuilder';
 import useRegisterToolbar from '../../hooks/useRegisterToolbar';
 import LoadingMessage from '../LoadingMessage';
+import FormControl from '@mui/material/FormControl';
 
 function mergeFilterSettings( schemaSettings, storedSettings ) {
 	if ( ! storedSettings ) return schemaSettings || {};
@@ -415,42 +416,76 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 		: FALLBACK_BINDINGS;
 
 	return (
-		<Stack spacing={ 0 } sx={ { height: '100%' } }>
-
-			<Stack p={ 4 } spacing={ 3 } sx={ { overflowY: 'auto', flex: 1 } }>
+		<Stack p={ 4 } spacing={ 3 } flexGrow={ 1 }>
+			{ objectType && (
 				<Stack direction="row" gap={2} alignItems="center">
-					{ objectType && (
-						<Chip label={ objectType } variant="outlined" sx={ { fontFamily: 'monospace', fontSize: '0.7rem' } } />
-					) }
-					<Chip
-						label={ isCustom ? __( 'Custom', 'rest-api-firewall' ) : __( 'WP Schema', 'rest-api-firewall' ) }
-						color={ isCustom ? 'secondary' : 'primary' }
-						variant="outlined"
-						sx={ { fontSize: '0.7rem' } }
-					/>
+					<Typography variant="subtitle1" fontWeight="600">
+						{ __('Object Type', 'rest-api-firewall') }
+					</Typography>
+					<Chip 
+					size="large"
+					label={ objectType } 
+					variant="outlined" 
+					color="primary"
+					sx={ { fontFamily: 'monospace' } } />
 				</Stack>
-				<Stack direction="row" spacing={ 4 } alignItems="flex-start" flexWrap="wrap">
-					<TextField
-						label={ __( 'Model Name', 'rest-api-firewall' ) }
-						value={ title }
-						onChange={ ( e ) => setTitle( e.target.value ) }
-						size="small"
-						fullWidth
-						required
-						helperText={ __( 'Internal name for this model', 'rest-api-firewall' ) }
-						sx={ { maxWidth: 320 } }
-					/>
-					<TextField
-						label={ __( 'Description', 'rest-api-firewall' ) }
-						value={ description }
-						onChange={ ( e ) => setDescription( e.target.value ) }
-						size="small"
-						multiline
-						rows={ 2 }
-						sx={ { maxWidth: 500 } }
-					/>
+			) }
+			<Stack spacing={3} maxWidth={600}>
+				<TextField
+					label={ __( 'Model Name', 'rest-api-firewall' ) }
+					value={ title }
+					onChange={ ( e ) => setTitle( e.target.value ) }
+					size="small"
+					fullWidth
+					required
+					helperText={ __( 'Internal name for this model.', 'rest-api-firewall' ) }
+				/>
+				<TextField
+					label={ __( 'Description', 'rest-api-firewall' ) }
+					value={ description }
+					onChange={ ( e ) => setDescription( e.target.value ) }
+					size="small"
+					multiline
+					rows={ 3 }
+					helperText={ __( 'Internal note for this model.', 'rest-api-firewall' ) }
 
-					<Stack direction="row" alignItems="center" gap={ 1 } flexWrap="wrap">
+				/>
+
+				{ objectType === 'settings_route' && (
+					<Stack spacing={ 3 }>
+
+						<FormControl disabled={ testMode }>
+							<FormControlLabel
+								label={ __( 'Embed Flattened Menus', 'rest-api-firewall' ) }
+								control={
+									<Switch
+										checked={ !! properties._embed_menus }
+										onChange={ ( e ) => setProperties( ( p ) => ( { ...p, _embed_menus: e.target.checked } ) ) }
+										size="small"
+									/>
+								}
+							/>
+						</FormControl>
+
+						<FormControl disabled={ ! adminData?.acf_active || testMode }>
+							<FormControlLabel
+								label={ __( 'Add ACF Options Pages', 'rest-api-firewall' ) }
+								control={
+									<Switch
+										checked={ !! properties._acf_options_page }
+										onChange={ ( e ) => setProperties( ( p ) => ( { ...p, _acf_options_page: e.target.checked } ) ) }
+										size="small"
+									/>
+								}
+							/>
+						</FormControl>
+					</Stack>
+				) }
+			</Stack>
+
+			{ objectType && (
+				<Stack spacing={ 3 } maxWidth={ 800 }>
+					<Stack direction="row" alignItems="center" justifyContent="space-between" gap={ 1 } flexWrap="wrap">
 						<ToggleButtonGroup
 							value={ isCustom ? 'custom' : 'wp' }
 							exclusive
@@ -471,7 +506,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 
 						{ ! isNew && (
 							<Button
-								variant={ testMode ? 'contained' : 'outlined' }
+								variant="contained"
 								size="small"
 								disableElevation
 								disabled={ testStatus === 'running' }
@@ -490,236 +525,204 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 							</Button>
 						) }
 					</Stack>
-				</Stack>
-
-				{ objectType === 'settings_route' && ! testMode && (
-					<Stack sx={ { pb: 1 } }>
-						<FormControlLabel
-							label={ __( 'Embed Flattened Menus', 'rest-api-firewall' ) }
-							control={
-								<Switch
-									checked={ !! properties._embed_menus }
-									onChange={ ( e ) => setProperties( ( p ) => ( { ...p, _embed_menus: e.target.checked } ) ) }
-									size="small"
-								/>
-							}
-						/>
-					{ adminData?.acf_active && (
-						<FormControlLabel
-							label={ __( 'Add ACF Options Pages', 'rest-api-firewall' ) }
-							control={
-								<Switch
-									checked={ !! properties._acf_options_page }
-									onChange={ ( e ) => setProperties( ( p ) => ( { ...p, _acf_options_page: e.target.checked } ) ) }
-									size="small"
-								/>
-							}
-						/>
-					) }
-					</Stack>
-				) }
-
-				{ objectType && (
-					<>
-						{ testMode ? (
-							<Stack spacing={ 2 }>
-								{ testStatus === 'running' && (
-									<Stack direction="row" alignItems="center" gap={ 1 }>
-										<CircularProgress size={ 16 } />
-										<Typography variant="body2" color="text.secondary">{ __( 'Fetching live data and applying model…', 'rest-api-firewall' ) }</Typography>
+					{ testMode ? (
+						<Stack spacing={ 2 }>
+							{ testStatus === 'running' && (
+								<Stack direction="row" alignItems="center" gap={ 1 }>
+									<CircularProgress size={ 16 } />
+									<Typography variant="body2" color="text.secondary">{ __( 'Fetching live data and applying model…', 'rest-api-firewall' ) }</Typography>
+								</Stack>
+							) }
+							{ testStatus === 'error' && testResult?.error && (
+								<Alert severity="warning">{ testResult.error }</Alert>
+							) }
+							{ testStatus === 'done' && testResult && (
+								<Stack direction={ { xs: 'column', md: 'row' } } spacing={ 2 } alignItems="flex-start">
+									<Stack flex={ 1 } spacing={ 1 } sx={ { minWidth: 0 } }>
+										<Typography variant="subtitle2" fontWeight={ 600 } color="text.secondary">{ __( 'Raw', 'rest-api-firewall' ) }</Typography>
+										<Box
+											component="pre"
+											sx={ { p: 2, bgcolor: 'grey.50', borderRadius: 1, overflowX: 'auto', fontSize: '0.72rem', lineHeight: 1.5, m: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' } }
+										>
+											{ JSON.stringify( testResult.raw, null, 2 ) }
+										</Box>
 									</Stack>
-								) }
-								{ testStatus === 'error' && testResult?.error && (
-									<Alert severity="warning">{ testResult.error }</Alert>
-								) }
-								{ testStatus === 'done' && testResult && (
-									<Stack direction={ { xs: 'column', md: 'row' } } spacing={ 2 } alignItems="flex-start">
-										<Stack flex={ 1 } spacing={ 1 } sx={ { minWidth: 0 } }>
-											<Typography variant="subtitle2" fontWeight={ 600 } color="text.secondary">{ __( 'Raw', 'rest-api-firewall' ) }</Typography>
-											<Box
-												component="pre"
-												sx={ { p: 2, bgcolor: 'grey.50', borderRadius: 1, overflowX: 'auto', fontSize: '0.72rem', lineHeight: 1.5, m: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' } }
-											>
-												{ JSON.stringify( testResult.raw, null, 2 ) }
-											</Box>
-										</Stack>
-										<Stack flex={ 1 } spacing={ 1 } sx={ { minWidth: 0 } }>
-											<Typography variant="subtitle2" fontWeight={ 600 } color="primary.main">{ __( 'Transformed', 'rest-api-firewall' ) }</Typography>
-											<Box
-												component="pre"
-												sx={ { p: 2, bgcolor: 'primary.50', borderRadius: 1, overflowX: 'auto', fontSize: '0.72rem', lineHeight: 1.5, m: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' } }
-											>
-												{ JSON.stringify( testResult.transformed, null, 2 ) }
-											</Box>
-										</Stack>
+									<Stack flex={ 1 } spacing={ 1 } sx={ { minWidth: 0 } }>
+										<Typography variant="subtitle2" fontWeight={ 600 } color="primary.main">{ __( 'Transformed', 'rest-api-firewall' ) }</Typography>
+										<Box
+											component="pre"
+											sx={ { p: 2, bgcolor: 'primary.50', borderRadius: 1, overflowX: 'auto', fontSize: '0.72rem', lineHeight: 1.5, m: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' } }
+										>
+											{ JSON.stringify( testResult.transformed, null, 2 ) }
+										</Box>
 									</Stack>
-								) }
+								</Stack>
+							) }
+						</Stack>
+						) : isCustom ? (
+							<Stack spacing={ 1 }>
+								<Typography variant="subtitle2" fontWeight={ 600 }>
+									{ __( 'Custom Schema', 'rest-api-firewall' ) }
+								</Typography>
+								<Typography variant="caption" color="text.secondary">
+									{ __( 'Define the exact JSON shape your REST endpoint will return for this object type.', 'rest-api-firewall' ) }
+								</Typography>
+								<JsonSchemaBuilder
+									value={ properties }
+									onChange={ setProperties }
+									availableBindings={ availableBindings }
+								/>
 							</Stack>
-							) : isCustom ? (
-								<Stack spacing={ 1 }>
-									<Typography variant="subtitle2" fontWeight={ 600 }>
-										{ __( 'Custom Schema', 'rest-api-firewall' ) }
-									</Typography>
-									<Typography variant="caption" color="text.secondary">
-										{ __( 'Define the exact JSON shape your REST endpoint will return for this object type.', 'rest-api-firewall' ) }
-									</Typography>
-									<JsonSchemaBuilder
-										value={ properties }
-										onChange={ setProperties }
-										availableBindings={ availableBindings }
-									/>
+						) : (
+						<Stack>
+							{ schemaProps ? (
+								<Stack spacing={ 0 }>
+									{ Object.entries( schemaProps ).map(
+										( [ propName, propConfig ] ) => (
+											<PropertyRow
+											key={ propName }
+											propName={ propName }
+											isInherit={ ! properties[ propName ] || ! Array.isArray( properties[ propName ]?.settings?.filters ) }
+											onToggleInherit={ () => {
+												const current = properties[ propName ];
+												const hasLocalFilters = Array.isArray( current?.settings?.filters );
+												if ( hasLocalFilters ) {
+													if ( current?.settings?.disable === true ) {
+														setProperties( ( prev ) => ( {
+															...prev,
+															[ propName ]: { settings: { disable: true } },
+														} ) );
+													} else {
+														setProperties( ( prev ) => {
+															const next = { ...prev };
+															delete next[ propName ];
+															return next;
+														} );
+													}
+												} else {
+													setProperties( ( prev ) => ( {
+														...prev,
+														[ propName ]: {
+															...( prev[ propName ] || {} ),
+															settings: {
+																disable: prev[ propName ]?.settings?.disable ?? propConfig.settings?.disable ?? false,
+																filters: ( propConfig.settings?.filters || [] ).map( ( f ) => ( { ...f } ) ),
+															},
+														},
+													} ) );
+												}
+											} }
+											propConfig={ {
+												...propConfig,
+												settings: mergeFilterSettings( propConfig.settings, properties[ propName ]?.settings ),
+												properties: propConfig.properties
+													? Object.fromEntries(
+														Object.entries( propConfig.properties ).map(
+															( [ subName, subConfig ] ) => [
+																subName,
+																typeof subConfig === 'object' &&
+																subConfig !== null
+																	? {
+																		...subConfig,
+																		settings: mergeFilterSettings( subConfig.settings, properties[ propName ]?.properties?.[ subName ]?.settings ),
+																		}
+																	: subConfig,
+															]
+														)
+														)
+													: propConfig.properties,
+											} }
+											selectedObjectType={ objectType }
+											setField={ ( e ) => {
+												const path = e.target.name;
+												const parts = path.split( '.' );
+												const propsIdx = parts.indexOf( 'props' );
+												const propKey = parts[ propsIdx + 1 ] || propName;
+												const subPropsIdx = parts.indexOf( 'properties', propsIdx + 2 );
+												const isSubProp = subPropsIdx > -1;
+												const subPropKey = isSubProp ? parts[ subPropsIdx + 1 ] : null;
+												const setting = parts[ parts.length - 2 ];
+												const key = parts[ parts.length - 1 ];
+												setProperties( ( prev ) => {
+													const next = { ...prev };
+													if ( ! next[ propKey ] ) {
+														if ( setting === 'settings' && key === 'disable' ) {
+															next[ propKey ] = { settings: { disable: false } };
+														} else {
+															next[ propKey ] = {
+																settings: {
+																	disable: false,
+																	filters: ( propConfig.settings?.filters || [] ).map( ( f ) => ( { ...f } ) ),
+																},
+															};
+														}
+													}
+													if ( isSubProp ) {
+														if ( ! next[ propKey ].properties ) {
+															next[ propKey ] = { ...next[ propKey ], properties: {} };
+														}
+														if ( ! next[ propKey ].properties[ subPropKey ] ) {
+															const subCfgInit = schemaProps?.[ propKey ]?.properties?.[ subPropKey ];
+															next[ propKey ].properties[ subPropKey ] = {
+																settings: {
+																	disable: false,
+																	filters: ( subCfgInit?.settings?.filters || [] ).map( ( f ) => ( { ...f } ) ),
+																},
+															};
+														}
+														if ( setting === 'settings' ) {
+															next[ propKey ].properties[ subPropKey ].settings = {
+																...next[ propKey ].properties[ subPropKey ].settings,
+																[ key ]: e.target.value,
+															};
+														} else if ( setting === 'filters' ) {
+															const subCfg = schemaProps?.[ propKey ]?.properties?.[ subPropKey ];
+															const currentFilters =
+																next[ propKey ].properties[ subPropKey ].settings?.filters ||
+																subCfg?.settings?.filters ||
+																[];
+															next[ propKey ].properties[ subPropKey ].settings = {
+																...next[ propKey ].properties[ subPropKey ].settings,
+																filters: currentFilters.map( ( f ) => f.key === key ? { ...f, value: e.target.value } : f ),
+															};
+														}
+													} else {
+														if ( setting === 'settings' ) {
+															next[ propKey ].settings = {
+																...next[ propKey ].settings,
+																[ key ]: e.target.value,
+															};
+														} else if ( setting === 'filters' ) {
+															const currentFilters =
+																next[ propKey ].settings?.filters ||
+																propConfig.settings?.filters ||
+																[];
+															next[ propKey ].settings = {
+																...next[ propKey ].settings,
+																filters: currentFilters.map( ( f ) => f.key === key ? { ...f, value: e.target.value } : f ),
+															};
+														}
+													}
+													return next;
+												} );
+											} }
+											hasValidLicense={ true }
+											globalForm={ globalForm }
+											__={ __ }
+											basePath={ `postProperties.${ objectType }.props.${ propName }` }
+										/>
+										)
+									) }
 								</Stack>
 							) : (
-							<Stack>
-								{ schemaProps ? (
-									<Stack spacing={ 0 }>
-										{ Object.entries( schemaProps ).map(
-											( [ propName, propConfig ] ) => (
-												<PropertyRow
-													key={ propName }
-													propName={ propName }
-													isInherit={ ! properties[ propName ] || ! Array.isArray( properties[ propName ]?.settings?.filters ) }
-													onToggleInherit={ () => {
-							const current = properties[ propName ];
-							const hasLocalFilters = Array.isArray( current?.settings?.filters );
-							if ( hasLocalFilters ) {
-								if ( current?.settings?.disable === true ) {
-									setProperties( ( prev ) => ( {
-										...prev,
-										[ propName ]: { settings: { disable: true } },
-									} ) );
-								} else {
-									setProperties( ( prev ) => {
-										const next = { ...prev };
-										delete next[ propName ];
-										return next;
-									} );
-								}
-							} else {
-								setProperties( ( prev ) => ( {
-									...prev,
-									[ propName ]: {
-										...( prev[ propName ] || {} ),
-										settings: {
-											disable: prev[ propName ]?.settings?.disable ?? propConfig.settings?.disable ?? false,
-											filters: ( propConfig.settings?.filters || [] ).map( ( f ) => ( { ...f } ) ),
-										},
-									},
-								} ) );
-							}
-						} }
-					propConfig={ {
-						...propConfig,
-						settings: mergeFilterSettings( propConfig.settings, properties[ propName ]?.settings ),
-						properties: propConfig.properties
-							? Object.fromEntries(
-								Object.entries( propConfig.properties ).map(
-									( [ subName, subConfig ] ) => [
-										subName,
-										typeof subConfig === 'object' &&
-										subConfig !== null
-											? {
-												...subConfig,
-												settings: mergeFilterSettings( subConfig.settings, properties[ propName ]?.properties?.[ subName ]?.settings ),
-												}
-											: subConfig,
-									]
-								)
-								)
-							: propConfig.properties,
-					} }
-					selectedObjectType={ objectType }
-					setField={ ( e ) => {
-						const path = e.target.name;
-						const parts = path.split( '.' );
-						const propsIdx = parts.indexOf( 'props' );
-						const propKey = parts[ propsIdx + 1 ] || propName;
-						const subPropsIdx = parts.indexOf( 'properties', propsIdx + 2 );
-						const isSubProp = subPropsIdx > -1;
-						const subPropKey = isSubProp ? parts[ subPropsIdx + 1 ] : null;
-						const setting = parts[ parts.length - 2 ];
-						const key = parts[ parts.length - 1 ];
-						setProperties( ( prev ) => {
-							const next = { ...prev };
-							if ( ! next[ propKey ] ) {
-								if ( setting === 'settings' && key === 'disable' ) {
-									next[ propKey ] = { settings: { disable: false } };
-								} else {
-									next[ propKey ] = {
-										settings: {
-											disable: false,
-											filters: ( propConfig.settings?.filters || [] ).map( ( f ) => ( { ...f } ) ),
-										},
-									};
-								}
-							}
-							if ( isSubProp ) {
-								if ( ! next[ propKey ].properties ) {
-									next[ propKey ] = { ...next[ propKey ], properties: {} };
-								}
-								if ( ! next[ propKey ].properties[ subPropKey ] ) {
-									const subCfgInit = schemaProps?.[ propKey ]?.properties?.[ subPropKey ];
-									next[ propKey ].properties[ subPropKey ] = {
-										settings: {
-											disable: false,
-											filters: ( subCfgInit?.settings?.filters || [] ).map( ( f ) => ( { ...f } ) ),
-										},
-									};
-								}
-								if ( setting === 'settings' ) {
-									next[ propKey ].properties[ subPropKey ].settings = {
-										...next[ propKey ].properties[ subPropKey ].settings,
-										[ key ]: e.target.value,
-									};
-								} else if ( setting === 'filters' ) {
-									const subCfg = schemaProps?.[ propKey ]?.properties?.[ subPropKey ];
-									const currentFilters =
-										next[ propKey ].properties[ subPropKey ].settings?.filters ||
-										subCfg?.settings?.filters ||
-										[];
-									next[ propKey ].properties[ subPropKey ].settings = {
-										...next[ propKey ].properties[ subPropKey ].settings,
-										filters: currentFilters.map( ( f ) => f.key === key ? { ...f, value: e.target.value } : f ),
-									};
-								}
-							} else {
-								if ( setting === 'settings' ) {
-									next[ propKey ].settings = {
-										...next[ propKey ].settings,
-										[ key ]: e.target.value,
-									};
-								} else if ( setting === 'filters' ) {
-									const currentFilters =
-										next[ propKey ].settings?.filters ||
-										propConfig.settings?.filters ||
-										[];
-									next[ propKey ].settings = {
-										...next[ propKey ].settings,
-										filters: currentFilters.map( ( f ) => f.key === key ? { ...f, value: e.target.value } : f ),
-									};
-								}
-							}
-							return next;
-						} );
-					} }
-					hasValidLicense={ true }
-					globalForm={ globalForm }
-					__={ __ }
-					basePath={ `postProperties.${ objectType }.props.${ propName }` }
-				/>
-											)
-										) }
-									</Stack>
-								) : (
-									<Alert severity="warning">
-										{ __( 'No WP REST schema found for this object type. Try switching to Custom mode.', 'rest-api-firewall' ) }
-									</Alert>
-								) }
-							</Stack>
-						) }
-					</>
-				) }
-			</Stack>
+								<Alert severity="warning">
+									{ __( 'No WP REST schema found for this object type. Try switching to Custom mode.', 'rest-api-firewall' ) }
+								</Alert>
+							) }
+						</Stack>
+					) }
+				</Stack>
+			) }
 		</Stack>
 	);
 }

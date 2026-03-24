@@ -487,7 +487,7 @@ export function PropertyRow( {
 				opacity: isDisabled ? 0.45 : 1,
 				'&:hover': { bgcolor: 'action.hover' },
 				borderRadius: 0.5,
-				px: 1,
+				pl: 1,
 				py: 0.25,
 				...( depth > 0 && {
 					ml: 2,
@@ -588,16 +588,8 @@ export function PropertyRow( {
 						alignItems="center"
 						justifyContent="flex-end"
 					>
-						{ depth === 0 && effectivelyLocked && (
-							<Tooltip
-								title={ __( 'This property cannot be published', 'rest-api-firewall' ) }
-								placement="top"
-							>
-								<LockIcon sx={ { fontSize: 16 } } color="action" />
-							</Tooltip>
-						) }
 
-						{ hasFilters && ! effectivelyLocked && (
+						{ hasFilters && (
 							<FiltersMenu
 								filters={ settings.filters }
 								propName={ propName }
@@ -613,11 +605,12 @@ export function PropertyRow( {
 						) }
 
 						<FormControlLabel
-							disabled={ disabled || ! hasValidLicense || effectivelyLocked }
+							disabled={ ! hasValidLicense }
+							sx={{marginRight: 0}}
 							control={
 								<Switch
 									size="small"
-									checked={ effectivelyLocked ? true : localDisable }
+									checked={ localDisable ? true : (effectivelyLocked ? true : false) }
 									onChange={ ( e ) => {
 										const next = e.target.checked;
 										setLocalDisable( next );

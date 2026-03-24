@@ -22,6 +22,8 @@ use cmk\RestApiFirewall\Policy\TestPolicy;
 use cmk\RestApiFirewall\Webhook\WebhookService;
 use cmk\RestApiFirewall\Webhook\WebhookAutoTrigger;
 use cmk\RestApiFirewall\Webhook\InboundWebhookReceiver;
+use cmk\RestApiFirewall\Collections\CollectionOrderController;
+use cmk\RestApiFirewall\Collections\CollectionsRouter;
 
 final class Bootstrap {
 
@@ -53,6 +55,8 @@ final class Bootstrap {
 		DisableComments::get_instance();
 		HttpHeaders::get_instance();
 		FilePermissions::get_instance();
+
+		CollectionOrderController::get_instance();
 
 		if ( is_admin() ) {
 			CoreOptionsService::get_instance();
