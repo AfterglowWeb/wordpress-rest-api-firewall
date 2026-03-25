@@ -157,13 +157,18 @@ export default function ApplicationEditorSettings( {
 								{ __( 'Default request cap for this application. Users can set a stricter limit but cannot exceed this.', 'rest-api-firewall' ) }
 							</Typography>
 						</Box>
-						<Switch
-							size="small"
-							checked={ rateLimitEnabled }
-							onChange={ ( e ) => setRateLimitEnabled( e.target.checked ) }
+						<FormControlLabel
+						control={
+							<Switch
+								size="small"
+								checked={ rateLimitEnabled }
+								onChange={ ( e ) => setRateLimitEnabled( e.target.checked ) }
+							/>
+						}
+						label={ __( 'Enable Rate Limiting', 'rest-api-firewall' ) }
 						/>
 					</Stack>
-
+					
 					<RateLimitFields
 						values={ {
 							max_requests:    rateLimitRequests,

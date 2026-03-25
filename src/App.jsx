@@ -28,8 +28,7 @@ import ConfigurationPanel from './components/ConfigurationDialog';
 
 import RoutesPanel from './components/Firewall/Routes/RoutesPanel';
 import IpFilter from './components/Firewall/IpFilter/IpFilter';
-import RateLimit from './components/Firewall/Users/RateLimit';
-import RestApiUser from './components/Firewall/Users/RestApiSingleUser';
+import RestApiSingleUser from './components/Firewall/Users/RestApiSingleUser';
 
 import Properties from './components/Models/Properties';
 import SettingsRoute from './components/Models/SettingsRoute';
@@ -249,21 +248,10 @@ function AppContent() {
 							{ hasValidLicense ? (
 								<Users />
 							) : (
-								<Stack
-									spacing={ 3 }
-									p={ 4 }
-									sx={ { maxWidth: 800 } }
-								>
-									<RestApiUser
-										form={ form }
-										setField={ setField }
-									/>
-									<Divider />
-									<RateLimit
-										form={ form }
-										setField={ setField }
-									/>
-								</Stack>
+								<RestApiSingleUser
+									form={ form }
+									setField={ setField }
+								/>
 							) }
 						</>
 					) }

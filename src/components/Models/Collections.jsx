@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
+import { useState, useEffect, useCallback, useRef, useReducer } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
@@ -9,7 +9,6 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
-import CircularProgress from '@mui/material/CircularProgress';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormHelperText from '@mui/material/FormHelperText';
@@ -19,321 +18,113 @@ import TablePagination from '@mui/material/TablePagination';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import UndoIcon from '@mui/icons-material/Undo';
 import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
 
 import ObjectTypeSelect from '../ObjectTypeSelect';
 import Tooltip from '@mui/material/Tooltip';
 
+import { PostOrderList, PageDropZone } from './SortCollectionsUtils';
+
+// ── Ordering reducer ────────────────────────────────────────────────────────
+
+const initTypeEntry = ( ids ) => ( {
+	masterOrder: ids,
+	originalMasterOrder: ids,
+	hasDragged: false,
+	proSettingsDirty: false,
+	loaded: true,
+} );
+
+const INITIAL_ORDER_STATE = { byType: {}, itemCache: {} };
+
+function ordersReducer( state, action ) {
+	switch ( action.type ) {
+		case 'INIT_TYPE':
+			return {
+				...state,
+				byType: { ...state.byType, [ action.typeKey ]: initTypeEntry( action.ids ) },
+			};
+
+		case 'UPDATE_MASTER_ORDER': {
+			const prev = state.byType[ action.typeKey ] || initTypeEntry( [] );
+			return {
+				...state,
+				byType: {
+					...state.byType,
+					[ action.typeKey ]: { ...prev, masterOrder: action.order, hasDragged: true },
+				},
+			};
+		}
+
+		case 'UNDO': {
+			const prev = state.byType[ action.typeKey ];
+			if ( ! prev ) return state;
+			return {
+				...state,
+				byType: {
+					...state.byType,
+					[ action.typeKey ]: {
+						...prev,
+						masterOrder: prev.originalMasterOrder,
+						hasDragged: false,
+					},
+				},
+			};
+		}
+
+		case 'MARK_SAVED': {
+			const prev = state.byType[ action.typeKey ];
+			if ( ! prev ) return state;
+			return {
+				...state,
+				byType: {
+					...state.byType,
+					[ action.typeKey ]: {
+						...prev,
+						masterOrder: action.savedOrder,
+						originalMasterOrder: action.savedOrder,
+						hasDragged: false,
+						proSettingsDirty: false,
+					},
+				},
+			};
+		}
+
+		case 'SET_SETTINGS_DIRTY': {
+			const prev = state.byType[ action.typeKey ];
+			if ( ! prev ) return state;
+			return {
+				...state,
+				byType: {
+					...state.byType,
+					[ action.typeKey ]: { ...prev, proSettingsDirty: action.dirty },
+				},
+			};
+		}
+
+		case 'CACHE_ITEMS':
+			return {
+				...state,
+				itemCache: {
+					...state.itemCache,
+					...Object.fromEntries( action.items.map( ( i ) => [ i.id, i ] ) ),
+				},
+			};
+
+		case 'RESET_ALL':
+			return INITIAL_ORDER_STATE;
+
+		default:
+			return state;
+	}
+}
+// ────────────────────────────────────────────────────────────────────────────
+
 const DEFAULT_ROWS_PER_PAGE = 25;
 const ROWS_PER_PAGE_OPTIONS = [ 25, 50, 100 ];
 
-function mergeOrderPreview( savedOrder, page, perPage, newIds ) {
-	const offset = page * perPage;
-	const before = savedOrder.slice( 0, offset );
-	const after = savedOrder.slice( offset + perPage );
-	const otherIds = [ ...before, ...after ];
-	const deduped = newIds.filter( ( id ) => ! otherIds.includes( id ) );
-
-	return [ ...before, ...deduped, ...after ];
-}
-
-function decodeHtmlEntities( str ) {
-	if ( ! str || typeof str !== 'string' ) {
-		return str;
-	}
-	const txt = document.createElement( 'textarea' );
-	txt.innerHTML = str;
-	return txt.value;
-}
-
-function PostOrderList( { items, orderedIds, objectKind, loading, onReorder, originalOrder } ) {
-	const { __ } = wp.i18n || {};
-	const [ dragIdx, setDragIdx ] = useState( null );
-	const [ dragOverIdx, setDragOverIdx ] = useState( null );
-
-	const handleDragStart = ( e, idx ) => {
-		setDragIdx( idx );
-		e.dataTransfer.effectAllowed = 'move';
-		e.dataTransfer.setData( 'application/json', JSON.stringify( { id: items[ idx ].id, idx } ) );
-	};
-
-	const handleDragOver = ( e, idx ) => {
-		e.preventDefault();
-		e.dataTransfer.dropEffect = 'move';
-		if ( idx !== dragOverIdx ) {
-			setDragOverIdx( idx );
-		}
-	};
-
-	const handleDrop = ( e, idx ) => {
-		e.preventDefault();
-		if ( dragIdx === null || dragIdx === idx ) {
-			setDragIdx( null );
-			setDragOverIdx( null );
-			return;
-		}
-
-		const next = [ ...items ];
-		const [ moved ] = next.splice( dragIdx, 1 );
-		next.splice( idx, 0, moved );
-		onReorder( next );
-		setDragIdx( null );
-		setDragOverIdx( null );
-	};
-
-	const handleDragEnd = () => {
-		setDragIdx( null );
-		setDragOverIdx( null );
-	};
-
-	if ( loading ) {
-		return (
-			<Stack alignItems="center" py={ 4 }>
-				<CircularProgress size={ 22 } />
-			</Stack>
-		);
-	}
-
-	if ( ! items.length ) {
-		return (
-			<Box sx={ { p: 3, textAlign: 'center', border: '1px solid', borderColor: 'divider', borderRadius: 1 } }>
-				<Typography variant="body2" color="text.secondary">
-					{ 'taxonomy' === objectKind
-						? __( 'No taxonomy terms found for this taxonomy.', 'rest-api-firewall' )
-						: __( 'No posts found for this post type.', 'rest-api-firewall' ) }
-				</Typography>
-			</Box>
-		);
-	}
-
-	return (
-		<Stack
-			spacing={ 0 }
-			sx={ { border: '1px solid', borderColor: 'divider', borderRadius: 1, overflow: 'hidden' } }
-		>
-			{ items.map( ( item, idx ) => {
-				const savedPos = orderedIds.indexOf( item.id );
-				const isOrdered = savedPos !== -1;
-				const origIdx = ( originalOrder || [] ).findIndex( ( o ) => o.id === item.id );
-				const hasMoved = origIdx !== -1 && origIdx !== idx;
-				const isDragging = dragIdx === idx;
-				const isOver = dragOverIdx === idx && dragIdx !== idx;
-				const secondaryMeta = 'taxonomy' === objectKind
-					? [
-						item.slug ? `${ __( 'Slug', 'rest-api-firewall' ) }: ${ item.slug }` : '',
-						Number.isInteger( item.count ) ? `${ item.count } ${ __( 'items', 'rest-api-firewall' ) }` : '',
-					]
-					: [
-						item.author_name,
-						item.date_created,
-						item.date_modified ? `${ __( 'Updated', 'rest-api-firewall' ) }: ${ item.date_modified }` : '',
-					];
-
-				return (
-					<Box
-						key={ item.id }
-						draggable
-						onDragStart={ ( e ) => handleDragStart( e, idx ) }
-						onDragOver={ ( e ) => handleDragOver( e, idx ) }
-						onDrop={ ( e ) => handleDrop( e, idx ) }
-						onDragEnd={ handleDragEnd }
-						sx={ {
-							display: 'flex',
-							alignItems: 'center',
-							gap: 1.5,
-							px: 2,
-							py: 0.875,
-							bgcolor: isDragging ? 'action.selected' : 'background.paper',
-							borderBottom: idx < items.length - 1 ? '1px solid' : 'none',
-							borderColor: 'divider',
-							borderTop: isOver ? '2px solid' : undefined,
-							borderTopColor: isOver ? 'primary.main' : undefined,
-							cursor: 'grab',
-							opacity: isDragging ? 0.45 : 1,
-							transition: 'background-color 0.1s',
-							'&:hover': { bgcolor: isDragging ? 'action.selected' : 'action.hover' },
-						} }
-					>
-						<DragIndicatorIcon sx={ { fontSize: 16, color: 'text.disabled', flexShrink: 0 } } />
-                        <Box sx={ { display: 'flex', alignItems: 'center', gap: 0.75, flexShrink: 0 } }>
-                            { isOrdered ? (
-                                <Chip label={ `${ savedPos + 1 }` } size="small" color="primary" />
-                            ) : (
-                                <Chip label={ `${ idx + 1 }` } size="small" />
-                            ) }
-                            { hasMoved && (
-                                <Typography variant="caption" color="text.secondary" sx={ { flexShrink: 0, lineHeight: 'normal' } }>
-                                    { __( 'was', 'rest-api-firewall' ) }<br/>{ origIdx + 1 }
-                                </Typography>
-                            ) }
-                        </Box>
-						<Stack spacing={ 0.375 } sx={ { flex: 1, minWidth: 0 } }>
-							<Typography
-								variant="body2"
-								sx={ { minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 } }
-							>
-							{ decodeHtmlEntities( item.label ) || `#${ item.id }` }
-							</Typography>
-							<Typography
-								variant="caption"
-								color="text.secondary"
-								sx={ { display: 'block', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }
-							>
-								{ secondaryMeta.filter( Boolean ).join( ' • ' ) || `#${ item.id }` }
-							</Typography>
-						</Stack>
-
-						<Stack direction="row" spacing={ 0.5 } alignItems="center" flexShrink={ 0 }>
-							{ 'post_type' === objectKind && item.status && item.status !== 'publish' && (
-								<Chip
-									label={ item.status }
-									size="small"
-									sx={ { fontSize: '0.65rem', height: 18, '& .MuiChip-label': { px: 0.75 } } }
-								/>
-							) }
-							{ 'taxonomy' === objectKind && Number.isInteger( item.count ) && (
-								<Chip
-									label={ `${ item.count }` }
-									size="small"
-									sx={ { fontSize: '0.65rem', height: 18, '& .MuiChip-label': { px: 0.75 } } }
-								/>
-							) }
-							
-						</Stack>
-					</Box>
-				);
-			} ) }
-		</Stack>
-	);
-}
-
-function PageDropZone( { direction, disabled, onDrop } ) {
-	const { __ } = wp.i18n || {};
-	const [ dragOver, setDragOver ] = useState( null );
-	const isPrev = direction === 'prev';
-
-	const handleZoneDragOver = ( e, zone ) => {
-		if ( disabled ) return;
-		e.preventDefault();
-		e.dataTransfer.dropEffect = 'move';
-		if ( dragOver !== zone ) setDragOver( zone );
-	};
-
-	const handleZoneDrop = ( e, zone ) => {
-		if ( disabled ) return;
-		e.preventDefault();
-		setDragOver( null );
-		try {
-			const raw = e.dataTransfer.getData( 'application/json' );
-			const data = raw ? JSON.parse( raw ) : {};
-			if ( data.id !== undefined ) {
-				onDrop( data.id, direction, zone === 'see' );
-			}
-		} catch {}
-	};
-
-	const handleContainerDragLeave = ( e ) => {
-		if ( ! e.currentTarget.contains( e.relatedTarget ) ) {
-			setDragOver( null );
-		}
-	};
-
-	const pageLabel = isPrev
-		? __( 'Prev. Page', 'rest-api-firewall' )
-		: __( 'Next Page', 'rest-api-firewall' );
-
-	const zoneLabel = ( zone ) =>
-		zone === 'drop'
-			? __( 'Drop', 'rest-api-firewall' )
-			: __( 'Drop & See', 'rest-api-firewall' );
-
-	const textSx = ( zone ) => ( {
-		fontSize: '14px',
-		lineHeight: 1.2,
-		color: dragOver === zone
-			? ( zone === 'drop' ? 'text.primary' : 'main.primary' )
-			: 'text.secondary',
-	} );
-
-	return (
-		<>
-		<Box sx={ { height: 20, position: 'absolute', top:'50%', left: 0, zIndex: 2 } }>
-				<Typography sx={ { ...textSx( 'drop' ),
-					textAlign: 'center',
-					textTransform: 'uppercase',
-					transform: 'rotate(-90deg)',
-					color: 'text.secondary',
-    				transform: 'translateX(-50px)',
-				 } }>{ pageLabel }</Typography>
-			</Box>
-		<Box
-			onDragLeave={ handleContainerDragLeave }
-			sx={ {
-				width: 50,
-				flexShrink: 0,
-				height: '70vh', 
-				position: 'sticky', 
-				top:'15vh',
-				display: 'flex',
-				flexDirection: 'column',
-				border: '1px dashed',
-				borderColor: 'divider',
-				borderRadius: 1,
-				overflow: 'hidden',
-				opacity: disabled ? 0.5 : 1,
-				pointerEvents: disabled ? 'none' : 'auto',
-				userSelect: 'none',
-			} }
-		>
-			
-				{ /* Top half: Drop (stay on page) */ }
-				<Box
-					onDragOver={ ( e ) => handleZoneDragOver( e, 'drop' ) }
-					onDrop={ ( e ) => handleZoneDrop( e, 'drop' ) }
-					sx={ {
-						height: '50%',
-						display: 'flex',
-						flexDirection: 'column',
-						alignItems: 'center',
-						justifyContent: 'center',
-						gap: 0.5,
-						px: 0.5,
-						py: 1,
-						borderBottom: '1px dashed',
-						borderBottomColor: 'divider',
-						bgcolor: dragOver === 'drop' ? 'primary.main' : 'action.hover',
-						transition: 'background-color 0.15s',
-					} }
-				>
-					<Typography sx={ textSx( 'drop' ) }>{ zoneLabel( 'drop' ) }</Typography>
-				</Box>
-				{ /* Bottom half: Drop & See (navigate to target page) */ }
-				<Box
-					onDragOver={ ( e ) => handleZoneDragOver( e, 'see' ) }
-					onDrop={ ( e ) => handleZoneDrop( e, 'see' ) }
-					sx={ {
-						height: '50%',
-						display: 'flex',
-						flexDirection: 'column',
-						alignItems: 'center',
-						justifyContent: 'center',
-						gap: 0.5,
-						px: 0.5,
-						py: 1,
-						bgcolor: dragOver === 'see' ? 'info.main' : 'background.paper',
-						transition: 'background-color 0.15s',
-					} }
-				>
-					<Typography sx={ textSx( 'see' ) }>{ zoneLabel( 'see' ) }</Typography>
-				</Box>
-		</Box>
-		</>
-	);
-}
-
-export default function Collections( { form: formProp, setField: setFieldProp, syncSavedField, postTypes } ) {
+export default function Collections( { form, setField, syncSavedField, postTypes } ) {
 	const { __, sprintf } = wp.i18n || {};
 	const { adminData } = useAdminData();
 	const { hasValidLicense, proNonce } = useLicense();
@@ -343,35 +134,46 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
 	const publicObjectTypes = objectTypes.filter( ( obj ) => obj.public );
 	const isPro = hasValidLicense && !! selectedApplicationId;
 
-	const form = formProp;
-	const setField = setFieldProp;
 	const { saving: savingOptions } = useSaveOptions();
 	const { save: saveProAction, saving: savingProOrder } = useProActions();
 
 	const [ selectedType, setSelectedType ] = useState( 'post' );
-	const [ items, setItems ] = useState( [] );
-	const [ localOrder, setLocalOrder ] = useState( [] );
-	const [ orderedItems, setOrderedItems ] = useState( [] );
-	const [ totalCount, setTotalCount ] = useState( 0 );
-	const [ page, setPage ] = useState( 0 );
-	const [ rowsPerPage, setRowsPerPage ] = useState( DEFAULT_ROWS_PER_PAGE );
+	const [ loadingIds, setLoadingIds ] = useState( false );
 	const [ loading, setLoading ] = useState( false );
 	const [ resetting, setResetting ] = useState( false );
 	const [ fetchError, setFetchError ] = useState( '' );
-	const [ hasDragged, setHasDragged ] = useState( false );
-	const [ originalOrder, setOriginalOrder ] = useState( [] );
-	const [ proSettingsDirty, setProSettingsDirty ] = useState( false );
+	const [ page, setPage ] = useState( 0 );
+	const [ rowsPerPage, setRowsPerPage ] = useState( DEFAULT_ROWS_PER_PAGE );
+
+	// ── Reducer for ordering state (persists across type switches) ──
+	const [ orderState, dispatch ] = useReducer( ordersReducer, INITIAL_ORDER_STATE );
+
+	// Ref mirrors of reducer state for use in async closures / effects
+	const itemCacheRef = useRef( {} );
+	useEffect( () => { itemCacheRef.current = orderState.itemCache; }, [ orderState.itemCache ] );
+	const byTypeRef = useRef( {} );
+	useEffect( () => { byTypeRef.current = orderState.byType; }, [ orderState.byType ] );
+
+	// Derived per-type ordering state
+	const typeState = orderState.byType[ selectedType ] || {
+		masterOrder: [],
+		originalMasterOrder: [],
+		hasDragged: false,
+		proSettingsDirty: false,
+		loaded: false,
+	};
+	const { masterOrder, originalMasterOrder, hasDragged, proSettingsDirty } = typeState;
 
 	const selectedObject = objectTypes.find( ( item ) => item.value === selectedType );
 	const objectKind = selectedObject?.type || 'post_type';
 	const objectLabel = selectedObject?.label || selectedType;
-	const savedOrder = ( form.rest_collection_orders || {} )[ selectedType ] || [];
-	const localIds = localOrder.map( ( item ) => item.id );
-	const isDirty = hasDragged;
-	const isLastPage = totalCount <= ( page + 1 ) * rowsPerPage;
-	const previewOrderIds = isDirty
-		? mergeOrderPreview( savedOrder, page, rowsPerPage, localIds )
-		: savedOrder;
+
+	const currentPageItems = masterOrder.slice( page * rowsPerPage, ( page + 1 ) * rowsPerPage ).map( ( id ) => orderState.itemCache[ id ] ).filter( Boolean );
+	const originalPageItems = originalMasterOrder
+		.slice( page * rowsPerPage, ( page + 1 ) * rowsPerPage )
+		.map( ( id ) => orderState.itemCache[ id ] )
+		.filter( Boolean );
+	const isLastPage = masterOrder.length <= ( page + 1 ) * rowsPerPage;
 
 	const formOrdersRef = useRef( form.rest_collection_orders );
 	useEffect( () => {
@@ -406,110 +208,145 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
 		} catch {}
 	}, [ isPro, selectedApplicationId, nonce, adminData.ajaxurl, syncSavedField ] );
 
-	const buildOrderingParams = useCallback( ( action, ids = null, nextPage = page ) => {
-		const params = {
-			action,
-			nonce,
-			object_key: selectedType,
-			object_kind: objectKind,
-			page: nextPage,
-			per_page: rowsPerPage,
-		};
-
-		if ( 'taxonomy' === objectKind ) {
-			params.taxonomy = selectedType;
-		} else {
-			params.post_type = selectedType;
-		}
-
-		if ( ids ) {
-			params.order = JSON.stringify( ids );
-		}
-
-		if ( isPro && selectedApplicationId ) {
-			params.application_id = selectedApplicationId;
-		}
-
-		return params;
-	}, [ nonce, objectKind, page, rowsPerPage, isPro, selectedApplicationId, selectedType ] );
-
-	const loadItems = useCallback( async ( type, kind, pg, perPage ) => {
+	// ── Fetch ALL IDs for the selected type → dispatch INIT_TYPE ──
+	const fetchAllIds = useCallback( async ( type, kind ) => {
 		if ( ! type ) {
 			return;
 		}
-
-		setLoading( true );
+		setLoadingIds( true );
 		setFetchError( '' );
-
 		try {
 			const params = {
-				action: 'get_collection_items',
+				action: isPro ? 'get_all_application_collection_ids' : 'get_all_collection_ids',
 				nonce,
 				object_key: type,
 				object_kind: kind,
-				page: pg,
-				per_page: perPage,
 			};
-
 			if ( 'taxonomy' === kind ) {
 				params.taxonomy = type;
 			} else {
 				params.post_type = type;
 			}
-
 			if ( isPro && selectedApplicationId ) {
 				params.application_id = selectedApplicationId;
 			}
-
 			const res = await fetch( adminData.ajaxurl, { method: 'POST', body: new URLSearchParams( params ) } );
 			const json = await res.json();
 			if ( json.success ) {
-				const fetchedItems = json.data.items || [];
-				setItems( fetchedItems );
-				setLocalOrder( fetchedItems );
-				setOriginalOrder( fetchedItems );
-				setOrderedItems( json.data.ordered_items || [] );
-				setTotalCount( json.data.total || 0 );
+				const ids = ( json.data.ids || [] ).map( Number );
+				dispatch( { type: 'INIT_TYPE', typeKey: type, ids } );
 			} else {
-				setFetchError( json.data?.message || __( 'Failed to load items', 'rest-api-firewall' ) );
+				setFetchError( json.data?.message || __( 'Failed to load', 'rest-api-firewall' ) );
 			}
 		} catch {
 			setFetchError( __( 'Network error', 'rest-api-firewall' ) );
 		} finally {
-			setLoading( false );
+			setLoadingIds( false );
 		}
-	}, [ isPro, selectedApplicationId, nonce, adminData.ajaxurl, __ ] );
+	}, [ isPro, selectedApplicationId, nonce, adminData.ajaxurl, __ ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
+	// ── Fetch item data for the current page (cache-miss IDs only) ──
+	useEffect( () => {
+		if ( ! masterOrder.length ) {
+			return;
+		}
+		const pageIds = masterOrder.slice( page * rowsPerPage, ( page + 1 ) * rowsPerPage );
+		const missingIds = pageIds.filter( ( id ) => ! itemCacheRef.current[ id ] );
+		if ( ! missingIds.length ) {
+			return;
+		}
+		let cancelled = false;
+		setLoading( true );
+		setFetchError( '' );
+		( async () => {
+			try {
+				const params = {
+					action: 'get_collection_items_by_ids',
+					nonce,
+					object_key: selectedType,
+					object_kind: objectKind,
+					ids: JSON.stringify( missingIds ),
+				};
+				if ( 'taxonomy' === objectKind ) {
+					params.taxonomy = selectedType;
+				} else {
+					params.post_type = selectedType;
+				}
+				const res = await fetch( adminData.ajaxurl, { method: 'POST', body: new URLSearchParams( params ) } );
+				const json = await res.json();
+				if ( ! cancelled ) {
+					if ( json.success ) {
+						dispatch( { type: 'CACHE_ITEMS', items: json.data.items || [] } );
+					} else {
+						setFetchError( json.data?.message || __( 'Failed to load items', 'rest-api-firewall' ) );
+					}
+				}
+			} catch {
+				if ( ! cancelled ) {
+					setFetchError( __( 'Network error', 'rest-api-firewall' ) );
+				}
+			} finally {
+				if ( ! cancelled ) {
+					setLoading( false );
+				}
+			}
+		} )();
+		return () => { cancelled = true; };
+	}, [ masterOrder, page, rowsPerPage ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	useEffect( () => {
 		loadOrders();
 	}, [ loadOrders ] );
 
+	// ── Load type IDs; preserve ordering state across type switches ──
+	// Reset ALL cached state only when the app/license context changes.
+	const contextKey = `${ isPro ? '1' : '0' }__${ selectedApplicationId || 'none' }`;
+	const prevContextKeyRef = useRef( null );
 	useEffect( () => {
-		if ( selectedType ) {
-			loadItems( selectedType, objectKind, page, rowsPerPage );
+		const contextChanged = prevContextKeyRef.current !== null && prevContextKeyRef.current !== contextKey;
+		prevContextKeyRef.current = contextKey;
+		if ( contextChanged ) {
+			dispatch( { type: 'RESET_ALL' } );
+			// Reset the mirrors immediately so the loaded-check below uses empty state
+			byTypeRef.current = {};
+			itemCacheRef.current = {};
 		}
-	}, [ selectedType, objectKind, page, rowsPerPage ] ); // eslint-disable-line react-hooks/exhaustive-deps
+		setPage( 0 );
+		if ( ! selectedType ) {
+			return;
+		}
+		// Skip fetch if this type's IDs are already loaded (type switch without context change)
+		if ( byTypeRef.current[ selectedType ]?.loaded && ! contextChanged ) {
+			return;
+		}
+		fetchAllIds( selectedType, objectKind );
+	}, [ selectedType, objectKind, contextKey ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
+	// ── Shared helper: sync rest_collection_orders form field ──
+	const syncOrderField = useCallback( ( order ) => {
+		const value = { ...( formOrdersRef.current || {} ), [ selectedType ]: order };
+		if ( ! isPro ) {
+			setField( { target: { name: 'rest_collection_orders', value, type: 'object' } } );
+		} else {
+			syncSavedField( 'rest_collection_orders', value );
+		}
+	}, [ isPro, selectedType, setField, syncSavedField ] );
+
+	const updateMasterOrder = useCallback( ( newOrder ) => {
+		dispatch( { type: 'UPDATE_MASTER_ORDER', typeKey: selectedType, order: newOrder } );
+		syncOrderField( newOrder );
+	}, [ selectedType, syncOrderField ] );
 
 	const handleTypeChange = ( e ) => {
 		setSelectedType( e.target.value );
-		setHasDragged( false );
-		setOriginalOrder( [] );
-		setProSettingsDirty( false );
-		setPage( 0 );
 	};
 
 	const handlePageChange = ( _, newPage ) => {
-		setHasDragged( false );
-		setOriginalOrder( [] );
-		setProSettingsDirty( false );
 		setPage( newPage );
 	};
 
 	const handleRowsPerPageChange = ( e ) => {
 		setRowsPerPage( parseInt( e.target.value, 10 ) || DEFAULT_ROWS_PER_PAGE );
-		setHasDragged( false );
-		setOriginalOrder( [] );
-		setProSettingsDirty( false );
 		setPage( 0 );
 	};
 
@@ -517,28 +354,32 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
 		if ( ! selectedType ) {
 			return;
 		}
-
 		setResetting( true );
-
 		try {
-			const params = buildOrderingParams(
-				isPro ? 'reset_application_collection_order' : 'reset_collection_order',
-				null,
-				0
-			);
+			const params = {
+				action: isPro ? 'reset_application_collection_order' : 'reset_collection_order',
+				nonce,
+				object_key: selectedType,
+				object_kind: objectKind,
+			};
+			if ( 'taxonomy' === objectKind ) {
+				params.taxonomy = selectedType;
+			} else {
+				params.post_type = selectedType;
+			}
+			if ( isPro && selectedApplicationId ) {
+				params.application_id = selectedApplicationId;
+			}
 			const res = await fetch( adminData.ajaxurl, { method: 'POST', body: new URLSearchParams( params ) } );
 			const json = await res.json();
-
 			if ( json.success ) {
 				setField( { target: {
 					name: 'rest_collection_orders',
 					value: { ...( formOrdersRef.current || {} ), [ selectedType ]: [] },
 					type: 'object',
 				} } );
-				setOrderedItems( [] );
-				setHasDragged( false );
 				setPage( 0 );
-				loadItems( selectedType, objectKind, 0, rowsPerPage );
+				await fetchAllIds( selectedType, objectKind );
 			}
 		} finally {
 			setResetting( false );
@@ -546,86 +387,68 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
 	};
 
 	const handleReorder = useCallback( ( newItems ) => {
-		setLocalOrder( newItems );
-		setHasDragged( true );
-		if ( ! isPro ) {
-			const newIds = newItems.map( ( i ) => i.id );
-			const currentSavedOrder = ( formOrdersRef.current || {} )[ selectedType ] || [];
-			const merged = mergeOrderPreview( currentSavedOrder, page, rowsPerPage, newIds );
-			setField( { target: {
-				name: 'rest_collection_orders',
-				value: { ...( formOrdersRef.current || {} ), [ selectedType ]: merged },
-				type: 'object',
-			} } );
-		}
-	}, [ selectedType, page, rowsPerPage, setField, isPro ] );
+		const pageIds = newItems.map( ( i ) => i.id );
+		const before = masterOrder.slice( 0, page * rowsPerPage );
+		const after = masterOrder.slice( ( page + 1 ) * rowsPerPage );
+		const newMasterOrder = [ ...before, ...pageIds, ...after ];
+		updateMasterOrder( newMasterOrder );
+	}, [ masterOrder, page, rowsPerPage, updateMasterOrder ] );
 
 	const handleCrossPageMove = useCallback( ( itemId, direction, navigate ) => {
-		const currentIdsWithoutItem = localOrder
-			.filter( ( i ) => i.id !== itemId )
-			.map( ( i ) => i.id );
-		const currentSavedOrder = ( formOrdersRef.current || {} )[ selectedType ] || [];
-		const base = mergeOrderPreview( currentSavedOrder, page, rowsPerPage, currentIdsWithoutItem );
-
-		let finalOrder;
+		const newOrder = masterOrder.filter( ( id ) => id !== itemId );
+		let insertIdx;
 		if ( direction === 'prev' ) {
-			// Insert as the last item of the previous page
-			const insertIdx = page * rowsPerPage - 1;
-			finalOrder = [ ...base.slice( 0, insertIdx ), itemId, ...base.slice( insertIdx ) ];
+			// Last slot of the previous page (clamped to 0)
+			insertIdx = Math.max( 0, page * rowsPerPage - 1 );
 		} else {
-			// Insert as the first item of the next page
-			const insertIdx = ( page + 1 ) * rowsPerPage;
-			finalOrder = [ ...base.slice( 0, insertIdx ), itemId, ...base.slice( insertIdx ) ];
+			// First slot of the next page (clamped to end)
+			insertIdx = Math.min( ( page + 1 ) * rowsPerPage, newOrder.length );
 		}
-
-		setHasDragged( true );
-		setLocalOrder( ( prev ) => prev.filter( ( i ) => i.id !== itemId ) );
-
-		if ( isPro ) {
-			syncSavedField( 'rest_collection_orders', { ...( formOrdersRef.current || {} ), [ selectedType ]: finalOrder } );
-		} else {
-			setField( { target: {
-				name: 'rest_collection_orders',
-				value: { ...( formOrdersRef.current || {} ), [ selectedType ]: finalOrder },
-				type: 'object',
-			} } );
-		}
-
+		const finalOrder = [ ...newOrder.slice( 0, insertIdx ), itemId, ...newOrder.slice( insertIdx ) ];
+		updateMasterOrder( finalOrder );
 		if ( navigate ) {
 			setPage( direction === 'prev' ? page - 1 : page + 1 );
 		}
-	}, [ localOrder, selectedType, page, rowsPerPage, isPro, setField, syncSavedField ] );
+	}, [ masterOrder, page, rowsPerPage, updateMasterOrder ] );
 
 	const handleSavePro = useCallback( () => {
-		const newIds = localOrder.map( ( i ) => i.id );
-		const currentSavedOrder = ( formOrdersRef.current || {} )[ selectedType ] || [];
-		const merged = mergeOrderPreview( currentSavedOrder, page, rowsPerPage, newIds );
 		const currentPerPageSettings = ( form.rest_collection_per_page_settings || {} )[ selectedType ] || {};
-		saveProAction(
-			buildOrderingParams( 'save_application_collection_order', newIds ),
-			{
-				confirmTitle:   sprintf( __( 'Save %s Settings', 'rest-api-firewall' ), objectLabel ),
-				confirmMessage: sprintf( __( 'Save order and per-page settings for %s?', 'rest-api-firewall' ), objectLabel ),
-				successTitle:   __( 'Settings Saved', 'rest-api-firewall' ),
-				successMessage: sprintf( __( '%s settings saved successfully.', 'rest-api-firewall' ), objectLabel ),
-				onSuccess: ( data ) => {
-					syncSavedField( 'rest_collection_orders', { ...( formOrdersRef.current || {} ), [ selectedType ]: data?.order || merged } );
-					setHasDragged( false );
-					setOriginalOrder( [ ...localOrder ] );
-					const params = new URLSearchParams( {
-						action: 'save_application_collection_per_page_setting',
-						nonce,
-						application_id: selectedApplicationId,
-						object_key: selectedType,
-						settings: JSON.stringify( currentPerPageSettings ),
-					} );
-					fetch( adminData.ajaxurl, { method: 'POST', body: params } )
-						.then( () => setProSettingsDirty( false ) )
-						.catch( () => {} );
-				},
-			}
-		);
-	}, [ saveProAction, localOrder, selectedType, page, rowsPerPage, buildOrderingParams, objectLabel, __, sprintf, syncSavedField, form.rest_collection_per_page_settings, nonce, selectedApplicationId, adminData.ajaxurl ] );
+		const params = {
+			action: 'save_application_collection_order',
+			nonce,
+			object_key: selectedType,
+			object_kind: objectKind,
+			order: JSON.stringify( masterOrder ),
+			full_order: '1',
+			application_id: selectedApplicationId,
+		};
+		if ( 'taxonomy' === objectKind ) {
+			params.taxonomy = selectedType;
+		} else {
+			params.post_type = selectedType;
+		}
+		saveProAction( params, {
+			confirmTitle:   sprintf( __( 'Save %s Settings', 'rest-api-firewall' ), objectLabel ),
+			confirmMessage: sprintf( __( 'Save order and per-page settings for %s?', 'rest-api-firewall' ), objectLabel ),
+			successTitle:   __( 'Settings Saved', 'rest-api-firewall' ),
+			successMessage: sprintf( __( '%s settings saved successfully.', 'rest-api-firewall' ), objectLabel ),
+			onSuccess: ( data ) => {
+				const savedOrder = data?.order || masterOrder;
+				syncSavedField( 'rest_collection_orders', { ...( formOrdersRef.current || {} ), [ selectedType ]: savedOrder } );
+				dispatch( { type: 'MARK_SAVED', typeKey: selectedType, savedOrder } );
+				const perPageParams = new URLSearchParams( {
+					action: 'save_application_collection_per_page_setting',
+					nonce,
+					application_id: selectedApplicationId,
+					object_key: selectedType,
+					settings: JSON.stringify( currentPerPageSettings ),
+				} );
+				fetch( adminData.ajaxurl, { method: 'POST', body: perPageParams } )
+					.then( () => dispatch( { type: 'SET_SETTINGS_DIRTY', typeKey: selectedType, dirty: false } ) )
+					.catch( () => {} );
+			},
+		} );
+	}, [ saveProAction, masterOrder, selectedType, objectKind, objectLabel, __, sprintf, syncSavedField, form.rest_collection_per_page_settings, nonce, selectedApplicationId, adminData.ajaxurl ] );
 
 	const handlePerPageSettingChange = ( field, value ) => {
 		const currentTypeSettings = ( form.rest_collection_per_page_settings || {} )[ selectedType ] || {};
@@ -634,23 +457,16 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
 			...( form.rest_collection_per_page_settings || {} ),
 			[ selectedType ]: newTypeSettings,
 		};
-
 		if ( isPro ) {
 			syncSavedField( 'rest_collection_per_page_settings', updated );
-			setProSettingsDirty( true );
+			dispatch( { type: 'SET_SETTINGS_DIRTY', typeKey: selectedType, dirty: true } );
 		} else {
-			setField( {
-				target: {
-					name: 'rest_collection_per_page_settings',
-					value: updated,
-					type: 'object',
-				},
-			} );
+			setField( { target: {
+				name: 'rest_collection_per_page_settings',
+				value: updated,
+				type: 'object',
+			} } );
 		}
-	};
-
-	const handleEnforceOrderChange = ( checked ) => {
-		handlePerPageSettingChange( 'enforce_order', checked );
 	};
 
 
@@ -722,7 +538,7 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
                                     control={
                                         <Switch
                                             checked={ !! ( form.rest_collection_per_page_settings?.[ selectedType ]?.enforce_order ) }
-                                            onChange={ ( e ) => handleEnforceOrderChange( e.target.checked ) }
+                                            onChange={ ( e ) => handlePerPageSettingChange( 'enforce_order', e.target.checked ) }
                                             size="small"
                                         />
                                     }
@@ -741,8 +557,11 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
                                     size="small"
                                     variant="text"
 									startIcon={ <UndoIcon /> }
-                                    disabled={ ! hasDragged || ! originalOrder.length }
-                                    onClick={ () => { setLocalOrder( originalOrder ); setHasDragged( false ); } }
+                                    disabled={ ! hasDragged || ! originalPageItems.length }
+                                    onClick={ () => {
+										dispatch( { type: 'UNDO', typeKey: selectedType } );
+										syncOrderField( originalMasterOrder );
+									} }
                                     sx={ { textTransform: 'none' } }
                                 >
                                     { __( 'Undo', 'rest-api-firewall' ) }
@@ -756,7 +575,7 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
                                     variant="text"
 									color="error"
                                     startIcon={ <SettingsBackupRestoreIcon /> }
-                                    disabled={ ( ! originalOrder.length ) || loading || resetting || savingOptions }
+                                    disabled={ ( ! originalPageItems.length ) || loading || loadingIds || resetting || savingOptions }
                                     onClick={ handleReset }
                                     sx={ { textTransform: 'none' } }
                                 >
@@ -775,16 +594,16 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
 
                                 <Box sx={ { flex: 1, minWidth: 0 } }>
                                     <PostOrderList
-                                        items={ localOrder }
-                                        orderedIds={ previewOrderIds }
+                                        items={ currentPageItems }
+                                        orderedIds={ masterOrder }
                                         objectKind={ objectKind }
-                                        loading={ loading }
+                                        loading={ loading || loadingIds }
                                         onReorder={ handleReorder }
-                                        originalOrder={ originalOrder }
+                                        originalOrder={ originalPageItems }
                                     />
                                     <TablePagination
                                         component="div"
-                                        count={ totalCount }
+                                        count={ masterOrder.length }
                                         page={ page }
                                         onPageChange={ handlePageChange }
                                         onRowsPerPageChange={ handleRowsPerPageChange }

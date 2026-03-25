@@ -22,6 +22,8 @@ class CollectionOrderController {
 		add_action( 'wp_ajax_get_collection_posts', array( $this, 'ajax_get_posts' ) );
 		add_action( 'wp_ajax_save_collection_order', array( $this, 'ajax_save_order' ) );
 		add_action( 'wp_ajax_reset_collection_order', array( $this, 'ajax_reset_order' ) );
+		add_action( 'wp_ajax_get_all_collection_ids', array( $this, 'ajax_get_all_collection_ids' ) );
+		add_action( 'wp_ajax_get_collection_items_by_ids', array( $this, 'ajax_get_collection_items_by_ids' ) );
 	}
 
 	protected function get_stored_orders(): array {
@@ -166,6 +168,151 @@ class CollectionOrderController {
 		}
 
 		return array_map( 'absint', array_filter( $ids, 'is_numeric' ) );
+	}
+
+	public function ajax_get_all_collection_ids(): void {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
+			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
+		}
+
+		$object = $this->get_requested_object();
+		if ( isset( $object['message'] ) ) {
+			wp_send_json_error( array( 'message' => $object['message'] ), 400 );
+		}
+
+		$app_id      = $this->get_requested_application_id();
+		$saved_order = $this->get_saved_order( $object['key'], $app_id );
+
+		if ( 'taxonomy' === $object['kind'] ) {
+			$all_ids = $this->get_all_term_ids( $object['key'] );
+		} else {
+			$all_ids = $this->get_all_post_ids( $object['key'] );
+		}
+
+		$unordered = array_values( array_filter( $all_ids, static fn( $id ) => ! in_array( $id, $saved_order, true ) ) );
+		$merged    = array_merge( $saved_order, $unordered );
+
+		wp_send_json_success( array( 'ids' => $merged, 'total' => count( $merged ) ) );
+	}
+
+	public function ajax_get_collection_items_by_ids(): void {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
+			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
+		}
+
+		$object = $this->get_requested_object();
+		if ( isset( $object['message'] ) ) {
+			wp_send_json_error( array( 'message' => $object['message'] ), 400 );
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above
+		$raw = isset( $_POST['ids'] ) ? sanitize_text_field( wp_unslash( $_POST['ids'] ) ) : '[]';
+		$ids = self::sanitize_order_ids( (array) json_decode( $raw, true ) );
+
+		if ( empty( $ids ) ) {
+			wp_send_json_success( array( 'items' => array() ) );
+		}
+
+		if ( 'taxonomy' === $object['kind'] ) {
+			$items = $this->get_items_by_term_ids( $object['key'], $ids );
+		} else {
+			$items = $this->get_items_by_post_ids( $object['key'], $ids );
+		}
+
+		wp_send_json_success( array( 'items' => $items ) );
+	}
+
+	private function get_all_post_ids( string $post_type ): array {
+		$query = new \WP_Query(
+			array(
+				'post_type'      => $post_type,
+				'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future' ),
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				'orderby'        => 'date',
+				'order'          => 'DESC',
+			)
+		);
+		return array_map( 'intval', $query->posts );
+	}
+
+	private function get_all_term_ids( string $taxonomy ): array {
+		$terms = get_terms(
+			array(
+				'taxonomy'   => $taxonomy,
+				'hide_empty' => false,
+				'fields'     => 'ids',
+			)
+		);
+		return is_wp_error( $terms ) ? array() : array_map( 'intval', $terms );
+	}
+
+	private function get_items_by_post_ids( string $post_type, array $ids ): array {
+		$query = new \WP_Query(
+			array(
+				'post_type'      => $post_type,
+				'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future' ),
+				'posts_per_page' => count( $ids ),
+				'post__in'       => $ids,
+				'orderby'        => 'post__in',
+				'no_found_rows'  => true,
+			)
+		);
+		return array_map(
+			function ( $post ) {
+				$author        = get_userdata( (int) $post->post_author );
+				$post_type_obj = get_post_type_object( $post->post_type );
+				$taxonomies    = array();
+				if ( $post_type_obj && ! empty( $post_type_obj->taxonomies ) ) {
+					foreach ( $post_type_obj->taxonomies as $tax ) {
+						$terms = wp_get_object_terms( $post->ID, $tax, array( 'fields' => 'names' ) );
+						if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+							$taxonomies[ $tax ] = $terms;
+						}
+					}
+				}
+				return array(
+					'id'            => $post->ID,
+					'kind'          => 'post_type',
+					'label'         => get_the_title( $post ) ?: '#' . $post->ID,
+					'status'        => $post->post_status,
+					'author_name'   => $author ? $author->display_name : '',
+					'date_created'  => get_the_date( '', $post ),
+					'date_modified' => get_the_modified_date( '', $post ),
+					'position'      => null,
+					'taxonomies'    => $taxonomies,
+				);
+			},
+			$query->posts
+		);
+	}
+
+	private function get_items_by_term_ids( string $taxonomy, array $ids ): array {
+		$terms = get_terms(
+			array(
+				'taxonomy'   => $taxonomy,
+				'hide_empty' => false,
+				'include'    => $ids,
+				'orderby'    => 'include',
+			)
+		);
+		if ( is_wp_error( $terms ) ) {
+			return array();
+		}
+		return array_map(
+			static function ( $term ) {
+				return array(
+					'id'       => $term->term_id,
+					'kind'     => 'taxonomy',
+					'label'    => $term->name ?: '#' . $term->term_id,
+					'slug'     => $term->slug,
+					'count'    => (int) $term->count,
+					'position' => null,
+				);
+			},
+			$terms
+		);
 	}
 
 	private function merge_page_order( string $object_key, int $page, int $per_page, array $new_ids ): array {

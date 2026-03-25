@@ -311,7 +311,8 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 
 					<Stack flex={ 1 } />
 
-					<Stack direction="row" alignItems="center" gap={ 1 }>
+
+					{hasValidLicense && <Stack direction="row" alignItems="center" gap={ 1 }>
 						{ customCount > 0 && (
 							<Chip
 								label={ sprintf( __( '%d per-route settings', 'rest-api-firewall' ), customCount ) }
@@ -340,7 +341,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 								? __( 'Saving…', 'rest-api-firewall' )
 								: __( 'Save', 'rest-api-firewall' ) }
 						</Button>
-					</Stack>
+					</Stack>}
 				</Toolbar>
 
 				<RichTreeView

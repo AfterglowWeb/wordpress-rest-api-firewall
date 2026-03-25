@@ -204,7 +204,7 @@ export default function GlobalRoutesPolicy( { form, setField, proSettings, onPro
 							{ HTTP_METHODS.map( ( method ) => (
 								<FormControlLabel
 									key={ method }
-								disabled={ ! hasValidLicense || ! isModuleEnabled }
+									disabled={ ! hasValidLicense || ! isModuleEnabled }
 									control={
 										<Switch
 											size="small"
@@ -216,14 +216,7 @@ export default function GlobalRoutesPolicy( { form, setField, proSettings, onPro
 											) }
 										/>
 									}
-									label={
-										<Typography
-											variant="body2"
-											sx={ { fontFamily: 'monospace', fontWeight: 600 } }
-										>
-											{ method.toUpperCase() }
-										</Typography>
-									}
+									label={ method.toUpperCase() }
 									sx={ {
 										m: 0,
 										px: 1.5,
