@@ -7,7 +7,9 @@ function castValue( type, value ) {
 		case 'integer':
 			return Number( value ) || 0;
 		case 'array':
-			return Array.isArray( value ) ? value : [];
+			if ( Array.isArray( value ) ) return value;
+			if ( value !== null && value !== undefined && typeof value === 'object' ) return value;
+			return [];
 		default:
 			return value ?? '';
 	}
@@ -116,5 +118,12 @@ export default function useSettingsForm( { adminData } ) {
 		[ form, savedForm, optionsByGroup ]
 	);
 
-	return { form, setField, setSlider, optionsByGroup, pickGroup, isGroupDirty };
+	// Updates both form and savedForm simultaneously (for server-loaded data that should
+	// not trigger a dirty state).
+	const syncSavedField = useCallback( ( name, value ) => {
+		setForm( ( prev ) => ( { ...prev, [ name ]: value } ) );
+		setSavedForm( ( prev ) => ( { ...prev, [ name ]: value } ) );
+	}, [] );
+
+	return { form, setField, setSlider, syncSavedField, optionsByGroup, pickGroup, isGroupDirty };
 }

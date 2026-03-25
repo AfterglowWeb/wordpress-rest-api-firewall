@@ -141,7 +141,7 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
 				<Tab
 					icon={ <AccountTreeOutlinedIcon /> }
 					iconPosition="start"
-					label={ __( 'Global Options', 'rest-api-firewall' ) }
+					label={ __( 'Global Settings', 'rest-api-firewall' ) }
 				/>
 				<Tab
 					icon={ <FormatListBulletedIcon /> }

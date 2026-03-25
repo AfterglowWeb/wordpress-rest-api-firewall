@@ -123,8 +123,7 @@ export default function EntryToolbar( {
                             <Typography
                                 variant="h6"
                                 fontWeight={ 600 }
-                                color={ isNew ? 'text.secondary' : 'text.primary' }
-                                sx={ { lineHeight: 'normal' } }
+                                color={ title ? 'text.primary' : 'text.secondary' }
                             >
                                 { title || ( isNew ? newEntryLabel : '...' ) }
                             </Typography>
