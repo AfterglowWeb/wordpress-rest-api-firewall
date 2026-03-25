@@ -75,7 +75,7 @@ function AppContent() {
 	);
 	const [ migrationDone, setMigrationDone ] = useState( false );
 
-	const { form, setField, setSlider, pickGroup, isGroupDirty } = useSettingsForm( {
+	const { form, setField, setSlider, syncSavedField, pickGroup, isGroupDirty } = useSettingsForm( {
 		adminData,
 	} );
 
@@ -169,7 +169,6 @@ function AppContent() {
 		'per-route-settings': 'firewall_routes_policy',
 		'collections':        'collections',
 		'models-properties':  'models_properties',
-		'settings-route':     'settings_route',
 		'webhook':            'webhook',
 		'theme':              'theme',
 		'global_security':    'global_security',
@@ -177,6 +176,7 @@ function AppContent() {
 	if ( hasValidLicense ) {
 		delete PANEL_SAVE_GROUP[ 'user-rate-limiting' ];
 		delete PANEL_SAVE_GROUP[ 'per-route-settings' ];
+		delete PANEL_SAVE_GROUP[ 'collections' ];
 		delete PANEL_SAVE_GROUP[ 'models-properties' ];
 		delete PANEL_SAVE_GROUP[ 'webhook' ];
 	}
@@ -284,6 +284,7 @@ function AppContent() {
 						<Collections
 							form={ form }
 							setField={ setField }
+							syncSavedField={ syncSavedField }
 							postTypes={ postTypes }
 						/>
 					) }
@@ -298,13 +299,6 @@ function AppContent() {
 								postTypes={ postTypes }
 							/>
 					) ) }
-
-					{ panel === 'settings-route' && (
-						<SettingsRoute
-							form={ form }
-							setField={ setField }
-						/>
-					) }
 
 					{ panel === 'webhook' &&
 						( hasValidLicense ? (

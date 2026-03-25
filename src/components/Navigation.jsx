@@ -85,7 +85,6 @@ export default function Navigation( {
 		'global-ip-filtering': { module: 'global_ip_filter', optionKey: null,                               label: __( 'Active', 'rest-api-firewall' ) },
 		'collections':         { module: 'collections',     optionKey: 'rest_collections_enabled',          label: __( 'Active', 'rest-api-firewall' ) },
 		'models-properties':   { module: 'models',          optionKey: 'rest_models_enabled',               label: __( 'Active', 'rest-api-firewall' ) },
-		'settings-route':      { module: 'settings_route',  optionKey: 'rest_settings_route_enabled',       label: __( 'Active', 'rest-api-firewall' ) },
 		'webhook':             { module: 'webhooks',         optionKey: 'webhooks_enabled',                  label: __( 'Active', 'rest-api-firewall' ) },
 		'emails':              { module: 'mails',            optionKey: 'mails_enabled',                     label: __( 'Active', 'rest-api-firewall' ) },
 		'automations':         { module: 'automations',      optionKey: 'automations_enabled',               label: __( 'Active', 'rest-api-firewall' ) },
@@ -163,9 +162,7 @@ export default function Navigation( {
 		{ type: 'app-selector' },
 		{
 			type: 'section',
-			label: __( 'REST API Firewall', 'rest-api-firewall' ),
-			breadcrumbPrefix: '',
-			icon:'',
+			label: '',
 		},
 		{
 			key: 'user-rate-limiting',
@@ -174,23 +171,25 @@ export default function Navigation( {
 				: __( 'Auth. & Rate Limit', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'REST API Firewall',
 			icon: SecurityOutlined,
+			pl:5,
 		},
 		{
 			key: 'per-route-settings',
 			label: __( 'Routes', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'REST API Firewall',
 			icon: AccountTreeOutlinedIcon,
+			pl:5,
 		},
 		{
 			key: 'ip-filtering',
 			label: __( 'IP Filtering', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'REST API Firewall',
 			icon: VpnLockOutlinedIcon,
+			pl:5,
 		},
-
 		{
 			type: 'section',
-			label: __( 'REST API Output', 'rest-api-firewall' ),
+			label: '',
 		},
 		{
 			key: 'collections',
@@ -198,6 +197,7 @@ export default function Navigation( {
 			secondary: 'wp/v2/posts/*',
 			breadcrumbPrefix: 'REST API Output',
 			icon: ApiIcon,
+			pl:5,
 		},
 		{
 			key: 'models-properties',
@@ -205,22 +205,16 @@ export default function Navigation( {
 			secondary: 'wp/v2/posts/*',
 			breadcrumbPrefix: 'REST API Output',
 			icon: RuleOutlinedIcon,
+			pl:5,
 		},
-		{
-			key: 'settings-route',
-			label: __( 'Settings Route', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'REST API Output',
-			secondary: 'wp/v2/settings',
-			icon: BusinessOutlinedIcon,
-		},
-
-		{ type: 'section', label: __( 'Integrations', 'rest-api-firewall' ) },
+		{ type: 'section', label: ''},
 		{
 			key: 'automations',
 			label: __( 'Automations', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Integrations',
 			icon: AutoFixHighOutlinedIcon,
 			disabled: ! hasValidLicense,
+			pl:5,
 		},
 		{
 			key: 'webhook',
@@ -229,6 +223,7 @@ export default function Navigation( {
 				: __( 'Webhook', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Integrations',
 			icon: WebhookIcon,
+			pl:5,
 		},
 		{
 			key: 'emails',
@@ -236,6 +231,7 @@ export default function Navigation( {
 			breadcrumbPrefix: 'Integrations',
 			icon: EmailOutlined,
 			disabled: ! hasValidLicense,
+			pl:5,
 		},
 
 		{ type: 'section', label: __( '', 'rest-api-firewall' ) },
@@ -388,10 +384,10 @@ export default function Navigation( {
 									<ListItemButton
 										selected={ panel === item.key }
 										sx={ {
-											px: 3,
-											backgroundColor: !! item.disabled ? 'grey.100' : '',
+											pl: item.pl ? item.pl : 3,
+											pr: 3
 										} }
-										disabled={ panel === item.key || !! item.disabled }
+										disabled={ !! item.disabled }
 										onClick={ () => {
 											if ( item.action ) {
 												item.action();
@@ -406,9 +402,6 @@ export default function Navigation( {
 												sx={ {
 													px: 1,
 													minWidth: 32,
-													color: !! item.disabled
-														? 'primary.main'
-														: 'text.secondary',
 												} }
 											>
 												<Badge
@@ -416,7 +409,7 @@ export default function Navigation( {
 													variant="dot"
 													invisible={ ! item.badge }
 												>
-													<Icon fontSize="small" />
+													<Icon color={ panel === item.key || !! item.disabled ? 'primary' : ''} fontSize="small" />
 												</Badge>
 											</ListItemIcon>
 										) }
@@ -426,6 +419,7 @@ export default function Navigation( {
 												'& .MuiListItemText-primary': {
 													fontSize: '0.9rem',
 													lineHeight: 'normal',
+													color: panel === item.key || !! item.disabled ? 'primary.main' : 'text.primary'
 												},
 											} }
 											primary={ item.label }
