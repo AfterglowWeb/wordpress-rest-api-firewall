@@ -20,10 +20,13 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import UndoIcon from '@mui/icons-material/Undo';
+import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
 
 import ObjectTypeSelect from '../ObjectTypeSelect';
+import Tooltip from '@mui/material/Tooltip';
 
-const DEFAULT_ROWS_PER_PAGE = 50;
+const DEFAULT_ROWS_PER_PAGE = 25;
 const ROWS_PER_PAGE_OPTIONS = [ 25, 50, 100 ];
 
 function mergeOrderPreview( savedOrder, page, perPage, newIds ) {
@@ -53,6 +56,7 @@ function PostOrderList( { items, orderedIds, objectKind, loading, onReorder, ori
 	const handleDragStart = ( e, idx ) => {
 		setDragIdx( idx );
 		e.dataTransfer.effectAllowed = 'move';
+		e.dataTransfer.setData( 'application/json', JSON.stringify( { id: items[ idx ].id, idx } ) );
 	};
 
 	const handleDragOver = ( e, idx ) => {
@@ -205,6 +209,130 @@ function PostOrderList( { items, orderedIds, objectKind, loading, onReorder, ori
 	);
 }
 
+function PageDropZone( { direction, disabled, onDrop } ) {
+	const { __ } = wp.i18n || {};
+	const [ dragOver, setDragOver ] = useState( null );
+	const isPrev = direction === 'prev';
+
+	const handleZoneDragOver = ( e, zone ) => {
+		if ( disabled ) return;
+		e.preventDefault();
+		e.dataTransfer.dropEffect = 'move';
+		if ( dragOver !== zone ) setDragOver( zone );
+	};
+
+	const handleZoneDrop = ( e, zone ) => {
+		if ( disabled ) return;
+		e.preventDefault();
+		setDragOver( null );
+		try {
+			const raw = e.dataTransfer.getData( 'application/json' );
+			const data = raw ? JSON.parse( raw ) : {};
+			if ( data.id !== undefined ) {
+				onDrop( data.id, direction, zone === 'see' );
+			}
+		} catch {}
+	};
+
+	const handleContainerDragLeave = ( e ) => {
+		if ( ! e.currentTarget.contains( e.relatedTarget ) ) {
+			setDragOver( null );
+		}
+	};
+
+	const pageLabel = isPrev
+		? __( 'Prev. Page', 'rest-api-firewall' )
+		: __( 'Next Page', 'rest-api-firewall' );
+
+	const zoneLabel = ( zone ) =>
+		zone === 'drop'
+			? __( 'Drop', 'rest-api-firewall' )
+			: __( 'Drop & See', 'rest-api-firewall' );
+
+	const textSx = ( zone ) => ( {
+		fontSize: '14px',
+		lineHeight: 1.2,
+		color: dragOver === zone
+			? ( zone === 'drop' ? 'text.primary' : 'main.primary' )
+			: 'text.secondary',
+	} );
+
+	return (
+		<>
+		<Box sx={ { height: 20, position: 'absolute', top:'50%', left: 0, zIndex: 2 } }>
+				<Typography sx={ { ...textSx( 'drop' ),
+					textAlign: 'center',
+					textTransform: 'uppercase',
+					transform: 'rotate(-90deg)',
+					color: 'text.secondary',
+    				transform: 'translateX(-50px)',
+				 } }>{ pageLabel }</Typography>
+			</Box>
+		<Box
+			onDragLeave={ handleContainerDragLeave }
+			sx={ {
+				width: 50,
+				flexShrink: 0,
+				height: '70vh', 
+				position: 'sticky', 
+				top:'15vh',
+				display: 'flex',
+				flexDirection: 'column',
+				border: '1px dashed',
+				borderColor: 'divider',
+				borderRadius: 1,
+				overflow: 'hidden',
+				opacity: disabled ? 0.5 : 1,
+				pointerEvents: disabled ? 'none' : 'auto',
+				userSelect: 'none',
+			} }
+		>
+			
+				{ /* Top half: Drop (stay on page) */ }
+				<Box
+					onDragOver={ ( e ) => handleZoneDragOver( e, 'drop' ) }
+					onDrop={ ( e ) => handleZoneDrop( e, 'drop' ) }
+					sx={ {
+						height: '50%',
+						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'center',
+						justifyContent: 'center',
+						gap: 0.5,
+						px: 0.5,
+						py: 1,
+						borderBottom: '1px dashed',
+						borderBottomColor: 'divider',
+						bgcolor: dragOver === 'drop' ? 'primary.main' : 'action.hover',
+						transition: 'background-color 0.15s',
+					} }
+				>
+					<Typography sx={ textSx( 'drop' ) }>{ zoneLabel( 'drop' ) }</Typography>
+				</Box>
+				{ /* Bottom half: Drop & See (navigate to target page) */ }
+				<Box
+					onDragOver={ ( e ) => handleZoneDragOver( e, 'see' ) }
+					onDrop={ ( e ) => handleZoneDrop( e, 'see' ) }
+					sx={ {
+						height: '50%',
+						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'center',
+						justifyContent: 'center',
+						gap: 0.5,
+						px: 0.5,
+						py: 1,
+						bgcolor: dragOver === 'see' ? 'info.main' : 'background.paper',
+						transition: 'background-color 0.15s',
+					} }
+				>
+					<Typography sx={ textSx( 'see' ) }>{ zoneLabel( 'see' ) }</Typography>
+				</Box>
+		</Box>
+		</>
+	);
+}
+
 export default function Collections( { form: formProp, setField: setFieldProp, syncSavedField, postTypes } ) {
 	const { __, sprintf } = wp.i18n || {};
 	const { adminData } = useAdminData();
@@ -240,6 +368,7 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
 	const savedOrder = ( form.rest_collection_orders || {} )[ selectedType ] || [];
 	const localIds = localOrder.map( ( item ) => item.id );
 	const isDirty = hasDragged;
+	const isLastPage = totalCount <= ( page + 1 ) * rowsPerPage;
 	const previewOrderIds = isDirty
 		? mergeOrderPreview( savedOrder, page, rowsPerPage, localIds )
 		: savedOrder;
@@ -431,6 +560,42 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
 		}
 	}, [ selectedType, page, rowsPerPage, setField, isPro ] );
 
+	const handleCrossPageMove = useCallback( ( itemId, direction, navigate ) => {
+		const currentIdsWithoutItem = localOrder
+			.filter( ( i ) => i.id !== itemId )
+			.map( ( i ) => i.id );
+		const currentSavedOrder = ( formOrdersRef.current || {} )[ selectedType ] || [];
+		const base = mergeOrderPreview( currentSavedOrder, page, rowsPerPage, currentIdsWithoutItem );
+
+		let finalOrder;
+		if ( direction === 'prev' ) {
+			// Insert as the last item of the previous page
+			const insertIdx = page * rowsPerPage - 1;
+			finalOrder = [ ...base.slice( 0, insertIdx ), itemId, ...base.slice( insertIdx ) ];
+		} else {
+			// Insert as the first item of the next page
+			const insertIdx = ( page + 1 ) * rowsPerPage;
+			finalOrder = [ ...base.slice( 0, insertIdx ), itemId, ...base.slice( insertIdx ) ];
+		}
+
+		setHasDragged( true );
+		setLocalOrder( ( prev ) => prev.filter( ( i ) => i.id !== itemId ) );
+
+		if ( isPro ) {
+			syncSavedField( 'rest_collection_orders', { ...( formOrdersRef.current || {} ), [ selectedType ]: finalOrder } );
+		} else {
+			setField( { target: {
+				name: 'rest_collection_orders',
+				value: { ...( formOrdersRef.current || {} ), [ selectedType ]: finalOrder },
+				type: 'object',
+			} } );
+		}
+
+		if ( navigate ) {
+			setPage( direction === 'prev' ? page - 1 : page + 1 );
+		}
+	}, [ localOrder, selectedType, page, rowsPerPage, isPro, setField, syncSavedField ] );
+
 	const handleSavePro = useCallback( () => {
 		const newIds = localOrder.map( ( i ) => i.id );
 		const currentSavedOrder = ( formOrdersRef.current || {} )[ selectedType ] || [];
@@ -569,48 +734,72 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
                                 </FormHelperText>
                             </FormControl>
 
-                            <Stack direction="row" alignItems="center" flexWrap="wrap" gap={ 1 }>
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    disabled={ ( ! savedOrder.length && ! isDirty ) || loading || resetting || savingOptions }
-                                    onClick={ handleReset }
-                                    sx={ { textTransform: 'none' } }
-                                >
-                                    { resetting ? __( 'Resetting…', 'rest-api-firewall' ) : sprintf( __( 'Reset %s Items Order', 'rest-api-firewall' ), objectLabel ) }
-                                </Button>
-                                <Button
+                            <Stack direction="row" alignItems="center" flexWrap="wrap" justifyContent="space-between" gap={ 1 }>
+                                
+								<Tooltip disableInteractive title={ __( 'Undo Current Changes', 'rest-api-firewall' ) }>
+								<Button
                                     size="small"
                                     variant="text"
+									startIcon={ <UndoIcon /> }
                                     disabled={ ! hasDragged || ! originalOrder.length }
                                     onClick={ () => { setLocalOrder( originalOrder ); setHasDragged( false ); } }
                                     sx={ { textTransform: 'none' } }
                                 >
-                                    { __( 'Restore original', 'rest-api-firewall' ) }
+                                    { __( 'Undo', 'rest-api-firewall' ) }
                                 </Button>
+								</Tooltip>
+
+
+								<Tooltip disableInteractive title={ __( 'Restore to WordPress Order', 'rest-api-firewall' ) }>
+								<Button
+                                    size="small"
+                                    variant="text"
+									color="error"
+                                    startIcon={ <SettingsBackupRestoreIcon /> }
+                                    disabled={ ( ! originalOrder.length ) || loading || resetting || savingOptions }
+                                    onClick={ handleReset }
+                                    sx={ { textTransform: 'none' } }
+                                >
+                                    { resetting ? __( 'Resetting…', 'rest-api-firewall' ) : sprintf( __( 'Restore Default', 'rest-api-firewall' ), objectLabel ) }
+                                </Button>
+								</Tooltip>
                             </Stack>
 
-                            <Box>
+                            <Box sx={ { display: 'flex', flexDirection: 'row', alignItems: 'stretch', gap: 0.75 } }>
 
-                            <PostOrderList
-                            items={ localOrder }
-                            orderedIds={ previewOrderIds }
-                            objectKind={ objectKind }
-                            loading={ loading }
-                            onReorder={ handleReorder }
-                            originalOrder={ originalOrder }
-                            />
+                                <PageDropZone
+                                    direction="prev"
+                                    disabled={ page === 0 }
+                                    onDrop={ handleCrossPageMove }
+                                />
 
-                            <TablePagination
-                                component="div"
-                                count={ totalCount }
-                                page={ page }
-                                onPageChange={ handlePageChange }
-                                onRowsPerPageChange={ handleRowsPerPageChange }
-                                rowsPerPage={ rowsPerPage }
-                                rowsPerPageOptions={ ROWS_PER_PAGE_OPTIONS }
-                                sx={ { borderTop: 0, mt: -1 } }
-                            />
+                                <Box sx={ { flex: 1, minWidth: 0 } }>
+                                    <PostOrderList
+                                        items={ localOrder }
+                                        orderedIds={ previewOrderIds }
+                                        objectKind={ objectKind }
+                                        loading={ loading }
+                                        onReorder={ handleReorder }
+                                        originalOrder={ originalOrder }
+                                    />
+                                    <TablePagination
+                                        component="div"
+                                        count={ totalCount }
+                                        page={ page }
+                                        onPageChange={ handlePageChange }
+                                        onRowsPerPageChange={ handleRowsPerPageChange }
+                                        rowsPerPage={ rowsPerPage }
+                                        rowsPerPageOptions={ ROWS_PER_PAGE_OPTIONS }
+                                        sx={ { borderTop: 0, mt: -1 } }
+                                    />
+                                </Box>
+
+                                <PageDropZone
+                                    direction="next"
+                                    disabled={ isLastPage }
+                                    onDrop={ handleCrossPageMove }
+                                />
+
                             </Box>
                         </Stack>
                     </Stack>
