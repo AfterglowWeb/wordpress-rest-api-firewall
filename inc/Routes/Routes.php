@@ -14,6 +14,7 @@ class Routes {
 	public static function register() {
 
 		self::set_posts_per_page();
+		self::set_collection_order();
 
 		add_action(
 			'rest_pre_serve_request',
@@ -132,6 +133,73 @@ class Routes {
 						$query_params['per_page']['maximum'] = $items_per_page;
 					}
 					return $query_params;
+				},
+				10,
+				1
+			);
+		}
+	}
+
+	private static function set_collection_order(): void {
+
+		$per_page_settings = CoreOptions::read_option( 'rest_collection_per_page_settings' );
+		$collection_orders = CoreOptions::read_option( 'rest_collection_orders' );
+
+		if ( ( empty( $per_page_settings ) || ! is_array( $per_page_settings ) ) &&
+			( empty( $collection_orders ) || ! is_array( $collection_orders ) ) ) {
+			return;
+		}
+
+		$per_page_settings = is_array( $per_page_settings ) ? $per_page_settings : array();
+		$collection_orders = is_array( $collection_orders ) ? $collection_orders : array();
+
+		// Handle post types.
+		foreach ( get_post_types( array( 'show_in_rest' => true, 'public' => true ) ) as $post_type ) {
+			$order         = (array) ( $collection_orders[ $post_type ] ?? array() );
+			$enforce_order = ! empty( $per_page_settings[ $post_type ]['enforce_order'] );
+
+			if ( empty( $order ) && ! $enforce_order ) {
+				continue;
+			}
+
+			add_filter(
+				'rest_' . $post_type . '_query',
+				static function ( $args ) use ( $order, $enforce_order ) {
+					if ( ! empty( $order ) && $enforce_order ) {
+						$args['post__in']            = $order;
+						$args['orderby']             = 'post__in';
+						$args['ignore_sticky_posts'] = true;
+					} elseif ( $enforce_order ) {
+						$args['orderby'] = 'menu_order';
+						$args['order']   = 'ASC';
+					}
+					return $args;
+				},
+				10,
+				1
+			);
+		}
+
+		// Handle taxonomies.
+		foreach ( get_taxonomies( array( 'show_in_rest' => true, 'public' => true ) ) as $taxonomy ) {
+			$order         = (array) ( $collection_orders[ $taxonomy ] ?? array() );
+			$enforce_order = ! empty( $per_page_settings[ $taxonomy ]['enforce_order'] );
+
+			if ( empty( $order ) && ! $enforce_order ) {
+				continue;
+			}
+
+			add_filter(
+				'rest_' . $taxonomy . '_query',
+				static function ( $args ) use ( $order, $enforce_order ) {
+					if ( ! empty( $order ) && $enforce_order ) {
+						$args['include'] = $order;
+						$args['orderby'] = 'include';
+					} elseif ( $enforce_order ) {
+						$args['orderby'] = 'name';
+						$args['order']   = 'ASC';
+					}
+					return $args;
 				},
 				10,
 				1

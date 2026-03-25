@@ -3,6 +3,7 @@ import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
 import useSaveOptions from '../../hooks/useSaveOptions';
+import useProActions from '../../hooks/useProActions';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -62,7 +63,7 @@ function decodeHtmlEntities( str ) {
 	return txt.value;
 }
 
-function PostOrderList( { items, orderedIds, objectKind, loading, onReorder } ) {
+function PostOrderList( { items, orderedIds, objectKind, loading, onReorder, originalOrder } ) {
 	const { __ } = wp.i18n || {};
 	const [ dragIdx, setDragIdx ] = useState( null );
 	const [ dragOverIdx, setDragOverIdx ] = useState( null );
@@ -169,11 +170,20 @@ function PostOrderList( { items, orderedIds, objectKind, loading, onReorder } ) 
 					>
 						<DragIndicatorIcon sx={ { fontSize: 16, color: 'text.disabled', flexShrink: 0 } } />
                         { isOrdered ? (
-								<Chip
-									label={ `${ savedPos + 1 }` }
-									size="small"
-									color="primary"
-								/>
+                                <Box sx={ { display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 } }  >
+                                    <Chip
+                                        label={ `${ savedPos + 1 }` }
+                                        size="small"
+                                        color="primary"
+                                    />
+                                    <Box sx={ { 
+                                        width: 10,
+                                        height: 10,
+                                        bgcolor: 'divider',
+                                        borderRadius: '50%',
+                                        flexShrink: 0,
+                                        } }>{ ( () => { const oi = ( originalOrder || [] ).findIndex( ( o ) => o.id === item.id ); return oi !== -1 ? oi + 1 : idx + 1; } )() }</Box>
+                                </Box>
 							) : (
 								<Chip
 									label={ `${ idx + 1 }` }
@@ -233,6 +243,7 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
 	const form = formProp;
 	const setField = setFieldProp;
 	const { saving: savingOptions } = useSaveOptions();
+	const { save: saveProAction, saving: savingProOrder } = useProActions();
 
 	const [ selectedType, setSelectedType ] = useState( 'post' );
 	const [ items, setItems ] = useState( [] );
@@ -245,6 +256,7 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
 	const [ resetting, setResetting ] = useState( false );
 	const [ fetchError, setFetchError ] = useState( '' );
 	const [ hasDragged, setHasDragged ] = useState( false );
+	const [ originalOrder, setOriginalOrder ] = useState( [] );
 
 	const selectedObject = objectTypes.find( ( item ) => item.value === selectedType );
 	const objectKind = selectedObject?.type || 'post_type';
@@ -255,7 +267,6 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
 	const previewOrderIds = isDirty
 		? mergeOrderPreview( savedOrder, page, rowsPerPage, localIds )
 		: savedOrder;
-	const displayedOrderedItems = formatOrderedItems( previewOrderIds, orderedItems, localOrder );
 
 	// Ref to always have latest form.rest_collection_orders for safe merging in callbacks
 	const formOrdersRef = useRef( form.rest_collection_orders );
@@ -268,15 +279,25 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
 			return; // Free tier: orders already loaded in form.rest_collection_orders from adminData
 		}
 		try {
-			const res = await fetch( adminData.ajaxurl, {
-				method: 'POST',
-				body: new URLSearchParams( { action: 'get_application_collection_orders', nonce, application_id: selectedApplicationId } ),
-			} );
-			const json = await res.json();
-			if ( json.success ) {
-				const perAppOrders = json.data.orders || {};
-				// Use syncSavedField so loading server data doesn't mark the form as dirty.
+			const [ ordersRes, perPageRes ] = await Promise.all( [
+				fetch( adminData.ajaxurl, {
+					method: 'POST',
+					body: new URLSearchParams( { action: 'get_application_collection_orders', nonce, application_id: selectedApplicationId } ),
+				} ),
+				fetch( adminData.ajaxurl, {
+					method: 'POST',
+					body: new URLSearchParams( { action: 'get_application_collection_per_page_settings', nonce, application_id: selectedApplicationId } ),
+				} ),
+			] );
+
+			const [ ordersJson, perPageJson ] = await Promise.all( [ ordersRes.json(), perPageRes.json() ] );
+
+			if ( ordersJson.success ) {
+				const perAppOrders = ordersJson.data.orders || {};
 				syncSavedField( 'rest_collection_orders', { ...( formOrdersRef.current || {} ), ...perAppOrders } );
+			}
+			if ( perPageJson.success ) {
+				syncSavedField( 'rest_collection_per_page_settings', perPageJson.data.settings || {} );
 			}
 		} catch {}
 	}, [ isPro, selectedApplicationId, nonce, adminData.ajaxurl, syncSavedField ] );
@@ -339,8 +360,10 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
 			const res = await fetch( adminData.ajaxurl, { method: 'POST', body: new URLSearchParams( params ) } );
 			const json = await res.json();
 			if ( json.success ) {
-				setItems( json.data.items || [] );
-				setLocalOrder( json.data.items || [] );
+				const fetchedItems = json.data.items || [];
+				setItems( fetchedItems );
+				setLocalOrder( fetchedItems );
+				setOriginalOrder( fetchedItems );
 				setOrderedItems( json.data.ordered_items || [] );
 				setTotalCount( json.data.total || 0 );
 			} else {
@@ -366,17 +389,20 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
 	const handleTypeChange = ( e ) => {
 		setSelectedType( e.target.value );
 		setHasDragged( false );
+		setOriginalOrder( [] );
 		setPage( 0 );
 	};
 
 	const handlePageChange = ( _, newPage ) => {
 		setHasDragged( false );
+		setOriginalOrder( [] );
 		setPage( newPage );
 	};
 
 	const handleRowsPerPageChange = ( e ) => {
 		setRowsPerPage( parseInt( e.target.value, 10 ) || DEFAULT_ROWS_PER_PAGE );
 		setHasDragged( false );
+		setOriginalOrder( [] );
 		setPage( 0 );
 	};
 
@@ -415,31 +441,64 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
 	const handleReorder = useCallback( ( newItems ) => {
 		setLocalOrder( newItems );
 		setHasDragged( true );
-		const newIds = newItems.map( ( i ) => i.id );
+		if ( ! isPro ) {
+			const newIds = newItems.map( ( i ) => i.id );
+			const currentSavedOrder = ( formOrdersRef.current || {} )[ selectedType ] || [];
+			const merged = mergeOrderPreview( currentSavedOrder, page, rowsPerPage, newIds );
+			setField( { target: {
+				name: 'rest_collection_orders',
+				value: { ...( formOrdersRef.current || {} ), [ selectedType ]: merged },
+				type: 'object',
+			} } );
+		}
+	}, [ selectedType, page, rowsPerPage, setField, isPro ] );
+
+	const handleSaveProOrder = useCallback( () => {
+		const newIds = localOrder.map( ( i ) => i.id );
 		const currentSavedOrder = ( formOrdersRef.current || {} )[ selectedType ] || [];
 		const merged = mergeOrderPreview( currentSavedOrder, page, rowsPerPage, newIds );
-		setField( { target: {
-			name: 'rest_collection_orders',
-			value: { ...( formOrdersRef.current || {} ), [ selectedType ]: merged },
-			type: 'object',
-		} } );
-	}, [ selectedType, page, rowsPerPage, setField ] );
+		saveProAction(
+			buildOrderingParams( 'save_application_collection_order', newIds ),
+			{
+				confirmTitle:   sprintf( __( 'Save %s Order', 'rest-api-firewall' ), objectLabel ),
+				confirmMessage: sprintf( __( 'Save the custom order for %s?', 'rest-api-firewall' ), objectLabel ),
+				successTitle:   __( 'Order Saved', 'rest-api-firewall' ),
+				successMessage: sprintf( __( '%s order saved successfully.', 'rest-api-firewall' ), objectLabel ),
+				onSuccess: ( data ) => {
+					syncSavedField( 'rest_collection_orders', { ...( formOrdersRef.current || {} ), [ selectedType ]: data?.order || merged } );
+					setHasDragged( false );
+				},
+			}
+		);
+	}, [ saveProAction, localOrder, selectedType, page, rowsPerPage, buildOrderingParams, objectLabel, __, sprintf, syncSavedField ] );
 
 	const handlePerPageSettingChange = ( field, value ) => {
+		const currentTypeSettings = ( form.rest_collection_per_page_settings || {} )[ selectedType ] || {};
+		const newTypeSettings = { ...currentTypeSettings, [ field ]: value };
 		const updated = {
 			...( form.rest_collection_per_page_settings || {} ),
-			[ selectedType ]: {
-				...( ( form.rest_collection_per_page_settings || {} )[ selectedType ] || {} ),
-				[ field ]: value,
-			},
+			[ selectedType ]: newTypeSettings,
 		};
-		setField( {
-			target: {
-				name: 'rest_collection_per_page_settings',
-				value: updated,
-				type: 'object',
-			},
-		} );
+
+		if ( isPro ) {
+			syncSavedField( 'rest_collection_per_page_settings', updated );
+			const params = new URLSearchParams( {
+				action: 'save_application_collection_per_page_setting',
+				nonce,
+				application_id: selectedApplicationId,
+				object_key: selectedType,
+				settings: JSON.stringify( newTypeSettings ),
+			} );
+			fetch( adminData.ajaxurl, { method: 'POST', body: params } ).catch( () => {} );
+		} else {
+			setField( {
+				target: {
+					name: 'rest_collection_per_page_settings',
+					value: updated,
+					type: 'object',
+				},
+			} );
+		}
 	};
 
 	const handleEnforceOrderChange = ( checked ) => {
@@ -451,9 +510,22 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
 		<Stack gap={4} direction={{xs:'column', xl: 'row'}} p={ 4 }>
             
             <Stack spacing={ 3 } minWidth={600} flex={1}>
-                <Typography variant="subtitle1" fontWeight={ 600 }>
-                    { __( 'Set Collections Per Page And Order', 'rest-api-firewall' ) }
-                </Typography>
+                <Stack direction="row" alignItems="center" justifyContent="space-between" gap={ 1 }>
+                    <Typography variant="subtitle1" fontWeight={ 600 }>
+                        { __( 'Set Collections Per Page And Order', 'rest-api-firewall' ) }
+                    </Typography>
+                    { isPro && (
+                        <Button
+                            size="small"
+                            variant="contained"
+                            disabled={ ! hasDragged || savingProOrder }
+                            onClick={ handleSaveProOrder }
+                            sx={ { textTransform: 'none', flexShrink: 0 } }
+                        >
+                            { savingProOrder ? __( 'Saving…', 'rest-api-firewall' ) : sprintf( __( 'Save %s Order', 'rest-api-firewall' ), objectLabel ) }
+                        </Button>
+                    ) }
+                </Stack>
                 <ObjectTypeSelect
                     types={ [ 'post_type', 'taxonomy' ] }
                     visibility={ [ 'public' ] }
@@ -514,7 +586,7 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
                                 </FormHelperText>
                             </FormControl>
 
-                            <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={ 1 }>
+                            <Stack direction="row" alignItems="center" flexWrap="wrap" gap={ 1 }>
                                 <Button
                                     size="small"
                                     variant="outlined"
@@ -524,16 +596,26 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
                                 >
                                     { resetting ? __( 'Resetting…', 'rest-api-firewall' ) : sprintf( __( 'Reset %s Items Order', 'rest-api-firewall' ), objectLabel ) }
                                 </Button>
+                                <Button
+                                    size="small"
+                                    variant="text"
+                                    disabled={ ! hasDragged || ! originalOrder.length }
+                                    onClick={ () => { setLocalOrder( originalOrder ); setHasDragged( false ); } }
+                                    sx={ { textTransform: 'none' } }
+                                >
+                                    { __( 'Restore original', 'rest-api-firewall' ) }
+                                </Button>
                             </Stack>
 
                             <Box>
 
                             <PostOrderList
                             items={ localOrder }
-                            orderedIds={ hasDragged ? previewOrderIds : [] }
+                            orderedIds={ previewOrderIds }
                             objectKind={ objectKind }
                             loading={ loading }
                             onReorder={ handleReorder }
+                            originalOrder={ originalOrder }
                             />
 
                             <TablePagination

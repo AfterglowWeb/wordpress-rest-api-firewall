@@ -297,20 +297,14 @@ export default function ApplicationEditorModules( {
 				<DataRow label={ __( 'Disabled types', 'rest-api-firewall' ) }>
 					<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
 						{ ( serverSettings.disabled_post_types || [] ).length > 0
-							? <>
-								{ ( serverSettings.disabled_post_types || [] ).slice( 0, 3 ).map( ( p ) => (
+							? ( serverSettings.disabled_post_types || [] ).map( ( p ) => (
 									<Chip key={ p } label={ p } size="small" sx={ { fontSize: 10 } } />
-								) ) }
-								{ ( serverSettings.disabled_post_types || [] ).length > 3 && (
-									<Typography variant="caption" color="text.secondary">+{ serverSettings.disabled_post_types.length - 3 }</Typography>
-								) }
-							</>
+								) ) 
 							: <Typography variant="caption">{ __( 'None', 'rest-api-firewall' ) }</Typography>
 						}
 					</Stack>
 				</DataRow>
 
-				{ /* Custom rules count */ }
 				{ routesCustomCount !== null && (
 					<DataRow label={ __( 'Custom rules', 'rest-api-firewall' ) }>
 						<Chip
@@ -323,7 +317,6 @@ export default function ApplicationEditorModules( {
 				) }
 			</PanelCard>
 
-			{ /* IP Filtering */ }
 			<PanelCard
 				title={ __( 'IP Filtering', 'rest-api-firewall' ) }
 				Icon={ VpnLockOutlinedIcon }
@@ -333,15 +326,13 @@ export default function ApplicationEditorModules( {
 				enabled={ getModuleEnabled( 3 ) }
 				onToggleEnabled={ handleModuleToggle }
 			>
-				<DataRow label={ __( 'Mode', 'rest-api-firewall' ) }>
+				<DataRow label={ __( 'Extra Ips', 'rest-api-firewall' ) }>
 					<Chip
 						size="small"
 						variant="outlined"
 						label={
 							! ipFilter.enabled
 								? __( 'Disabled', 'rest-api-firewall' )
-								: ipFilter.mode === 'whitelist'
-								? __( 'Whitelist', 'rest-api-firewall' )
 								: __( 'Blacklist', 'rest-api-firewall' )
 						}
 						color={
@@ -355,17 +346,15 @@ export default function ApplicationEditorModules( {
 				</DataRow>
 				{ allowedOrigins.length > 0 && (
 					<DataRow label={ __( 'Origins', 'rest-api-firewall' ) }>
-						<Typography variant="caption" noWrap sx={ { fontFamily: 'monospace' } }>
-							{ allowedOrigins.slice( 0, 2 ).join( ', ' ) }
-							{ allowedOrigins.length > 2 ? ` +${ allowedOrigins.length - 2 }` : '' }
-						</Typography>
+						{ allowedOrigins.map( (allowedOrigin) => {<Typography variant="caption" sx={ { fontFamily: 'monospace' } }>
+							{ allowedOrigin }
+						</Typography>} ) }
 					</DataRow>
 				) }
 				{ ipFilter.enabled && ipFilter.mode === 'whitelist' && ipFilterIps.length > 0 && (
 					<DataRow label={ __( 'IPs', 'rest-api-firewall' ) }>
-						<Typography variant="caption" noWrap sx={ { fontFamily: 'monospace' } }>
-							{ ipFilterIps.slice( 0, 2 ).join( ', ' ) }
-							{ ipFilterIps.length > 2 ? ` +${ ipFilterIps.length - 2 }` : '' }
+						<Typography variant="caption" sx={ { fontFamily: 'monospace' } }>
+							{ ipFilterIps.join( ', ' ) }
 						</Typography>
 					</DataRow>
 				) }
