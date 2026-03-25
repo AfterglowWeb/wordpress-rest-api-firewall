@@ -89,7 +89,7 @@ class Routes {
 		}
 
 		// Handle post types.
-		foreach ( get_post_types( array( 'show_in_rest' => true ) ) as $post_type ) {
+		foreach ( get_post_types( array( 'show_in_rest' => true, 'public' => true ) ) as $post_type ) {
 			if ( empty( $per_page_settings[ $post_type ]['enabled'] ) ) {
 				continue;
 			}
@@ -114,7 +114,7 @@ class Routes {
 		}
 
 		// Handle taxonomies.
-		foreach ( get_taxonomies( array( 'show_in_rest' => true ) ) as $taxonomy ) {
+		foreach ( get_taxonomies( array( 'show_in_rest' => true, 'public' => true ) ) as $taxonomy ) {
 			if ( empty( $per_page_settings[ $taxonomy ]['enabled'] ) ) {
 				continue;
 			}

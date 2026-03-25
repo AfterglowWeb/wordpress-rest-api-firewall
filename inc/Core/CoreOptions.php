@@ -207,7 +207,7 @@ class CoreOptions {
 			'rest_collection_orders'                      => array(
 				'default_value'     => array(),
 				'type'              => 'array',
-				'sanitize_callback' => 'rest_sanitize_json',
+				'sanitize_callback' => array( CollectionOrderController::class, 'sanitize_collection_order_entry' ),
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
 				'group'             => 'collections',

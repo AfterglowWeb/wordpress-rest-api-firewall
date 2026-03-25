@@ -168,7 +168,18 @@ function PostOrderList( { items, orderedIds, objectKind, loading, onReorder } ) 
 						} }
 					>
 						<DragIndicatorIcon sx={ { fontSize: 16, color: 'text.disabled', flexShrink: 0 } } />
-
+                        { isOrdered ? (
+								<Chip
+									label={ `${ savedPos + 1 }` }
+									size="small"
+									color="primary"
+								/>
+							) : (
+								<Chip
+									label={ `${ idx + 1 }` }
+									size="small"
+								/>
+							) } 
 						<Stack spacing={ 0.375 } sx={ { flex: 1, minWidth: 0 } }>
 							<Typography
 								variant="body2"
@@ -200,15 +211,7 @@ function PostOrderList( { items, orderedIds, objectKind, loading, onReorder } ) 
 									sx={ { fontSize: '0.65rem', height: 18, '& .MuiChip-label': { px: 0.75 } } }
 								/>
 							) }
-							{ isOrdered && (
-								<Chip
-									label={ `#${ savedPos + 1 }` }
-									size="small"
-									color="primary"
-									variant="outlined"
-									sx={ { fontSize: '0.65rem', height: 18, '& .MuiChip-label': { px: 0.75 } } }
-								/>
-							) }
+							
 						</Stack>
 					</Box>
 				);
@@ -448,6 +451,9 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
 		<Stack gap={4} direction={{xs:'column', xl: 'row'}} p={ 4 }>
             
             <Stack spacing={ 3 } minWidth={600} flex={1}>
+                <Typography variant="subtitle1" fontWeight={ 600 }>
+                    { __( 'Set Collections Per Page And Order', 'rest-api-firewall' ) }
+                </Typography>
                 <ObjectTypeSelect
                     types={ [ 'post_type', 'taxonomy' ] }
                     visibility={ [ 'public' ] }
@@ -503,7 +509,8 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
                                     label={ sprintf( __( 'Enforce %s Items Order', 'rest-api-firewall' ), objectLabel) }
                                 />
                                 <FormHelperText>
-                                    { sprintf( __( 'Override the order_by parameter on `%s` collection requests.', 'rest-api-firewall' ), objectLabel ) }
+                                    { sprintf( __( 'Override the order_by parameter on `%s` collection requests.', 'rest-api-firewall' ), objectLabel ) }<br />
+                                    { sprintf( __( 'If disabled, use `menu_order` as order by parameter.', 'rest-api-firewall' ), objectLabel ) }
                                 </FormHelperText>
                             </FormControl>
 
@@ -544,8 +551,6 @@ export default function Collections( { form: formProp, setField: setFieldProp, s
                     </Stack>
                 ) }
             </Stack>
-
-            <Divider orientation="vertical" flexItem sx={{display:{ xs: 'none', xl: 'block' }}} />
 
             <Stack spacing={ 2 } sx={{ width:300 }} >
                 <Typography variant="subtitle1" fontWeight={ 600 }>

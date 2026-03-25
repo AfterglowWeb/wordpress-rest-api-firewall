@@ -7,7 +7,9 @@ function castValue( type, value ) {
 		case 'integer':
 			return Number( value ) || 0;
 		case 'array':
-			return Array.isArray( value ) ? value : [];
+			if ( Array.isArray( value ) ) return value;
+			if ( value !== null && value !== undefined && typeof value === 'object' ) return value;
+			return [];
 		default:
 			return value ?? '';
 	}

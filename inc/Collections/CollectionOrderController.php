@@ -136,29 +136,36 @@ class CollectionOrderController {
 		return array_values( array_unique( $sanitized ) );
 	}
 
-	public static function sanitize_collection_per_page_settings( $settings ) {
-		if ( ! is_array( $settings ) ) {
-			return array();
-		}
-
-		$sanitized = array();
-		foreach ( $settings as $object_key => $config ) {
-			$object_key = sanitize_key( $object_key );
-			if ( ! $object_key ) {
-				continue;
-			}
-
-			if ( ! is_array( $config ) ) {
-				continue;
-			}
-
-			$sanitized[ $object_key ] = array(
-				'enabled'       => (bool) ( $config['enabled'] ?? false ),
-				'items_per_page' => max( 1, min( 100, absint( $config['items_per_page'] ?? 25 ) ) ),
+	/**
+	 * Sanitizes a single per-type per-page config entry.
+	 * Called via array_map in CoreOptions::sanitize_option, so receives one entry at a time.
+	 */
+	public static function sanitize_collection_per_page_settings( $config ) {
+		if ( ! is_array( $config ) ) {
+			return array(
+				'enabled'        => false,
+				'items_per_page' => 25,
+				'enforce_order'  => false,
 			);
 		}
 
-		return $sanitized;
+		return array(
+			'enabled'        => (bool) ( $config['enabled'] ?? false ),
+			'items_per_page' => max( 1, min( 100, absint( $config['items_per_page'] ?? 25 ) ) ),
+			'enforce_order'  => (bool) ( $config['enforce_order'] ?? false ),
+		);
+	}
+
+	/**
+	 * Sanitizes a single per-type order array (list of post/term IDs).
+	 * Called via array_map in CoreOptions::sanitize_option, so receives one entry at a time.
+	 */
+	public static function sanitize_collection_order_entry( $ids ) {
+		if ( ! is_array( $ids ) ) {
+			return array();
+		}
+
+		return array_map( 'absint', array_filter( $ids, 'is_numeric' ) );
 	}
 
 	private function merge_page_order( string $object_key, int $page, int $per_page, array $new_ids ): array {
