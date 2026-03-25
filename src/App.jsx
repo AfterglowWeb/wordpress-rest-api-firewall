@@ -75,7 +75,7 @@ function AppContent() {
 	);
 	const [ migrationDone, setMigrationDone ] = useState( false );
 
-	const { form, setField, setSlider, pickGroup, isGroupDirty } = useSettingsForm( {
+	const { form, setField, setSlider, syncSavedField, pickGroup, isGroupDirty } = useSettingsForm( {
 		adminData,
 	} );
 
@@ -284,6 +284,7 @@ function AppContent() {
 						<Collections
 							form={ form }
 							setField={ setField }
+							syncSavedField={ syncSavedField }
 							postTypes={ postTypes }
 						/>
 					) }

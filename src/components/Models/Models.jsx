@@ -282,11 +282,11 @@ export default function Models() {
 	return (
 		<Stack p={4} spacing={ 2 } sx={ { height: '100%', flexGrow: 1 } }>
 			
-			<Stack spacing={ 2 } sx={ { maxWidth: 600 } }>
+			<Stack spacing={ 3 } sx={ { maxWidth: 600 } }>
 			
 				<GlobalProperties form={ outputForm } setField={ setOutputField } />
 
-				<Stack direction="row" justifyContent="flex-end">
+				<Stack direction="row" justifyContent="flex-start">
 					<Button
 						size="small"
 						variant="contained"
@@ -306,7 +306,7 @@ export default function Models() {
 							} );
 						} }
 					>
-						{ __( 'Apply', 'rest-api-firewall' ) }
+						{ __( 'Save Global Settings', 'rest-api-firewall' ) }
 					</Button>
 				</Stack>
 			</Stack>

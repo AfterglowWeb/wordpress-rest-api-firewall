@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
-import useSettingsForm from '../../hooks/useSettingsForm';
 import useSaveOptions from '../../hooks/useSaveOptions';
 
 import Alert from '@mui/material/Alert';
@@ -218,17 +217,18 @@ function PostOrderList( { items, orderedIds, objectKind, loading, onReorder } ) 
 	);
 }
 
-export default function Collections( { form: formProp, setField: setFieldProp, postTypes } ) {
+export default function Collections( { form: formProp, setField: setFieldProp, syncSavedField, postTypes } ) {
 	const { __, sprintf } = wp.i18n || {};
 	const { adminData } = useAdminData();
 	const { hasValidLicense, proNonce } = useLicense();
 	const { selectedApplicationId } = useApplication();
 	const nonce = proNonce || adminData.nonce;
 	const objectTypes = adminData?.post_types || postTypes || [];
+	const publicObjectTypes = objectTypes.filter( ( obj ) => obj.public );
 	const isPro = hasValidLicense && !! selectedApplicationId;
 
-	// Use unified form management from useSettingsForm
-	const { form, setField } = useSettingsForm( { adminData } );
+	const form = formProp;
+	const setField = setFieldProp;
 	const { saving: savingOptions } = useSaveOptions();
 
 	const [ selectedType, setSelectedType ] = useState( 'post' );
@@ -272,14 +272,11 @@ export default function Collections( { form: formProp, setField: setFieldProp, p
 			const json = await res.json();
 			if ( json.success ) {
 				const perAppOrders = json.data.orders || {};
-				setField( { target: {
-					name: 'rest_collection_orders',
-					value: { ...( formOrdersRef.current || {} ), ...perAppOrders },
-					type: 'object',
-				} } );
+				// Use syncSavedField so loading server data doesn't mark the form as dirty.
+				syncSavedField( 'rest_collection_orders', { ...( formOrdersRef.current || {} ), ...perAppOrders } );
 			}
 		} catch {}
-	}, [ isPro, selectedApplicationId, nonce, adminData.ajaxurl, setField ] );
+	}, [ isPro, selectedApplicationId, nonce, adminData.ajaxurl, syncSavedField ] );
 
 	const buildOrderingParams = useCallback( ( action, ids = null, nextPage = page ) => {
 		const params = {
@@ -448,103 +445,152 @@ export default function Collections( { form: formProp, setField: setFieldProp, p
 
 
 	return (
-		<Stack spacing={ 3 } maxWidth={ 780 } p={ 4  }>
+		<Stack gap={4} direction={{xs:'column', xl: 'row'}} p={ 4 }>
+            
+            <Stack spacing={ 3 } minWidth={600} flex={1}>
+                <ObjectTypeSelect
+                    types={ [ 'post_type', 'taxonomy' ] }
+                    visibility={ [ 'public' ] }
+                    isSingle
+                    name="collection_object_type_select"
+                    label={ __( 'Select Post Type Or Taxonomy', 'rest-api-firewall' ) }
+                    value={ selectedType }
+                    onChange={ handleTypeChange }
+                    sx={ { maxWidth: 320} }
+                />
 
-            <ObjectTypeSelect
-                types={ [ 'post_type', 'taxonomy' ] }
-                visibility={ [ 'public' ] }
-                isSingle
-                name="collection_object_type_select"
-                label={ __( 'Select Post Type Or Taxonomy', 'rest-api-firewall' ) }
-                value={ selectedType }
-                onChange={ handleTypeChange }
-                sx={ { maxWidth: 320} }
-            />
-
-			{ selectedType && (
-				<Stack spacing={ 2 } pl={ 3 }>
-					<FormControl>
-						<FormControlLabel
-							control={
-								<Switch
-									checked={ !! ( form.rest_collection_per_page_settings?.[ selectedType ]?.enabled ) }
-									onChange={ ( e ) => handlePerPageSettingChange( 'enabled', e.target.checked ) }
-									size="small"
-								/>
-							}
-							label={ sprintf( __( 'Enforce %s Items Per Page', 'rest-api-firewall' ), objectLabel) }
-						/>
-                        <FormHelperText>
-							{ sprintf( __( 'Override the per_page parameter on `%s` collection requests.', 'rest-api-firewall' ), objectLabel ) }
-						</FormHelperText>
-					</FormControl>
-
-					<TextField
-						label={ sprintf( __( '`%s` Items Per Page', 'rest-api-firewall' ), objectLabel ) }
-						type="number"
-						min="1"
-						max="100"
-						size="small"
-						disabled={ ! ( form.rest_collection_per_page_settings?.[ selectedType ]?.enabled ) }
-						value={ form.rest_collection_per_page_settings?.[ selectedType ]?.items_per_page || 25 }
-						onChange={ ( e ) => handlePerPageSettingChange( 'items_per_page', parseInt( e.target.value, 10 ) || 25 ) }
-						sx={ { maxWidth: 200 } }
-					/>
-
-                    <Stack spacing={ 2 }>
-                        { fetchError && <Alert severity="error">{ fetchError }</Alert> }
-                        <FormControl maxWidth={ 300 }>
+                { selectedType && (
+                    <Stack spacing={ 2 } pl={ 3 }>
+                        <FormControl>
                             <FormControlLabel
                                 control={
                                     <Switch
-                                        checked={ !! ( form.rest_collection_per_page_settings?.[ selectedType ]?.enforce_order ) }
-                                        onChange={ ( e ) => handleEnforceOrderChange( e.target.checked ) }
+                                        checked={ !! ( form.rest_collection_per_page_settings?.[ selectedType ]?.enabled ) }
+                                        onChange={ ( e ) => handlePerPageSettingChange( 'enabled', e.target.checked ) }
                                         size="small"
                                     />
                                 }
-                                label={ sprintf( __( 'Enforce %s Items Order', 'rest-api-firewall' ), objectLabel) }
+                                label={ sprintf( __( 'Enforce %s Items Per Page', 'rest-api-firewall' ), objectLabel) }
                             />
                             <FormHelperText>
-                                { sprintf( __( 'Override the order_by parameter on `%s` collection requests.', 'rest-api-firewall' ), objectLabel ) }
+                                { sprintf( __( 'Override the per_page parameter on `%s` collection requests.', 'rest-api-firewall' ), objectLabel ) }
                             </FormHelperText>
                         </FormControl>
 
-                        <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={ 1 }>
-                            <Button
-                                size="small"
-                                variant="outlined"
-                                disabled={ ( ! savedOrder.length && ! isDirty ) || loading || resetting || savingOptions }
-                                onClick={ handleReset }
-                                sx={ { textTransform: 'none' } }
-                            >
-                                { resetting ? __( 'Resetting…', 'rest-api-firewall' ) : sprintf( __( 'Reset %s Items Order', 'rest-api-firewall' ), objectLabel ) }
-                            </Button>
+                        <TextField
+                            label={ sprintf( __( '`%s` Items Per Page', 'rest-api-firewall' ), objectLabel ) }
+                            type="number"
+                            min="1"
+                            max="100"
+                            size="small"
+                            disabled={ ! ( form.rest_collection_per_page_settings?.[ selectedType ]?.enabled ) }
+                            value={ form.rest_collection_per_page_settings?.[ selectedType ]?.items_per_page || 25 }
+                            onChange={ ( e ) => handlePerPageSettingChange( 'items_per_page', parseInt( e.target.value, 10 ) || 25 ) }
+                            sx={ { maxWidth: 200 } }
+                        />
+
+                        <Stack spacing={ 2 }>
+                            { fetchError && <Alert severity="error">{ fetchError }</Alert> }
+                            <FormControl maxWidth={ 300 }>
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={ !! ( form.rest_collection_per_page_settings?.[ selectedType ]?.enforce_order ) }
+                                            onChange={ ( e ) => handleEnforceOrderChange( e.target.checked ) }
+                                            size="small"
+                                        />
+                                    }
+                                    label={ sprintf( __( 'Enforce %s Items Order', 'rest-api-firewall' ), objectLabel) }
+                                />
+                                <FormHelperText>
+                                    { sprintf( __( 'Override the order_by parameter on `%s` collection requests.', 'rest-api-firewall' ), objectLabel ) }
+                                </FormHelperText>
+                            </FormControl>
+
+                            <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={ 1 }>
+                                <Button
+                                    size="small"
+                                    variant="outlined"
+                                    disabled={ ( ! savedOrder.length && ! isDirty ) || loading || resetting || savingOptions }
+                                    onClick={ handleReset }
+                                    sx={ { textTransform: 'none' } }
+                                >
+                                    { resetting ? __( 'Resetting…', 'rest-api-firewall' ) : sprintf( __( 'Reset %s Items Order', 'rest-api-firewall' ), objectLabel ) }
+                                </Button>
+                            </Stack>
+
+                            <Box>
+
+                            <PostOrderList
+                            items={ localOrder }
+                            orderedIds={ hasDragged ? previewOrderIds : [] }
+                            objectKind={ objectKind }
+                            loading={ loading }
+                            onReorder={ handleReorder }
+                            />
+
+                            <TablePagination
+                                component="div"
+                                count={ totalCount }
+                                page={ page }
+                                onPageChange={ handlePageChange }
+                                onRowsPerPageChange={ handleRowsPerPageChange }
+                                rowsPerPage={ rowsPerPage }
+                                rowsPerPageOptions={ ROWS_PER_PAGE_OPTIONS }
+                                sx={ { borderTop: 0, mt: -1 } }
+                            />
+                            </Box>
                         </Stack>
-
-                        <Box>
-
-                        <PostOrderList
-                        items={ localOrder }
-                        orderedIds={ hasDragged ? previewOrderIds : [] }
-                        objectKind={ objectKind }
-                        loading={ loading }
-                        onReorder={ handleReorder }
-                        />
-
-                        <TablePagination
-                            component="div"
-                            count={ totalCount }
-                            page={ page }
-                            onPageChange={ handlePageChange }
-                            onRowsPerPageChange={ handleRowsPerPageChange }
-                            rowsPerPage={ rowsPerPage }
-                            rowsPerPageOptions={ ROWS_PER_PAGE_OPTIONS }
-                            sx={ { borderTop: 0, mt: -1 } }
-                        />
-                        </Box>
                     </Stack>
-				</Stack>
-			) }
+                ) }
+            </Stack>
+
+            <Divider orientation="vertical" flexItem sx={{display:{ xs: 'none', xl: 'block' }}} />
+
+            <Stack spacing={ 2 } sx={{ width:300 }} >
+                <Typography variant="subtitle1" fontWeight={ 600 }>
+                    { __( 'Current Settings', 'rest-api-firewall' ) }
+                </Typography>
+                { publicObjectTypes.length > 0 && (
+                    <Stack spacing={ 1 } maxWidth="100%" overflow="hidden">
+                        { publicObjectTypes.map( ( obj ) => {
+                            const typeSettings = ( form?.rest_collection_per_page_settings || {} )[ obj.value ] || {};
+                            const typeOrder = ( form?.rest_collection_orders || {} )[ obj.value ] || [];
+                            const hasPerPage = !! typeSettings.enabled;
+                            const hasOrder = Array.isArray( typeOrder ) && typeOrder.length > 0;
+                            const hasEnforceOrder = !! typeSettings.enforce_order;
+                            const isSelected = selectedType === obj.value;
+
+                            return (
+                                <Stack key={ obj.value } sx={{p:1, mb:1, bgcolor: 'grey.100', borderRadius: 0.5}} maxWidth="100%" direction="row" flexWrap="wrap" gap={ 1 }>
+                                    <Typography variant="body2" color={ isSelected ? 'primary.main' : 'text.primary' } fontWeight={ isSelected ? 600 : 500 }>
+                                        { obj.label }
+                                    </Typography>
+                                    { hasPerPage && <Chip
+                                        size="small"
+                                        color={ isSelected ? 'primary' : 'default' }
+                                        variant="outlined"
+                                        label={sprintf( __( 'Per page: %d', 'rest-api-firewall' ), typeSettings.items_per_page || 25 ) }
+                                            
+                                    />}
+                                    { hasOrder && <Chip
+                                        size="small"
+                                        color={ isSelected ? 'primary' : 'default' }
+                                        variant="outlined"
+                                        label={ __( 'Order set', 'rest-api-firewall' ) }
+                                    />}
+                                    { hasEnforceOrder && <Chip
+                                        size="small"
+                                        color={ isSelected ? 'primary' : 'default' }
+                                        variant="outlined"
+                                        label={  __( 'Order enforced', 'rest-api-firewall' )}
+                                    />}
+                                </Stack>
+                            );
+                        } ) }
+                    </Stack>
+                ) }
+            </Stack>
 
                 
 		</Stack>

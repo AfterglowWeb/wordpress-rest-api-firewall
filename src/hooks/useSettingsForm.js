@@ -116,5 +116,12 @@ export default function useSettingsForm( { adminData } ) {
 		[ form, savedForm, optionsByGroup ]
 	);
 
-	return { form, setField, setSlider, optionsByGroup, pickGroup, isGroupDirty };
+	// Updates both form and savedForm simultaneously (for server-loaded data that should
+	// not trigger a dirty state).
+	const syncSavedField = useCallback( ( name, value ) => {
+		setForm( ( prev ) => ( { ...prev, [ name ]: value } ) );
+		setSavedForm( ( prev ) => ( { ...prev, [ name ]: value } ) );
+	}, [] );
+
+	return { form, setField, setSlider, syncSavedField, optionsByGroup, pickGroup, isGroupDirty };
 }
