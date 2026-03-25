@@ -24,10 +24,12 @@ import GlobalProperties from './GlobalProperties';
 
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 
 import useProActions from '../../hooks/useProActions';
 import ModelEditor from './ModelEditor';
 import ObjectTypeSelect from '../ObjectTypeSelect';
+import Tooltip from '@mui/material/Tooltip';
 
 export default function Models() {
 	const { adminData } = useAdminData();
@@ -319,14 +321,6 @@ export default function Models() {
 			>
 				<ObjectTypeSelect
 					types={ [ 'post_type', 'taxonomy', 'author' ] }
-					extraGroups={ [
-						{
-							groupLabel: __( 'Special', 'rest-api-firewall' ),
-							items: [
-								{ value: 'settings_route', label: __( 'Settings Route', 'rest-api-firewall' ) },
-							],
-						},
-					] }
 					value={ newModelObjectType }
 					defaultValue=""
 					label={ __( 'Object Type', 'rest-api-firewall' ) }
@@ -353,6 +347,30 @@ export default function Models() {
 				>
 					{ __( 'Create Model', 'rest-api-firewall' ) }
 				</Button>
+
+				<Stack flex={ 1 } />
+				
+				<Tooltip title={__('Properties model for wp/v2/settings route', 'rest-api-firewall' ) }>
+					<Button
+						size="small"
+						variant="text"
+						startIcon={ <BusinessOutlinedIcon /> }
+						onClick={ () =>
+							setEditing( {
+								id: null,
+								label: '',
+								object_type: 'settings_route',
+								is_custom: false,
+								enabled: false,
+								properties: {},
+								application_id: selectedApplicationId,
+							} )
+						}
+						disabled={ ! selectedApplicationId }
+					>
+						{ __( 'Create Settings Model', 'rest-api-firewall' ) }
+					</Button>
+				</Tooltip>
 
 				{ rowSelectionModel.ids.size > 0 && (
 					<Button
