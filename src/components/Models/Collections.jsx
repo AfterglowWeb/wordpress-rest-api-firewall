@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useReducer } from '@wordpress
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
+import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
 import useSaveOptions from '../../hooks/useSaveOptions';
 import useProActions from '../../hooks/useProActions';
 
@@ -133,6 +134,7 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 
 	const { saving: savingOptions } = useSaveOptions();
 	const { save: saveProAction, saving: savingProOrder } = useProActions();
+	const { openDialog } = useDialog();
 
 	const [ selectedType, setSelectedType ] = useState( 'post' );
 	const [ loadingIds, setLoadingIds ] = useState( false );
@@ -339,36 +341,44 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 		if ( ! selectedType ) {
 			return;
 		}
-		setResetting( true );
-		try {
-			const params = {
-				action: isPro ? 'reset_application_collection_order' : 'reset_collection_order',
-				nonce,
-				object_key: selectedType,
-				object_kind: objectKind,
-			};
-			if ( 'taxonomy' === objectKind ) {
-				params.taxonomy = selectedType;
-			} else {
-				params.post_type = selectedType;
-			}
-			if ( isPro && selectedApplicationId ) {
-				params.application_id = selectedApplicationId;
-			}
-			const res = await fetch( adminData.ajaxurl, { method: 'POST', body: new URLSearchParams( params ) } );
-			const json = await res.json();
-			if ( json.success ) {
-				setField( { target: {
-					name: 'rest_collection_orders',
-					value: { ...( formOrdersRef.current || {} ), [ selectedType ]: [] },
-					type: 'object',
-				} } );
-				setPage( 0 );
-				await fetchAllIds( selectedType, objectKind );
-			}
-		} finally {
-			setResetting( false );
-		}
+		openDialog( {
+			type: DIALOG_TYPES.CONFIRM,
+			title: sprintf( __( 'Restore %s Order', 'rest-api-firewall' ), objectLabel ),
+			content: sprintf( __( 'Restore WordPress default order for %s? This will remove any custom ordering you have set.', 'rest-api-firewall' ), objectLabel ),
+			confirmLabel: __( 'Restore', 'rest-api-firewall' ),
+			onConfirm: async () => {
+				setResetting( true );
+				try {
+					const params = {
+						action: isPro ? 'reset_application_collection_order' : 'reset_collection_order',
+						nonce,
+						object_key: selectedType,
+						object_kind: objectKind,
+					};
+					if ( 'taxonomy' === objectKind ) {
+						params.taxonomy = selectedType;
+					} else {
+						params.post_type = selectedType;
+					}
+					if ( isPro && selectedApplicationId ) {
+						params.application_id = selectedApplicationId;
+					}
+					const res = await fetch( adminData.ajaxurl, { method: 'POST', body: new URLSearchParams( params ) } );
+					const json = await res.json();
+					if ( json.success ) {
+						setField( { target: {
+							name: 'rest_collection_orders',
+							value: { ...( formOrdersRef.current || {} ), [ selectedType ]: [] },
+							type: 'object',
+						} } );
+						setPage( 0 );
+						await fetchAllIds( selectedType, objectKind );
+					}
+				} finally {
+					setResetting( false );
+				}
+			},
+		} );
 	};
 
 	const handleReorder = useCallback( ( newItems ) => {
@@ -570,7 +580,7 @@ export default function Collections( { form, setField, syncSavedField, postTypes
                                     variant="text"
 									color="error"
                                     startIcon={ <SettingsBackupRestoreIcon /> }
-                                    disabled={ ( ! originalMasterOrder.length ) || loading || loadingIds || resetting || savingOptions }
+                                    disabled={ ! ( form.rest_collection_orders?.[ selectedType ]?.length > 0 ) || loading || loadingIds || resetting || savingOptions }
                                     onClick={ handleReset }
                                 >
                                     { resetting ? __( 'Resetting…', 'rest-api-firewall' ) : sprintf( __( 'Restore', 'rest-api-firewall' ), objectLabel ) }

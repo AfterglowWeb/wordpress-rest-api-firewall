@@ -60,7 +60,6 @@ export function PostOrderList( { items, orderedIds, originalOrderedIds, objectKi
 		setDragOverIdx( null );
 	};
 
-	// Clear stale drag state when the dragged item leaves this page (cross-page drop + navigate)
 	useEffect( () => {
 		if ( dragId !== null && ! items.some( ( i ) => i.id === dragId ) ) {
 			setDragId( null );
@@ -163,6 +162,17 @@ export function PostOrderList( { items, orderedIds, originalOrderedIds, objectKi
 							>
 								{ secondaryMeta.filter( Boolean ).join( ' • ' ) || `#${ item.id }` }
 							</Typography>
+							{ 'post_type' === objectKind && item.taxonomies && Object.keys( item.taxonomies ).length > 0 && (
+								<Typography
+									variant="caption"
+									color="text.disabled"
+									sx={ { display: 'block', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }
+								>
+									{ Object.entries( item.taxonomies )
+										.map( ( [ tax, terms ] ) => `${ tax }: ${ terms.join( ', ' ) }` )
+										.join( ' • ' ) }
+								</Typography>
+							) }
 						</Stack>
 
 						<Stack direction="row" spacing={ 0.5 } alignItems="center" flexShrink={ 0 }>

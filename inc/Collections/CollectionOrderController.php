@@ -27,7 +27,7 @@ class CollectionOrderController {
 	}
 
 	protected function get_stored_orders(): array {
-		$orders = CoreOptions::read_option('rest_collection_orders');
+		$orders = CoreOptions::read_option( 'rest_collection_orders' );
 		return is_array( $orders ) ? $orders : array();
 	}
 
@@ -57,9 +57,9 @@ class CollectionOrderController {
 			wp_send_json_error( array( 'message' => $object['message'] ), 400 );
 		}
 
-		$page      = $this->get_requested_page();
-		$per_page  = $this->get_requested_per_page();
-		$app_id    = $this->get_requested_application_id();
+		$page        = $this->get_requested_page();
+		$per_page    = $this->get_requested_per_page();
+		$app_id      = $this->get_requested_application_id();
 		$saved_order = $this->get_saved_order( $object['key'], $app_id );
 
 		if ( 'taxonomy' === $object['kind'] ) {
@@ -99,7 +99,7 @@ class CollectionOrderController {
 		$new_ids = self::sanitize_order_ids( (array) json_decode( $raw, true ) );
 		$merged  = $this->merge_page_order( $object['key'], $page, $per_page, $new_ids );
 
-		$orders                = $this->get_stored_orders();
+		$orders                   = $this->get_stored_orders();
 		$orders[ $object['key'] ] = $merged;
 		$this->save_stored_orders( $orders );
 
@@ -192,7 +192,12 @@ class CollectionOrderController {
 		$unordered = array_values( array_filter( $all_ids, static fn( $id ) => ! in_array( $id, $saved_order, true ) ) );
 		$merged    = array_merge( $saved_order, $unordered );
 
-		wp_send_json_success( array( 'ids' => $merged, 'total' => count( $merged ) ) );
+		wp_send_json_success(
+			array(
+				'ids'   => $merged,
+				'total' => count( $merged ),
+			)
+		);
 	}
 
 	public function ajax_get_collection_items_by_ids(): void {
@@ -261,15 +266,15 @@ class CollectionOrderController {
 		);
 		return array_map(
 			function ( $post ) {
-				$author        = get_userdata( (int) $post->post_author );
-				$post_type_obj = get_post_type_object( $post->post_type );
-				$taxonomies    = array();
-				if ( $post_type_obj && ! empty( $post_type_obj->taxonomies ) ) {
-					foreach ( $post_type_obj->taxonomies as $tax ) {
-						$terms = wp_get_object_terms( $post->ID, $tax, array( 'fields' => 'names' ) );
-						if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
-							$taxonomies[ $tax ] = $terms;
-						}
+				$author     = get_userdata( (int) $post->post_author );
+				$taxonomies = array();
+				foreach ( get_object_taxonomies( $post->post_type, 'objects' ) as $tax_slug => $tax_obj ) {
+					if ( empty( $tax_obj->public ) ) {
+						continue;
+					}
+					$terms = wp_get_object_terms( $post->ID, $tax_slug, array( 'fields' => 'names' ) );
+					if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+						$taxonomies[ $tax_slug ] = $terms;
 					}
 				}
 				return array(
@@ -387,7 +392,7 @@ class CollectionOrderController {
 		if ( empty( $saved_order ) ) {
 			$saved_order = $this->get_saved_order( $post_type, '' );
 		}
-		$count_query = new \WP_Query(
+		$count_query   = new \WP_Query(
 			array(
 				'post_type'      => $post_type,
 				'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future' ),
@@ -405,18 +410,18 @@ class CollectionOrderController {
 				function ( $post ) use ( $saved_order, $post_type ) {
 					$author = get_userdata( (int) $post->post_author );
 					$pos    = array_search( $post->ID, $saved_order, true );
-					
-					$post_type_obj = get_post_type_object( $post_type );
-					$taxonomies    = array();
-					if ( $post_type_obj && ! empty( $post_type_obj->taxonomies ) ) {
-						foreach ( $post_type_obj->taxonomies as $tax ) {
-							$terms = wp_get_object_terms( $post->ID, $tax, array( 'fields' => 'names' ) );
-							if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
-								$taxonomies[ $tax ] = $terms;
-							}
+
+					$taxonomies = array();
+					foreach ( get_object_taxonomies( $post_type, 'objects' ) as $tax_slug => $tax_obj ) {
+						if ( empty( $tax_obj->public ) ) {
+							continue;
+						}
+						$terms = wp_get_object_terms( $post->ID, $tax_slug, array( 'fields' => 'names' ) );
+						if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+							$taxonomies[ $tax_slug ] = $terms;
 						}
 					}
-					
+
 					return array(
 						'id'            => $post->ID,
 						'kind'          => 'post_type',
@@ -477,7 +482,7 @@ class CollectionOrderController {
 		$page_posts    = array();
 
 		if ( ! empty( $ordered_slice ) ) {
-			$query = new \WP_Query(
+			$query       = new \WP_Query(
 				array(
 					'post_type'      => $post_type,
 					'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future' ),
@@ -513,7 +518,7 @@ class CollectionOrderController {
 					'no_found_rows'  => true,
 				)
 			);
-			$page_posts = array_merge( $page_posts, $query->posts );
+			$page_posts       = array_merge( $page_posts, $query->posts );
 		}
 
 		return $page_posts;

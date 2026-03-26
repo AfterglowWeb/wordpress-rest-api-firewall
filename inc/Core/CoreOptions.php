@@ -848,5 +848,4 @@ class CoreOptions {
 				return (string) call_user_func( $callback, $option_value );
 		}
 	}
-
 }
