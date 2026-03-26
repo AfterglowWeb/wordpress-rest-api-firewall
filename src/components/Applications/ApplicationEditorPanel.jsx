@@ -25,7 +25,6 @@ import ApplicationEditorModules from './ApplicationEditorModules';
 const MODULE_KEY = {
 	1:  { module: 'users',          panelKey: 'user-rate-limiting',  optionKey: 'user_rate_limit_enabled' },
 	2:  { module: 'routes_policy',  panelKey: 'per-route-settings',  optionKey: 'firewall_routes_policy_enabled' },
-	3:  { module: 'ip_filter',      panelKey: 'ip-filtering',        optionKey: null },
 	4:  { module: 'collections',    panelKey: 'collections',         optionKey: 'rest_collections_enabled' },
 	5:  { module: 'models',         panelKey: 'models-properties',   optionKey: 'rest_models_enabled' },
 	7:  { module: 'webhooks',       panelKey: 'webhook',             optionKey: 'webhooks_enabled' },
@@ -85,9 +84,6 @@ export default function ApplicationEditorPanel( { application, onBack } ) {
 	const [ rateLimitBlacklistWindow, setRateLimitBlacklistWindow ] = useState( 3600 );
 	const [ rateLimitEnabled, setRateLimitEnabled ] = useState( true );
 
-	// ── Module panel data ─────────────────────────────────────────────────────
-	const [ ipFilter, setIpFilter ] = useState( { enabled: false, mode: 'blacklist' } );
-	const [ ipFilterIps, setIpFilterIps ] = useState( [] );
 	const [ appUsers, setAppUsers ] = useState( [] );
 	const [ routesCustomCount, setRoutesCustomCount ] = useState( null );
 
@@ -183,34 +179,6 @@ export default function ApplicationEditorPanel( { application, onBack } ) {
 		}
 	}, [ adminData, nonce, application.id ] );
 
-	const loadIpFilter = useCallback( async () => {
-		try {
-			const res = await fetch( adminData.ajaxurl, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-				body: new URLSearchParams( { action: 'get_ip_filter', nonce } ),
-			} );
-			const data = await res.json();
-			if ( data?.success && data?.data ) {
-				const { enabled: ipEnabled, mode } = data.data;
-				setIpFilter( { enabled: !! ipEnabled, mode: mode || 'blacklist' } );
-				if ( ipEnabled && mode === 'whitelist' ) {
-					const res2 = await fetch( adminData.ajaxurl, {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-						body: new URLSearchParams( { action: 'get_ip_entries', nonce, list_type: 'whitelist' } ),
-					} );
-					const data2 = await res2.json();
-					if ( data2?.success && data2?.data?.entries ) {
-						setIpFilterIps( data2.data.entries.map( ( e ) => e.ip ).filter( Boolean ) );
-					}
-				}
-			}
-		} catch {
-			// Silent fail.
-		}
-	}, [ adminData, nonce ] );
-
 	const loadUsers = useCallback( async () => {
 		try {
 			const response = await fetch( adminData.ajaxurl, {
@@ -248,10 +216,6 @@ export default function ApplicationEditorPanel( { application, onBack } ) {
 	}, [ adminData, nonce, application.id ] );
 
 	useEffect( () => {
-		loadIpFilter();
-	}, [ loadIpFilter ] );
-
-	useEffect( () => {
 		if ( isNew ) return;
 		loadEntry();
 		loadUsers();
@@ -260,7 +224,6 @@ export default function ApplicationEditorPanel( { application, onBack } ) {
 
 	// ── Module toggle ─────────────────────────────────────────────────────────
 	const getModuleEnabled = ( panel ) => {
-		if ( panel === 3 ) return ipFilter.enabled;
 		const { optionKey } = MODULE_KEY[ panel ] || {};
 		return optionKey ? !! adminData?.admin_options?.[ optionKey ] : true;
 	};
@@ -273,8 +236,6 @@ export default function ApplicationEditorPanel( { application, onBack } ) {
 					...adminData,
 					admin_options: { ...( adminData.admin_options || {} ), [ entry.optionKey ]: enabledState },
 				} );
-			} else if ( 'ip_filter' === module ) {
-				setIpFilter( ( prev ) => ( { ...prev, enabled: enabledState } ) );
 			}
 			try {
 				await fetch( adminData.ajaxurl, {
@@ -456,8 +417,6 @@ export default function ApplicationEditorPanel( { application, onBack } ) {
 					serverSettings={ serverSettings }
 					routesCustomCount={ routesCustomCount }
 					allowedOrigins={ allowedOrigins }
-					ipFilter={ ipFilter }
-					ipFilterIps={ ipFilterIps }
 					getModuleEnabled={ getModuleEnabled }
 					handleModuleToggle={ handleModuleToggle }
 					handlePanelNavigate={ handlePanelNavigate }

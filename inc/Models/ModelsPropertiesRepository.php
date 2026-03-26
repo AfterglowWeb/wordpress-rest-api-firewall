@@ -125,7 +125,10 @@ class ModelsPropertiesRepository {
 			if ( ! isset( $properties[ $meta_key ] ) ) {
 				$properties[ $meta_key ] = array(
 					'type'     => 'object',
-					'settings' => array( 'disable' => false, 'filters' => array() ),
+					'settings' => array(
+						'disable' => false,
+						'filters' => array(),
+					),
 				);
 			}
 		}
@@ -192,7 +195,7 @@ class ModelsPropertiesRepository {
 	}
 
 	private static function settings_route_properties(): array {
-		$filters = self::properties_filters();
+		$filters  = self::properties_filters();
 		$request  = new WP_REST_Request( 'GET', '/wp/v2/settings' );
 		$response = rest_do_request( $request );
 
@@ -366,7 +369,10 @@ class ModelsPropertiesRepository {
 					$layout_props[ $layout_key ] = array(
 						'type'        => 'object',
 						'description' => sanitize_text_field( $layout['label'] ?? '' ),
-						'settings'    => array( 'disable' => false, 'filters' => array() ),
+						'settings'    => array(
+							'disable' => false,
+							'filters' => array(),
+						),
 						'properties'  => self::build_acf_subprops( $layout['sub_fields'] ?? array(), $string_filters ),
 					);
 				}
@@ -525,7 +531,12 @@ class ModelsPropertiesRepository {
 			array_filter( $filters, fn( $f ) => in_array( $f['key'], array( 'search_replace' ), true ) )
 		);
 
-		$users = get_users( array( 'number' => 1, 'fields' => 'ids' ) );
+		$users = get_users(
+			array(
+				'number' => 1,
+				'fields' => 'ids',
+			)
+		);
 		if ( ! empty( $users ) ) {
 			$id       = (int) $users[0];
 			$request  = new WP_REST_Request( 'GET', "/wp/v2/users/{$id}" );
@@ -578,7 +589,10 @@ class ModelsPropertiesRepository {
 			if ( ! isset( $props[ $meta_key ] ) ) {
 				$props[ $meta_key ] = array(
 					'type'     => 'object',
-					'settings' => array( 'disable' => false, 'filters' => array() ),
+					'settings' => array(
+						'disable' => false,
+						'filters' => array(),
+					),
 				);
 			}
 		}
@@ -606,5 +620,4 @@ class ModelsPropertiesRepository {
 
 		return $props;
 	}
-
 }

@@ -16,8 +16,9 @@ import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined';
-const listItemIconSx = { px: 1, minWidth: 32, color: 'text.secondary' };
-const listItemTextSx = { '& .MuiListItemText-primary': { fontSize: '0.9rem', lineHeight: 'normal' } };
+
+export const listItemIconSx = { px: 1, minWidth: 32, color: 'text.secondary' };
+export const listItemTextSx = { '& .MuiListItemText-primary': { fontSize: '0.9rem', lineHeight: 'normal' } };
 
 export default function ApplicationSelector() {
 	const { __ } = wp.i18n || {};

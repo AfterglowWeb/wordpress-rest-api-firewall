@@ -146,7 +146,7 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
 				<Tab
 					icon={ <FormatListBulletedIcon /> }
 					iconPosition="start"
-					label={ __( 'Per Route Settings', 'rest-api-firewall' ) }
+					label={ hasValidLicense ? __( 'Per Route Settings', 'rest-api-firewall' ) : __( 'Explore Routes', 'rest-api-firewall' ) }
 				/>
 			</Tabs>
 

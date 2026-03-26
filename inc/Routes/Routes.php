@@ -90,7 +90,12 @@ class Routes {
 		}
 
 		// Handle post types.
-		foreach ( get_post_types( array( 'show_in_rest' => true, 'public' => true ) ) as $post_type ) {
+		foreach ( get_post_types(
+			array(
+				'show_in_rest' => true,
+				'public'       => true,
+			)
+		) as $post_type ) {
 			if ( empty( $per_page_settings[ $post_type ]['enabled'] ) ) {
 				continue;
 			}
@@ -115,7 +120,12 @@ class Routes {
 		}
 
 		// Handle taxonomies.
-		foreach ( get_taxonomies( array( 'show_in_rest' => true, 'public' => true ) ) as $taxonomy ) {
+		foreach ( get_taxonomies(
+			array(
+				'show_in_rest' => true,
+				'public'       => true,
+			)
+		) as $taxonomy ) {
 			if ( empty( $per_page_settings[ $taxonomy ]['enabled'] ) ) {
 				continue;
 			}
@@ -154,7 +164,12 @@ class Routes {
 		$collection_orders = is_array( $collection_orders ) ? $collection_orders : array();
 
 		// Handle post types.
-		foreach ( get_post_types( array( 'show_in_rest' => true, 'public' => true ) ) as $post_type ) {
+		foreach ( get_post_types(
+			array(
+				'show_in_rest' => true,
+				'public'       => true,
+			)
+		) as $post_type ) {
 			$order         = (array) ( $collection_orders[ $post_type ] ?? array() );
 			$enforce_order = ! empty( $per_page_settings[ $post_type ]['enforce_order'] );
 
@@ -181,7 +196,12 @@ class Routes {
 		}
 
 		// Handle taxonomies.
-		foreach ( get_taxonomies( array( 'show_in_rest' => true, 'public' => true ) ) as $taxonomy ) {
+		foreach ( get_taxonomies(
+			array(
+				'show_in_rest' => true,
+				'public'       => true,
+			)
+		) as $taxonomy ) {
 			$order         = (array) ( $collection_orders[ $taxonomy ] ?? array() );
 			$enforce_order = ! empty( $per_page_settings[ $taxonomy ]['enforce_order'] );
 
