@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Core\MultiSite;
 use cmk\RestApiFirewall\Firewall\WordpressAuth;
-use cmk\RestApiFirewallPro\Collections\CollectionOrderController;
+use cmk\RestApiFirewall\Collections\CollectionOrderController;
 
 class CoreOptions {
 	protected static $instance = null;

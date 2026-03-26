@@ -191,15 +191,17 @@ export default function ApplicationEditorModules( {
 	appUsers,
 	serverSettings,
 	routesCustomCount,
-	allowedOrigins,
-	ipFilter,
-	ipFilterIps,
 	getModuleEnabled,
 	handleModuleToggle,
 	handlePanelNavigate,
 	navigate,
 } ) {
 	const { __ } = wp.i18n || {};
+
+	const perPageSet = serverSettings.rest_collection_per_page_settings?.length > 0 ? 
+		serverSettings.rest_collection_per_page_settings.filter( ( s ) => s.enabled ) : [];
+	const orderSet = serverSettings.rest_collection_orders?.length > 0 ?
+		serverSettings.rest_collection_orders.filter( ( s ) => s.enabled ) : [];
 
 	return (
 		<Box
@@ -317,49 +319,6 @@ export default function ApplicationEditorModules( {
 				) }
 			</PanelCard>
 
-			<PanelCard
-				title={ __( 'IP Filtering', 'rest-api-firewall' ) }
-				Icon={ VpnLockOutlinedIcon }
-				panel={ 3 }
-				module="ip_filter"
-				onNavigate={ handlePanelNavigate }
-				enabled={ getModuleEnabled( 3 ) }
-				onToggleEnabled={ handleModuleToggle }
-			>
-				<DataRow label={ __( 'Extra Ips', 'rest-api-firewall' ) }>
-					<Chip
-						size="small"
-						variant="outlined"
-						label={
-							! ipFilter.enabled
-								? __( 'Disabled', 'rest-api-firewall' )
-								: __( 'Blacklist', 'rest-api-firewall' )
-						}
-						color={
-							! ipFilter.enabled
-								? 'default'
-								: ipFilter.mode === 'whitelist'
-								? 'success'
-								: 'warning'
-						}
-					/>
-				</DataRow>
-				{ allowedOrigins.length > 0 && (
-					<DataRow label={ __( 'Origins', 'rest-api-firewall' ) }>
-						{ allowedOrigins.map( (allowedOrigin) => {<Typography variant="caption" sx={ { fontFamily: 'monospace' } }>
-							{ allowedOrigin }
-						</Typography>} ) }
-					</DataRow>
-				) }
-				{ ipFilter.enabled && ipFilter.mode === 'whitelist' && ipFilterIps.length > 0 && (
-					<DataRow label={ __( 'IPs', 'rest-api-firewall' ) }>
-						<Typography variant="caption" sx={ { fontFamily: 'monospace' } }>
-							{ ipFilterIps.join( ', ' ) }
-						</Typography>
-					</DataRow>
-				) }
-			</PanelCard>
-
 			{ /* Collections */ }
 			<PanelCard
 				title={ __( 'Collections', 'rest-api-firewall' ) }
@@ -370,11 +329,30 @@ export default function ApplicationEditorModules( {
 				enabled={ getModuleEnabled( 4 ) }
 				onToggleEnabled={ handleModuleToggle }
 			>
-				<DataRow label={ __( 'Sorting', 'rest-api-firewall' ) }>
-					<Typography variant="caption" color="text.disabled">
-						{ __( 'Endpoint grouping & access rules', 'rest-api-firewall' ) }
-					</Typography>
+				{/*<DataRow label={ __( 'Per Page Enforced On', 'rest-api-firewall' ) }>
+					<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
+						{ perPageSet?.length > 0 ? perPageSet.map( ( s ) => (
+							<Chip
+								key={ s.label }
+								label={ s.label }
+								size="small"
+								sx={ { fontFamily: 'monospace', fontSize: 10 } }
+							/>
+						) ) : <Typography variant="caption">{ __( 'None', 'rest-api-firewall' ) }</Typography> }
+					</Stack>
 				</DataRow>
+				<DataRow label={ __( 'Custom Order Set On', 'rest-api-firewall' ) }>
+					<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
+						{ orderSet?.length > 0 ? orderSet.map( ( s ) => (
+							<Chip
+								key={ s.label }
+								label={ s.label }
+								size="small"
+								sx={ { fontFamily: 'monospace', fontSize: 10 } }
+							/>
+						) ) : <Typography variant="caption">{ __( 'None', 'rest-api-firewall' ) }</Typography> }
+					</Stack>
+				</DataRow>*/}
 			</PanelCard>
 
 			{ /* Properties */ }
@@ -395,23 +373,6 @@ export default function ApplicationEditorModules( {
 				<DataRow label={ __( 'Models', 'rest-api-firewall' ) }>
 					<Typography variant="caption" color="text.disabled">
 						{ __( 'Custom field model definitions', 'rest-api-firewall' ) }
-					</Typography>
-				</DataRow>
-			</PanelCard>
-
-			{ /* Settings Route */ }
-			<PanelCard
-				title={ __( 'Settings Route', 'rest-api-firewall' ) }
-				Icon={ BusinessOutlinedIcon }
-				panel={ 6 }
-				module="settings_route"
-				onNavigate={ handlePanelNavigate }
-				enabled={ getModuleEnabled( 6 ) }
-				onToggleEnabled={ handleModuleToggle }
-			>
-				<DataRow label={ __( 'Route', 'rest-api-firewall' ) }>
-					<Typography variant="caption" noWrap sx={ { fontFamily: 'monospace' } }>
-						wp/v2/settings
 					</Typography>
 				</DataRow>
 			</PanelCard>

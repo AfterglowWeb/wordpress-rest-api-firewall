@@ -182,7 +182,6 @@ export default function Navigation( {
 		{
 			key: 'collections',
 			label: __( 'Collections', 'rest-api-firewall' ),
-			secondary: 'wp/v2/posts/*',
 			breadcrumbPrefix: 'REST API Output',
 			icon: ApiIcon,
 			pl:5,
@@ -190,7 +189,6 @@ export default function Navigation( {
 		{
 			key: 'models-properties',
 			label: __( 'Properties', 'rest-api-firewall' ),
-			secondary: 'wp/v2/posts/*',
 			breadcrumbPrefix: 'REST API Output',
 			icon: RuleOutlinedIcon,
 			pl:5,
@@ -249,6 +247,7 @@ export default function Navigation( {
 			breadcrumbPrefix: 'Modules',
 			icon: PaletteOutlined,
 		},
+		{ type: 'section', label: ''},
 		{
 			key: 'license',
 			label: __( 'License', 'rest-api-firewall' ),
@@ -416,7 +415,7 @@ export default function Navigation( {
 													variant="dot"
 													invisible={ ! item.badge }
 												>
-													<Icon color={ panel === item.key || !! item.disabled ? 'primary' : ''} fontSize="small" />
+													<Icon color={ panel === item.key ? 'primary' : ''} fontSize="small" />
 												</Badge>
 											</ListItemIcon>
 										) }
@@ -426,7 +425,7 @@ export default function Navigation( {
 												'& .MuiListItemText-primary': {
 													fontSize: '0.9rem',
 													lineHeight: 'normal',
-													color: panel === item.key || !! item.disabled ? 'primary.main' : 'text.primary'
+													color: panel === item.key ? 'primary.main' : 'text.primary'
 												},
 											} }
 											primary={ item.label }
