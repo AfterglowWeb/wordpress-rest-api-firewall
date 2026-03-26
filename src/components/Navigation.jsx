@@ -33,7 +33,6 @@ import WebhookIcon from '@mui/icons-material/Webhook';
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import VpnLockOutlinedIcon from '@mui/icons-material/VpnLockOutlined';
 import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined';
-import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 import CardMembershipOutlinedIcon from '@mui/icons-material/CardMembershipOutlined';
 import RocketLaunchOutlinedIcon from '@mui/icons-material/RocketLaunchOutlined';
 import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined';
@@ -41,13 +40,17 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import ShieldIcon from '@mui/icons-material/Shield';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined';
+
 
 import { useNavigation } from '../contexts/NavigationContext';
 import { useEntryToolbarContext } from '../contexts/EntryToolbarContext';
 import AppIdentity from './AppIdentity';
-import ApplicationSelector from './ApplicationSelector';
+import ApplicationSelector, { listItemTextSx, listItemIconSx} from './ApplicationSelector';
 import Documentation from './Documentation/Documentation';
 import PanelBreadcrumb from './shared/PanelBreadcrumb';
+import ListItem from '@mui/material/ListItem';
 
 export const DRAWER_WIDTH = 220;
 export const APP_BAR_HEIGHT = 75;
@@ -81,7 +84,6 @@ export default function Navigation( {
 	const moduleKey = {
 		'user-rate-limiting':  { module: 'users',           optionKey: 'user_rate_limit_enabled',           label: __( 'Active', 'rest-api-firewall' ) },
 		'per-route-settings':  { module: 'routes_policy',   optionKey: 'firewall_routes_policy_enabled',    label: __( 'Active', 'rest-api-firewall' ) },
-		'ip-filtering':        { module: 'ip_filter',       optionKey: null,                                label: __( 'Active', 'rest-api-firewall' ) },
 		'global-ip-filtering': { module: 'global_ip_filter', optionKey: null,                               label: __( 'Active', 'rest-api-firewall' ) },
 		'collections':         { module: 'collections',     optionKey: 'rest_collections_enabled',          label: __( 'Active', 'rest-api-firewall' ) },
 		'models-properties':   { module: 'models',          optionKey: 'rest_models_enabled',               label: __( 'Active', 'rest-api-firewall' ) },
@@ -99,7 +101,6 @@ export default function Navigation( {
 	);
 
 	const getModuleEnabled = ( pg ) => {
-		if ( pg === 'ip-filtering' ) return ipFilterEnabled;
 		if ( pg === 'global-ip-filtering' ) return globalIpFilterEnabled;
 		const key = moduleKey[ pg ]?.optionKey;
 		return key ? !! adminData?.admin_options?.[ key ] : null;
@@ -131,9 +132,7 @@ export default function Navigation( {
 						? __( 'Module enabled successfully.', 'rest-api-firewall' )
 						: __( 'Module disabled successfully.', 'rest-api-firewall' ),
 					onSuccess: () => {
-						if ( pg === 'ip-filtering' ) {
-							setIpFilterEnabled( checked );
-						} else if ( pg === 'global-ip-filtering' ) {
+						if ( pg === 'global-ip-filtering' ) {
 							setGlobalIpFilterEnabled( checked );
 						} else {
 							updateAdminData( {
@@ -168,7 +167,7 @@ export default function Navigation( {
 			key: 'user-rate-limiting',
 			label: hasValidLicense
 				? __( 'Users', 'rest-api-firewall' )
-				: __( 'Auth. & Rate Limit', 'rest-api-firewall' ),
+				: __( 'User', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'REST API Firewall',
 			icon: SecurityOutlined,
 			pl:5,
@@ -181,20 +180,8 @@ export default function Navigation( {
 			pl:5,
 		},
 		{
-			key: 'ip-filtering',
-			label: __( 'IP Filtering', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'REST API Firewall',
-			icon: VpnLockOutlinedIcon,
-			pl:5,
-		},
-		{
-			type: 'section',
-			label: '',
-		},
-		{
 			key: 'collections',
 			label: __( 'Collections', 'rest-api-firewall' ),
-			secondary: 'wp/v2/posts/*',
 			breadcrumbPrefix: 'REST API Output',
 			icon: ApiIcon,
 			pl:5,
@@ -202,7 +189,6 @@ export default function Navigation( {
 		{
 			key: 'models-properties',
 			label: __( 'Properties', 'rest-api-firewall' ),
-			secondary: 'wp/v2/posts/*',
 			breadcrumbPrefix: 'REST API Output',
 			icon: RuleOutlinedIcon,
 			pl:5,
@@ -233,26 +219,25 @@ export default function Navigation( {
 			disabled: ! hasValidLicense,
 			pl:5,
 		},
-
-		{ type: 'section', label: __( '', 'rest-api-firewall' ) },
 		{
 			key: 'logs',
 			label: __( 'Logs', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'All Applications',
 			icon: AssessmentOutlinedIcon,
 			disabled: ! hasValidLicense,
+			pl:5,
 		},
 
 		{ type: 'section', label: __( '', 'rest-api-firewall' ) },
 		{
 			key: 'global-ip-filtering',
-			label: __( 'Global IP Filtering', 'rest-api-firewall' ),
+			label: __( 'IP Filtering', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Modules',
 			icon: VpnLockOutlinedIcon,
 		},
 		{
 			key: 'global_security',
-			label: __( 'Global Security', 'rest-api-firewall' ),
+			label: __( 'Security', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Modules',
 			icon: ShieldIcon,
 		},
@@ -262,6 +247,7 @@ export default function Navigation( {
 			breadcrumbPrefix: 'Modules',
 			icon: PaletteOutlined,
 		},
+		{ type: 'section', label: ''},
 		{
 			key: 'license',
 			label: __( 'License', 'rest-api-firewall' ),
@@ -362,7 +348,26 @@ export default function Navigation( {
 					if ( item.hidden ) return null;
 
 					if ( item.type === 'app-selector' ) {
-						if ( ! hasValidLicense ) return null;
+						if ( ! hasValidLicense ) return (
+						<Tooltip
+								disableInteractive
+								followCursor
+								title={'License required'}
+							>
+	
+							<ListItem sx={ { px: 3, mt: 1, userSelect: 'none' } }>
+								<ListItemIcon sx={ listItemIconSx }>
+									<AppsOutlinedIcon color="disabled" fontSize="small" />
+								</ListItemIcon>
+								<ListItemText
+									sx={{ ...listItemTextSx, '& .MuiListItemText-primary': { color: 'text.disabled' } }}
+									primary={ __( 'Applications', 'rest-api-firewall' ) }
+								/>
+								<ExpandMoreIcon fontSize="small" sx={ { color: 'text.disabled' } } />
+							</ListItem>
+				
+						</Tooltip>
+						);
 						return <ApplicationSelector key="app-selector" />;
 					}
 
@@ -370,6 +375,8 @@ export default function Navigation( {
 						return (
 							<Tooltip
 								key={ item.key }
+								disableInteractive
+								followCursor
 								title={
 									item.disabled
 										? __(
@@ -378,7 +385,6 @@ export default function Navigation( {
 										  )
 										: ''
 								}
-								placement="right"
 							>
 								<span>
 									<ListItemButton
@@ -409,7 +415,7 @@ export default function Navigation( {
 													variant="dot"
 													invisible={ ! item.badge }
 												>
-													<Icon color={ panel === item.key || !! item.disabled ? 'primary' : ''} fontSize="small" />
+													<Icon color={ panel === item.key ? 'primary' : ''} fontSize="small" />
 												</Badge>
 											</ListItemIcon>
 										) }
@@ -419,7 +425,7 @@ export default function Navigation( {
 												'& .MuiListItemText-primary': {
 													fontSize: '0.9rem',
 													lineHeight: 'normal',
-													color: panel === item.key || !! item.disabled ? 'primary.main' : 'text.primary'
+													color: panel === item.key ? 'primary.main' : 'text.primary'
 												},
 											} }
 											primary={ item.label }

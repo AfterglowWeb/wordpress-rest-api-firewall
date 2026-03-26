@@ -12,6 +12,7 @@ import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import Switch from '@mui/material/Switch';
 
 export default function GlobalProperties( { form, setField } ) {
 	const { hasValidLicense } = useLicense();
@@ -20,32 +21,22 @@ export default function GlobalProperties( { form, setField } ) {
 	const Item = ( { name, label, tip, disabled = false, indent = false, pro = false } ) => {
 		const isDisabled = ( pro && ! hasValidLicense ) || disabled === true;
 
-		const labelNode = pro && ! hasValidLicense
-			? (
-				<Box component="span" sx={ { display: 'inline-flex', alignItems: 'center', gap: 0.75 } }>
-					{ label }
-					<Chip label="Pro" size="small" color="primary" sx={ { height: 16, fontSize: '0.65rem', pointerEvents: 'none' } } />
-				</Box>
-			)
-			: label;
-
 		return (
-		<Tooltip title={ tip || '' } placement="bottom-start" followCursor>
+		<Tooltip title={ tip || '' } disableInteractive followCursor>
 			<FormControlLabel
 				disabled={ isDisabled }
 				control={
-					<Checkbox
+					<Switch
 						size="small"
 						checked={ !! form[ name ] }
 						name={ name }
 						onChange={ setField }
 					/>
 				}
-				label={ labelNode }
+				label={ label }
 				sx={ {
 					width: '50%',
 					minWidth: 360,
-					mr: 0,
 					...( indent && { pl: 2 } ),
 				} }
 			/>
@@ -69,7 +60,7 @@ export default function GlobalProperties( { form, setField } ) {
 						<br />{ __( 'Can be overridden per model.', 'rest-api-firewall' ) }
 					</Typography>
 				</Stack>
-				<FormGroup sx={ { flexDirection: 'row', flexWrap: 'wrap' } }>
+				<FormGroup sx={ { flexDirection: 'column', gap: 2 } }>
 					<Item
 						name="rest_models_relative_url_enabled"
 						label={ __( 'Relative URLs', 'rest-api-firewall' ) }
@@ -78,32 +69,32 @@ export default function GlobalProperties( { form, setField } ) {
 					<Item
 						name="rest_models_relative_attachment_url_enabled"
 						label={ __( 'Relative Attachment URLs', 'rest-api-firewall' ) }
-						tip={ __( 'Remove the host and upload path from attachment URLs.', 'rest-api-firewall' ) }
+						tip={ __( 'Remove the host and upload path from attachment URLs. Require License', 'rest-api-firewall' ) }
 						pro
 					/>
 					<Item
 						name="rest_models_remove_links_prop"
 						label={ __( 'Remove `_links`', 'rest-api-firewall' ) }
-						tip={ __( 'Remove the `_links` property from REST responses.', 'rest-api-firewall' ) }
+						tip={ __( 'Remove the `_links` property from REST responses. Require License', 'rest-api-firewall' ) }
 						pro
 					/>
 					<Item
 						name="rest_models_remove_embed_prop"
 						label={ __( 'Remove `_embed`', 'rest-api-firewall' ) }
-						tip={ __( 'Remove the `_embed` property from REST responses.', 'rest-api-firewall' ) }
+						tip={ __( 'Remove the `_embed` property from REST responses. Require License', 'rest-api-firewall' ) }
 						pro
 					/>
 					<Item
 						name="rest_models_remove_empty_props"
 						label={ __( 'Remove Empty Properties', 'rest-api-firewall' ) }
-						tip={ __( 'Remove properties with empty values from REST responses.', 'rest-api-firewall' ) }
+						tip={ __( 'Remove properties with empty values from REST responses. Require License', 'rest-api-firewall' ) }
 						pro
 					/>
 					<Item
 						disabled={ !form.rest_models_remove_empty_props }
 						name="rest_models_remove_empty_props_recursively"
 						label={ __( 'Apply to Nested Properties', 'rest-api-firewall' ) }
-						tip={ __( 'Also remove empty properties from nested objects.', 'rest-api-firewall' ) }
+						tip={ __( 'Also remove empty properties from nested objects. Require License', 'rest-api-firewall' ) }
 						indent
 						pro
 					/>
@@ -125,7 +116,7 @@ export default function GlobalProperties( { form, setField } ) {
 						<br />{ __( 'Can be overridden per model.', 'rest-api-firewall' ) }
 					</Typography>
 				</Stack>
-				<FormGroup sx={ { flexDirection: 'row', flexWrap: 'wrap' } }>
+				<FormGroup sx={ { flexDirection: 'column', gap: 2 } }>
 					<Item
 						name="rest_models_resolve_rendered_props"
 						label={ __( 'Flatten `rendered`', 'rest-api-firewall' ) }
@@ -135,7 +126,6 @@ export default function GlobalProperties( { form, setField } ) {
 						name="rest_models_embed_featured_attachment_enabled"
 						label={ __( 'Resolve Featured Attachments', 'rest-api-firewall' ) }
 						tip={ __( 'Replace the featured attachment ID with its configured properties.', 'rest-api-firewall' ) }
-						pro
 					/>
 					<Item
 						name="rest_models_embed_post_attachments_enabled"
@@ -167,9 +157,6 @@ export default function GlobalProperties( { form, setField } ) {
 					>
 						{ __( 'Date Format', 'rest-api-firewall' ) }
 					</Typography>
-					{ ! hasValidLicense && (
-						<Chip label="Pro" size="small" color="primary" sx={ { height: 16, fontSize: '0.65rem' } } />
-					) }
 				</Box>
 				<Typography variant="body2" color="text.secondary">
 					{ __( 'Format date properties. Can be overridden per model.', 'rest-api-firewall' ) }<br/>
