@@ -5,7 +5,6 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import IconButton from '@mui/material/IconButton';
 
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
@@ -20,7 +19,7 @@ export function mergeOrderPreview( savedOrder, page, perPage, newIds ) {
 	return [ ...before, ...deduped, ...after ];
 }
 
-export function PostOrderList( { items, orderedIds, originalOrderedIds, objectKind, loading, onReorder } ) {
+export function PostOrderList( { items, orderedIds, originalOrderedIds, objectKind, loading, onReorder, singleItem } ) {
 	const { __ } = wp.i18n || {};
 	const [ dragId, setDragId ] = useState( null );
 	const [ dragOverIdx, setDragOverIdx ] = useState( null );
@@ -95,12 +94,12 @@ export function PostOrderList( { items, orderedIds, originalOrderedIds, objectKi
 			sx={ { border: '1px solid', borderColor: 'divider', borderRadius: 1, overflow: 'hidden' } }
 		>
 			{ items.map( ( item, idx ) => {
-				const savedPos = orderedIds.indexOf( item.id );
-				const isOrdered = savedPos !== -1;
-			const origGlobalIdx = ( originalOrderedIds || [] ).indexOf( item.id );
-			const hasMoved = origGlobalIdx !== -1 && origGlobalIdx !== savedPos;
+				const currentPos = orderedIds.indexOf( item.id );
+				const isOrdered = currentPos !== -1;
+				const origGlobalIdx = ( originalOrderedIds || [] ).indexOf( item.id );
+				const hasMoved = origGlobalIdx !== -1 && origGlobalIdx !== currentPos;
 				const isDragging = dragId === item.id;
-			const isOver = dragOverIdx === idx && dragId !== null && dragId !== item.id;
+				const isOver = dragOverIdx === idx && dragId !== null && dragId !== item.id;
 				const secondaryMeta = 'taxonomy' === objectKind
 					? [
 						item.slug ? `${ __( 'Slug', 'rest-api-firewall' ) }: ${ item.slug }` : '',
@@ -115,11 +114,11 @@ export function PostOrderList( { items, orderedIds, originalOrderedIds, objectKi
 				return (
 					<Box
 						key={ item.id }
-						draggable
-						onDragStart={ ( e ) => handleDragStart( e, idx ) }
-						onDragOver={ ( e ) => handleDragOver( e, idx ) }
-						onDrop={ ( e ) => handleDrop( e, idx ) }
-						onDragEnd={ handleDragEnd }
+					draggable={ ! singleItem }
+					onDragStart={ singleItem ? undefined : ( e ) => handleDragStart( e, idx ) }
+					onDragOver={ singleItem ? undefined : ( e ) => handleDragOver( e, idx ) }
+					onDrop={ singleItem ? undefined : ( e ) => handleDrop( e, idx ) }
+					onDragEnd={ singleItem ? undefined : handleDragEnd }
 						sx={ {
 							display: 'flex',
 							alignItems: 'center',
@@ -131,16 +130,16 @@ export function PostOrderList( { items, orderedIds, originalOrderedIds, objectKi
 							borderColor: 'divider',
 							borderTop: isOver ? '2px solid' : undefined,
 							borderTopColor: isOver ? 'primary.main' : undefined,
-							cursor: 'grab',
-							opacity: isDragging ? 0.45 : 1,
-							transition: 'background-color 0.1s',
-							'&:hover': { bgcolor: isDragging ? 'action.selected' : 'action.hover' },
+						cursor: singleItem ? 'default' : 'grab',
+						opacity: isDragging ? 0.45 : 1,
+						transition: 'background-color 0.1s',
+						'&:hover': { bgcolor: isDragging ? 'action.selected' : ( singleItem ? 'background.paper' : 'action.hover' ) },
 						} }
 					>
-						<DragIndicatorIcon sx={ { fontSize: 16, color: 'text.disabled', flexShrink: 0 } } />
+						<DragIndicatorIcon sx={ { fontSize: 16, color: singleItem ? 'transparent' : 'text.disabled', flexShrink: 0 } } />
                         <Box sx={ { display: 'flex', alignItems: 'center', gap: 0.75, flexShrink: 0 } }>
-                            { isOrdered ? (
-                                <Chip label={ `${ savedPos + 1 }` } size="small" color="primary" />
+                            { isOrdered && ! singleItem ? (
+                                <Chip label={ `${ currentPos + 1 }` } size="small" color={ hasMoved ? 'primary' : 'default' } />
                             ) : (
                                 <Chip label={ `${ idx + 1 }` } size="small" />
                             ) }
@@ -193,6 +192,7 @@ export function PostOrderList( { items, orderedIds, originalOrderedIds, objectKi
 export function PageDropZone( { direction, disabled, onDrop, setPage } ) {
 	const { __ } = wp.i18n || {};
 	const [ dragOver, setDragOver ] = useState( null );
+	const [ hovered, setHovered ] = useState( false );
 	const isPrev = direction === 'prev';
 
 	const handleZoneDragOver = ( e, zone ) => {
@@ -221,63 +221,78 @@ export function PageDropZone( { direction, disabled, onDrop, setPage } ) {
 		}
 	};
 
+	const isExpanded = hovered || !! dragOver;
+
 	const pageLabel = isPrev
 		? __( 'Prev. Page', 'rest-api-firewall' )
 		: __( 'Next Page', 'rest-api-firewall' );
 
 	const zoneLabel = ( zone ) =>
 		zone === 'drop'
-			? __( 'Move', 'rest-api-firewall' )
-			: __( 'Move & See', 'rest-api-firewall' );
+			? __( 'Drop', 'rest-api-firewall' )
+			: __( 'Drop & See Page', 'rest-api-firewall' );
 
 	const textSx = ( zone ) => ( {
 		fontSize: '12px',
 		lineHeight: 'normal',
 		textTransform: 'uppercase',
 		textAlign: 'center',
+		whiteSpace: 'nowrap',
+		writingMode: 'vertical-rl',
+		transform: 'rotate(180deg)',
 		color: dragOver === zone
 			? 'primary.main'
 			: 'text.disabled',
 	} );
 
 	return (
-
 		<Box
-			onDragLeave={ handleContainerDragLeave }
+			onMouseEnter={ () => setHovered( true ) }
+			onMouseLeave={ () => setHovered( false ) }
+			onDragEnter={ () => setHovered( true ) }
+			onDragLeave={ ( e ) => {
+				handleContainerDragLeave( e );
+				if ( ! e.currentTarget.contains( e.relatedTarget ) ) setHovered( false );
+			} }
 			sx={ {
-				width: 74,
+				width: isExpanded ? 78 : 32,
 				flexShrink: 0,
-				height: '70vh', 
-				position: 'sticky', 
-				top:'15vh',
+				height: '70vh',
+				position: 'sticky',
+				top: '15vh',
 				display: 'flex',
 				justifyContent: 'center',
 				flexDirection: isPrev ? 'row' : 'row-reverse',
 				borderRadius: 1,
 				border: '1px solid',
-				borderColor: dragOver ? 'primary.main' : 'divider',
+				borderColor: dragOver ? 'primary.main' : ( hovered ? 'primary.light' : 'divider' ),
 				overflow: 'hidden',
 				opacity: disabled ? 0.5 : 1,
 				pointerEvents: disabled ? 'none' : 'auto',
 				userSelect: 'none',
+				cursor: 'pointer',
+				transition: 'width 0.2s ease, border-color 0.15s',
 			} }
 		>
 			<Box
-				sx={ { width:16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 2 } }
+			sx={ { width: 28, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0.5, flexShrink: 0 } }
 			>
-					<Typography 
+				<Typography 
 					variant="caption" 
 					sx={ { 
-					whiteSpace: 'nowrap', 
-					lineHeight: 'normal', 
-					color: dragOver ? 'primary.main' :'text.secondary', 
-					transform: 'rotate(-90deg)',
-					textTransform: 'uppercase',
+						writingMode: 'vertical-rl',
+						transform: 'rotate(180deg)',
+						lineHeight: 'normal', 
+						color: dragOver ? 'primary.main' : ( hovered ? 'text.primary' : 'text.disabled' ),
+						textTransform: 'uppercase',
+						fontSize: '10px',
 					} }>
-						{ pageLabel }
-					</Typography>
+					{ pageLabel }
+				</Typography>
 			</Box>
-			<Box sx={ { width: 50, px:0.5, py:1, display: 'flex', flexDirection: 'column', gap: 1 } }>
+			<Box sx={ { width: isExpanded ? 50 : 0, px: 0.5, py: 1, display: 'flex', flexDirection: 'column', gap: 1, flexShrink: 0,
+				opacity: isExpanded ? 1 : 0, transition: 'all 0.15s ease', pointerEvents: isExpanded ? 'auto' : 'none',
+			} }>
 
 				<Box
 					onDragOver={ ( e ) => handleZoneDragOver( e, 'drop' ) }

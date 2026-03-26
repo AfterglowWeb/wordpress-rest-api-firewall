@@ -164,6 +164,8 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 
 	const currentPageItems = masterOrder.slice( page * rowsPerPage, ( page + 1 ) * rowsPerPage ).map( ( id ) => orderState.itemCache[ id ] ).filter( Boolean );
 	const isLastPage = masterOrder.length <= ( page + 1 ) * rowsPerPage;
+	const needsPagination = masterOrder.length > rowsPerPage;
+	const singleItem = masterOrder.length === 1;
 
 	const formOrdersRef = useRef( form.rest_collection_orders );
 	useEffect( () => {
@@ -532,17 +534,18 @@ export default function Collections( { form, setField, syncSavedField, postTypes
                             </FormControl>
 
                             <Stack direction="row" alignItems="center" flexWrap="wrap" justifyContent="space-between" gap={ 1 }>
-								<TablePagination
-                                        component="div"
-                                        count={ masterOrder.length }
-                                        page={ page }
-										setPage={ setPage }
-                                        onPageChange={ handlePageChange }
-                                        onRowsPerPageChange={ handleRowsPerPageChange }
-                                        rowsPerPage={ rowsPerPage }
-                                        rowsPerPageOptions={ ROWS_PER_PAGE_OPTIONS }
-                                        sx={ { borderTop: 0, mt: -1 } }
-                                    />
+								{ needsPagination && (
+									<TablePagination
+										component="div"
+										count={ masterOrder.length }
+										page={ page }
+										onPageChange={ handlePageChange }
+										onRowsPerPageChange={ handleRowsPerPageChange }
+										rowsPerPage={ rowsPerPage }
+										rowsPerPageOptions={ ROWS_PER_PAGE_OPTIONS }
+										sx={ { borderTop: 0, mt: -1 } }
+									/>
+								) }
 
 								<Stack flex={ 1 } />
 								<Tooltip disableInteractive title={ __( 'Undo Current Changes', 'rest-api-firewall' ) }>
@@ -577,13 +580,14 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 
                             <Box sx={ { display: 'flex', flexDirection: 'row', alignItems: 'stretch', gap: 0.75 } }>
 
-                                <PageDropZone
-                                    direction="prev"
-                                    disabled={ page === 0 }
-                                    onDrop={ handleCrossPageMove }
-                                    setPage={ setPage }
-									page={ page }
-                                />
+                                { needsPagination && (
+                                    <PageDropZone
+                                        direction="prev"
+                                        disabled={ page === 0 }
+                                        onDrop={ handleCrossPageMove }
+                                        setPage={ setPage }
+                                    />
+                                ) }
 
                                 <Box sx={ { flex: 1, minWidth: 0 } }>
                                     <PostOrderList
@@ -593,16 +597,18 @@ export default function Collections( { form, setField, syncSavedField, postTypes
                                         objectKind={ objectKind }
                                         loading={ loading || loadingIds }
                                         onReorder={ handleReorder }
+                                        singleItem={ singleItem }
                                     />
-                                    
                                 </Box>
 
-                                <PageDropZone
-                                    direction="next"
-                                    disabled={ isLastPage }
-                                    onDrop={ handleCrossPageMove }
-                                    setPage={ setPage }
-                                />
+                                { needsPagination && (
+                                    <PageDropZone
+                                        direction="next"
+                                        disabled={ isLastPage }
+                                        onDrop={ handleCrossPageMove }
+                                        setPage={ setPage }
+                                    />
+                                ) }
 
                             </Box>
                         </Stack>

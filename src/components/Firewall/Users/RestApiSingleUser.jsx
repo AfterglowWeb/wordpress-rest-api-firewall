@@ -12,6 +12,7 @@ import Box from '@mui/material/Box';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
+import Checkbox from '@mui/material/Checkbox';
 
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
@@ -20,6 +21,7 @@ import AllowedOrigins from '../IpFilter/AllowedOrigins';
 import { JwtConfig } from './AuthManager';
 
 import { RateLimitFields } from './RateLimit';
+import Tooltip from '@mui/material/Tooltip';
 
 export default function RestApiSingleUser( { form, setField } ) {
 	const { __, sprintf } = wp.i18n || {};
@@ -111,6 +113,7 @@ export default function RestApiSingleUser( { form, setField } ) {
 	return (
 
 		<Stack spacing={ 3 } p={ 4 } sx={ { maxWidth: 800 } }>
+			
 			<Stack
 				direction={ { xs: 'column', lg: 'row' } }
 				gap={ 2 }
@@ -208,8 +211,8 @@ export default function RestApiSingleUser( { form, setField } ) {
 
 			<Divider />
 
-			<Stack spacing={ 2 }>
-				<Stack spacing={ 0.5 }>
+			<Stack spacing={ 3 }>
+				<Stack spacing={ 0 }>
 					<Typography variant="subtitle1" fontWeight={ 600 }>
 						{ __( 'Authentication Method', 'rest-api-firewall' ) }
 					</Typography>
@@ -242,38 +245,82 @@ export default function RestApiSingleUser( { form, setField } ) {
 	
 			<Divider />
 
-			<Stack spacing={ 2 } sx={ { maxWidth: 760 } }>
-				<Stack spacing={ 0.75 }>
+			<Stack spacing={ 3 } sx={ { maxWidth: 760 } }>
+				
+				<Stack spacing={ 0 }>
 					<Typography variant="subtitle1" fontWeight={ 600 }>
 						{ __( 'Allowed IPs', 'rest-api-firewall' ) }
 					</Typography>
 					<Typography variant="caption" color="text.secondary">
 						{ __( 'Only authorized requests from these IPs will be accepted.', 'rest-api-firewall' ) }
 					</Typography>
-					<AllowedIps
-						inline
-						value={ allowedIps || [] }
-						onChange={ setAllowedIps }
-						onSave={ () => saveSetting( 'allowed_ips', allowedIps ) }
-						saving={ saving }
-					/>
 				</Stack>
-				<Stack spacing={ 0.75 }>
+
+				<AllowedIps
+					inline
+					value={ allowedIps || [] }
+					onChange={ setAllowedIps }
+					onSave={ () => saveSetting( 'allowed_ips', allowedIps ) }
+					saving={ saving }
+				/>
+
+				<Divider />	
+			
+				<Stack spacing={ 0 }>
 					<Typography variant="subtitle1" fontWeight={ 600 }>
 						{ __( 'Allowed Origins', 'rest-api-firewall' ) }
 					</Typography>
 					<Typography variant="caption" color="text.secondary">
 						{ __( 'Only authorized requests from these origins will be accepted.', 'rest-api-firewall' ) }
 					</Typography>
-					<AllowedOrigins
-						inline
-						value={ allowedOrigins || [] }
-						onChange={ setAllowedOrigins }
-						onSave={ () => saveSetting( 'allowed_origins', allowedOrigins ) }
-						saving={ saving }
+				</Stack>
+
+				<AllowedOrigins
+					inline
+					value={ allowedOrigins || [] }
+					onChange={ setAllowedOrigins }
+					onSave={ () => saveSetting( 'allowed_origins', allowedOrigins ) }
+					saving={ saving }
+				/>
+			
+			</Stack>
+
+			<Divider />
+
+			<Tooltip title={ __( 'License required.', 'rest-api-firewall' ) } followCursor disableInteractive>
+			<Stack spacing={ 3 } sx={{ userSelect: 'none' }}>
+				<Stack spacing={ 0 }>
+					<Typography variant="subtitle1" fontWeight={ 600 } color="text.disabled">
+						{ __( 'Allowed HTTP Methods', 'rest-api-firewall' ) }
+					</Typography>
+					<Typography variant="caption" color="text.disabled">
+						{ __( 'Which HTTP verbs this user is allowed to use against the REST API.', 'rest-api-firewall.' ) }
+					</Typography>
+				</Stack>
+				<Stack direction="row" flexWrap="wrap" gap={ 1 }>
+				{ ['GET','POST','PUT','PATCH','DELETE'].map( ( method ) => (
+					<FormControlLabel
+						key={ method }
+						disabled
+						label={
+							method
+						}
+						control={
+							<Checkbox
+								size="small"
+								disabled
+							/>
+						}
+						sx={ {
+							m: 0,
+							px: 1.5,
+							userSelect: 'none',
+						} }
 					/>
+				) ) }
 				</Stack>
 			</Stack>
+			</Tooltip>
 
 			<Divider />
 
