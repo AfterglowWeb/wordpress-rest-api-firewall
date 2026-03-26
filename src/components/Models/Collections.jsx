@@ -26,8 +26,6 @@ import Tooltip from '@mui/material/Tooltip';
 
 import { PostOrderList, PageDropZone } from './SortCollectionsUtils';
 
-// ── Ordering reducer ────────────────────────────────────────────────────────
-
 const initTypeEntry = ( ids ) => ( {
 	masterOrder: ids,
 	originalMasterOrder: ids,
@@ -119,7 +117,6 @@ function ordersReducer( state, action ) {
 			return state;
 	}
 }
-// ────────────────────────────────────────────────────────────────────────────
 
 const DEFAULT_ROWS_PER_PAGE = 25;
 const ROWS_PER_PAGE_OPTIONS = [ 25, 50, 100 ];
@@ -145,16 +142,13 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 	const [ page, setPage ] = useState( 0 );
 	const [ rowsPerPage, setRowsPerPage ] = useState( DEFAULT_ROWS_PER_PAGE );
 
-	// ── Reducer for ordering state (persists across type switches) ──
 	const [ orderState, dispatch ] = useReducer( ordersReducer, INITIAL_ORDER_STATE );
 
-	// Ref mirrors of reducer state for use in async closures / effects
 	const itemCacheRef = useRef( {} );
 	useEffect( () => { itemCacheRef.current = orderState.itemCache; }, [ orderState.itemCache ] );
 	const byTypeRef = useRef( {} );
 	useEffect( () => { byTypeRef.current = orderState.byType; }, [ orderState.byType ] );
 
-	// Derived per-type ordering state
 	const typeState = orderState.byType[ selectedType ] || {
 		masterOrder: [],
 		originalMasterOrder: [],
@@ -169,10 +163,6 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 	const objectLabel = selectedObject?.label || selectedType;
 
 	const currentPageItems = masterOrder.slice( page * rowsPerPage, ( page + 1 ) * rowsPerPage ).map( ( id ) => orderState.itemCache[ id ] ).filter( Boolean );
-	const originalPageItems = originalMasterOrder
-		.slice( page * rowsPerPage, ( page + 1 ) * rowsPerPage )
-		.map( ( id ) => orderState.itemCache[ id ] )
-		.filter( Boolean );
 	const isLastPage = masterOrder.length <= ( page + 1 ) * rowsPerPage;
 
 	const formOrdersRef = useRef( form.rest_collection_orders );
@@ -208,7 +198,6 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 		} catch {}
 	}, [ isPro, selectedApplicationId, nonce, adminData.ajaxurl, syncSavedField ] );
 
-	// ── Fetch ALL IDs for the selected type → dispatch INIT_TYPE ──
 	const fetchAllIds = useCallback( async ( type, kind ) => {
 		if ( ! type ) {
 			return;
@@ -245,7 +234,6 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 		}
 	}, [ isPro, selectedApplicationId, nonce, adminData.ajaxurl, __ ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
-	// ── Fetch item data for the current page (cache-miss IDs only) ──
 	useEffect( () => {
 		if ( ! masterOrder.length ) {
 			return;
@@ -298,8 +286,6 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 		loadOrders();
 	}, [ loadOrders ] );
 
-	// ── Load type IDs; preserve ordering state across type switches ──
-	// Reset ALL cached state only when the app/license context changes.
 	const contextKey = `${ isPro ? '1' : '0' }__${ selectedApplicationId || 'none' }`;
 	const prevContextKeyRef = useRef( null );
 	useEffect( () => {
@@ -307,7 +293,6 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 		prevContextKeyRef.current = contextKey;
 		if ( contextChanged ) {
 			dispatch( { type: 'RESET_ALL' } );
-			// Reset the mirrors immediately so the loaded-check below uses empty state
 			byTypeRef.current = {};
 			itemCacheRef.current = {};
 		}
@@ -315,14 +300,12 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 		if ( ! selectedType ) {
 			return;
 		}
-		// Skip fetch if this type's IDs are already loaded (type switch without context change)
 		if ( byTypeRef.current[ selectedType ]?.loaded && ! contextChanged ) {
 			return;
 		}
 		fetchAllIds( selectedType, objectKind );
 	}, [ selectedType, objectKind, contextKey ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
-	// ── Shared helper: sync rest_collection_orders form field ──
 	const syncOrderField = useCallback( ( order ) => {
 		const value = { ...( formOrdersRef.current || {} ), [ selectedType ]: order };
 		if ( ! isPro ) {
@@ -398,10 +381,8 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 		const newOrder = masterOrder.filter( ( id ) => id !== itemId );
 		let insertIdx;
 		if ( direction === 'prev' ) {
-			// Last slot of the previous page (clamped to 0)
 			insertIdx = Math.max( 0, page * rowsPerPage - 1 );
 		} else {
-			// First slot of the next page (clamped to end)
 			insertIdx = Math.min( ( page + 1 ) * rowsPerPage, newOrder.length );
 		}
 		const finalOrder = [ ...newOrder.slice( 0, insertIdx ), itemId, ...newOrder.slice( insertIdx ) ];
@@ -551,35 +532,45 @@ export default function Collections( { form, setField, syncSavedField, postTypes
                             </FormControl>
 
                             <Stack direction="row" alignItems="center" flexWrap="wrap" justifyContent="space-between" gap={ 1 }>
-                                
+								<TablePagination
+                                        component="div"
+                                        count={ masterOrder.length }
+                                        page={ page }
+										setPage={ setPage }
+                                        onPageChange={ handlePageChange }
+                                        onRowsPerPageChange={ handleRowsPerPageChange }
+                                        rowsPerPage={ rowsPerPage }
+                                        rowsPerPageOptions={ ROWS_PER_PAGE_OPTIONS }
+                                        sx={ { borderTop: 0, mt: -1 } }
+                                    />
+
+								<Stack flex={ 1 } />
 								<Tooltip disableInteractive title={ __( 'Undo Current Changes', 'rest-api-firewall' ) }>
 								<Button
                                     size="small"
                                     variant="text"
 									startIcon={ <UndoIcon /> }
-                                    disabled={ ! hasDragged || ! originalPageItems.length }
+                                    disabled={ ! hasDragged || ! originalMasterOrder.length }
                                     onClick={ () => {
 										dispatch( { type: 'UNDO', typeKey: selectedType } );
 										syncOrderField( originalMasterOrder );
 									} }
-                                    sx={ { textTransform: 'none' } }
                                 >
                                     { __( 'Undo', 'rest-api-firewall' ) }
                                 </Button>
 								</Tooltip>
 
 
-								<Tooltip disableInteractive title={ __( 'Restore to WordPress Order', 'rest-api-firewall' ) }>
+								<Tooltip disableInteractive title={ __( 'Restore WordPress Default Order', 'rest-api-firewall' ) }>
 								<Button
                                     size="small"
                                     variant="text"
 									color="error"
                                     startIcon={ <SettingsBackupRestoreIcon /> }
-                                    disabled={ ( ! originalPageItems.length ) || loading || loadingIds || resetting || savingOptions }
+                                    disabled={ ( ! originalMasterOrder.length ) || loading || loadingIds || resetting || savingOptions }
                                     onClick={ handleReset }
-                                    sx={ { textTransform: 'none' } }
                                 >
-                                    { resetting ? __( 'Resetting…', 'rest-api-firewall' ) : sprintf( __( 'Restore Default', 'rest-api-firewall' ), objectLabel ) }
+                                    { resetting ? __( 'Resetting…', 'rest-api-firewall' ) : sprintf( __( 'Restore', 'rest-api-firewall' ), objectLabel ) }
                                 </Button>
 								</Tooltip>
                             </Stack>
@@ -590,33 +581,27 @@ export default function Collections( { form, setField, syncSavedField, postTypes
                                     direction="prev"
                                     disabled={ page === 0 }
                                     onDrop={ handleCrossPageMove }
+                                    setPage={ setPage }
+									page={ page }
                                 />
 
                                 <Box sx={ { flex: 1, minWidth: 0 } }>
                                     <PostOrderList
                                         items={ currentPageItems }
                                         orderedIds={ masterOrder }
+                                        originalOrderedIds={ originalMasterOrder }
                                         objectKind={ objectKind }
                                         loading={ loading || loadingIds }
                                         onReorder={ handleReorder }
-                                        originalOrder={ originalPageItems }
                                     />
-                                    <TablePagination
-                                        component="div"
-                                        count={ masterOrder.length }
-                                        page={ page }
-                                        onPageChange={ handlePageChange }
-                                        onRowsPerPageChange={ handleRowsPerPageChange }
-                                        rowsPerPage={ rowsPerPage }
-                                        rowsPerPageOptions={ ROWS_PER_PAGE_OPTIONS }
-                                        sx={ { borderTop: 0, mt: -1 } }
-                                    />
+                                    
                                 </Box>
 
                                 <PageDropZone
                                     direction="next"
                                     disabled={ isLastPage }
                                     onDrop={ handleCrossPageMove }
+                                    setPage={ setPage }
                                 />
 
                             </Box>
@@ -669,7 +654,6 @@ export default function Collections( { form, setField, syncSavedField, postTypes
                     </Stack>
                 ) }
             </Stack>
-
                 
 		</Stack>
 	);

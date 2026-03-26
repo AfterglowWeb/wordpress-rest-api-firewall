@@ -1,10 +1,14 @@
-import { useState } from '@wordpress/element';
+import { useState, useEffect } from '@wordpress/element';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import IconButton from '@mui/material/IconButton';
+
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
 export function mergeOrderPreview( savedOrder, page, perPage, newIds ) {
 	const offset = page * perPage;
@@ -16,7 +20,7 @@ export function mergeOrderPreview( savedOrder, page, perPage, newIds ) {
 	return [ ...before, ...deduped, ...after ];
 }
 
-export function PostOrderList( { items, orderedIds, objectKind, loading, onReorder, originalOrder } ) {
+export function PostOrderList( { items, orderedIds, originalOrderedIds, objectKind, loading, onReorder } ) {
 	const { __ } = wp.i18n || {};
 	const [ dragId, setDragId ] = useState( null );
 	const [ dragOverIdx, setDragOverIdx ] = useState( null );
@@ -57,6 +61,14 @@ export function PostOrderList( { items, orderedIds, objectKind, loading, onReord
 		setDragOverIdx( null );
 	};
 
+	// Clear stale drag state when the dragged item leaves this page (cross-page drop + navigate)
+	useEffect( () => {
+		if ( dragId !== null && ! items.some( ( i ) => i.id === dragId ) ) {
+			setDragId( null );
+			setDragOverIdx( null );
+		}
+	}, [ items ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
 	if ( loading ) {
 		return (
 			<Stack alignItems="center" py={ 4 }>
@@ -85,10 +97,10 @@ export function PostOrderList( { items, orderedIds, objectKind, loading, onReord
 			{ items.map( ( item, idx ) => {
 				const savedPos = orderedIds.indexOf( item.id );
 				const isOrdered = savedPos !== -1;
-				const origIdx = ( originalOrder || [] ).findIndex( ( o ) => o.id === item.id );
-				const hasMoved = origIdx !== -1 && origIdx !== idx;
+			const origGlobalIdx = ( originalOrderedIds || [] ).indexOf( item.id );
+			const hasMoved = origGlobalIdx !== -1 && origGlobalIdx !== savedPos;
 				const isDragging = dragId === item.id;
-				const isOver = dragOverIdx === idx && dragId !== null && items.findIndex( ( i ) => i.id === dragId ) !== idx;
+			const isOver = dragOverIdx === idx && dragId !== null && dragId !== item.id;
 				const secondaryMeta = 'taxonomy' === objectKind
 					? [
 						item.slug ? `${ __( 'Slug', 'rest-api-firewall' ) }: ${ item.slug }` : '',
@@ -134,7 +146,7 @@ export function PostOrderList( { items, orderedIds, objectKind, loading, onReord
                             ) }
                             { hasMoved && (
                                 <Typography variant="caption" color="text.secondary" sx={ { flexShrink: 0, lineHeight: 'normal' } }>
-                                    { __( 'was', 'rest-api-firewall' ) }<br/>{ origIdx + 1 }
+                                    { __( 'was', 'rest-api-firewall' ) }<br/>{ origGlobalIdx + 1 }
                                 </Typography>
                             ) }
                         </Box>
@@ -178,7 +190,7 @@ export function PostOrderList( { items, orderedIds, objectKind, loading, onReord
 	);
 }
 
-export function PageDropZone( { direction, disabled, onDrop } ) {
+export function PageDropZone( { direction, disabled, onDrop, setPage } ) {
 	const { __ } = wp.i18n || {};
 	const [ dragOver, setDragOver ] = useState( null );
 	const isPrev = direction === 'prev';
@@ -215,49 +227,58 @@ export function PageDropZone( { direction, disabled, onDrop } ) {
 
 	const zoneLabel = ( zone ) =>
 		zone === 'drop'
-			? __( 'Drop', 'rest-api-firewall' )
-			: __( 'Drop & See', 'rest-api-firewall' );
+			? __( 'Move', 'rest-api-firewall' )
+			: __( 'Move & See', 'rest-api-firewall' );
 
 	const textSx = ( zone ) => ( {
-		fontSize: '14px',
-		lineHeight: 1.2,
+		fontSize: '12px',
+		lineHeight: 'normal',
+		textTransform: 'uppercase',
+		textAlign: 'center',
 		color: dragOver === zone
-			? ( zone === 'drop' ? 'text.primary' : 'main.primary' )
-			: 'text.secondary',
+			? 'primary.main'
+			: 'text.disabled',
 	} );
 
 	return (
-		<>
-		<Box sx={ { height: 20, position: 'absolute', top:'50%', left: 0, zIndex: 2 } }>
-				<Typography sx={ { ...textSx( 'drop' ),
-					textAlign: 'center',
-					textTransform: 'uppercase',
-					transform: 'rotate(-90deg)',
-					color: 'text.secondary',
-    				transform: 'translateX(-50px)',
-				 } }>{ pageLabel }</Typography>
-			</Box>
+
 		<Box
 			onDragLeave={ handleContainerDragLeave }
 			sx={ {
-				width: 50,
+				width: 74,
 				flexShrink: 0,
 				height: '70vh', 
 				position: 'sticky', 
 				top:'15vh',
 				display: 'flex',
-				flexDirection: 'column',
-				border: '1px dashed',
-				borderColor: 'divider',
+				justifyContent: 'center',
+				flexDirection: isPrev ? 'row' : 'row-reverse',
 				borderRadius: 1,
+				border: '1px solid',
+				borderColor: dragOver ? 'primary.main' : 'divider',
 				overflow: 'hidden',
 				opacity: disabled ? 0.5 : 1,
 				pointerEvents: disabled ? 'none' : 'auto',
 				userSelect: 'none',
 			} }
 		>
-			
-				{ /* Top half: Drop (stay on page) */ }
+			<Box
+				sx={ { width:16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 2 } }
+			>
+					<Typography 
+					variant="caption" 
+					sx={ { 
+					whiteSpace: 'nowrap', 
+					lineHeight: 'normal', 
+					color: dragOver ? 'primary.main' :'text.secondary', 
+					transform: 'rotate(-90deg)',
+					textTransform: 'uppercase',
+					} }>
+						{ pageLabel }
+					</Typography>
+			</Box>
+			<Box sx={ { width: 50, px:0.5, py:1, display: 'flex', flexDirection: 'column', gap: 1 } }>
+
 				<Box
 					onDragOver={ ( e ) => handleZoneDragOver( e, 'drop' ) }
 					onDrop={ ( e ) => handleZoneDrop( e, 'drop' ) }
@@ -270,15 +291,17 @@ export function PageDropZone( { direction, disabled, onDrop } ) {
 						gap: 0.5,
 						px: 0.5,
 						py: 1,
-						borderBottom: '1px dashed',
-						borderBottomColor: 'divider',
-						bgcolor: dragOver === 'drop' ? 'primary.main' : 'action.hover',
+						borderRadius: 1,
+						overflow: 'hidden',
+						border: '1px dashed',
+						borderColor: 'divider',
+						bgcolor: dragOver === 'drop' ? 'action.hover' : 'background.paper',
 						transition: 'background-color 0.15s',
 					} }
 				>
 					<Typography sx={ textSx( 'drop' ) }>{ zoneLabel( 'drop' ) }</Typography>
 				</Box>
-				{ /* Bottom half: Drop & See (navigate to target page) */ }
+
 				<Box
 					onDragOver={ ( e ) => handleZoneDragOver( e, 'see' ) }
 					onDrop={ ( e ) => handleZoneDrop( e, 'see' ) }
@@ -291,14 +314,18 @@ export function PageDropZone( { direction, disabled, onDrop } ) {
 						gap: 0.5,
 						px: 0.5,
 						py: 1,
-						bgcolor: dragOver === 'see' ? 'info.main' : 'background.paper',
-						transition: 'background-color 0.15s',
+						borderRadius: 1,
+						overflow: 'hidden',
+						border: '1px dashed',
+						borderColor: 'divider',
+						bgcolor: dragOver === 'see' ? 'action.hover' : 'background.paper',
+						transition: 'all 0.25s',
 					} }
 				>
 					<Typography sx={ textSx( 'see' ) }>{ zoneLabel( 'see' ) }</Typography>
 				</Box>
+			</Box>
 		</Box>
-		</>
 	);
 }
 
