@@ -64,6 +64,10 @@ class ModelsPropertiesRepository {
 				}
 			}
 
+			if ( 'attachment' === $post_type && isset( $props['media_details'] ) && empty( $props['media_details']['properties'] ) ) {
+				$props['media_details']['properties'] = self::build_media_details_fallback_props();
+			}
+
 			return $props;
 		}
 
@@ -133,6 +137,10 @@ class ModelsPropertiesRepository {
 			}
 		}
 
+		if ( 'attachment' === $post_type && isset( $properties['media_details'] ) && empty( $properties['media_details']['properties'] ) ) {
+			$properties['media_details']['properties'] = self::build_media_details_fallback_props();
+		}
+
 		return $properties;
 	}
 
@@ -169,7 +177,7 @@ class ModelsPropertiesRepository {
 					'post_type'      => $object_type,
 					'posts_per_page' => 1,
 					'fields'         => 'ids',
-					'post_status'    => array( 'publish', 'draft', 'private' ),
+					'post_status'    => array( 'publish', 'draft', 'private', 'inherit' ),
 				)
 			);
 			if ( empty( $posts ) ) {
@@ -619,5 +627,43 @@ class ModelsPropertiesRepository {
 		}
 
 		return $props;
+	}
+
+	private static function build_media_details_fallback_props(): array {
+		$empty_settings = array( 'disable' => false, 'filters' => array() );
+		$string_prop    = array( 'type' => 'string',  'settings' => $empty_settings );
+		$integer_prop   = array( 'type' => 'integer', 'settings' => $empty_settings );
+
+		$size_properties = array(
+			'file'       => $string_prop,
+			'width'      => $integer_prop,
+			'height'     => $integer_prop,
+			'mime_type'  => $string_prop,
+			'source_url' => $string_prop,
+		);
+
+		$sizes_props = array();
+		if ( function_exists( 'wp_get_registered_image_subsizes' ) ) {
+			foreach ( array_keys( wp_get_registered_image_subsizes() ) as $size_name ) {
+				$sizes_props[ $size_name ] = array(
+					'type'       => 'object',
+					'settings'   => $empty_settings,
+					'properties' => $size_properties,
+				);
+			}
+		}
+
+		return array(
+			'width'      => $integer_prop,
+			'height'     => $integer_prop,
+			'file'       => $string_prop,
+			'filesize'   => $integer_prop,
+			'sizes'      => array(
+				'type'       => 'object',
+				'settings'   => $empty_settings,
+				'properties' => $sizes_props,
+			),
+			'image_meta' => array( 'type' => 'object', 'settings' => $empty_settings ),
+		);
 	}
 }

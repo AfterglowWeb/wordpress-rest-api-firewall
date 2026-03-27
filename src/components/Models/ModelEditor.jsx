@@ -37,6 +37,60 @@ function mergeFilterSettings( schemaSettings, storedSettings ) {
 	};
 }
 
+function mergePropertiesRecursively( schemaPropMap, storedPropMap ) {
+	if ( ! schemaPropMap ) return schemaPropMap;
+	return Object.fromEntries(
+		Object.entries( schemaPropMap ).map( ( [ name, cfg ] ) => [
+			name,
+			typeof cfg === 'object' && cfg !== null
+				? {
+					...cfg,
+					settings: mergeFilterSettings( cfg.settings, storedPropMap?.[ name ]?.settings ),
+					properties: mergePropertiesRecursively( cfg.properties, storedPropMap?.[ name ]?.properties ),
+				}
+				: cfg,
+		] )
+	);
+}
+
+function applySettingToNode( node, setting, key, value, schemaFilters ) {
+	if ( setting === 'settings' ) {
+		return { ...node, settings: { ...( node.settings || {} ), [ key ]: value } };
+	}
+	if ( setting === 'filters' ) {
+		const currentFilters = node.settings?.filters || schemaFilters || [];
+		return {
+			...node,
+			settings: {
+				...( node.settings || {} ),
+				filters: currentFilters.map( ( f ) => ( f.key === key ? { ...f, value } : f ) ),
+			},
+		};
+	}
+	return node;
+}
+
+function deepSetSubPropSetting( node, subPath, setting, key, value, schemaCfg ) {
+	const [ head, ...rest ] = subPath;
+	const subSchema = schemaCfg?.properties?.[ head ];
+	const currentChild = node.properties?.[ head ] || {
+		settings: {
+			disable: false,
+			filters: ( subSchema?.settings?.filters || [] ).map( ( f ) => ( { ...f } ) ),
+		},
+	};
+	return {
+		...node,
+		properties: {
+			...( node.properties || {} ),
+			[ head ]:
+				rest.length === 0
+					? applySettingToNode( currentChild, setting, key, value, subSchema?.settings?.filters )
+					: deepSetSubPropSetting( currentChild, rest, setting, key, value, subSchema ),
+		},
+	};
+}
+
 const FALLBACK_BINDINGS = [
 	{ key: 'id', label: 'ID', type: 'integer' },
 	{ key: 'slug', label: 'Slug', type: 'string' },
@@ -615,22 +669,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 											propConfig={ {
 												...propConfig,
 												settings: mergeFilterSettings( propConfig.settings, properties[ propName ]?.settings ),
-												properties: propConfig.properties
-													? Object.fromEntries(
-														Object.entries( propConfig.properties ).map(
-															( [ subName, subConfig ] ) => [
-																subName,
-																typeof subConfig === 'object' &&
-																subConfig !== null
-																	? {
-																		...subConfig,
-																		settings: mergeFilterSettings( subConfig.settings, properties[ propName ]?.properties?.[ subName ]?.settings ),
-																		}
-																	: subConfig,
-															]
-														)
-														)
-													: propConfig.properties,
+												properties: mergePropertiesRecursively( propConfig.properties, properties[ propName ]?.properties ),
 											} }
 											selectedObjectType={ objectType }
 											setField={ ( e ) => {
@@ -638,11 +677,17 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 												const parts = path.split( '.' );
 												const propsIdx = parts.indexOf( 'props' );
 												const propKey = parts[ propsIdx + 1 ] || propName;
-												const subPropsIdx = parts.indexOf( 'properties', propsIdx + 2 );
-												const isSubProp = subPropsIdx > -1;
-												const subPropKey = isSubProp ? parts[ subPropsIdx + 1 ] : null;
-												const setting = parts[ parts.length - 2 ];
-												const key = parts[ parts.length - 1 ];
+
+												// Extract full sub-property path: all 'properties.X' pairs after propKey
+												const subPath = [];
+												let i = propsIdx + 2;
+												while ( i < parts.length && parts[ i ] === 'properties' ) {
+													subPath.push( parts[ i + 1 ] );
+													i += 2;
+												}
+												const setting = parts[ i ];
+												const key = parts[ i + 1 ];
+
 												setProperties( ( prev ) => {
 													const next = { ...prev };
 													if ( ! next[ propKey ] ) {
@@ -657,51 +702,23 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 															};
 														}
 													}
-													if ( isSubProp ) {
-														if ( ! next[ propKey ].properties ) {
-															next[ propKey ] = { ...next[ propKey ], properties: {} };
-														}
-														if ( ! next[ propKey ].properties[ subPropKey ] ) {
-															const subCfgInit = schemaProps?.[ propKey ]?.properties?.[ subPropKey ];
-															next[ propKey ].properties[ subPropKey ] = {
-																settings: {
-																	disable: false,
-																	filters: ( subCfgInit?.settings?.filters || [] ).map( ( f ) => ( { ...f } ) ),
-																},
-															};
-														}
-														if ( setting === 'settings' ) {
-															next[ propKey ].properties[ subPropKey ].settings = {
-																...next[ propKey ].properties[ subPropKey ].settings,
-																[ key ]: e.target.value,
-															};
-														} else if ( setting === 'filters' ) {
-															const subCfg = schemaProps?.[ propKey ]?.properties?.[ subPropKey ];
-															const currentFilters =
-																next[ propKey ].properties[ subPropKey ].settings?.filters ||
-																subCfg?.settings?.filters ||
-																[];
-															next[ propKey ].properties[ subPropKey ].settings = {
-																...next[ propKey ].properties[ subPropKey ].settings,
-																filters: currentFilters.map( ( f ) => f.key === key ? { ...f, value: e.target.value } : f ),
-															};
-														}
+													if ( subPath.length === 0 ) {
+														next[ propKey ] = applySettingToNode(
+															next[ propKey ],
+															setting,
+															key,
+															e.target.value,
+															propConfig.settings?.filters
+														);
 													} else {
-														if ( setting === 'settings' ) {
-															next[ propKey ].settings = {
-																...next[ propKey ].settings,
-																[ key ]: e.target.value,
-															};
-														} else if ( setting === 'filters' ) {
-															const currentFilters =
-																next[ propKey ].settings?.filters ||
-																propConfig.settings?.filters ||
-																[];
-															next[ propKey ].settings = {
-																...next[ propKey ].settings,
-																filters: currentFilters.map( ( f ) => f.key === key ? { ...f, value: e.target.value } : f ),
-															};
-														}
+														next[ propKey ] = deepSetSubPropSetting(
+															next[ propKey ],
+															subPath,
+															setting,
+															key,
+															e.target.value,
+															schemaProps?.[ propKey ]
+														);
 													}
 													return next;
 												} );
