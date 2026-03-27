@@ -100,6 +100,10 @@ class ModelsPropertiesRepository {
 					}
 				}
 			}
+			// Auto-detect 'rendered' filter from schema: property is an object with a 'rendered' sub-property.
+			if ( isset( $property['properties']['rendered'] ) ) {
+				self::maybe_add_rendered_filter( $property_filters, $filters );
+			}
 			$properties[ $property_key ] = array_merge(
 				$property,
 				array(
@@ -144,6 +148,58 @@ class ModelsPropertiesRepository {
 		return $properties;
 	}
 
+	private static function get_attachment_sample_data( string $rest_base ): array {
+		// Try image attachments first — they have media_details.sizes populated.
+		$candidate_ids = get_posts(
+			array(
+				'post_type'      => 'attachment',
+				'posts_per_page' => 10,
+				'fields'         => 'ids',
+				'post_status'    => 'inherit',
+				'post_mime_type' => 'image',
+			)
+		);
+
+		if ( empty( $candidate_ids ) ) {
+			$candidate_ids = get_posts(
+				array(
+					'post_type'      => 'attachment',
+					'posts_per_page' => 3,
+					'fields'         => 'ids',
+					'post_status'    => 'inherit',
+				)
+			);
+		}
+
+		if ( empty( $candidate_ids ) ) {
+			return array();
+		}
+
+		$fallback = array();
+		foreach ( $candidate_ids as $attachment_id ) {
+			$request = new WP_REST_Request( 'GET', "/wp/v2/{$rest_base}/" . (int) $attachment_id );
+			$request->set_param( '_embed', '1' );
+			$response = rest_do_request( $request );
+			if ( is_wp_error( $response ) || 200 !== $response->get_status() ) {
+				continue;
+			}
+			$raw  = rest_get_server()->response_to_data( $response, true );
+			$data = json_decode( wp_json_encode( $raw ), true ) ?: array();
+			if ( ! is_array( $data ) ) {
+				continue;
+			}
+			$sizes = isset( $data['media_details']['sizes'] ) ? (array) $data['media_details']['sizes'] : array();
+			if ( ! empty( $sizes ) ) {
+				return $data; // Best case: has real size variants.
+			}
+			if ( empty( $fallback ) ) {
+				$fallback = $data;
+			}
+		}
+
+		return $fallback;
+	}
+
 	private static function get_sample_rest_response_data( string $object_type ): array {
 
 		$rest_base = '';
@@ -172,6 +228,12 @@ class ModelsPropertiesRepository {
 				return array();
 			}
 			$rest_base = property_exists( $pt_obj, 'rest_base' ) && $pt_obj->rest_base ? $pt_obj->rest_base : $object_type;
+
+			// For attachments, prefer image files which are most likely to have populated media_details.
+			if ( 'attachment' === $object_type ) {
+				return self::get_attachment_sample_data( $rest_base );
+			}
+
 			$posts     = get_posts(
 				array(
 					'post_type'      => $object_type,
@@ -198,8 +260,8 @@ class ModelsPropertiesRepository {
 			return array();
 		}
 
-		$data = rest_get_server()->response_to_data( $response, true );
-		return $data;
+		$raw = rest_get_server()->response_to_data( $response, true );
+		return json_decode( wp_json_encode( $raw ), true ) ?: array();
 	}
 
 	private static function settings_route_properties(): array {
@@ -301,7 +363,12 @@ class ModelsPropertiesRepository {
 				),
 			);
 
-			if ( 'object' === $type && ! in_array( $str_key, array( '_links', '_embedded' ), true ) ) {
+			// Auto-detect 'rendered' filter: value is an object with a 'rendered' sub-key.
+			if ( 'object' === $type && is_array( $value ) && array_key_exists( 'rendered', $value ) ) {
+				self::maybe_add_rendered_filter( $property_filters, $filters );
+			}
+
+			if ( 'object' === $type ) {
 				$sub = self::build_props_from_data( (array) $value, $filters, $depth + 1 );
 				if ( ! empty( $sub ) ) {
 					$prop['properties'] = $sub;
@@ -393,6 +460,19 @@ class ModelsPropertiesRepository {
 		return $props;
 	}
 
+	private static function maybe_add_rendered_filter( array &$property_filters, array $filters ): void {
+		$existing_keys = array_column( $property_filters, 'key' );
+		if ( in_array( 'rendered', $existing_keys, true ) ) {
+			return;
+		}
+		foreach ( $filters as $filter ) {
+			if ( 'rendered' === ( $filter['key'] ?? '' ) ) {
+				$property_filters[] = $filter;
+				return;
+			}
+		}
+	}
+
 	private static function get_filters_per_property( $property_key, $filters ): array {
 		$property_filters = array();
 		foreach ( $filters as $filter ) {
@@ -479,14 +559,9 @@ class ModelsPropertiesRepository {
 				'key'        => 'rendered',
 				'tooltip'    => 'Flatten Rendered',
 				'label'      => 'Flatten',
-				'properties' => array(
-					'guid',
-					'title',
-					'excerpt',
-					'content',
-					'description',
-					'caption',
-				),
+				// Properties are auto-detected: any field whose value is an object with a 'rendered'
+				// sub-key (title, content, excerpt, caption, etc.) gets this filter automatically.
+				'properties' => array(),
 			),
 			array(
 				'key'        => 'date_format',
@@ -567,6 +642,10 @@ class ModelsPropertiesRepository {
 						$property_filters[] = $sf;
 					}
 				}
+			}
+			// Auto-detect 'rendered' filter from schema: property is an object with a 'rendered' sub-property.
+			if ( isset( $property['properties']['rendered'] ) ) {
+				self::maybe_add_rendered_filter( $property_filters, $filters );
 			}
 			$props[ $key ] = array_merge(
 				$property,

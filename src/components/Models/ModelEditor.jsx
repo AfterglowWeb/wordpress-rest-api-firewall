@@ -472,7 +472,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 	return (
 		<Stack spacing={ 3 } flexGrow={ 1 }>
 			{ objectType && (
-				<Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
+				<Stack direction="row" gap={2} alignItems="center" justifyContent="space-between" maxWidth={ 800 }>
 					<Stack direction="row" gap={2} alignItems="center">
 						<Typography variant="subtitle1" fontWeight="600">
 							{ __('Object Type', 'rest-api-firewall') }
