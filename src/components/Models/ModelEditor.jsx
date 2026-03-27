@@ -410,23 +410,53 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 		} );
 	}, [ title, author, dateCreated, dateModified, saving, enabled, isDirty, objectType, isCustom ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
-	if ( ! loaded ) {
-		return (
-			<LoadingMessage message={ __( 'Loading model…', 'rest-api-firewall' ) } />
-		);
-	}
+	const [ schemaPropsRaw, setSchemaPropsRaw ] = useState( null );
 
-	const schemaProps = ( () => {
-		const props = adminData?.models_properties?.[ objectType ]?.props || null;
-		if ( objectType !== 'settings_route' || ! props ) return props;
+	useEffect( () => {
+		if ( ! objectType ) {
+			setSchemaPropsRaw( null );
+			return;
+		}
+		let cancelled = false;
+		( async () => {
+			try {
+				const res = await fetch( adminData.ajaxurl, {
+					method: 'POST',
+					body: new URLSearchParams( {
+						action: 'rest_api_firewall_model_properties',
+						nonce:  adminData.nonce,
+						object_type: objectType,
+					} ),
+				} );
+				const json = await res.json();
+				if ( ! cancelled ) {
+					setSchemaPropsRaw( json.success ? ( json.data?.props || null ) : null );
+				}
+			} catch {
+				if ( ! cancelled ) {
+					setSchemaPropsRaw( null );
+				}
+			}
+		} )();
+		return () => { cancelled = true; };
+	}, [ objectType ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
+	const schemaProps = useMemo( () => {
+		if ( objectType !== 'settings_route' || ! schemaPropsRaw ) return schemaPropsRaw;
 		const result = {};
-		for ( const [ key, cfg ] of Object.entries( props ) ) {
+		for ( const [ key, cfg ] of Object.entries( schemaPropsRaw ) ) {
 			if ( key === 'menus' && ! properties._embed_menus ) continue;
 			if ( key === 'acf_options' && ! properties._acf_options_page ) continue;
 			result[ key ] = cfg;
 		}
 		return result;
-	} )();
+	}, [ schemaPropsRaw, objectType, properties._embed_menus, properties._acf_options_page ] );
+
+	if ( ! loaded ) {
+		return (
+			<LoadingMessage message={ __( 'Loading model…', 'rest-api-firewall' ) } />
+		);
+	}
 
 	const availableBindings = schemaProps
 		? Object.entries( schemaProps ).flatMap( ( [ key, cfg ] ) => {
@@ -703,7 +733,6 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 												const propsIdx = parts.indexOf( 'props' );
 												const propKey = parts[ propsIdx + 1 ] || propName;
 
-												// Extract full sub-property path: all 'properties.X' pairs after propKey
 												const subPath = [];
 												let i = propsIdx + 2;
 												while ( i < parts.length && parts[ i ] === 'properties' ) {

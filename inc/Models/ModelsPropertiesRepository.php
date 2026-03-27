@@ -35,6 +35,17 @@ class ModelsPropertiesRepository {
 		return $result;
 	}
 
+	/**
+	 * Public entry point that handles all object types including 'settings_route'.
+	 * Use this from AJAX handlers instead of calling model_properties() directly.
+	 */
+	public static function model_properties_for_type( string $object_type ): array {
+		if ( 'settings_route' === $object_type ) {
+			return self::settings_route_properties();
+		}
+		return self::model_properties( $object_type );
+	}
+
 	public static function model_properties( string $post_type ): array {
 
 		if ( 'author' === $post_type ) {
@@ -45,7 +56,8 @@ class ModelsPropertiesRepository {
 		$string_auto_filters = array_values(
 			array_filter( $filters, fn( $f ) => in_array( $f['key'], array( 'search_replace' ), true ) )
 		);
-		$data                = self::get_sample_rest_response_data( $post_type );
+
+		$data = self::get_sample_rest_response_data( $post_type );
 
 		if ( ! empty( $data ) ) {
 			$props = self::build_props_from_data( $data, $filters );
@@ -340,7 +352,7 @@ class ModelsPropertiesRepository {
 		foreach ( $data as $key => $value ) {
 			$str_key          = (string) $key;
 			$type             = self::infer_json_type( $value );
-			$property_filters = 0 === $depth ? self::get_filters_per_property( $str_key, $filters ) : array();
+			$property_filters = self::get_filters_per_property( $str_key, $filters );
 
 			if ( 'string' !== $type ) {
 				$property_filters = array_values( array_filter( $property_filters, fn( $f ) => 'search_replace' !== $f['key'] ) );
@@ -355,6 +367,12 @@ class ModelsPropertiesRepository {
 				}
 			}
 
+			// Auto-detect 'rendered' filter: value is an object with a 'rendered' sub-key.
+			// Must happen BEFORE $prop is built so the updated $property_filters snapshot is correct.
+			if ( 'object' === $type && is_array( $value ) && array_key_exists( 'rendered', $value ) ) {
+				self::maybe_add_rendered_filter( $property_filters, $filters );
+			}
+
 			$prop = array(
 				'type'     => $type,
 				'settings' => array(
@@ -363,15 +381,20 @@ class ModelsPropertiesRepository {
 				),
 			);
 
-			// Auto-detect 'rendered' filter: value is an object with a 'rendered' sub-key.
-			if ( 'object' === $type && is_array( $value ) && array_key_exists( 'rendered', $value ) ) {
-				self::maybe_add_rendered_filter( $property_filters, $filters );
-			}
-
-			if ( 'object' === $type ) {
+			if ( 'object' === $type && $depth < 5 ) {
 				$sub = self::build_props_from_data( (array) $value, $filters, $depth + 1 );
 				if ( ! empty( $sub ) ) {
 					$prop['properties'] = $sub;
+				}
+			}
+
+			if ( 'array' === $type && $depth < 5 && is_array( $value ) && ! empty( $value ) ) {
+				$first = reset( $value );
+				if ( is_array( $first ) && ! empty( $first ) ) {
+					$sub = self::build_props_from_data( $first, $filters, $depth + 1 );
+					if ( ! empty( $sub ) ) {
+						$prop['properties'] = $sub;
+					}
 				}
 			}
 
@@ -483,6 +506,99 @@ class ModelsPropertiesRepository {
 		return $property_filters;
 	}
 
+	private static function resolve_rest_base( string $object_type ): string {
+		if ( taxonomy_exists( $object_type ) ) {
+			$tax_obj = get_taxonomy( $object_type );
+			return $tax_obj && property_exists( $tax_obj, 'rest_base' ) && $tax_obj->rest_base
+				? $tax_obj->rest_base
+				: $object_type;
+		}
+		$pt_obj = get_post_type_object( $object_type );
+		if ( $pt_obj && property_exists( $pt_obj, 'rest_base' ) && $pt_obj->rest_base ) {
+			return $pt_obj->rest_base;
+		}
+		return $object_type;
+	}
+
+	private static function build_props_from_route_schema( string $post_type, array $filters, array $string_auto_filters ): array {
+		$rest_base = self::resolve_rest_base( $post_type );
+		$request   = new WP_REST_Request( 'OPTIONS', "/wp/v2/{$rest_base}" );
+		$response  = rest_do_request( $request );
+
+		if ( is_wp_error( $response ) || $response->get_status() < 200 || $response->get_status() >= 300 ) {
+			return array();
+		}
+
+		$data              = $response->get_data();
+		$schema_properties = $data['schema']['properties'] ?? array();
+
+		if ( empty( $schema_properties ) ) {
+			return array();
+		}
+
+		$properties = array();
+		foreach ( $schema_properties as $property_key => $property ) {
+			$property_filters = self::get_filters_per_property( $property_key, $filters );
+			$prop_type        = $property['type'] ?? '';
+			$is_string        = 'string' === $prop_type || ( is_array( $prop_type ) && in_array( 'string', $prop_type, true ) );
+			if ( ! $is_string ) {
+				$property_filters = array_values( array_filter( $property_filters, fn( $f ) => 'search_replace' !== $f['key'] ) );
+			}
+			if ( $is_string ) {
+				$existing_keys = array_column( $property_filters, 'key' );
+				foreach ( $string_auto_filters as $sf ) {
+					if ( ! in_array( $sf['key'], $existing_keys, true ) ) {
+						$property_filters[] = $sf;
+					}
+				}
+			}
+			if ( isset( $property['properties']['rendered'] ) ) {
+				self::maybe_add_rendered_filter( $property_filters, $filters );
+			}
+			$properties[ $property_key ] = array_merge(
+				$property,
+				array(
+					'settings' => array(
+						'disable' => false,
+						'filters' => $property_filters,
+					),
+				)
+			);
+		}
+
+		if ( isset( $properties['acf'] ) && function_exists( 'acf_get_field_groups' ) ) {
+			$all_fields   = array();
+			$field_groups = acf_get_field_groups( array( 'post_type' => $post_type ) );
+			foreach ( $field_groups as $group ) {
+				$fields = isset( $group['key'] ) && acf_get_fields( $group['key'] ) ? acf_get_fields( $group['key'] ) : array();
+				foreach ( $fields as $field ) {
+					$all_fields[] = $field;
+				}
+			}
+			if ( ! empty( $all_fields ) ) {
+				$properties['acf']['properties'] = self::build_acf_subprops( $all_fields, $string_auto_filters );
+			}
+		}
+
+		foreach ( array( '_links', '_embedded' ) as $meta_key ) {
+			if ( ! isset( $properties[ $meta_key ] ) ) {
+				$properties[ $meta_key ] = array(
+					'type'     => 'object',
+					'settings' => array(
+						'disable' => false,
+						'filters' => array(),
+					),
+				);
+			}
+		}
+
+		if ( 'attachment' === $post_type && isset( $properties['media_details'] ) && empty( $properties['media_details']['properties'] ) ) {
+			$properties['media_details']['properties'] = self::build_media_details_fallback_props();
+		}
+
+		return $properties;
+	}
+
 	private static function get_rest_controller( string $object_type, string $subtype = '' ): ?object {
 
 		$object_type = sanitize_key( $object_type );
@@ -559,8 +675,6 @@ class ModelsPropertiesRepository {
 				'key'        => 'rendered',
 				'tooltip'    => 'Flatten Rendered',
 				'label'      => 'Flatten',
-				// Properties are auto-detected: any field whose value is an object with a 'rendered'
-				// sub-key (title, content, excerpt, caption, etc.) gets this filter automatically.
 				'properties' => array(),
 			),
 			array(
