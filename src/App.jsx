@@ -10,7 +10,6 @@ import useSettingsForm from './hooks/useSettingsForm';
 import useSaveOptions from './hooks/useSaveOptions';
 
 import Box from '@mui/material/Box';
-import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
 
 import ConfirmDialog from './components/ConfirmDialog';
@@ -263,8 +262,6 @@ function AppContent() {
 							onNavigate={ ( v ) => navigate( { 5: 'models-properties' }[ v ] ?? String( v ) ) }
 						/>
 					) }
-
-					{ panel === 'ip-filtering' && <IpFilter /> }
 
 					{ panel === 'global-ip-filtering' && <IpFilter scope="global" /> }
 
