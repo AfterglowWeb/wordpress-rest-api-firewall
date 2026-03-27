@@ -58,9 +58,6 @@ export const CustomTreeItem = forwardRef(
 						toggleNodeCustom: props.toggleNodeCustom,
 						node,
 						enforce_auth: props.enforce_auth,
-						enforce_rate_limit: props.enforce_rate_limit,
-						rate_limit: props.rate_limit,
-						rate_limit_time: props.rate_limit_time,
 						hide_user_routes: props.hide_user_routes,
 						hide_batch_routes: props.hide_batch_routes,
 						hide_oembed_routes: props.hide_oembed_routes,
@@ -87,9 +84,6 @@ export function NodeContent( {
 	toggleNodeCustom,
 	node,
 	enforce_auth,
-	enforce_rate_limit,
-	rate_limit,
-	rate_limit_time,
 	hide_user_routes,
 	hide_batch_routes,
 	hide_oembed_routes,
@@ -144,9 +138,6 @@ export function NodeContent( {
 	const authIsGlobal = !! enforce_auth && ! isCustom;
 	const isAuthEnforced = authIsGlobal || nodeSettings.protect?.value;
 
-	const rateIsGlobal = !! enforce_rate_limit && ! isCustom;
-	const isRateLimitEnforced = rateIsGlobal || nodeSettings.rate_limit?.value;
-
 	const isUserRoute = !! (
 		node.path?.startsWith( '/wp/v2/users' ) ||
 		node.route?.startsWith( '/wp/v2/users' )
@@ -182,12 +173,8 @@ export function NodeContent( {
 
 	const isDisabled = disabledIsGlobal || !! nodeSettings.disabled?.value;
 
-	const effectiveRateLimit = rate_limit;
-	const effectiveRateLimitTime = rate_limit_time;
-
 	const effectiveValues = {
 		protect: isAuthEnforced,
-		rate_limit: isRateLimitEnforced,
 		disabled: isDisabled,
 	};
 
@@ -210,11 +197,6 @@ export function NodeContent( {
 	const handleAuthToggle = ( e ) => {
 		e.stopPropagation();
 		toggleNodeSetting( node.id, 'protect', effectiveValues );
-	};
-
-	const handleRateToggle = ( e ) => {
-		e.stopPropagation();
-		toggleNodeSetting( node.id, 'rate_limit', effectiveValues );
 	};
 
 	const handleDisableToggle = ( e ) => {
@@ -556,58 +538,6 @@ export function NodeContent( {
 								sx={ { fontSize: '0.875rem' } }
 							>
 								{ __( 'Auth', 'rest-api-firewall' ) }
-							</Typography>
-						}
-					/>
-				</Tooltip>
-
-				<Tooltip
-					disableInteractive
-					title={
-						! hasValidLicense
-							? __( 'Pro version required', 'rest-api-firewall' )
-							: isDisabled && node.isMethod
-							? __( 'Route is disabled', 'rest-api-firewall' )
-							: rateIsGlobal
-							? __(
-									'Rate limiting enforced globally — click to override for this route',
-									'rest-api-firewall'
-							  )
-							: isRateLimitEnforced
-							? `${ effectiveRateLimit } requests / ${ effectiveRateLimitTime }s`
-							: __(
-									'Enable rate limiting for this route',
-									'rest-api-firewall'
-							  )
-					}
-				>
-					<FormControlLabel
-						control={
-							<Switch
-								size="small"
-								checked={ isRateLimitEnforced }
-								onChange={ handleRateToggle }
-								disabled={
-									! hasValidLicense ||
-									( isDisabled && node.isMethod )
-								}
-								sx={ {
-									opacity:
-										( isDisabled && node.isMethod ) ||
-										rateIsGlobal ||
-										isInherited ||
-										! hasValidLicense
-											? 0.6
-											: 1,
-								} }
-							/>
-						}
-						label={
-							<Typography
-								variant="body2"
-								sx={ { fontSize: '0.875rem' } }
-							>
-								{ __( 'Rate', 'rest-api-firewall' ) }
 							</Typography>
 						}
 					/>

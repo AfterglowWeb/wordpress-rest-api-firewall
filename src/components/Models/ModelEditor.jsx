@@ -416,7 +416,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 		: FALLBACK_BINDINGS;
 
 	return (
-		<Stack p={ 4 } spacing={ 3 } flexGrow={ 1 }>
+		<Stack spacing={ 3 } flexGrow={ 1 }>
 			{ objectType && (
 				<Stack direction="row" gap={2} alignItems="center">
 					<Typography variant="subtitle1" fontWeight="600">

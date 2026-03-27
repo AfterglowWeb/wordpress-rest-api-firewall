@@ -92,10 +92,6 @@ export default function Navigation( {
 		'automations':         { module: 'automations',      optionKey: 'automations_enabled',               label: __( 'Active', 'rest-api-firewall' ) },
 	};
 
-	const [ ipFilterEnabled, setIpFilterEnabled ] = useState(
-		() => !! adminData?.ip_filter_enabled
-	);
-
 	const [ globalIpFilterEnabled, setGlobalIpFilterEnabled ] = useState(
 		() => !! adminData?.global_ip_filter_enabled
 	);

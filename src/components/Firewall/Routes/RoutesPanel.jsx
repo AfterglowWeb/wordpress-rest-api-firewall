@@ -12,6 +12,7 @@ import Tabs from '@mui/material/Tabs';
 
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
+import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
 
 import GlobalRoutesPolicy from './GlobalRoutesPolicy';
 import RoutesPolicyTree from './RoutesPolicyTree';
@@ -139,12 +140,12 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
             } }
 			>
 				<Tab
-					icon={ <AccountTreeOutlinedIcon /> }
+					icon={ <TuneOutlinedIcon /> }
 					iconPosition="start"
 					label={ __( 'Global Settings', 'rest-api-firewall' ) }
 				/>
 				<Tab
-					icon={ <FormatListBulletedIcon /> }
+					icon={ <AccountTreeOutlinedIcon /> }
 					iconPosition="start"
 					label={ hasValidLicense ? __( 'Per Route Settings', 'rest-api-firewall' ) : __( 'Explore Routes', 'rest-api-firewall' ) }
 				/>

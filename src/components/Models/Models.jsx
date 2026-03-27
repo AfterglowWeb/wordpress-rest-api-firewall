@@ -5,7 +5,6 @@ import { useApplication } from '../../contexts/ApplicationContext';
 
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
-import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Toolbar from '@mui/material/Toolbar';
@@ -18,10 +17,6 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Switch from '@mui/material/Switch';
 
-import useSettingsForm from '../../hooks/useSettingsForm';
-import useSaveOptions from '../../hooks/useSaveOptions';
-import GlobalProperties from './GlobalProperties';
-
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
@@ -31,7 +26,7 @@ import ModelEditor from './ModelEditor';
 import ObjectTypeSelect from '../ObjectTypeSelect';
 import Tooltip from '@mui/material/Tooltip';
 
-export default function Models() {
+export default function Models( { globalForm = null } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
 	const { selectedApplicationId } = useApplication();
@@ -39,9 +34,6 @@ export default function Models() {
 	const { __ } = wp.i18n || {};
 
 	const { remove } = useProActions();
-
-	const { form: outputForm, setField: setOutputField, pickGroup: pickOutputGroup } = useSettingsForm( { adminData } );
-	const { save: saveOutput, saving: savingOutput } = useSaveOptions();
 
 	const [ models, setModels ] = useState( [] );
 	const [ loading, setLoading ] = useState( false );
@@ -152,7 +144,7 @@ export default function Models() {
 		return (
 			<ModelEditor
 				model={ editing }
-				globalForm={ outputForm }
+				globalForm={ globalForm }
 				onBack={ () => {
 					setEditing( null );
 					fetchModels();
@@ -282,39 +274,7 @@ export default function Models() {
 	];
 
 	return (
-		<Stack p={4} spacing={ 2 } sx={ { height: '100%', flexGrow: 1 } }>
-			
-			<Stack spacing={ 3 } sx={ { maxWidth: 600 } }>
-			
-				<GlobalProperties form={ outputForm } setField={ setOutputField } />
-
-				<Stack direction="row" justifyContent="flex-start">
-					<Button
-						size="small"
-						variant="contained"
-						disableElevation
-						disabled={ savingOutput }
-						onClick={ () => {
-							const { rest_models_enabled: _ignored, ...applyOpts } = pickOutputGroup( 'models_properties' );
-							saveOutput( applyOpts, {
-								confirmTitle: __( 'Apply to all models', 'rest-api-firewall' ),
-								confirmMessage: __(
-									'This will apply the selected output filters as defaults across all your models. Each model can then override these settings individually.',
-									'rest-api-firewall'
-								),
-								confirmLabel: __( 'Apply', 'rest-api-firewall' ),
-								successTitle: __( 'Settings Applied', 'rest-api-firewall' ),
-								successMessage: __( 'Global output settings have been applied.', 'rest-api-firewall' ),
-							} );
-						} }
-					>
-						{ __( 'Save Global Settings', 'rest-api-firewall' ) }
-					</Button>
-				</Stack>
-			</Stack>
-
-			<Divider />
-
+		<Stack spacing={ 2 } sx={ { height: '100%', flexGrow: 1 } }>
 			<Toolbar
 				disableGutters
 				sx={ { gap: 2, flexWrap: 'wrap' } }

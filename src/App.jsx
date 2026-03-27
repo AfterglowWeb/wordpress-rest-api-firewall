@@ -30,9 +30,8 @@ import IpFilter from './components/Firewall/IpFilter/IpFilter';
 import RestApiSingleUser from './components/Firewall/Users/RestApiSingleUser';
 
 import Properties from './components/Models/Properties';
-import SettingsRoute from './components/Models/SettingsRoute';
 import Collections from './components/Models/Collections';
-import Models from './components/Models/Models';
+import ModelsPanel from './components/Models/ModelsPanel';
 
 import Webhook from './components/Webhooks/Webhook';
 import Webhooks from './components/Webhooks/Webhooks';
@@ -276,7 +275,7 @@ function AppContent() {
 
 					{ panel === 'models-properties' &&
 						( hasValidLicense ? (
-							<Models />
+							<ModelsPanel />
 						) : (
 							<Properties
 								form={ form }
