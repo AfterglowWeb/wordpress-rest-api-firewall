@@ -484,6 +484,8 @@ class ModelsPropertiesRepository {
 					'title',
 					'excerpt',
 					'content',
+					'description',
+					'caption',
 				),
 			),
 			array(
@@ -496,22 +498,6 @@ class ModelsPropertiesRepository {
 					'modified',
 					'modified_gmt',
 					'registered_date',
-				),
-			),
-			array(
-				'key'        => 'search_replace',
-				'type'       => 'search_replace',
-				'tooltip'    => 'Search & Replace',
-				'label'      => 'S&R',
-				'properties' => array(
-					'title',
-					'content',
-					'excerpt',
-					'guid',
-					'link',
-					'source_url',
-					'description',
-					'name',
 				),
 			),
 			array(

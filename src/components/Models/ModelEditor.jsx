@@ -472,19 +472,62 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 	return (
 		<Stack spacing={ 3 } flexGrow={ 1 }>
 			{ objectType && (
-				<Stack direction="row" gap={2} alignItems="center">
-					<Typography variant="subtitle1" fontWeight="600">
-						{ __('Object Type', 'rest-api-firewall') }
-					</Typography>
-					<Chip 
-					size="large"
-					label={ objectType } 
-					variant="outlined" 
-					color="primary"
-					sx={ { fontFamily: 'monospace' } } />
+				<Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
+					<Stack direction="row" gap={2} alignItems="center">
+						<Typography variant="subtitle1" fontWeight="600">
+							{ __('Object Type', 'rest-api-firewall') }
+						</Typography>
+						<Chip
+							size="large"
+							label={ objectType }
+							variant="outlined"
+							color="primary"
+							sx={ { fontFamily: 'monospace' } }
+						/>
+					</Stack>
+					{ ! isNew && (
+						testMode ? (
+							<Button
+								variant="outlined"
+								size="small"
+								onClick={ () => {
+									if ( testAbortRef.current ) {
+										testAbortRef.current.abort();
+									}
+									setTestMode( false );
+									setTestStatus( 'idle' );
+									setTestResult( null );
+								} }
+							>
+								<Typography variant="caption">
+									{ __( 'Close Test', 'rest-api-firewall' ) }
+								</Typography>
+							</Button>
+						) : (
+							<Button
+								variant="contained"
+								size="small"
+								disableElevation
+								disabled={ testStatus === 'running' }
+								onClick={ () => {
+									setTestMode( true );
+									setTestStatus( 'idle' );
+									setTestResult( null );
+									runTest();
+								} }
+							>
+								<Typography variant="caption">
+									{ testStatus === 'running'
+										? __( 'Testing…', 'rest-api-firewall' )
+										: __( 'Test', 'rest-api-firewall' ) }
+								</Typography>
+							</Button>
+						)
+					) }
 				</Stack>
 			) }
-			<Stack spacing={3} maxWidth={600}>
+			{ ! testMode && (
+				<Stack spacing={3} maxWidth={600}>
 				<TextField
 					label={ __( 'Model Name', 'rest-api-firewall' ) }
 					value={ title }
@@ -536,49 +579,31 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 					</Stack>
 				) }
 			</Stack>
+			) }
 
 			{ objectType && (
 				<Stack spacing={ 3 } maxWidth={ 800 }>
-					<Stack direction="row" alignItems="center" justifyContent="space-between" gap={ 1 } flexWrap="wrap">
-						<ToggleButtonGroup
-							value={ isCustom ? 'custom' : 'wp' }
-							exclusive
-							onChange={ handleModeChange }
-							size="small"
-						>
-							<ToggleButton value="wp">
-								<Typography variant="caption">
-									{ __( 'WordPress Schema', 'rest-api-firewall' ) }
-								</Typography>
-							</ToggleButton>
-							<ToggleButton value="custom">
-								<Typography variant="caption">
-									{ __( 'Custom Schema', 'rest-api-firewall' ) }
-								</Typography>
-							</ToggleButton>
-						</ToggleButtonGroup>
-
-						{ ! isNew && (
-							<Button
-								variant="contained"
+					{ ! testMode && (
+						<Stack direction="row" alignItems="center" gap={ 1 } flexWrap="wrap">
+							<ToggleButtonGroup
+								value={ isCustom ? 'custom' : 'wp' }
+								exclusive
+								onChange={ handleModeChange }
 								size="small"
-								disableElevation
-								disabled={ testStatus === 'running' }
-								onClick={ () => {
-									setTestMode( true );
-									setTestStatus( 'idle' );
-									setTestResult( null );
-									runTest();
-								} }
 							>
-								<Typography variant="caption">
-									{ testStatus === 'running'
-										? __( 'Testing…', 'rest-api-firewall' )
-										: __( 'Test', 'rest-api-firewall' ) }
-								</Typography>
-							</Button>
-						) }
-					</Stack>
+								<ToggleButton value="wp">
+									<Typography variant="caption">
+										{ __( 'WordPress Schema', 'rest-api-firewall' ) }
+									</Typography>
+								</ToggleButton>
+								<ToggleButton value="custom">
+									<Typography variant="caption">
+										{ __( 'Custom Schema', 'rest-api-firewall' ) }
+									</Typography>
+								</ToggleButton>
+							</ToggleButtonGroup>
+						</Stack>
+					) }
 					{ testMode ? (
 						<Stack spacing={ 2 }>
 							{ testStatus === 'running' && (

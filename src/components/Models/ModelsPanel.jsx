@@ -1,3 +1,4 @@
+import { useState } from '@wordpress/element';
 import { useNavigation } from '../../contexts/NavigationContext';
 import useSettingsForm from '../../hooks/useSettingsForm';
 import useSaveOptions from '../../hooks/useSaveOptions';
@@ -22,30 +23,33 @@ export default function ModelsPanel() {
 	const { form, setField, pickGroup } = useSettingsForm( { adminData } );
 	const { save: saveOutput, saving: savingOutput } = useSaveOptions();
 
+	const [ isEditing, setIsEditing ] = useState( false );
 	const currentTab = subKey === 'models' ? 1 : 0;
 
 	return (
 		<Stack p={ 4 } flexGrow={ 1 } spacing={ 3 }>
-			<Tabs
-				value={ currentTab }
-				onChange={ ( e, v ) =>
-					navigate( 'models-properties', v === 1 ? 'models' : null )
-				}
-				sx={ { borderBottom: 1, borderColor: 'divider' } }
-			>
-				<Tab
-					icon={ <TuneOutlinedIcon /> }
-					iconPosition="start"
-					label={ __( 'Global Settings', 'rest-api-firewall' ) }
-				/>
-				<Tab
-					icon={ <RuleOutlinedIcon /> }
-					iconPosition="start"
-					label={ __( 'Property Models', 'rest-api-firewall' ) }
-				/>
-			</Tabs>
+			{ ! isEditing && (
+				<Tabs
+					value={ currentTab }
+					onChange={ ( e, v ) =>
+						navigate( 'models-properties', v === 1 ? 'models' : null )
+					}
+					sx={ { borderBottom: 1, borderColor: 'divider' } }
+				>
+					<Tab
+						icon={ <TuneOutlinedIcon /> }
+						iconPosition="start"
+						label={ __( 'Global Settings', 'rest-api-firewall' ) }
+					/>
+					<Tab
+						icon={ <RuleOutlinedIcon /> }
+						iconPosition="start"
+						label={ __( 'Property Models', 'rest-api-firewall' ) }
+					/>
+				</Tabs>
+			) }
 
-			{ currentTab === 0 && (
+			{ ! isEditing && currentTab === 0 && (
 				<Stack spacing={ 3 } sx={ { maxWidth: 600 } }>
 					<GlobalProperties form={ form } setField={ setField } />
 					<Stack direction="row">
@@ -78,7 +82,7 @@ export default function ModelsPanel() {
 				</Stack>
 			) }
 
-			{ currentTab === 1 && <Models globalForm={ form } /> }
+			{ currentTab === 1 && <Models globalForm={ form } onEditingChange={ setIsEditing } /> }
 		</Stack>
 	);
 }

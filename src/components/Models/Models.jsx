@@ -26,7 +26,7 @@ import ModelEditor from './ModelEditor';
 import ObjectTypeSelect from '../ObjectTypeSelect';
 import Tooltip from '@mui/material/Tooltip';
 
-export default function Models( { globalForm = null } ) {
+export default function Models( { globalForm = null, onEditingChange } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
 	const { selectedApplicationId } = useApplication();
@@ -41,7 +41,11 @@ export default function Models( { globalForm = null } ) {
 		type: 'include',
 		ids: new Set(),
 	} );
-	const [ editing, setEditing ] = useState( null ); // null = list, object = editor
+	const [ editing, setEditing ] = useState( null );
+	const setEditingAndNotify = useCallback( ( val ) => {
+		setEditing( val );
+		onEditingChange?.( val !== null );
+	}, [ onEditingChange ] ); // null = list, object = editor
 	const [ newModelObjectType, setNewModelObjectType ] = useState( '' );
 	const [ pendingToggle, setPendingToggle ] = useState( null );
 
@@ -146,7 +150,7 @@ export default function Models( { globalForm = null } ) {
 				model={ editing }
 				globalForm={ globalForm }
 				onBack={ () => {
-					setEditing( null );
+					setEditingAndNotify( null );
 					fetchModels();
 				} }
 			/>
@@ -218,7 +222,7 @@ export default function Models( { globalForm = null } ) {
 					fontFamily: 'monospace',
 					color: 'primary.main',
 				} }
-				onClick={ ( e ) => { e.preventDefault(); setEditing( params.row ); } }
+				onClick={ ( e ) => { e.preventDefault(); setEditingAndNotify( params.row ); } }
 			>
 				{ params.value }
 				<OpenInNewIcon
@@ -293,7 +297,7 @@ export default function Models( { globalForm = null } ) {
 					variant="contained"
 					disableElevation
 					onClick={ () =>
-						setEditing( {
+						setEditingAndNotify( {
 							id: null,
 							label: '',
 							object_type: newModelObjectType,
@@ -316,7 +320,7 @@ export default function Models( { globalForm = null } ) {
 						variant="text"
 						startIcon={ <BusinessOutlinedIcon /> }
 						onClick={ () =>
-							setEditing( {
+							setEditingAndNotify( {
 								id: null,
 								label: '',
 								object_type: 'settings_route',
@@ -354,7 +358,7 @@ export default function Models( { globalForm = null } ) {
 				disableRowSelectionOnClick
 				rowSelectionModel={ rowSelectionModel }
 				onRowSelectionModelChange={ setRowSelectionModel }
-				onRowDoubleClick={ ( { row } ) => setEditing( row ) }
+				onRowDoubleClick={ ( { row } ) => setEditingAndNotify( row ) }
 				getRowHeight={ () => 'auto' }
 				showToolbar={ true }
 				sx={ {
