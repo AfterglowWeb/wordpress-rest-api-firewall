@@ -6,7 +6,7 @@ hero:
   text: "WordPress as a modern application backend."
   tagline: "Decide what data is exposed, who can access it, and how it is shaped. Self-hosted, open-source, built for developers who are done rebuilding the same things from scratch."
   image:
-    src: /wordpress-application-layer-applications-1-tab.webp
+    src: /wordpress-application-layer-routes.webp
     alt: WordPress Application Layer admin interface
   actions:
     - theme: brand
@@ -233,36 +233,56 @@ An optional encryption layer for sensitive data stored in `wp_options` and custo
 
 <div class="screenshots-grid">
   <figure>
-    <img src="/wordpress-application-layer-auth-rate-limit-tab.webp" alt="Auth and Rate Limiting tab" />
-    <figcaption>Auth & Rate Limiting</figcaption>
+    <img src="/wordpress-application-layer-user-editor.webp" alt="User Editor" />
+    <figcaption>User Editor</figcaption>
   </figure>
   <figure>
-    <img src="/wordpress-application-layer-applications-1-tab.webp" alt="Applications list" />
-    <figcaption>Applications List</figcaption>
+    <img src="/wordpress-application-layer-applications.webp" alt="Applications" />
+    <figcaption>Applications</figcaption>
   </figure>
   <figure>
-    <img src="/wordpress-application-layer-applications-2-tab.webp" alt="Create Application" />
-    <figcaption>New Application</figcaption>
+    <img src="/wordpress-application-layer-application-settings.webp" alt="Application Settings" />
+    <figcaption>Application Settings</figcaption>
   </figure>
   <figure>
-    <img src="/wordpress-application-layer-ip-filters-tab.webp" alt="IP Filters" />
-    <figcaption>IP Filtering</figcaption>
+    <img src="/wordpress-application-layer-application-modules.webp" alt="Application Modules" />
+    <figcaption>Application Modules</figcaption>
   </figure>
   <figure>
-    <img src="/wordpress-application-layer-collections-tab.webp" alt="Collections" />
+    <img src="/wordpress-application-layer-application-users.webp" alt="Application Users" />
+    <figcaption>Application Users</figcaption>
+  </figure>
+  <figure>
+    <img src="/wordpress-application-layer-geoip.webp" alt="GeoIP Filtering" />
+    <figcaption>GeoIP Filtering</figcaption>
+  </figure>
+  <figure>
+    <img src="/wordpress-application-layer-collections.webp" alt="Collections" />
     <figcaption>Collections</figcaption>
   </figure>
   <figure>
-    <img src="/wordpress-application-layer-properties-tab.webp" alt="Properties" />
-    <figcaption>Properties & Models</figcaption>
+    <img src="/wordpress-application-layer-properties-global-settings.webp" alt="Properties — Global Settings" />
+    <figcaption>Properties — Global Settings</figcaption>
   </figure>
   <figure>
-    <img src="/wordpress-application-layer-routes-tab.webp" alt="Routes" />
-    <figcaption>Routes Policy</figcaption>
+    <img src="/wordpress-application-layer-properties-model.webp" alt="Properties — Model" />
+    <figcaption>Properties — Model</figcaption>
   </figure>
   <figure>
-    <img src="/wordpress-application-layer-webhook-tab.webp" alt="Webhooks" />
-    <figcaption>Webhooks</figcaption>
+    <img src="/wordpress-application-layer-properties-custom-schema.webp" alt="Properties — Custom Schema" />
+    <figcaption>Properties — Custom Schema</figcaption>
+  </figure>
+  <figure>
+    <img src="/wordpress-application-layer-properties-wordpress-schema.webp" alt="Properties — WordPress Schema" />
+    <figcaption>Properties — WordPress Schema</figcaption>
+  </figure>
+  <figure>
+    <img src="/wordpress-application-layer-properties-test.webp" alt="Properties — Test" />
+    <figcaption>Properties — Test</figcaption>
+  </figure>
+  <figure>
+    <img src="/wordpress-application-layer-routes-global-settings.webp" alt="Routes — Global Settings" />
+    <figcaption>Routes — Global Settings</figcaption>
   </figure>
 </div>
 

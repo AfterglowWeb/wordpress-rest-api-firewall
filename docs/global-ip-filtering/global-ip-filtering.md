@@ -41,6 +41,11 @@ Add IPv4 addresses to the global blocklist manually. Blocked IPs receive a `403`
 
 Read-only geographic statistics of incoming requests are visible. Country-level blocking requires Pro.
 
+<figure>
+  <img src="/wordpress-application-layer-geoip.webp" alt="GeoIP Filtering" />
+  <figcaption>GeoIP Filtering</figcaption>
+</figure>
+
 ---
 
 ## Pro Tier

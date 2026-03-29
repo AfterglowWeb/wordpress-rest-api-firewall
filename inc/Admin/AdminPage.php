@@ -41,7 +41,7 @@ class AdminPage {
 			'rest_api_firewall_edit_options',
 			'rest-api-firewall-admin',
 			array( $this, 'render_admin_page' ),
-			'dashicons-rest-api',
+			'dashicons-tablet',
 			99
 		);
 	}

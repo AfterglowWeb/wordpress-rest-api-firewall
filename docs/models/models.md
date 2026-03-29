@@ -6,6 +6,11 @@ Models define REST response transformation rules for a post type or taxonomy. **
 
 Transformations run server-side before the response is sent, removing the need for client-side data massaging.
 
+<figure>
+  <img src="/wordpress-application-layer-properties-global-settings.webp" alt="Properties — Global Settings" />
+  <figcaption>Properties — Global Settings</figcaption>
+</figure>
+
 ---
 
 <details>
@@ -23,6 +28,11 @@ Transformations run server-side before the response is sent, removing the need f
   <li><strong>Remove <code>_embedded</code></strong> <span style="display:inline-block;padding:1px 6px;border-radius:3px;background:#1565c0;color:#fff;font-size:10px;font-weight:600">PRO</span> — removes sideloaded embed data</li>
 </ul>
 
+<figure>
+  <img src="/wordpress-application-layer-properties-wordpress-schema.webp" alt="Properties — WordPress Schema" />
+  <figcaption>Properties — WordPress Schema</figcaption>
+</figure>
+
 </details>
 
 <details>
@@ -35,6 +45,11 @@ Transformations run server-side before the response is sent, removing the need f
   <li><strong>Remap</strong> — source a property's value from a different field in the original response</li>
 </ul>
 <p>These rules layer on top of the sitewide transforms and apply to the WordPress schema mode only.</p>
+
+<figure>
+  <img src="/wordpress-application-layer-properties-model.webp" alt="Properties — Model" />
+  <figcaption>Properties — Model</figcaption>
+</figure>
 
 </details>
 
@@ -52,6 +67,11 @@ Transformations run server-side before the response is sent, removing the need f
 </ul>
 <p>Use this mode to produce a minimal, application-specific payload that hides WordPress internals entirely.</p>
 
+<figure>
+  <img src="/wordpress-application-layer-properties-custom-schema.webp" alt="Properties — Custom Schema" />
+  <figcaption>Properties — Custom Schema</figcaption>
+</figure>
+
 </details>
 
 <details>
@@ -59,6 +79,11 @@ Transformations run server-side before the response is sent, removing the need f
 
 <p>The <strong>Test</strong> tab fetches a live sample entry from WordPress and displays the raw REST response alongside the transformed result side by side. Use it to verify your schema before deploying — no external request needed.</p>
 <p>The test uses the first available entry of the model's object type and runs the full transform pipeline.</p>
+
+<figure>
+  <img src="/wordpress-application-layer-properties-test.webp" alt="Properties — Test" />
+  <figcaption>Properties — Test</figcaption>
+</figure>
 
 </details>
 

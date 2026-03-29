@@ -1,5 +1,7 @@
 # WordPress Application Layer
 
+![Routes explorer and per-route settings](docs/public/wordpress-application-layer-routes.webp)
+
 📖 **[Documentation](https://wordpress-application-layer.abc-plugins.com)**
 
 WordPress Application Layer is a plugin that sits between the WordPress REST API and your client applications. It lets you control exactly what data is exposed, who can access it, how it is shaped, and at what rate — without touching WordPress core or your theme.

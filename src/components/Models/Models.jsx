@@ -311,8 +311,6 @@ export default function Models( { globalForm = null, onEditingChange } ) {
 				>
 					{ __( 'Create Model', 'rest-api-firewall' ) }
 				</Button>
-
-				<Stack flex={ 1 } />
 				
 				<Tooltip title={__('Properties model for wp/v2/settings route', 'rest-api-firewall' ) }>
 					<Button
@@ -335,6 +333,8 @@ export default function Models( { globalForm = null, onEditingChange } ) {
 						{ __( 'Create Settings Model', 'rest-api-firewall' ) }
 					</Button>
 				</Tooltip>
+
+				<Stack flex={ 1 } />
 
 				{ rowSelectionModel.ids.size > 0 && (
 					<Button
