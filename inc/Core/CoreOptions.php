@@ -511,7 +511,7 @@ class CoreOptions {
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
-				'context'           => array( 'pro' ),
+				'context'           => array( 'free','pro' ),
 				'group'             => 'models_properties',
 			),
 

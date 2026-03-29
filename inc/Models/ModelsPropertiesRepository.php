@@ -661,8 +661,8 @@ class ModelsPropertiesRepository {
 		return array(
 			array(
 				'key'        => 'embed',
-				'tooltip'    => 'Resolve Object',
-				'label'      => 'Resolve',
+				'tooltip'    => esc_html__('Resolve Object', 'rest-api-firewall'),
+				'label'      => esc_html__('Resolve Object', 'rest-api-firewall'),
 				'properties' => array_merge(
 					array(
 						'featured_media',
@@ -673,14 +673,14 @@ class ModelsPropertiesRepository {
 			),
 			array(
 				'key'        => 'rendered',
-				'tooltip'    => 'Flatten Rendered',
-				'label'      => 'Flatten',
+				'tooltip'    => esc_html__('Flatten Rendered', 'rest-api-firewall'),
+				'label'      => esc_html__('Flatten Rendered', 'rest-api-firewall'),
 				'properties' => array(),
 			),
 			array(
 				'key'        => 'date_format',
-				'tooltip'    => 'Date Format',
-				'label'      => 'Format',
+				'tooltip'    => esc_html__('Date Format', 'rest-api-firewall'),
+				'label'      => esc_html__('DateFormat', 'rest-api-firewall'),
 				'properties' => array(
 					'date',
 					'date_gmt',
@@ -690,10 +690,32 @@ class ModelsPropertiesRepository {
 				),
 			),
 			array(
+				'key'        => 'relative_url',
+				'tooltip'    => esc_html__('Relative URL', 'rest-api-firewall'),
+				'label'      => esc_html__('Relative URL', 'rest-api-firewall'),
+				'properties' => array(
+					'file',
+					'link',
+					'source_url',
+					'guid',
+				),
+			),
+			array(
+				'key'        => 'remove_uploads_path',
+				'tooltip'    => esc_html__('Remove Uploads Path', 'rest-api-firewall'),
+				'label'      => esc_html__('Remove Uploads Path', 'rest-api-firewall'),
+				'properties' => array(
+					'file',
+					'source_url',
+					'guid',
+					'link',
+				),
+			),
+			array(
 				'key'        => 'search_replace',
 				'type'       => 'search_replace',
-				'tooltip'    => 'Search & Replace',
-				'label'      => 'S&R',
+				'tooltip'    => esc_html__('Search & Replace', 'rest-api-firewall'),
+				'label'      => esc_html__('Search & Replace', 'rest-api-firewall'),
 				'properties' => array(
 					'title',
 					'content',
@@ -703,6 +725,7 @@ class ModelsPropertiesRepository {
 					'source_url',
 					'description',
 					'name',
+					'slug',
 				),
 			),
 		);

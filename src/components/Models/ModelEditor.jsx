@@ -28,10 +28,11 @@ import FormControl from '@mui/material/FormControl';
 function mergeFilterSettings( schemaSettings, storedSettings ) {
 	if ( ! storedSettings ) return schemaSettings || {};
 	const schemaFilters = schemaSettings?.filters || [];
+	const storedFilters = Array.isArray( storedSettings.filters ) ? storedSettings.filters : [];
 	return {
 		...storedSettings,
 		filters: schemaFilters.map( ( sf ) => {
-			const s = ( storedSettings.filters || [] ).find( ( f ) => f.key === sf.key );
+			const s = storedFilters.find( ( f ) => f.key === sf.key );
 			return s !== undefined ? { ...sf, value: s.value } : sf;
 		} ),
 	};
@@ -739,8 +740,13 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 													subPath.push( parts[ i + 1 ] );
 													i += 2;
 												}
-												const setting = parts[ i ];
-												const key = parts[ i + 1 ];
+												// Handle settings.filters.{filterKey} → re-route to the 'filters' branch.
+												let setting = parts[ i ];
+												let key = parts[ i + 1 ];
+												if ( setting === 'settings' && key === 'filters' && parts[ i + 2 ] !== undefined ) {
+													setting = 'filters';
+													key     = parts[ i + 2 ];
+												}
 
 												setProperties( ( prev ) => {
 													const next = { ...prev };
