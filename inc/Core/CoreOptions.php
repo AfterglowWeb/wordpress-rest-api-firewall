@@ -4,6 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Core\MultiSite;
 use cmk\RestApiFirewall\Firewall\WordpressAuth;
+use cmk\RestApiFirewall\Collections\CollectionOrderController;
 
 class CoreOptions {
 	protected static $instance = null;
@@ -203,28 +204,19 @@ class CoreOptions {
 			),
 
 			// Collections.
-			'rest_collections_per_page_enabled'           => array(
-				'default_value'     => false,
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
+			'rest_collection_orders'                      => array(
+				'default_value'     => array(),
+				'type'              => 'array',
+				'sanitize_callback' => array( CollectionOrderController::class, 'sanitize_collection_order_entry' ),
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
 				'group'             => 'collections',
 			),
 
-			'rest_collections_posts_per_page'             => array(
-				'default_value'     => 100,
-				'type'              => 'integer',
-				'sanitize_callback' => 'absint',
-				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'collections',
-			),
-
-			'rest_collections_attachments_per_page'       => array(
-				'default_value'     => 100,
-				'type'              => 'integer',
-				'sanitize_callback' => 'absint',
+			'rest_collection_per_page_settings'           => array(
+				'default_value'     => array(),
+				'type'              => 'array',
+				'sanitize_callback' => array( CollectionOrderController::class, 'sanitize_collection_per_page_settings' ),
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
 				'group'             => 'collections',
@@ -510,7 +502,7 @@ class CoreOptions {
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
-				'context'           => array( 'pro' ),
+				'context'           => array( 'free', 'pro' ),
 				'group'             => 'models_properties',
 			),
 
@@ -565,7 +557,7 @@ class CoreOptions {
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
-				'context'           => array( 'pro' ),
+				'context'           => array( 'free', 'pro' ),
 				'group'             => 'models_properties',
 			),
 
@@ -583,7 +575,7 @@ class CoreOptions {
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
-				'context'           => array( 'pro' ),
+				'context'           => array( 'free', 'pro' ),
 				'group'             => 'models_properties',
 			),
 
@@ -592,7 +584,7 @@ class CoreOptions {
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
-				'context'           => array( 'pro' ),
+				'context'           => array( 'free', 'pro' ),
 				'group'             => 'models_properties',
 			),
 
@@ -601,7 +593,7 @@ class CoreOptions {
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
-				'context'           => array( 'pro' ),
+				'context'           => array( 'free', 'pro' ),
 				'group'             => 'models_properties',
 			),
 
@@ -615,7 +607,7 @@ class CoreOptions {
 			),
 
 			'rest_models_date_format'                     => array(
-				'default_value'     => 'rest_api',
+				'default_value'     => 'wordpress',
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 				'rest_expose'       => false,

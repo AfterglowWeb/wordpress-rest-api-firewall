@@ -5,6 +5,7 @@ defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Core\CoreOptions;
 use cmk\RestApiFirewall\Core\FileUtils;
+use cmk\RestApiFirewall\Core\Permissions;
 use cmk\RestApiFirewall\Core\Utils;
 use cmk\RestApiFirewall\Models\ModelsPropertiesRepository;
 use cmk\RestApiFirewall\Webhook\WebhookAutoTrigger;
@@ -30,6 +31,7 @@ class AdminPage {
 		add_action( 'admin_menu', array( $this, 'register_admin_page' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'admin_footer', array( $this, 'print_inline_styles' ), 20 );
+		add_action( 'wp_ajax_rest_api_firewall_model_properties', array( $this, 'ajax_model_properties' ) );
 	}
 
 	public function register_admin_page() {
@@ -39,7 +41,7 @@ class AdminPage {
 			'rest_api_firewall_edit_options',
 			'rest-api-firewall-admin',
 			array( $this, 'render_admin_page' ),
-			'dashicons-rest-api',
+			'dashicons-tablet',
 			99
 		);
 	}
@@ -86,7 +88,7 @@ class AdminPage {
 			'ajaxurl'                  => admin_url( 'admin-ajax.php' ),
 			'users'                    => Utils::list_users(),
 			'post_types'               => Utils::list_rest_api_object_types(),
-			'models_properties'        => ModelsPropertiesRepository::models_properties(),
+			'models_properties'        => array(),
 			'admin_options'            => CoreOptions::read_options(),
 			'options_config'           => CoreOptions::options_config_for_js(),
 			'plugin_name'              => sanitize_text_field( $plugin_data['Name'] ),
@@ -114,6 +116,20 @@ class AdminPage {
 			'restApiFirewallAdminData',
 			$args
 		);
+	}
+
+	public function ajax_model_properties() {
+		if ( false === Permissions::ajax_validate_has_firewall_admin_caps() ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized.', 'rest-api-firewall' ) ), 403 );
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above via Permissions::ajax_validate_has_firewall_admin_caps()
+		$object_type = sanitize_key( wp_unslash( $_POST['object_type'] ?? '' ) );
+		if ( empty( $object_type ) ) {
+			wp_send_json_error( array( 'message' => 'Missing object_type.' ), 400 );
+		}
+
+		wp_send_json_success( array( 'props' => ModelsPropertiesRepository::model_properties_for_type( $object_type ) ) );
 	}
 
 	public function print_inline_styles() {

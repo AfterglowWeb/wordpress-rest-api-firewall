@@ -59,19 +59,6 @@ export default function GlobalRoutesPolicy( { form, setField, proSettings, onPro
 					/>
 				</FormControl>
 
-				{ hasValidLicense && (
-					<Stack direction="row" justifyContent="flex-end">
-						<Button
-							variant="contained"
-							disableElevation
-							size="small"
-							disabled={ ! canSave }
-							onClick={ onSave }
-						>
-							{ __( 'Save', 'rest-api-firewall' ) }
-						</Button>
-					</Stack>
-				) }
 
 			</Stack>
 	
@@ -140,22 +127,8 @@ export default function GlobalRoutesPolicy( { form, setField, proSettings, onPro
 					</Stack>
 				</Tooltip>
 
-				{ hasValidLicense && (
-					<Stack direction="row" justifyContent="flex-end">
-						<Button
-							variant="contained"
-							disableElevation
-							size="small"
-							disabled={ ! canSave }
-							onClick={ onSave }
-						>
-							{ __( 'Save', 'rest-api-firewall' ) }
-						</Button>
-					</Stack>
-				) }
 
 			</Stack>
-		
 
 			<Divider />
 
@@ -204,7 +177,7 @@ export default function GlobalRoutesPolicy( { form, setField, proSettings, onPro
 							{ HTTP_METHODS.map( ( method ) => (
 								<FormControlLabel
 									key={ method }
-								disabled={ ! hasValidLicense || ! isModuleEnabled }
+									disabled={ ! hasValidLicense || ! isModuleEnabled }
 									control={
 										<Switch
 											size="small"
@@ -216,14 +189,7 @@ export default function GlobalRoutesPolicy( { form, setField, proSettings, onPro
 											) }
 										/>
 									}
-									label={
-										<Typography
-											variant="body2"
-											sx={ { fontFamily: 'monospace', fontWeight: 600 } }
-										>
-											{ method.toUpperCase() }
-										</Typography>
-									}
+									label={ method.toUpperCase() }
 									sx={ {
 										m: 0,
 										px: 1.5,
@@ -233,19 +199,6 @@ export default function GlobalRoutesPolicy( { form, setField, proSettings, onPro
 								/>
 							) ) }
 						</Stack>
-						{ hasValidLicense && (
-							<Stack direction="row" justifyContent="flex-end">
-								<Button
-									variant="contained"
-									disableElevation
-									size="small"
-									disabled={ ! canSave }
-									onClick={ onSave }
-								>
-									{ __( 'Save', 'rest-api-firewall' ) }
-								</Button>
-							</Stack>
-						) }
 					</Stack>
 				</Tooltip>
 			</Stack>
@@ -289,21 +242,20 @@ export default function GlobalRoutesPolicy( { form, setField, proSettings, onPro
 								onChange={ onProChange }
 							/>
 						</Stack>
-						{ hasValidLicense && (
-							<Stack direction="row" justifyContent="flex-end">
-								<Button
-									variant="contained"
-									disableElevation
-									size="small"
-									disabled={ ! canSave }
-									onClick={ onSave }
-								>
-									{ __( 'Save', 'rest-api-firewall' ) }
-								</Button>
-							</Stack>
-						) }
 					</Stack>
 				</Tooltip>
+			</Stack>
+
+			<Stack direction="row">
+				<Button
+					variant="contained"
+					disableElevation
+					size="small"
+					disabled={ ! canSave }
+					onClick={ onSave }
+				>
+					{ __( 'Save Global Settings', 'rest-api-firewall' ) }
+				</Button>
 			</Stack>
 		</Stack>
 	);

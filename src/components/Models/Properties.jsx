@@ -19,6 +19,7 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import Badge from '@mui/material/Badge';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import TuneIcon from '@mui/icons-material/Tune';
@@ -59,7 +60,7 @@ function resolveGlobalFilterValue( filterKey, propName, globalForm ) {
 	}
 }
 
-function FiltersMenu( {
+export function FiltersMenu( {
 	filters,
 	propName,
 	isInherit,
@@ -69,6 +70,7 @@ function FiltersMenu( {
 	basePath,
 	disabled,
 	hasValidLicense,
+	onSaveFilters = null,
 	__,
 } ) {
 	const [ anchorEl, setAnchorEl ] = useState( null );
@@ -101,14 +103,21 @@ function FiltersMenu( {
 	const handleCancel = () => setAnchorEl( null );
 
 	const handleSave = () => {
-		localFilters.forEach( ( f ) => {
-			setField( {
-				target: {
-					name: `${ basePath }.settings.filters.${ f.key }`,
-					value: f.value ?? ( f.type === 'search_replace' ? {} : false ),
-				},
+		if ( onSaveFilters ) {
+			onSaveFilters( localFilters.map( ( f ) => ( {
+				...f,
+				value: f.value ?? ( f.type === 'search_replace' ? {} : false ),
+			} ) ) );
+		} else {
+			localFilters.forEach( ( f ) => {
+				setField( {
+					target: {
+						name: `${ basePath }.settings.filters.${ f.key }`,
+						value: f.value ?? ( f.type === 'search_replace' ? {} : false ),
+					},
+				} );
 			} );
-		} );
+		}
 		setAnchorEl( null );
 	};
 
@@ -479,7 +488,7 @@ export function PropertyRow( {
 				opacity: isDisabled ? 0.45 : 1,
 				'&:hover': { bgcolor: 'action.hover' },
 				borderRadius: 0.5,
-				px: 1,
+				pl: 1,
 				py: 0.25,
 				...( depth > 0 && {
 					ml: 2,
@@ -580,16 +589,8 @@ export function PropertyRow( {
 						alignItems="center"
 						justifyContent="flex-end"
 					>
-						{ depth === 0 && effectivelyLocked && (
-							<Tooltip
-								title={ __( 'This property cannot be published', 'rest-api-firewall' ) }
-								placement="top"
-							>
-								<LockIcon sx={ { fontSize: 16 } } color="action" />
-							</Tooltip>
-						) }
 
-						{ hasFilters && ! effectivelyLocked && (
+						{ hasFilters && (
 							<FiltersMenu
 								filters={ settings.filters }
 								propName={ propName }
@@ -605,11 +606,12 @@ export function PropertyRow( {
 						) }
 
 						<FormControlLabel
-							disabled={ disabled || ! hasValidLicense || effectivelyLocked }
+							disabled={ ! hasValidLicense }
+							sx={{marginRight: 0}}
 							control={
 								<Switch
 									size="small"
-									checked={ effectivelyLocked ? true : localDisable }
+									checked={ localDisable ? true : (effectivelyLocked ? true : false) }
 									onChange={ ( e ) => {
 										const next = e.target.checked;
 										setLocalDisable( next );
@@ -752,30 +754,74 @@ function ModelProperties( { selectedObjectType, setField, globalForm } ) {
 	const { __ } = wp.i18n || {};
 	const { hasValidLicense } = useLicense();
 	const { adminData } = useAdminData();
-	const postProperties = adminData?.models_properties || {};
+
+	const [ fetchedProps, setFetchedProps ] = useState( null );
+	const [ loading, setLoading ] = useState( false );
+
+	useEffect( () => {
+		if ( ! selectedObjectType ) {
+			setFetchedProps( null );
+			return;
+		}
+		let cancelled = false;
+		setLoading( true );
+		setFetchedProps( null );
+		( async () => {
+			try {
+				const res = await fetch( adminData.ajaxurl, {
+					method: 'POST',
+					body: new URLSearchParams( {
+						action: 'rest_api_firewall_model_properties',
+						nonce:  adminData.nonce,
+						object_type: selectedObjectType,
+					} ),
+				} );
+				const json = await res.json();
+				if ( ! cancelled ) {
+					setFetchedProps( json.success ? ( json.data?.props || null ) : null );
+				}
+			} catch {
+				if ( ! cancelled ) {
+					setFetchedProps( null );
+				}
+			} finally {
+				if ( ! cancelled ) {
+					setLoading( false );
+				}
+			}
+		} )();
+		return () => { cancelled = true; };
+	}, [ selectedObjectType ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
+	if ( loading ) {
+		return (
+			<Box sx={ { py: 2, display: 'flex', justifyContent: 'center' } }>
+				<CircularProgress size={ 20 } />
+			</Box>
+		);
+	}
+
+	if ( ! fetchedProps ) {
+		return null;
+	}
 
 	return (
 		<Stack spacing={ 1 }>
-			{ selectedObjectType &&
-				postProperties?.[ selectedObjectType ]?.props && (
-					<Stack spacing={ 0 }>
-						{ Object.entries(
-							postProperties[ selectedObjectType ].props
-						).map( ( [ propName, propConfig ] ) => (
-							<PropertyRow
-								key={ propName }
-								propName={ propName }
-								propConfig={ propConfig }
-								selectedObjectType={ selectedObjectType }
-								setField={ setField }
-								hasValidLicense={ hasValidLicense }
-								__={ __ }
-								basePath={ `postProperties.${ selectedObjectType }.props.${ propName }` }
-							globalForm={ globalForm }
-							/>
-						) ) }
-					</Stack>
-				) }
+			<Stack spacing={ 0 }>
+				{ Object.entries( fetchedProps ).map( ( [ propName, propConfig ] ) => (
+					<PropertyRow
+						key={ propName }
+						propName={ propName }
+						propConfig={ propConfig }
+						selectedObjectType={ selectedObjectType }
+						setField={ setField }
+						hasValidLicense={ hasValidLicense }
+						__={ __ }
+						basePath={ `postProperties.${ selectedObjectType }.props.${ propName }` }
+						globalForm={ globalForm }
+					/>
+				) ) }
+			</Stack>
 		</Stack>
 	);
 }

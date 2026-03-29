@@ -9,7 +9,7 @@ import WebhookIcon from '@mui/icons-material/Webhook';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import VpnLockOutlinedIcon from '@mui/icons-material/VpnLockOutlined';
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import CardMembershipOutlinedIcon from '@mui/icons-material/CardMembershipOutlined';
@@ -61,7 +61,7 @@ const FEATURES = [
 		details: 'Define custom sort orders and group related endpoints into named collections, independently configured for each application.',
 	},
 	{
-		Icon: AccountTreeIcon,
+		Icon: AccountTreeOutlinedIcon,
 		label: 'Routes Policy',
 		desc: 'Fine-grained control over route access and HTTP methods per application.',
 		details: 'Restrict allowed HTTP methods, assign users per route, configure redirections, filter by post type, and more — all scoped per application.',

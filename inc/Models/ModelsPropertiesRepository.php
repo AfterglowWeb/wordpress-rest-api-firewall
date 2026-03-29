@@ -35,6 +35,17 @@ class ModelsPropertiesRepository {
 		return $result;
 	}
 
+	/**
+	 * Public entry point that handles all object types including 'settings_route'.
+	 * Use this from AJAX handlers instead of calling model_properties() directly.
+	 */
+	public static function model_properties_for_type( string $object_type ): array {
+		if ( 'settings_route' === $object_type ) {
+			return self::settings_route_properties();
+		}
+		return self::model_properties( $object_type );
+	}
+
 	public static function model_properties( string $post_type ): array {
 
 		if ( 'author' === $post_type ) {
@@ -45,7 +56,8 @@ class ModelsPropertiesRepository {
 		$string_auto_filters = array_values(
 			array_filter( $filters, fn( $f ) => in_array( $f['key'], array( 'search_replace' ), true ) )
 		);
-		$data                = self::get_sample_rest_response_data( $post_type );
+
+		$data = self::get_sample_rest_response_data( $post_type );
 
 		if ( ! empty( $data ) ) {
 			$props = self::build_props_from_data( $data, $filters );
@@ -62,6 +74,10 @@ class ModelsPropertiesRepository {
 				if ( ! empty( $all_fields ) ) {
 					$props['acf']['properties'] = self::build_acf_subprops( $all_fields, $string_auto_filters );
 				}
+			}
+
+			if ( 'attachment' === $post_type && isset( $props['media_details'] ) && empty( $props['media_details']['properties'] ) ) {
+				$props['media_details']['properties'] = self::build_media_details_fallback_props();
 			}
 
 			return $props;
@@ -96,6 +112,10 @@ class ModelsPropertiesRepository {
 					}
 				}
 			}
+			// Auto-detect 'rendered' filter from schema: property is an object with a 'rendered' sub-property.
+			if ( isset( $property['properties']['rendered'] ) ) {
+				self::maybe_add_rendered_filter( $property_filters, $filters );
+			}
 			$properties[ $property_key ] = array_merge(
 				$property,
 				array(
@@ -125,12 +145,71 @@ class ModelsPropertiesRepository {
 			if ( ! isset( $properties[ $meta_key ] ) ) {
 				$properties[ $meta_key ] = array(
 					'type'     => 'object',
-					'settings' => array( 'disable' => false, 'filters' => array() ),
+					'settings' => array(
+						'disable' => false,
+						'filters' => array(),
+					),
 				);
 			}
 		}
 
+		if ( 'attachment' === $post_type && isset( $properties['media_details'] ) && empty( $properties['media_details']['properties'] ) ) {
+			$properties['media_details']['properties'] = self::build_media_details_fallback_props();
+		}
+
 		return $properties;
+	}
+
+	private static function get_attachment_sample_data( string $rest_base ): array {
+		// Try image attachments first — they have media_details.sizes populated.
+		$candidate_ids = get_posts(
+			array(
+				'post_type'      => 'attachment',
+				'posts_per_page' => 10,
+				'fields'         => 'ids',
+				'post_status'    => 'inherit',
+				'post_mime_type' => 'image',
+			)
+		);
+
+		if ( empty( $candidate_ids ) ) {
+			$candidate_ids = get_posts(
+				array(
+					'post_type'      => 'attachment',
+					'posts_per_page' => 3,
+					'fields'         => 'ids',
+					'post_status'    => 'inherit',
+				)
+			);
+		}
+
+		if ( empty( $candidate_ids ) ) {
+			return array();
+		}
+
+		$fallback = array();
+		foreach ( $candidate_ids as $attachment_id ) {
+			$request = new WP_REST_Request( 'GET', "/wp/v2/{$rest_base}/" . (int) $attachment_id );
+			$request->set_param( '_embed', '1' );
+			$response = rest_do_request( $request );
+			if ( is_wp_error( $response ) || 200 !== $response->get_status() ) {
+				continue;
+			}
+			$raw  = rest_get_server()->response_to_data( $response, true );
+			$data = json_decode( wp_json_encode( $raw ), true ) ?: array();
+			if ( ! is_array( $data ) ) {
+				continue;
+			}
+			$sizes = isset( $data['media_details']['sizes'] ) ? (array) $data['media_details']['sizes'] : array();
+			if ( ! empty( $sizes ) ) {
+				return $data; // Best case: has real size variants.
+			}
+			if ( empty( $fallback ) ) {
+				$fallback = $data;
+			}
+		}
+
+		return $fallback;
 	}
 
 	private static function get_sample_rest_response_data( string $object_type ): array {
@@ -161,12 +240,18 @@ class ModelsPropertiesRepository {
 				return array();
 			}
 			$rest_base = property_exists( $pt_obj, 'rest_base' ) && $pt_obj->rest_base ? $pt_obj->rest_base : $object_type;
+
+			// For attachments, prefer image files which are most likely to have populated media_details.
+			if ( 'attachment' === $object_type ) {
+				return self::get_attachment_sample_data( $rest_base );
+			}
+
 			$posts     = get_posts(
 				array(
 					'post_type'      => $object_type,
 					'posts_per_page' => 1,
 					'fields'         => 'ids',
-					'post_status'    => array( 'publish', 'draft', 'private' ),
+					'post_status'    => array( 'publish', 'draft', 'private', 'inherit' ),
 				)
 			);
 			if ( empty( $posts ) ) {
@@ -187,12 +272,12 @@ class ModelsPropertiesRepository {
 			return array();
 		}
 
-		$data = rest_get_server()->response_to_data( $response, true );
-		return $data;
+		$raw = rest_get_server()->response_to_data( $response, true );
+		return json_decode( wp_json_encode( $raw ), true ) ?: array();
 	}
 
 	private static function settings_route_properties(): array {
-		$filters = self::properties_filters();
+		$filters  = self::properties_filters();
 		$request  = new WP_REST_Request( 'GET', '/wp/v2/settings' );
 		$response = rest_do_request( $request );
 
@@ -237,7 +322,22 @@ class ModelsPropertiesRepository {
 		return $properties;
 	}
 
-	private static function build_props_from_data( array $data, array $filters = array(), int $depth = 0 ): array {
+	public static function fetch_route_properties( string $route ): array {
+		$filters  = self::properties_filters();
+		$request  = new WP_REST_Request( 'GET', $route );
+		$response = rest_do_request( $request );
+
+		if ( ! is_wp_error( $response ) && 200 === $response->get_status() ) {
+			$data = rest_get_server()->response_to_data( $response, false );
+			if ( ! empty( $data ) && is_array( $data ) ) {
+				return self::build_props_from_data( $data, $filters );
+			}
+		}
+
+		return array();
+	}
+
+	public static function build_props_from_data( array $data, array $filters = array(), int $depth = 0 ): array {
 		$props = array();
 
 		$string_auto_filters = array_values(
@@ -252,7 +352,7 @@ class ModelsPropertiesRepository {
 		foreach ( $data as $key => $value ) {
 			$str_key          = (string) $key;
 			$type             = self::infer_json_type( $value );
-			$property_filters = 0 === $depth ? self::get_filters_per_property( $str_key, $filters ) : array();
+			$property_filters = self::get_filters_per_property( $str_key, $filters );
 
 			if ( 'string' !== $type ) {
 				$property_filters = array_values( array_filter( $property_filters, fn( $f ) => 'search_replace' !== $f['key'] ) );
@@ -267,6 +367,12 @@ class ModelsPropertiesRepository {
 				}
 			}
 
+			// Auto-detect 'rendered' filter: value is an object with a 'rendered' sub-key.
+			// Must happen BEFORE $prop is built so the updated $property_filters snapshot is correct.
+			if ( 'object' === $type && is_array( $value ) && array_key_exists( 'rendered', $value ) ) {
+				self::maybe_add_rendered_filter( $property_filters, $filters );
+			}
+
 			$prop = array(
 				'type'     => $type,
 				'settings' => array(
@@ -275,10 +381,20 @@ class ModelsPropertiesRepository {
 				),
 			);
 
-			if ( 'object' === $type && ! in_array( $str_key, array( '_links', '_embedded' ), true ) ) {
+			if ( 'object' === $type && $depth < 5 ) {
 				$sub = self::build_props_from_data( (array) $value, $filters, $depth + 1 );
 				if ( ! empty( $sub ) ) {
 					$prop['properties'] = $sub;
+				}
+			}
+
+			if ( 'array' === $type && $depth < 5 && is_array( $value ) && ! empty( $value ) ) {
+				$first = reset( $value );
+				if ( is_array( $first ) && ! empty( $first ) ) {
+					$sub = self::build_props_from_data( $first, $filters, $depth + 1 );
+					if ( ! empty( $sub ) ) {
+						$prop['properties'] = $sub;
+					}
 				}
 			}
 
@@ -351,7 +467,10 @@ class ModelsPropertiesRepository {
 					$layout_props[ $layout_key ] = array(
 						'type'        => 'object',
 						'description' => sanitize_text_field( $layout['label'] ?? '' ),
-						'settings'    => array( 'disable' => false, 'filters' => array() ),
+						'settings'    => array(
+							'disable' => false,
+							'filters' => array(),
+						),
 						'properties'  => self::build_acf_subprops( $layout['sub_fields'] ?? array(), $string_filters ),
 					);
 				}
@@ -364,6 +483,19 @@ class ModelsPropertiesRepository {
 		return $props;
 	}
 
+	private static function maybe_add_rendered_filter( array &$property_filters, array $filters ): void {
+		$existing_keys = array_column( $property_filters, 'key' );
+		if ( in_array( 'rendered', $existing_keys, true ) ) {
+			return;
+		}
+		foreach ( $filters as $filter ) {
+			if ( 'rendered' === ( $filter['key'] ?? '' ) ) {
+				$property_filters[] = $filter;
+				return;
+			}
+		}
+	}
+
 	private static function get_filters_per_property( $property_key, $filters ): array {
 		$property_filters = array();
 		foreach ( $filters as $filter ) {
@@ -372,6 +504,99 @@ class ModelsPropertiesRepository {
 			}
 		}
 		return $property_filters;
+	}
+
+	private static function resolve_rest_base( string $object_type ): string {
+		if ( taxonomy_exists( $object_type ) ) {
+			$tax_obj = get_taxonomy( $object_type );
+			return $tax_obj && property_exists( $tax_obj, 'rest_base' ) && $tax_obj->rest_base
+				? $tax_obj->rest_base
+				: $object_type;
+		}
+		$pt_obj = get_post_type_object( $object_type );
+		if ( $pt_obj && property_exists( $pt_obj, 'rest_base' ) && $pt_obj->rest_base ) {
+			return $pt_obj->rest_base;
+		}
+		return $object_type;
+	}
+
+	private static function build_props_from_route_schema( string $post_type, array $filters, array $string_auto_filters ): array {
+		$rest_base = self::resolve_rest_base( $post_type );
+		$request   = new WP_REST_Request( 'OPTIONS', "/wp/v2/{$rest_base}" );
+		$response  = rest_do_request( $request );
+
+		if ( is_wp_error( $response ) || $response->get_status() < 200 || $response->get_status() >= 300 ) {
+			return array();
+		}
+
+		$data              = $response->get_data();
+		$schema_properties = $data['schema']['properties'] ?? array();
+
+		if ( empty( $schema_properties ) ) {
+			return array();
+		}
+
+		$properties = array();
+		foreach ( $schema_properties as $property_key => $property ) {
+			$property_filters = self::get_filters_per_property( $property_key, $filters );
+			$prop_type        = $property['type'] ?? '';
+			$is_string        = 'string' === $prop_type || ( is_array( $prop_type ) && in_array( 'string', $prop_type, true ) );
+			if ( ! $is_string ) {
+				$property_filters = array_values( array_filter( $property_filters, fn( $f ) => 'search_replace' !== $f['key'] ) );
+			}
+			if ( $is_string ) {
+				$existing_keys = array_column( $property_filters, 'key' );
+				foreach ( $string_auto_filters as $sf ) {
+					if ( ! in_array( $sf['key'], $existing_keys, true ) ) {
+						$property_filters[] = $sf;
+					}
+				}
+			}
+			if ( isset( $property['properties']['rendered'] ) ) {
+				self::maybe_add_rendered_filter( $property_filters, $filters );
+			}
+			$properties[ $property_key ] = array_merge(
+				$property,
+				array(
+					'settings' => array(
+						'disable' => false,
+						'filters' => $property_filters,
+					),
+				)
+			);
+		}
+
+		if ( isset( $properties['acf'] ) && function_exists( 'acf_get_field_groups' ) ) {
+			$all_fields   = array();
+			$field_groups = acf_get_field_groups( array( 'post_type' => $post_type ) );
+			foreach ( $field_groups as $group ) {
+				$fields = isset( $group['key'] ) && acf_get_fields( $group['key'] ) ? acf_get_fields( $group['key'] ) : array();
+				foreach ( $fields as $field ) {
+					$all_fields[] = $field;
+				}
+			}
+			if ( ! empty( $all_fields ) ) {
+				$properties['acf']['properties'] = self::build_acf_subprops( $all_fields, $string_auto_filters );
+			}
+		}
+
+		foreach ( array( '_links', '_embedded' ) as $meta_key ) {
+			if ( ! isset( $properties[ $meta_key ] ) ) {
+				$properties[ $meta_key ] = array(
+					'type'     => 'object',
+					'settings' => array(
+						'disable' => false,
+						'filters' => array(),
+					),
+				);
+			}
+		}
+
+		if ( 'attachment' === $post_type && isset( $properties['media_details'] ) && empty( $properties['media_details']['properties'] ) ) {
+			$properties['media_details']['properties'] = self::build_media_details_fallback_props();
+		}
+
+		return $properties;
 	}
 
 	private static function get_rest_controller( string $object_type, string $subtype = '' ): ?object {
@@ -415,7 +640,7 @@ class ModelsPropertiesRepository {
 		return new $controller_class( $object_type );
 	}
 
-	private static function properties_filters(): array {
+	public static function properties_filters(): array {
 
 		$taxonomy_options = Utils::list_taxonomies();
 
@@ -450,12 +675,7 @@ class ModelsPropertiesRepository {
 				'key'        => 'rendered',
 				'tooltip'    => 'Flatten Rendered',
 				'label'      => 'Flatten',
-				'properties' => array(
-					'guid',
-					'title',
-					'excerpt',
-					'content',
-				),
+				'properties' => array(),
 			),
 			array(
 				'key'        => 'date_format',
@@ -485,22 +705,6 @@ class ModelsPropertiesRepository {
 					'name',
 				),
 			),
-			array(
-				'key'        => 'search_replace',
-				'type'       => 'search_replace',
-				'tooltip'    => 'Search & Replace',
-				'label'      => 'S&R',
-				'properties' => array(
-					'title',
-					'content',
-					'excerpt',
-					'guid',
-					'link',
-					'source_url',
-					'description',
-					'name',
-				),
-			),
 		);
 	}
 	private static function author_properties(): array {
@@ -510,7 +714,12 @@ class ModelsPropertiesRepository {
 			array_filter( $filters, fn( $f ) => in_array( $f['key'], array( 'search_replace' ), true ) )
 		);
 
-		$users = get_users( array( 'number' => 1, 'fields' => 'ids' ) );
+		$users = get_users(
+			array(
+				'number' => 1,
+				'fields' => 'ids',
+			)
+		);
 		if ( ! empty( $users ) ) {
 			$id       = (int) $users[0];
 			$request  = new WP_REST_Request( 'GET', "/wp/v2/users/{$id}" );
@@ -548,6 +757,10 @@ class ModelsPropertiesRepository {
 					}
 				}
 			}
+			// Auto-detect 'rendered' filter from schema: property is an object with a 'rendered' sub-property.
+			if ( isset( $property['properties']['rendered'] ) ) {
+				self::maybe_add_rendered_filter( $property_filters, $filters );
+			}
 			$props[ $key ] = array_merge(
 				$property,
 				array(
@@ -563,7 +776,10 @@ class ModelsPropertiesRepository {
 			if ( ! isset( $props[ $meta_key ] ) ) {
 				$props[ $meta_key ] = array(
 					'type'     => 'object',
-					'settings' => array( 'disable' => false, 'filters' => array() ),
+					'settings' => array(
+						'disable' => false,
+						'filters' => array(),
+					),
 				);
 			}
 		}
@@ -592,4 +808,41 @@ class ModelsPropertiesRepository {
 		return $props;
 	}
 
+	private static function build_media_details_fallback_props(): array {
+		$empty_settings = array( 'disable' => false, 'filters' => array() );
+		$string_prop    = array( 'type' => 'string',  'settings' => $empty_settings );
+		$integer_prop   = array( 'type' => 'integer', 'settings' => $empty_settings );
+
+		$size_properties = array(
+			'file'       => $string_prop,
+			'width'      => $integer_prop,
+			'height'     => $integer_prop,
+			'mime_type'  => $string_prop,
+			'source_url' => $string_prop,
+		);
+
+		$sizes_props = array();
+		if ( function_exists( 'wp_get_registered_image_subsizes' ) ) {
+			foreach ( array_keys( wp_get_registered_image_subsizes() ) as $size_name ) {
+				$sizes_props[ $size_name ] = array(
+					'type'       => 'object',
+					'settings'   => $empty_settings,
+					'properties' => $size_properties,
+				);
+			}
+		}
+
+		return array(
+			'width'      => $integer_prop,
+			'height'     => $integer_prop,
+			'file'       => $string_prop,
+			'filesize'   => $integer_prop,
+			'sizes'      => array(
+				'type'       => 'object',
+				'settings'   => $empty_settings,
+				'properties' => $sizes_props,
+			),
+			'image_meta' => array( 'type' => 'object', 'settings' => $empty_settings ),
+		);
+	}
 }

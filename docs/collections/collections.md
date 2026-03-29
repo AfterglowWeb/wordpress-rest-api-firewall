@@ -4,6 +4,11 @@
 
 Collections extends REST API list endpoints with per-page enforcement and drag-and-drop ordering for posts and taxonomy terms. Like all Pro modules, Collections is scoped per application — each application can have its own per-page limits and its own sort order for each object type.
 
+<figure>
+  <img src="/wordpress-application-layer-collections.webp" alt="Collections" />
+  <figcaption>Collections</figcaption>
+</figure>
+
 ---
 
 ## Per Page Enforcement

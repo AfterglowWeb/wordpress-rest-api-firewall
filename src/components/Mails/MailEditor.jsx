@@ -44,9 +44,15 @@ export default function MailEditor( { mail, onBack } ) {
 	const handleSaveRef = useRef( null );
 	const handleDeleteRef = useRef( null );
 
+	const [ dirty, setDirty ] = useState( isNew );
+
 	useEffect( () => {
-		setDirtyFlag( { has: true, message: __( 'You are editing a mail template. Unsaved changes will be lost.', 'rest-api-firewall' ) } );
-	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps — cleanup handled by useRegisterToolbar
+		setDirtyFlag(
+			dirty
+				? { has: true, message: __( 'You are editing a mail template. Unsaved changes will be lost.', 'rest-api-firewall' ) }
+				: { has: false, message: '' }
+		);
+	}, [ dirty ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const clearDirty = useCallback(
 		() => setDirtyFlag( { has: false, message: '' } ),
@@ -54,6 +60,7 @@ export default function MailEditor( { mail, onBack } ) {
 	);
 
 	const [ title, setTitle ] = useState( mail.title || '' );
+	const [ description, setDescription ] = useState( mail.description || '' );
 	const [ recipient, setRecipient ] = useState( mail.recipient || '' );
 	const [ cc, setCc ] = useState( mail.cc || '' );
 	const [ cci, setCci ] = useState( mail.cci || '' );
@@ -63,8 +70,6 @@ export default function MailEditor( { mail, onBack } ) {
 	const [ author, setAuthor ] = useState( '' );
 	const [ dateCreated, setDateCreated ] = useState( '' );
 	const [ dateModified, setDateModified ] = useState( '' );
-
-	const [ dirty, setDirty ] = useState( isNew );
 
 	const [ testStatus, setTestStatus ] = useState( '' );
 	const [ testLoading, setTestLoading ] = useState( false );
@@ -90,6 +95,7 @@ export default function MailEditor( { mail, onBack } ) {
 				if ( json.success ) {
 					const e = json.data.entry;
 					setTitle( e.title || '' );
+					setDescription( e.description || '' );
 					setRecipient( e.recipient || '' );
 					setCc( e.cc || '' );
 					setCci( e.cci || '' );
@@ -122,6 +128,7 @@ export default function MailEditor( { mail, onBack } ) {
 		nonce,
 		application_id: selectedApplicationId,
 		title,
+		description,
 		recipient,
 		cc,
 		cci,
@@ -216,7 +223,8 @@ export default function MailEditor( { mail, onBack } ) {
 
 	const updateToolbar = useRegisterToolbar( {
 		isNew,
-		breadcrumb: [ __( 'Emails', 'rest-api-firewall' ) ],
+		breadcrumb: __( 'Emails', 'rest-api-firewall' ),
+		newEntryLabel: __( 'New Mail Template', 'rest-api-firewall' ),
 		docPage: 'mails',
 		handleBack: () => { clearDirty(); onBack(); },
 		handleSave: () => handleSaveRef.current?.(),
@@ -232,7 +240,10 @@ export default function MailEditor( { mail, onBack } ) {
 			dateModified,
 			saving,
 			enabled: isNew ? null : enabled,
-			dirtyFlag: { has: true, message: __( 'You are editing a mail template. Unsaved changes will be lost.', 'rest-api-firewall' ) },
+			canSave: dirty,
+			dirtyFlag: dirty
+				? { has: true, message: __( 'You are editing a mail template. Unsaved changes will be lost.', 'rest-api-firewall' ) }
+				: null,
 			children: (
 				<Tooltip
 					title={
@@ -307,6 +318,17 @@ export default function MailEditor( { mail, onBack } ) {
 					sx={{
 						maxWidth: 370,
 					}}
+				/>
+
+				<TextField
+					label={ __( 'Description', 'rest-api-firewall' ) }
+					value={ description }
+					onChange={ ( e ) => { setDescription( e.target.value ); setDirty( true ); } }
+					size="small"
+					fullWidth
+					multiline
+					rows={ 2 }
+					sx={{ maxWidth: 600 }}
 				/>
 
 				<Divider />

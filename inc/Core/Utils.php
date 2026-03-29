@@ -12,10 +12,17 @@ use JsonException;
 class Utils {
 
 	/**
-	 * List administrator users.
+	 * List all WordPress users for entry linking.
 	 */
 	public static function list_users(): array {
-		$users = get_users( array( 'role__in' => array( 'administrator' ) ) );
+		$users = get_users(
+			array(
+				'role__in' => array( 'administrator' ),
+				'number'   => 500,
+				'orderby'  => 'display_name',
+				'order'    => 'ASC',
+			)
+		);
 
 		if ( empty( $users ) ) {
 			return array();

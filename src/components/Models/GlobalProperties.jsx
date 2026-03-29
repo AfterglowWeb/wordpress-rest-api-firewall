@@ -1,6 +1,7 @@
 import { useLicense } from '../../contexts/LicenseContext';
 
 import Checkbox from '@mui/material/Checkbox';
+import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
@@ -11,31 +12,31 @@ import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import Switch from '@mui/material/Switch';
 
 export default function GlobalProperties( { form, setField } ) {
 	const { hasValidLicense } = useLicense();
 	const { __ } = wp.i18n || {};
 
-	const Item = ( { name, label, tip, disabled = false, indent = false } ) => {
-		const isDisabled = ! hasValidLicense || disabled === true;
+	const Item = ( { name, label, tip, disabled = false, indent = false, pro = false } ) => {
+		const isDisabled = ( pro && ! hasValidLicense ) || disabled === true;
 
 		return (
-		<Tooltip title={ tip || '' } placement="bottom-start" followCursor>
+		<Tooltip title={ tip || '' } disableInteractive followCursor>
 			<FormControlLabel
 				disabled={ isDisabled }
 				control={
-					<Checkbox
+					<Switch
 						size="small"
 						checked={ !! form[ name ] }
 						name={ name }
 						onChange={ setField }
 					/>
 				}
-				label={label}
+				label={ label }
 				sx={ {
 					width: '50%',
 					minWidth: 360,
-					mr: 0,
 					...( indent && { pl: 2 } ),
 				} }
 			/>
@@ -51,7 +52,6 @@ export default function GlobalProperties( { form, setField } ) {
 					<Typography
 						variant="subtitle1"
 						fontWeight={ 600 }
-						color={ ! hasValidLicense ? 'text.disabled' : 'text.primary' }
 					>
 						{ __( 'Post Types and Taxonomies', 'rest-api-firewall' ) }
 					</Typography>
@@ -60,7 +60,7 @@ export default function GlobalProperties( { form, setField } ) {
 						<br />{ __( 'Can be overridden per model.', 'rest-api-firewall' ) }
 					</Typography>
 				</Stack>
-				<FormGroup sx={ { flexDirection: 'row', flexWrap: 'wrap' } }>
+				<FormGroup sx={ { flexDirection: 'column', gap: 2 } }>
 					<Item
 						name="rest_models_relative_url_enabled"
 						label={ __( 'Relative URLs', 'rest-api-firewall' ) }
@@ -69,29 +69,34 @@ export default function GlobalProperties( { form, setField } ) {
 					<Item
 						name="rest_models_relative_attachment_url_enabled"
 						label={ __( 'Relative Attachment URLs', 'rest-api-firewall' ) }
-						tip={ __( 'Remove the host and upload path from attachment URLs.', 'rest-api-firewall' ) }
+						tip={ __( 'Remove the host and upload path from attachment URLs. Require License', 'rest-api-firewall' ) }
+						pro
 					/>
 					<Item
 						name="rest_models_remove_links_prop"
 						label={ __( 'Remove `_links`', 'rest-api-firewall' ) }
-						tip={ __( 'Remove the `_links` property from REST responses.', 'rest-api-firewall' ) }
+						tip={ __( 'Remove the `_links` property from REST responses. Require License', 'rest-api-firewall' ) }
+						pro
 					/>
 					<Item
 						name="rest_models_remove_embed_prop"
 						label={ __( 'Remove `_embed`', 'rest-api-firewall' ) }
-						tip={ __( 'Remove the `_embed` property from REST responses.', 'rest-api-firewall' ) }
+						tip={ __( 'Remove the `_embed` property from REST responses. Require License', 'rest-api-firewall' ) }
+						pro
 					/>
 					<Item
 						name="rest_models_remove_empty_props"
 						label={ __( 'Remove Empty Properties', 'rest-api-firewall' ) }
-						tip={ __( 'Remove properties with empty values from REST responses.', 'rest-api-firewall' ) }
+						tip={ __( 'Remove properties with empty values from REST responses. Require License', 'rest-api-firewall' ) }
+						pro
 					/>
 					<Item
 						disabled={ !form.rest_models_remove_empty_props }
 						name="rest_models_remove_empty_props_recursively"
 						label={ __( 'Apply to Nested Properties', 'rest-api-firewall' ) }
-						tip={ __( 'Also remove empty properties from nested objects.', 'rest-api-firewall' ) }
+						tip={ __( 'Also remove empty properties from nested objects. Require License', 'rest-api-firewall' ) }
 						indent
+						pro
 					/>
 				</FormGroup>
 			</Stack>
@@ -103,7 +108,6 @@ export default function GlobalProperties( { form, setField } ) {
 					<Typography
 						variant="subtitle1"
 						fontWeight={ 600 }
-						color={ ! hasValidLicense ? 'text.disabled' : 'text.primary' }
 					>
 						{ __( 'Post Types Only', 'rest-api-firewall' ) }
 					</Typography>
@@ -112,7 +116,7 @@ export default function GlobalProperties( { form, setField } ) {
 						<br />{ __( 'Can be overridden per model.', 'rest-api-firewall' ) }
 					</Typography>
 				</Stack>
-				<FormGroup sx={ { flexDirection: 'row', flexWrap: 'wrap' } }>
+				<FormGroup sx={ { flexDirection: 'column', gap: 2 } }>
 					<Item
 						name="rest_models_resolve_rendered_props"
 						label={ __( 'Flatten `rendered`', 'rest-api-firewall' ) }
@@ -145,15 +149,17 @@ export default function GlobalProperties( { form, setField } ) {
 
 		<Stack spacing={ 2 }>
 			<Stack spacing={ 0 }>
-				<Typography
-					variant="subtitle1"
-					fontWeight={ 600 }
-					color={ ! hasValidLicense ? 'text.disabled' : 'text.primary' }
-				>
-					{ __( 'Date Format', 'rest-api-firewall' ) }
-				</Typography>
+				<Box sx={ { display: 'flex', alignItems: 'center', gap: 1 } }>
+					<Typography
+						variant="subtitle1"
+						fontWeight={ 600 }
+						color={ ! hasValidLicense ? 'text.disabled' : 'text.primary' }
+					>
+						{ __( 'Date Format', 'rest-api-firewall' ) }
+					</Typography>
+				</Box>
 				<Typography variant="body2" color="text.secondary">
-					{ __( 'Format date properties.', 'rest-api-firewall' ) }
+					{ __( 'Format date properties. Can be overridden per model.', 'rest-api-firewall' ) }<br/>
 					{ __( 'Default REST API format is ISO 8601 — e.g. 2024-01-15T14:30:00', 'rest-api-firewall' ) }
 				</Typography>
 			</Stack>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
+import { useState, useEffect, useCallback, useMemo, useRef } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
@@ -154,10 +154,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 	const handleSaveRef = useRef( null );
 	const handleDeleteRef = useRef( null );
-
-	useEffect( () => {
-		setDirtyFlag( { has: true, message: __( 'You are editing a webhook. Unsaved changes will be lost.', 'rest-api-firewall' ) } );
-	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps — cleanup handled by useRegisterToolbar
+	const [ savedSnapshot, setSavedSnapshot ] = useState( null );
 
 	const clearDirty = useCallback(
 		() => setDirtyFlag( { has: false, message: '' } ),
@@ -168,6 +165,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 	const [ loadError, setLoadError ] = useState( '' );
 
 	const [ title, setTitle ] = useState( webhook.title || '' );
+	const [ description, setDescription ] = useState( webhook.description || '' );
 	const [ endpoint, setEndpoint ] = useState( webhook.endpoint || '' );
 	const [ method, setMethod ] = useState( webhook.method || 'POST' );
 	const [ enabled, setEnabled ] = useState(
@@ -187,6 +185,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 	const [ linkedAutomationId, setLinkedAutomationId ] = useState( webhook.linked_automation_id || '' );
 	const [ endpointUrl, setEndpointUrl ] = useState( webhook.endpoint_url || '' );
 	const [ automations, setAutomations ] = useState( [] );
+	const [ author, setAuthor ] = useState( '' );
 	const [ dateCreated, setDateCreated ] = useState( '' );
 	const [ dateModified, setDateModified ] = useState( '' );
 	const [ hasSecret, setHasSecret ] = useState( false );
@@ -194,6 +193,40 @@ export default function WebhookEditor( { webhook, onBack } ) {
 	const [ copied, setCopied ] = useState( false );
 
 	const isInbound = type === 'inbound';
+
+	const isDirty = useMemo( () => {
+		if ( isNew ) {
+			return !! title.trim();
+		}
+		if ( ! savedSnapshot ) {
+			return false;
+		}
+		if ( pendingSecret !== undefined ) {
+			return true;
+		}
+		const s = savedSnapshot;
+		return (
+			title !== s.title ||
+			description !== s.description ||
+			endpoint !== s.endpoint ||
+			method !== s.method ||
+			enabled !== s.enabled ||
+			JSON.stringify( headers.map( ( { key, value } ) => ( { key, value } ) ) ) !== s.headersJson ||
+			String( timeoutSeconds ) !== s.timeoutSeconds ||
+			String( retryCount ) !== s.retryCount ||
+			bodyPayload !== s.bodyPayload ||
+			type !== s.type ||
+			linkedAutomationId !== s.linkedAutomationId
+		);
+	}, [ isNew, savedSnapshot, title, description, endpoint, method, enabled, headers, timeoutSeconds, retryCount, bodyPayload, type, linkedAutomationId, pendingSecret ] );
+
+	useEffect( () => {
+		setDirtyFlag(
+			isDirty
+				? { has: true, message: __( 'You are editing a webhook. Unsaved changes will be lost.', 'rest-api-firewall' ) }
+				: { has: false, message: '' }
+		);
+	}, [ isDirty ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	useEffect( () => {
 		const appId = selectedApplicationId || webhook.application_id || '';
@@ -225,18 +258,44 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 			if ( result?.success && result?.data?.entry ) {
 				const e = result.data.entry;
-				setTitle( e.title || '' );
-				setEndpoint( e.endpoint || '' );
-				setMethod( e.method || 'POST' );
-				setEnabled( e.enabled !== undefined ? e.enabled : true );
-				setHeaders( normalizeHeaders( e.headers ) );
-				setTimeoutSeconds( e.timeout_seconds ?? 10 );
-				setRetryCount( e.retry_count ?? 0 );
-				setBodyPayload( e.body_payload || '' );
-				setType( e.type || 'general' );
-				setLinkedAutomationId( e.linked_automation_id || '' );
+				const loadedTitle             = e.title || '';
+				const loadedDescription       = e.description || '';
+				const loadedEndpoint          = e.endpoint || '';
+				const loadedMethod            = e.method || 'POST';
+				const loadedEnabled           = e.enabled !== undefined ? e.enabled : true;
+				const loadedHeaders           = normalizeHeaders( e.headers );
+				const loadedTimeoutSeconds    = e.timeout_seconds ?? 10;
+				const loadedRetryCount        = e.retry_count ?? 0;
+				const loadedBodyPayload       = e.body_payload || '';
+				const loadedType              = e.type || 'general';
+				const loadedLinkedAutomationId = e.linked_automation_id || '';
+				setTitle( loadedTitle );
+				setDescription( loadedDescription );
+				setEndpoint( loadedEndpoint );
+				setMethod( loadedMethod );
+				setEnabled( loadedEnabled );
+				setHeaders( loadedHeaders );
+				setTimeoutSeconds( loadedTimeoutSeconds );
+				setRetryCount( loadedRetryCount );
+				setBodyPayload( loadedBodyPayload );
+				setType( loadedType );
+				setLinkedAutomationId( loadedLinkedAutomationId );
 				setEndpointUrl( e.endpoint_url || '' );
 				setHasSecret( e.has_secret || false );
+				setAuthor( e.author_name || '' );
+				setSavedSnapshot( {
+					title:             loadedTitle,
+					description:       loadedDescription,
+					endpoint:          loadedEndpoint,
+					method:            loadedMethod,
+					enabled:           loadedEnabled,
+					headersJson:       JSON.stringify( loadedHeaders.map( ( { key, value } ) => ( { key, value } ) ) ),
+					timeoutSeconds:    String( loadedTimeoutSeconds ),
+					retryCount:        String( loadedRetryCount ),
+					bodyPayload:       loadedBodyPayload,
+					type:              loadedType,
+					linkedAutomationId: loadedLinkedAutomationId,
+				} );
 				setDateCreated(
 					formatDate(
 						e.date_created,
@@ -273,6 +332,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 	const commonPayload = {
 		title,
+		description,
 		endpoint,
 		method,
 		enabled: enabled ? '1' : '0',
@@ -308,6 +368,18 @@ export default function WebhookEditor( { webhook, onBack } ) {
 				}
 			);
 		} else {
+			const snapshotAtSave = {
+				title,
+				endpoint,
+				method,
+				enabled,
+				headersJson:       JSON.stringify( headers.map( ( { key, value } ) => ( { key, value } ) ) ),
+				timeoutSeconds:    String( parseInt( timeoutSeconds, 10 ) || 10 ),
+				retryCount:        String( parseInt( retryCount, 10 ) || 0 ),
+				bodyPayload,
+				type,
+				linkedAutomationId,
+			};
 			save(
 				{
 					action: 'update_webhook_entry',
@@ -321,7 +393,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 						'Webhook settings saved successfully.',
 						'rest-api-firewall'
 					),
-					onSuccess: () => { clearDirty(); setPendingSecret( undefined ); },
+					onSuccess: () => { setSavedSnapshot( snapshotAtSave ); setPendingSecret( undefined ); },
 				}
 			);
 		}
@@ -360,7 +432,8 @@ export default function WebhookEditor( { webhook, onBack } ) {
 
 	const updateToolbar = useRegisterToolbar( {
 		isNew,
-		breadcrumb: [ __( 'Webhooks', 'rest-api-firewall' ) ],
+		breadcrumb: __( 'Webhooks', 'rest-api-firewall' ),
+		newEntryLabel: __( 'New Webhook', 'rest-api-firewall' ),
 		docPage: 'webhooks',
 		handleBack: () => { clearDirty(); onBack(); },
 		handleSave: () => handleSaveRef.current?.(),
@@ -371,13 +444,17 @@ export default function WebhookEditor( { webhook, onBack } ) {
 	useEffect( () => {
 		updateToolbar( {
 			title,
+			author,
 			dateCreated,
 			dateModified,
 			saving,
 			enabled,
-			dirtyFlag: { has: true, message: __( 'You are editing a webhook. Unsaved changes will be lost.', 'rest-api-firewall' ) },
+			canSave: isDirty,
+			dirtyFlag: isDirty
+				? { has: true, message: __( 'You are editing a webhook. Unsaved changes will be lost.', 'rest-api-firewall' ) }
+				: null,
 		} );
-	}, [ title, dateCreated, dateModified, saving, enabled ] ); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [ title, author, dateCreated, dateModified, saving, enabled, isDirty ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	if ( loading ) {
 		return (
@@ -407,6 +484,15 @@ export default function WebhookEditor( { webhook, onBack } ) {
 						onChange={ ( e ) => setTitle( e.target.value ) }
 						required
 						sx={ { maxWidth: 340 } }
+					/>
+					<TextField
+						label={ __( 'Description', 'rest-api-firewall' ) }
+						size="small"
+						value={ description }
+						onChange={ ( e ) => setDescription( e.target.value ) }
+						multiline
+						rows={ 2 }
+						sx={ { maxWidth: 600 } }
 					/>
 					<FormControl size="small" sx={ { maxWidth: 220 } }>
 						<InputLabel>{ __( 'Direction', 'rest-api-firewall' ) }</InputLabel>

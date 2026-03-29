@@ -5,11 +5,9 @@ import { useApplication } from '../../contexts/ApplicationContext';
 
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
-import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
 import { DataGrid } from '@mui/x-data-grid';
 
 import Dialog from '@mui/material/Dialog';
@@ -19,20 +17,16 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Switch from '@mui/material/Switch';
 
-import useSettingsForm from '../../hooks/useSettingsForm';
-import useSaveOptions from '../../hooks/useSaveOptions';
-import GlobalProperties from './GlobalProperties';
-
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 
 import useProActions from '../../hooks/useProActions';
-import formatDate from '../../utils/formatDate';
 import ModelEditor from './ModelEditor';
 import ObjectTypeSelect from '../ObjectTypeSelect';
+import Tooltip from '@mui/material/Tooltip';
 
-export default function Models() {
+export default function Models( { globalForm = null, onEditingChange } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
 	const { selectedApplicationId } = useApplication();
@@ -41,16 +35,17 @@ export default function Models() {
 
 	const { remove } = useProActions();
 
-	const { form: outputForm, setField: setOutputField, pickGroup: pickOutputGroup } = useSettingsForm( { adminData } );
-	const { save: saveOutput, saving: savingOutput } = useSaveOptions();
-
 	const [ models, setModels ] = useState( [] );
 	const [ loading, setLoading ] = useState( false );
 	const [ rowSelectionModel, setRowSelectionModel ] = useState( {
 		type: 'include',
 		ids: new Set(),
 	} );
-	const [ editing, setEditing ] = useState( null ); // null = list, object = editor
+	const [ editing, setEditing ] = useState( null );
+	const setEditingAndNotify = useCallback( ( val ) => {
+		setEditing( val );
+		onEditingChange?.( val !== null );
+	}, [ onEditingChange ] ); // null = list, object = editor
 	const [ newModelObjectType, setNewModelObjectType ] = useState( '' );
 	const [ pendingToggle, setPendingToggle ] = useState( null );
 
@@ -153,9 +148,9 @@ export default function Models() {
 		return (
 			<ModelEditor
 				model={ editing }
-				globalForm={ outputForm }
+				globalForm={ globalForm }
 				onBack={ () => {
-					setEditing( null );
+					setEditingAndNotify( null );
 					fetchModels();
 				} }
 			/>
@@ -227,7 +222,7 @@ export default function Models() {
 					fontFamily: 'monospace',
 					color: 'primary.main',
 				} }
-				onClick={ ( e ) => { e.preventDefault(); setEditing( params.row ); } }
+				onClick={ ( e ) => { e.preventDefault(); setEditingAndNotify( params.row ); } }
 			>
 				{ params.value }
 				<OpenInNewIcon
@@ -283,39 +278,7 @@ export default function Models() {
 	];
 
 	return (
-		<Stack p={4} spacing={ 2 } sx={ { height: '100%', flexGrow: 1 } }>
-			
-			<Stack spacing={ 2 } sx={ { maxWidth: 720 } }>
-			
-				<GlobalProperties form={ outputForm } setField={ setOutputField } />
-
-				<Stack direction="row" justifyContent="flex-end">
-					<Button
-						size="small"
-						variant="contained"
-						disableElevation
-						disabled={ savingOutput }
-						onClick={ () => {
-							const { rest_models_enabled: _ignored, ...applyOpts } = pickOutputGroup( 'models_properties' );
-							saveOutput( applyOpts, {
-								confirmTitle: __( 'Apply to all models', 'rest-api-firewall' ),
-								confirmMessage: __(
-									'This will apply the selected output filters as defaults across all your models. Each model can then override these settings individually.',
-									'rest-api-firewall'
-								),
-								confirmLabel: __( 'Apply', 'rest-api-firewall' ),
-								successTitle: __( 'Settings Applied', 'rest-api-firewall' ),
-								successMessage: __( 'Global output settings have been applied.', 'rest-api-firewall' ),
-							} );
-						} }
-					>
-						{ __( 'Apply to all models', 'rest-api-firewall' ) }
-					</Button>
-				</Stack>
-			</Stack>
-
-			<Divider />
-
+		<Stack spacing={ 2 } sx={ { height: '100%', flexGrow: 1 } }>
 			<Toolbar
 				disableGutters
 				sx={ { gap: 2, flexWrap: 'wrap' } }
@@ -334,7 +297,7 @@ export default function Models() {
 					variant="contained"
 					disableElevation
 					onClick={ () =>
-						setEditing( {
+						setEditingAndNotify( {
 							id: null,
 							label: '',
 							object_type: newModelObjectType,
@@ -348,6 +311,30 @@ export default function Models() {
 				>
 					{ __( 'Create Model', 'rest-api-firewall' ) }
 				</Button>
+				
+				<Tooltip title={__('Properties model for wp/v2/settings route', 'rest-api-firewall' ) }>
+					<Button
+						size="small"
+						variant="text"
+						startIcon={ <BusinessOutlinedIcon /> }
+						onClick={ () =>
+							setEditingAndNotify( {
+								id: null,
+								label: '',
+								object_type: 'settings_route',
+								is_custom: false,
+								enabled: false,
+								properties: {},
+								application_id: selectedApplicationId,
+							} )
+						}
+						disabled={ ! selectedApplicationId }
+					>
+						{ __( 'Create Settings Model', 'rest-api-firewall' ) }
+					</Button>
+				</Tooltip>
+
+				<Stack flex={ 1 } />
 
 				{ rowSelectionModel.ids.size > 0 && (
 					<Button
@@ -371,7 +358,7 @@ export default function Models() {
 				disableRowSelectionOnClick
 				rowSelectionModel={ rowSelectionModel }
 				onRowSelectionModelChange={ setRowSelectionModel }
-				onRowDoubleClick={ ( { row } ) => setEditing( row ) }
+				onRowDoubleClick={ ( { row } ) => setEditingAndNotify( row ) }
 				getRowHeight={ () => 'auto' }
 				showToolbar={ true }
 				sx={ {

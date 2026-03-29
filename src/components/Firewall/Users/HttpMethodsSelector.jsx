@@ -2,7 +2,6 @@ import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
 
 export const HTTP_METHODS = [ 'get', 'post', 'put', 'patch', 'delete' ];
 
@@ -23,13 +22,10 @@ export default function HttpMethodsSelector( { value = [], onChange, onSave, sav
 			{ HTTP_METHODS.map( ( method ) => (
 				<FormControlLabel
 					key={ method }
+					disabled={ allowedMethods.length > 0 && ! allowedMethods.includes( method ) }
 					label={
-						<Typography
-							variant="body2"
-							sx={ { fontFamily: 'monospace', fontWeight: 600 } }
-						>
-							{ method.toUpperCase() }
-						</Typography>
+						
+							method.toUpperCase()
 					}
 					control={
 						<Checkbox

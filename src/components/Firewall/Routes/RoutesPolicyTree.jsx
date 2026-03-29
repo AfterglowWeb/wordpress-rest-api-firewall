@@ -22,7 +22,6 @@ import Toolbar from '@mui/material/Toolbar';
 
 import Typography from '@mui/material/Typography';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import SettingsBackupRestoreOutlinedIcon from '@mui/icons-material/SettingsBackupRestoreOutlined';
 
 import { RichTreeView } from '@mui/x-tree-view/RichTreeView';
@@ -41,9 +40,6 @@ import TestPolicyPanel from './TestPolicyPanel';
 export default function RoutesPolicyTree( { form, setField, selectedApplicationId, onNavigate } ) {
 	const {
 		enforce_auth,
-		enforce_rate_limit,
-		rate_limit,
-		rate_limit_time,
 		hide_user_routes,
 		hide_batch_routes,
 		hide_oembed_routes,
@@ -196,6 +192,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 	};
 
 	const handleUserAccessChange = ( userId, routeIds, grant ) => {
+		setIsDirty( true );
 		setUsersData( ( prev ) =>
 			( prev || [] ).map( ( u ) => {
 				if ( u.id !== userId ) {
@@ -255,7 +252,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 			return;
 		}
 		setIsDirty( true );
-	}, [ nodes, usersData ] );
+	}, [ nodes ] );
 
 	if ( loading || ( ! loading && ! treeData ) ) {
 		return (
@@ -312,7 +309,8 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 
 					<Stack flex={ 1 } />
 
-					<Stack direction="row" alignItems="center" gap={ 1 }>
+
+					{hasValidLicense && <Stack direction="row" alignItems="center" gap={ 1 }>
 						{ customCount > 0 && (
 							<Chip
 								label={ sprintf( __( '%d per-route settings', 'rest-api-firewall' ), customCount ) }
@@ -341,7 +339,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 								? __( 'Saving…', 'rest-api-firewall' )
 								: __( 'Save', 'rest-api-firewall' ) }
 						</Button>
-					</Stack>
+					</Stack>}
 				</Toolbar>
 
 				<RichTreeView
@@ -357,9 +355,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 								: null,
 							toggleNodeCustom: handleToggleCustom,
 							enforce_auth,
-							enforce_rate_limit,
-							rate_limit,
-							rate_limit_time,
+
 							hide_user_routes,
 							hide_batch_routes,
 							hide_oembed_routes,

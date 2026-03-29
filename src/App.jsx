@@ -10,7 +10,6 @@ import useSettingsForm from './hooks/useSettingsForm';
 import useSaveOptions from './hooks/useSaveOptions';
 
 import Box from '@mui/material/Box';
-import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
 
 import ConfirmDialog from './components/ConfirmDialog';
@@ -28,13 +27,11 @@ import ConfigurationPanel from './components/ConfigurationDialog';
 
 import RoutesPanel from './components/Firewall/Routes/RoutesPanel';
 import IpFilter from './components/Firewall/IpFilter/IpFilter';
-import RateLimit from './components/Firewall/Users/RateLimit';
-import RestApiUser from './components/Firewall/Users/RestApiSingleUser';
+import RestApiSingleUser from './components/Firewall/Users/RestApiSingleUser';
 
 import Properties from './components/Models/Properties';
-import SettingsRoute from './components/Models/SettingsRoute';
 import Collections from './components/Models/Collections';
-import Models from './components/Models/Models';
+import ModelsPanel from './components/Models/ModelsPanel';
 
 import Webhook from './components/Webhooks/Webhook';
 import Webhooks from './components/Webhooks/Webhooks';
@@ -75,7 +72,7 @@ function AppContent() {
 	);
 	const [ migrationDone, setMigrationDone ] = useState( false );
 
-	const { form, setField, setSlider, pickGroup, isGroupDirty } = useSettingsForm( {
+	const { form, setField, setSlider, syncSavedField, pickGroup, isGroupDirty } = useSettingsForm( {
 		adminData,
 	} );
 
@@ -169,7 +166,6 @@ function AppContent() {
 		'per-route-settings': 'firewall_routes_policy',
 		'collections':        'collections',
 		'models-properties':  'models_properties',
-		'settings-route':     'settings_route',
 		'webhook':            'webhook',
 		'theme':              'theme',
 		'global_security':    'global_security',
@@ -177,6 +173,7 @@ function AppContent() {
 	if ( hasValidLicense ) {
 		delete PANEL_SAVE_GROUP[ 'user-rate-limiting' ];
 		delete PANEL_SAVE_GROUP[ 'per-route-settings' ];
+		delete PANEL_SAVE_GROUP[ 'collections' ];
 		delete PANEL_SAVE_GROUP[ 'models-properties' ];
 		delete PANEL_SAVE_GROUP[ 'webhook' ];
 	}
@@ -204,7 +201,6 @@ function AppContent() {
 		<>
 			<Box sx={ { display: 'flex' } }>
 				<Navigation
-
 					migrationNeeded={ migrationNeeded }
 					migrationDone={ migrationDone }
 					schemaUpdateNeeded={ schemaUpdateNeeded }
@@ -216,95 +212,77 @@ function AppContent() {
 				/>
 
 				<Stack
-					sx={ {
-						flexGrow: 1,
-						minWidth: 0,
-						pl: { xs: 0, md: DRAWER_WIDTH + 'px' },
-						pt: editorOpen ? 0 : APP_BAR_HEIGHT + 'px',
-						minHeight: {
-							xs: editorOpen
-								? `calc(100svh - ${ APP_FOOTER_HEIGHT + WP_ADMIN_BAR_HEIGHT_MOBILE }px)`
-								: `calc(100svh - ${
-										APP_FOOTER_HEIGHT +
-										APP_BAR_HEIGHT +
-										WP_ADMIN_BAR_HEIGHT_MOBILE
-								  }px)`,
-							md: editorOpen
-								? `calc(100svh - ${ APP_FOOTER_HEIGHT + WP_ADMIN_BAR_HEIGHT_DESKTOP }px)`
-								: `calc(100svh - ${
-										APP_FOOTER_HEIGHT +
-										APP_BAR_HEIGHT +
-										WP_ADMIN_BAR_HEIGHT_DESKTOP
-								  }px)`,
-						},
-						bgcolor: 'background.paper',
-					} }
+				sx={ {
+					flexGrow: 1,
+					minWidth: 0,
+					pl: { xs: 0, md: DRAWER_WIDTH + 'px' },
+					pt: editorOpen ? 0 : APP_BAR_HEIGHT + 'px',
+					minHeight: {
+						xs: editorOpen
+							? `calc(100svh - ${ APP_FOOTER_HEIGHT + WP_ADMIN_BAR_HEIGHT_MOBILE }px)`
+							: `calc(100svh - ${
+									APP_FOOTER_HEIGHT +
+									APP_BAR_HEIGHT +
+									WP_ADMIN_BAR_HEIGHT_MOBILE
+								}px)`,
+						md: editorOpen
+							? `calc(100svh - ${ APP_FOOTER_HEIGHT + WP_ADMIN_BAR_HEIGHT_DESKTOP }px)`
+							: `calc(100svh - ${
+									APP_FOOTER_HEIGHT +
+									APP_BAR_HEIGHT +
+									WP_ADMIN_BAR_HEIGHT_DESKTOP
+								}px)`,
+					},
+					bgcolor: 'background.paper',
+				} }
 				>
-				{ editorOpen && <EntryToolbar { ...toolbarConfig } /> }
 
-{ hasValidLicense && panel === 'applications' && <Applications /> }
+					{ editorOpen && <EntryToolbar { ...toolbarConfig } /> }
 
-							{ panel === 'user-rate-limiting' && (
+					{ hasValidLicense && panel === 'applications' && <Applications /> }
+
+					{ panel === 'user-rate-limiting' && (
 						<>
 							{ hasValidLicense ? (
 								<Users />
 							) : (
-								<Stack
-									spacing={ 3 }
-									p={ 4 }
-									sx={ { maxWidth: 800 } }
-								>
-									<RestApiUser
-										form={ form }
-										setField={ setField }
-									/>
-									<Divider />
-									<RateLimit
-										form={ form }
-										setField={ setField }
-									/>
-								</Stack>
+								<RestApiSingleUser
+									form={ form }
+									setField={ setField }
+								/>
 							) }
 						</>
 					) }
 
-{ panel === 'per-route-settings' && (
-								<RoutesPanel
-									form={ form }
-									setField={ setField }
-									onNavigate={ ( v ) => navigate( { 5: 'models-properties' }[ v ] ?? String( v ) ) }
-								/>
-							) }
+					{ panel === 'per-route-settings' && (
+						<RoutesPanel
+							form={ form }
+							setField={ setField }
+							onNavigate={ ( v ) => navigate( { 5: 'models-properties' }[ v ] ?? String( v ) ) }
+						/>
+					) }
 
-{ panel === 'ip-filtering' && <IpFilter /> }
+					{ panel === 'global-ip-filtering' && <IpFilter scope="global" /> }
 
-{ panel === 'global-ip-filtering' && <IpFilter scope="global" /> }
-
-							{ panel === 'collections' && (
+					{ panel === 'collections' && (
 						<Collections
 							form={ form }
 							setField={ setField }
+							syncSavedField={ syncSavedField }
 							postTypes={ postTypes }
 						/>
 					) }
 
-							{ panel === 'models-properties' &&
+					{ panel === 'models-properties' &&
 						( hasValidLicense ? (
-							<Models />
+							<ModelsPanel />
 						) : (
 							<Properties
 								form={ form }
 								setField={ setField }
 								postTypes={ postTypes }
 							/>
-						) ) }
-
-							{ panel === 'settings-route' && (
-						<SettingsRoute
-							form={ form }
-							setField={ setField }
-						/>
-					) }
+					) ) }
 
 					{ panel === 'webhook' &&
 						( hasValidLicense ? (
@@ -313,15 +291,15 @@ function AppContent() {
 							<Webhook form={ form } setField={ setField } />
 						) ) }
 
-{ panel === 'emails' && hasValidLicense && <MailsPanel /> }
+					{ panel === 'emails' && hasValidLicense && <MailsPanel /> }
 
-{ panel === 'logs' && hasValidLicense && <Logs /> }
+					{ panel === 'logs' && hasValidLicense && <Logs /> }
 
-{ panel === 'automations' && hasValidLicense && <Automations /> }
+					{ panel === 'automations' && hasValidLicense && <Automations /> }
 
-							{ panel === 'global_security' && (
-					<GlobalSecurity form={ form } setField={ setField } />
-				) }
+					{ panel === 'global_security' && (
+						<GlobalSecurity form={ form } setField={ setField } />
+					) }
 
 					{ panel === 'theme' && (
 						<ThemeSettings
@@ -333,9 +311,9 @@ function AppContent() {
 						/>
 					) }
 
-{ panel === 'license' && <License /> }
+					{ panel === 'license' && <License /> }
 
-							{ panel === 'configuration' && (
+					{ panel === 'configuration' && (
 						<ConfigurationPanel
 							form={ form }
 							setField={ setField }

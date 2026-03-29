@@ -1,7 +1,6 @@
 import { useState, useCallback } from '@wordpress/element';
 import { useLicense } from '../contexts/LicenseContext';
 import { useAdminData } from '../contexts/AdminDataContext';
-import { useApplication } from '../contexts/ApplicationContext';
 import useProActions from '../hooks/useProActions';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
@@ -31,10 +30,9 @@ import EmailOutlined from '@mui/icons-material/EmailOutlined';
 import MenuIcon from '@mui/icons-material/Menu';
 import ApiIcon from '@mui/icons-material/Api';
 import WebhookIcon from '@mui/icons-material/Webhook';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import VpnLockOutlinedIcon from '@mui/icons-material/VpnLockOutlined';
 import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined';
-import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 import CardMembershipOutlinedIcon from '@mui/icons-material/CardMembershipOutlined';
 import RocketLaunchOutlinedIcon from '@mui/icons-material/RocketLaunchOutlined';
 import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined';
@@ -42,12 +40,17 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import ShieldIcon from '@mui/icons-material/Shield';
+import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+
 
 import { useNavigation } from '../contexts/NavigationContext';
 import { useEntryToolbarContext } from '../contexts/EntryToolbarContext';
 import AppIdentity from './AppIdentity';
-import ApplicationSelector from './ApplicationSelector';
+import ApplicationSelector, { listItemTextSx, listItemIconSx} from './ApplicationSelector';
 import Documentation from './Documentation/Documentation';
+import PanelBreadcrumb from './shared/PanelBreadcrumb';
+import ListItem from '@mui/material/ListItem';
 
 export const DRAWER_WIDTH = 220;
 export const APP_BAR_HEIGHT = 75;
@@ -69,7 +72,6 @@ export default function Navigation( {
 } ) {
 	const { hasValidLicense } = useLicense();
 	const { adminData, updateAdminData } = useAdminData();
-	const { selectedApplication } = useApplication();
 	const { save } = useProActions();
 	const { panel, navigateGuarded } = useNavigation();
 	const { toolbarConfig } = useEntryToolbarContext();
@@ -82,26 +84,19 @@ export default function Navigation( {
 	const moduleKey = {
 		'user-rate-limiting':  { module: 'users',           optionKey: 'user_rate_limit_enabled',           label: __( 'Active', 'rest-api-firewall' ) },
 		'per-route-settings':  { module: 'routes_policy',   optionKey: 'firewall_routes_policy_enabled',    label: __( 'Active', 'rest-api-firewall' ) },
-		'ip-filtering':        { module: 'ip_filter',       optionKey: null,                                label: __( 'Active', 'rest-api-firewall' ) },
 		'global-ip-filtering': { module: 'global_ip_filter', optionKey: null,                               label: __( 'Active', 'rest-api-firewall' ) },
 		'collections':         { module: 'collections',     optionKey: 'rest_collections_enabled',          label: __( 'Active', 'rest-api-firewall' ) },
 		'models-properties':   { module: 'models',          optionKey: 'rest_models_enabled',               label: __( 'Active', 'rest-api-firewall' ) },
-		'settings-route':      { module: 'settings_route',  optionKey: 'rest_settings_route_enabled',       label: __( 'Active', 'rest-api-firewall' ) },
 		'webhook':             { module: 'webhooks',         optionKey: 'webhooks_enabled',                  label: __( 'Active', 'rest-api-firewall' ) },
 		'emails':              { module: 'mails',            optionKey: 'mails_enabled',                     label: __( 'Active', 'rest-api-firewall' ) },
 		'automations':         { module: 'automations',      optionKey: 'automations_enabled',               label: __( 'Active', 'rest-api-firewall' ) },
 	};
-
-	const [ ipFilterEnabled, setIpFilterEnabled ] = useState(
-		() => !! adminData?.ip_filter_enabled
-	);
 
 	const [ globalIpFilterEnabled, setGlobalIpFilterEnabled ] = useState(
 		() => !! adminData?.global_ip_filter_enabled
 	);
 
 	const getModuleEnabled = ( pg ) => {
-		if ( pg === 'ip-filtering' ) return ipFilterEnabled;
 		if ( pg === 'global-ip-filtering' ) return globalIpFilterEnabled;
 		const key = moduleKey[ pg ]?.optionKey;
 		return key ? !! adminData?.admin_options?.[ key ] : null;
@@ -133,9 +128,7 @@ export default function Navigation( {
 						? __( 'Module enabled successfully.', 'rest-api-firewall' )
 						: __( 'Module disabled successfully.', 'rest-api-firewall' ),
 					onSuccess: () => {
-						if ( pg === 'ip-filtering' ) {
-							setIpFilterEnabled( checked );
-						} else if ( pg === 'global-ip-filtering' ) {
+						if ( pg === 'global-ip-filtering' ) {
 							setGlobalIpFilterEnabled( checked );
 						} else {
 							updateAdminData( {
@@ -164,64 +157,46 @@ export default function Navigation( {
 		{ type: 'app-selector' },
 		{
 			type: 'section',
-			label: __( 'REST API Firewall', 'rest-api-firewall' ),
-			breadcrumbPrefix: '',
-			icon:'',
+			label: '',
 		},
 		{
 			key: 'user-rate-limiting',
 			label: hasValidLicense
 				? __( 'Users', 'rest-api-firewall' )
-				: __( 'Auth. & Rate Limit', 'rest-api-firewall' ),
+				: __( 'User', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'REST API Firewall',
-			icon: SecurityOutlined,
+			icon: SmartToyOutlinedIcon,
+			pl:5,
 		},
 		{
 			key: 'per-route-settings',
 			label: __( 'Routes', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'REST API Firewall',
-			icon: AccountTreeIcon,
-		},
-		{
-			key: 'ip-filtering',
-			label: __( 'IP Filtering', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'REST API Firewall',
-			icon: VpnLockOutlinedIcon,
-		},
-
-		{
-			type: 'section',
-			label: __( 'REST API Output', 'rest-api-firewall' ),
+			icon: AccountTreeOutlinedIcon,
+			pl:5,
 		},
 		{
 			key: 'collections',
 			label: __( 'Collections', 'rest-api-firewall' ),
-			secondary: 'wp/v2/posts/*',
 			breadcrumbPrefix: 'REST API Output',
 			icon: ApiIcon,
+			pl:5,
 		},
 		{
 			key: 'models-properties',
 			label: __( 'Properties', 'rest-api-firewall' ),
-			secondary: 'wp/v2/posts/*',
 			breadcrumbPrefix: 'REST API Output',
 			icon: RuleOutlinedIcon,
+			pl:5,
 		},
-		{
-			key: 'settings-route',
-			label: __( 'Settings Route', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'REST API Output',
-			secondary: 'wp/v2/settings',
-			icon: BusinessOutlinedIcon,
-		},
-
-		{ type: 'section', label: __( 'Integrations', 'rest-api-firewall' ) },
+		{ type: 'section', label: ''},
 		{
 			key: 'automations',
 			label: __( 'Automations', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Integrations',
 			icon: AutoFixHighOutlinedIcon,
 			disabled: ! hasValidLicense,
+			pl:5,
 		},
 		{
 			key: 'webhook',
@@ -230,6 +205,7 @@ export default function Navigation( {
 				: __( 'Webhook', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Integrations',
 			icon: WebhookIcon,
+			pl:5,
 		},
 		{
 			key: 'emails',
@@ -237,29 +213,29 @@ export default function Navigation( {
 			breadcrumbPrefix: 'Integrations',
 			icon: EmailOutlined,
 			disabled: ! hasValidLicense,
+			pl:5,
 		},
-
-		{ type: 'section', label: __( '', 'rest-api-firewall' ) },
 		{
 			key: 'logs',
 			label: __( 'Logs', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'All Applications',
 			icon: AssessmentOutlinedIcon,
 			disabled: ! hasValidLicense,
+			pl:5,
 		},
 
 		{ type: 'section', label: __( '', 'rest-api-firewall' ) },
 		{
 			key: 'global-ip-filtering',
-			label: __( 'Global IP Filtering', 'rest-api-firewall' ),
+			label: __( 'IP Filtering', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Modules',
 			icon: VpnLockOutlinedIcon,
 		},
 		{
 			key: 'global_security',
-			label: __( 'Global Security', 'rest-api-firewall' ),
+			label: __( 'Security', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Modules',
-			icon: ShieldIcon,
+			icon: SecurityOutlined,
 		},
 		{
 			key: 'theme',
@@ -267,6 +243,7 @@ export default function Navigation( {
 			breadcrumbPrefix: 'Modules',
 			icon: PaletteOutlined,
 		},
+		{ type: 'section', label: ''},
 		{
 			key: 'license',
 			label: __( 'License', 'rest-api-firewall' ),
@@ -367,18 +344,35 @@ export default function Navigation( {
 					if ( item.hidden ) return null;
 
 					if ( item.type === 'app-selector' ) {
-						if ( ! hasValidLicense ) return null;
-						return (
-							<Box key="app-selector" sx={ { py: 0.5 } }>
-								<ApplicationSelector />
-							</Box>
+						if ( ! hasValidLicense ) return (
+						<Tooltip
+								disableInteractive
+								followCursor
+								title={'License required'}
+							>
+	
+							<ListItem sx={ { px: 3, mt: 1, userSelect: 'none' } }>
+								<ListItemIcon sx={ listItemIconSx }>
+									<AppsOutlinedIcon color="disabled" fontSize="small" />
+								</ListItemIcon>
+								<ListItemText
+									sx={{ ...listItemTextSx, '& .MuiListItemText-primary': { color: 'text.disabled' } }}
+									primary={ __( 'Applications', 'rest-api-firewall' ) }
+								/>
+								<ExpandMoreIcon fontSize="small" sx={ { color: 'text.disabled' } } />
+							</ListItem>
+				
+						</Tooltip>
 						);
+						return <ApplicationSelector key="app-selector" />;
 					}
 
 						const Icon = item.icon;
 						return (
 							<Tooltip
 								key={ item.key }
+								disableInteractive
+								followCursor
 								title={
 									item.disabled
 										? __(
@@ -387,16 +381,15 @@ export default function Navigation( {
 										  )
 										: ''
 								}
-								placement="right"
 							>
 								<span>
 									<ListItemButton
 										selected={ panel === item.key }
 										sx={ {
-											px: 3,
-											backgroundColor: !! item.disabled ? 'grey.100' : '',
+											pl: item.pl ? item.pl : 3,
+											pr: 3
 										} }
-										disabled={ panel === item.key || !! item.disabled }
+										disabled={ !! item.disabled }
 										onClick={ () => {
 											if ( item.action ) {
 												item.action();
@@ -411,9 +404,6 @@ export default function Navigation( {
 												sx={ {
 													px: 1,
 													minWidth: 32,
-													color: !! item.disabled
-														? 'primary.main'
-														: 'text.secondary',
 												} }
 											>
 												<Badge
@@ -421,7 +411,7 @@ export default function Navigation( {
 													variant="dot"
 													invisible={ ! item.badge }
 												>
-													<Icon fontSize="small" />
+													<Icon color={ panel === item.key ? 'primary' : ''} fontSize="small" />
 												</Badge>
 											</ListItemIcon>
 										) }
@@ -431,6 +421,7 @@ export default function Navigation( {
 												'& .MuiListItemText-primary': {
 													fontSize: '0.9rem',
 													lineHeight: 'normal',
+													color: panel === item.key ? 'primary.main' : 'text.primary'
 												},
 											} }
 											primary={ item.label }
@@ -514,23 +505,14 @@ export default function Navigation( {
 									'.MuiFormControlLabel-label': { color: 'text.primary' } }}
 								label={ 'Enable' }
 								/>
+								<Divider orientation="vertical" flexItem />
 							</Stack>
 							) }
 
 							<Stack minWidth={150}>
-								{ selectedApplication && (
-									<Typography
-										variant="caption"
-										color="text.secondary"
-										sx={ {
-											display: 'block',
-											textTransform: 'uppercase',
-											letterSpacing: 0.5,
-										} }
-									>
-										{ selectedApplication.title }
-									</Typography>
-								) }
+								<PanelBreadcrumb
+									label={ activeMenuItem?.breadcrumbPrefix || null }
+								/>
 								<Typography
 									variant="h6"
 									fontWeight={ 600 }

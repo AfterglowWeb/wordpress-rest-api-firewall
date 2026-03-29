@@ -158,19 +158,6 @@ export default function DisabledRouteResponse( { proSettings, onChange, onSave, 
 					</FormControl>
 				) }
 
-				{ hasValidLicense && (
-					<Stack direction="row" justifyContent="flex-end">
-						<Button
-							variant="contained"
-							disableElevation
-							size="small"
-							disabled={ ! canSave }
-							onClick={ onSave }
-						>
-							{ __( 'Save', 'rest-api-firewall' ) }
-						</Button>
-					</Stack>
-				) }
 			</Stack>
 		</Tooltip>
 	);
