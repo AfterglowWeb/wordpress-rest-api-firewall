@@ -1,4 +1,3 @@
-import { useEffect, useRef } from '@wordpress/element';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -52,21 +51,6 @@ export default function EntryToolbar( {
             handleBack();
         }
     };
-
-    const handleBackClickRef = useRef( handleBackClick );
-    handleBackClickRef.current = handleBackClick;
-
-    useEffect( () => {
-        window.history.pushState( { entryEditor: true }, '' );
-
-        const onPopState = () => {
-            window.history.pushState( { entryEditor: true }, '' );
-            handleBackClickRef.current();
-        };
-
-        window.addEventListener( 'popstate', onPopState );
-        return () => window.removeEventListener( 'popstate', onPopState );
-    }, [] ); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
             <Toolbar

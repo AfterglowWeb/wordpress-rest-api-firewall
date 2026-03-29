@@ -19,6 +19,7 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import Badge from '@mui/material/Badge';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import TuneIcon from '@mui/icons-material/Tune';
@@ -753,30 +754,74 @@ function ModelProperties( { selectedObjectType, setField, globalForm } ) {
 	const { __ } = wp.i18n || {};
 	const { hasValidLicense } = useLicense();
 	const { adminData } = useAdminData();
-	const postProperties = adminData?.models_properties || {};
+
+	const [ fetchedProps, setFetchedProps ] = useState( null );
+	const [ loading, setLoading ] = useState( false );
+
+	useEffect( () => {
+		if ( ! selectedObjectType ) {
+			setFetchedProps( null );
+			return;
+		}
+		let cancelled = false;
+		setLoading( true );
+		setFetchedProps( null );
+		( async () => {
+			try {
+				const res = await fetch( adminData.ajaxurl, {
+					method: 'POST',
+					body: new URLSearchParams( {
+						action: 'rest_api_firewall_model_properties',
+						nonce:  adminData.nonce,
+						object_type: selectedObjectType,
+					} ),
+				} );
+				const json = await res.json();
+				if ( ! cancelled ) {
+					setFetchedProps( json.success ? ( json.data?.props || null ) : null );
+				}
+			} catch {
+				if ( ! cancelled ) {
+					setFetchedProps( null );
+				}
+			} finally {
+				if ( ! cancelled ) {
+					setLoading( false );
+				}
+			}
+		} )();
+		return () => { cancelled = true; };
+	}, [ selectedObjectType ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
+	if ( loading ) {
+		return (
+			<Box sx={ { py: 2, display: 'flex', justifyContent: 'center' } }>
+				<CircularProgress size={ 20 } />
+			</Box>
+		);
+	}
+
+	if ( ! fetchedProps ) {
+		return null;
+	}
 
 	return (
 		<Stack spacing={ 1 }>
-			{ selectedObjectType &&
-				postProperties?.[ selectedObjectType ]?.props && (
-					<Stack spacing={ 0 }>
-						{ Object.entries(
-							postProperties[ selectedObjectType ].props
-						).map( ( [ propName, propConfig ] ) => (
-							<PropertyRow
-								key={ propName }
-								propName={ propName }
-								propConfig={ propConfig }
-								selectedObjectType={ selectedObjectType }
-								setField={ setField }
-								hasValidLicense={ hasValidLicense }
-								__={ __ }
-								basePath={ `postProperties.${ selectedObjectType }.props.${ propName }` }
-							globalForm={ globalForm }
-							/>
-						) ) }
-					</Stack>
-				) }
+			<Stack spacing={ 0 }>
+				{ Object.entries( fetchedProps ).map( ( [ propName, propConfig ] ) => (
+					<PropertyRow
+						key={ propName }
+						propName={ propName }
+						propConfig={ propConfig }
+						selectedObjectType={ selectedObjectType }
+						setField={ setField }
+						hasValidLicense={ hasValidLicense }
+						__={ __ }
+						basePath={ `postProperties.${ selectedObjectType }.props.${ propName }` }
+						globalForm={ globalForm }
+					/>
+				) ) }
+			</Stack>
 		</Stack>
 	);
 }

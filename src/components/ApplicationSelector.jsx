@@ -15,7 +15,7 @@ import AddIcon from '@mui/icons-material/Add';
 import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined';
+import AppSettingsAltOutlinedIcon from '@mui/icons-material/AppSettingsAltOutlined';
 
 export const listItemIconSx = { px: 1, minWidth: 32, color: 'text.secondary' };
 export const listItemTextSx = { '& .MuiListItemText-primary': { fontSize: '0.9rem', lineHeight: 'normal' } };
@@ -44,7 +44,7 @@ export default function ApplicationSelector() {
 
 	return (
 		<>
-			<ListItemButton onClick={ () => setOpen( ( o ) => ! o ) } sx={ { px: 3 } }>
+			<ListItemButton onClick={ () => setOpen( ( o ) => ! o ) } sx={ { px: 3, mt: 1 } }>
 				<ListItemIcon sx={ listItemIconSx }>
 					<AppsOutlinedIcon fontSize="small" />
 				</ListItemIcon>
@@ -68,7 +68,7 @@ export default function ApplicationSelector() {
 					>
 						<ListItemText
 							sx={ listItemTextSx }
-							primary={ __( 'Manage', 'rest-api-firewall' ) }
+							primary={ __( 'All', 'rest-api-firewall' ) }
 						/>
 					</ListItemButton>
 
@@ -121,16 +121,14 @@ export default function ApplicationSelector() {
 					sx={ {
 						px: 1,
 						minWidth: 32,
-						color: !! selectedApplicationId
-							? 'primary.main'
-							: 'text.secondary',
 					} }
 				>
-					<CreateOutlinedIcon fontSize="small" />
+					<AppSettingsAltOutlinedIcon fontSize="small" />
 				</ListItemIcon>
 				<ListItemText
-					sx={{ ...listItemTextSx, color:'primary.main' }}
-					primary={ applications.find( ( app ) => app.id === selectedApplicationId )?.title || __( 'No application selected', 'rest-api-firewall' ) }
+					sx={{ ...listItemTextSx }}
+					primary={ applicationsLoading ? __( 'Loading...', 'rest-api-firewall' ) 
+						: ( applications.find( ( app ) => app.id === selectedApplicationId )?.title || __( 'No application', 'rest-api-firewall' ) ) }
 				/>
 			</ListItemButton>
 

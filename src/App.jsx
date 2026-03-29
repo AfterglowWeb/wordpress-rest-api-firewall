@@ -10,7 +10,6 @@ import useSettingsForm from './hooks/useSettingsForm';
 import useSaveOptions from './hooks/useSaveOptions';
 
 import Box from '@mui/material/Box';
-import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
 
 import ConfirmDialog from './components/ConfirmDialog';
@@ -31,9 +30,8 @@ import IpFilter from './components/Firewall/IpFilter/IpFilter';
 import RestApiSingleUser from './components/Firewall/Users/RestApiSingleUser';
 
 import Properties from './components/Models/Properties';
-import SettingsRoute from './components/Models/SettingsRoute';
 import Collections from './components/Models/Collections';
-import Models from './components/Models/Models';
+import ModelsPanel from './components/Models/ModelsPanel';
 
 import Webhook from './components/Webhooks/Webhook';
 import Webhooks from './components/Webhooks/Webhooks';
@@ -264,8 +262,6 @@ function AppContent() {
 						/>
 					) }
 
-					{ panel === 'ip-filtering' && <IpFilter /> }
-
 					{ panel === 'global-ip-filtering' && <IpFilter scope="global" /> }
 
 					{ panel === 'collections' && (
@@ -279,7 +275,7 @@ function AppContent() {
 
 					{ panel === 'models-properties' &&
 						( hasValidLicense ? (
-							<Models />
+							<ModelsPanel />
 						) : (
 							<Properties
 								form={ form }

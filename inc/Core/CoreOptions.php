@@ -607,7 +607,7 @@ class CoreOptions {
 			),
 
 			'rest_models_date_format'                     => array(
-				'default_value'     => 'rest_api',
+				'default_value'     => 'wordpress',
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 				'rest_expose'       => false,

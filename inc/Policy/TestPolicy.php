@@ -168,7 +168,11 @@ class TestPolicy {
 			return null;
 		}
 
-		$app = \cmk\RestApiFirewallPro\Application\ApplicationRepository::find_first_active();
+		if ( ! empty( $this->current_test_application_id ) ) {
+			$app = \cmk\RestApiFirewallPro\Application\ApplicationRepository::find_by_id( $this->current_test_application_id );
+		} else {
+			$app = \cmk\RestApiFirewallPro\Application\ApplicationRepository::find_first_active();
+		}
 		if ( ! $app ) {
 			return null;
 		}

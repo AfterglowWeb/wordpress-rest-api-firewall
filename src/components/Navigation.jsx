@@ -40,8 +40,8 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import ShieldIcon from '@mui/icons-material/Shield';
+import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined';
 
 
 import { useNavigation } from '../contexts/NavigationContext';
@@ -91,10 +91,6 @@ export default function Navigation( {
 		'emails':              { module: 'mails',            optionKey: 'mails_enabled',                     label: __( 'Active', 'rest-api-firewall' ) },
 		'automations':         { module: 'automations',      optionKey: 'automations_enabled',               label: __( 'Active', 'rest-api-firewall' ) },
 	};
-
-	const [ ipFilterEnabled, setIpFilterEnabled ] = useState(
-		() => !! adminData?.ip_filter_enabled
-	);
 
 	const [ globalIpFilterEnabled, setGlobalIpFilterEnabled ] = useState(
 		() => !! adminData?.global_ip_filter_enabled
@@ -169,7 +165,7 @@ export default function Navigation( {
 				? __( 'Users', 'rest-api-firewall' )
 				: __( 'User', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'REST API Firewall',
-			icon: SecurityOutlined,
+			icon: SmartToyOutlinedIcon,
 			pl:5,
 		},
 		{
@@ -239,7 +235,7 @@ export default function Navigation( {
 			key: 'global_security',
 			label: __( 'Security', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Modules',
-			icon: ShieldIcon,
+			icon: SecurityOutlined,
 		},
 		{
 			key: 'theme',

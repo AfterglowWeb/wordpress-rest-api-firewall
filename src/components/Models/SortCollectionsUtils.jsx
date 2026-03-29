@@ -6,9 +6,6 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 
-import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-
 export function mergeOrderPreview( savedOrder, page, perPage, newIds ) {
 	const offset = page * perPage;
 	const before = savedOrder.slice( 0, offset );

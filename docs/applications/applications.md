@@ -19,6 +19,11 @@ The list view is the entry point for managing all your applications.
 
 Once at least one application exists and is enabled, any incoming REST request that does not match a registered application is blocked.
 
+<figure>
+  <img src="/wordpress-application-layer-applications.webp" alt="Applications" />
+  <figcaption>Applications</figcaption>
+</figure>
+
 ---
 
 ## Application Editor
@@ -30,6 +35,11 @@ Each application has its own editor with two areas:
 - **Title** — display name used throughout the admin.
 - **Description** — optional notes for your own reference.
 - **Enabled** — activate or deactivate the application without deleting it.
+
+<figure>
+  <img src="/wordpress-application-layer-application-settings.webp" alt="Application Settings" />
+  <figcaption>Application Settings</figcaption>
+</figure>
 
 ### Modules
 
@@ -45,6 +55,11 @@ Each module can be toggled on or off at the application level. A module must als
 | **Automations** | Event-driven workflows with conditions and actions | [→ Automations](/automations/automations) |
 | **Webhooks** | Outbound webhook entries with event triggers | [→ Webhooks](/webhooks/webhooks) |
 | **Emails** | Transactional email templates with SMTP | [→ Emails](/mails/mails) |
+
+<figure>
+  <img src="/wordpress-application-layer-application-modules.webp" alt="Application Modules" />
+  <figcaption>Application Modules</figcaption>
+</figure>
 
 ---
 

@@ -40,9 +40,6 @@ import TestPolicyPanel from './TestPolicyPanel';
 export default function RoutesPolicyTree( { form, setField, selectedApplicationId, onNavigate } ) {
 	const {
 		enforce_auth,
-		enforce_rate_limit,
-		rate_limit,
-		rate_limit_time,
 		hide_user_routes,
 		hide_batch_routes,
 		hide_oembed_routes,
@@ -195,6 +192,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 	};
 
 	const handleUserAccessChange = ( userId, routeIds, grant ) => {
+		setIsDirty( true );
 		setUsersData( ( prev ) =>
 			( prev || [] ).map( ( u ) => {
 				if ( u.id !== userId ) {
@@ -254,7 +252,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 			return;
 		}
 		setIsDirty( true );
-	}, [ nodes, usersData ] );
+	}, [ nodes ] );
 
 	if ( loading || ( ! loading && ! treeData ) ) {
 		return (
@@ -357,9 +355,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 								: null,
 							toggleNodeCustom: handleToggleCustom,
 							enforce_auth,
-							enforce_rate_limit,
-							rate_limit,
-							rate_limit_time,
+
 							hide_user_routes,
 							hide_batch_routes,
 							hide_oembed_routes,
