@@ -67,6 +67,11 @@ The users list manages which WordPress users have access to the application.
 
 An application supports an **unlimited number of users**.
 
+<figure>
+  <img src="/wordpress-application-layer-application-users.webp" alt="Application Users" />
+  <figcaption>Application Users</figcaption>
+</figure>
+
 ---
 
 ## Pro — User Editor
@@ -80,6 +85,11 @@ Accessible from the users list, the user editor lets you configure per-user acce
 - **Allowed IPs** — narrow to one or more specific IPs.
 - **Allowed origins** — narrow to one or more specific origins.
 - **Rate limit** — override the application default with a lower quota. Rate limits can only be tightened at user level, not relaxed.
+
+<figure>
+  <img src="/wordpress-application-layer-user-editor.webp" alt="User Editor" />
+  <figcaption>User Editor</figcaption>
+</figure>
 
 ---
 

@@ -37,6 +37,60 @@ function mergeFilterSettings( schemaSettings, storedSettings ) {
 	};
 }
 
+function mergePropertiesRecursively( schemaPropMap, storedPropMap ) {
+	if ( ! schemaPropMap ) return schemaPropMap;
+	return Object.fromEntries(
+		Object.entries( schemaPropMap ).map( ( [ name, cfg ] ) => [
+			name,
+			typeof cfg === 'object' && cfg !== null
+				? {
+					...cfg,
+					settings: mergeFilterSettings( cfg.settings, storedPropMap?.[ name ]?.settings ),
+					properties: mergePropertiesRecursively( cfg.properties, storedPropMap?.[ name ]?.properties ),
+				}
+				: cfg,
+		] )
+	);
+}
+
+function applySettingToNode( node, setting, key, value, schemaFilters ) {
+	if ( setting === 'settings' ) {
+		return { ...node, settings: { ...( node.settings || {} ), [ key ]: value } };
+	}
+	if ( setting === 'filters' ) {
+		const currentFilters = node.settings?.filters || schemaFilters || [];
+		return {
+			...node,
+			settings: {
+				...( node.settings || {} ),
+				filters: currentFilters.map( ( f ) => ( f.key === key ? { ...f, value } : f ) ),
+			},
+		};
+	}
+	return node;
+}
+
+function deepSetSubPropSetting( node, subPath, setting, key, value, schemaCfg ) {
+	const [ head, ...rest ] = subPath;
+	const subSchema = schemaCfg?.properties?.[ head ];
+	const currentChild = node.properties?.[ head ] || {
+		settings: {
+			disable: false,
+			filters: ( subSchema?.settings?.filters || [] ).map( ( f ) => ( { ...f } ) ),
+		},
+	};
+	return {
+		...node,
+		properties: {
+			...( node.properties || {} ),
+			[ head ]:
+				rest.length === 0
+					? applySettingToNode( currentChild, setting, key, value, subSchema?.settings?.filters )
+					: deepSetSubPropSetting( currentChild, rest, setting, key, value, subSchema ),
+		},
+	};
+}
+
 const FALLBACK_BINDINGS = [
 	{ key: 'id', label: 'ID', type: 'integer' },
 	{ key: 'slug', label: 'Slug', type: 'string' },
@@ -356,23 +410,53 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 		} );
 	}, [ title, author, dateCreated, dateModified, saving, enabled, isDirty, objectType, isCustom ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
-	if ( ! loaded ) {
-		return (
-			<LoadingMessage message={ __( 'Loading model…', 'rest-api-firewall' ) } />
-		);
-	}
+	const [ schemaPropsRaw, setSchemaPropsRaw ] = useState( null );
 
-	const schemaProps = ( () => {
-		const props = adminData?.models_properties?.[ objectType ]?.props || null;
-		if ( objectType !== 'settings_route' || ! props ) return props;
+	useEffect( () => {
+		if ( ! objectType ) {
+			setSchemaPropsRaw( null );
+			return;
+		}
+		let cancelled = false;
+		( async () => {
+			try {
+				const res = await fetch( adminData.ajaxurl, {
+					method: 'POST',
+					body: new URLSearchParams( {
+						action: 'rest_api_firewall_model_properties',
+						nonce:  adminData.nonce,
+						object_type: objectType,
+					} ),
+				} );
+				const json = await res.json();
+				if ( ! cancelled ) {
+					setSchemaPropsRaw( json.success ? ( json.data?.props || null ) : null );
+				}
+			} catch {
+				if ( ! cancelled ) {
+					setSchemaPropsRaw( null );
+				}
+			}
+		} )();
+		return () => { cancelled = true; };
+	}, [ objectType ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
+	const schemaProps = useMemo( () => {
+		if ( objectType !== 'settings_route' || ! schemaPropsRaw ) return schemaPropsRaw;
 		const result = {};
-		for ( const [ key, cfg ] of Object.entries( props ) ) {
+		for ( const [ key, cfg ] of Object.entries( schemaPropsRaw ) ) {
 			if ( key === 'menus' && ! properties._embed_menus ) continue;
 			if ( key === 'acf_options' && ! properties._acf_options_page ) continue;
 			result[ key ] = cfg;
 		}
 		return result;
-	} )();
+	}, [ schemaPropsRaw, objectType, properties._embed_menus, properties._acf_options_page ] );
+
+	if ( ! loaded ) {
+		return (
+			<LoadingMessage message={ __( 'Loading model…', 'rest-api-firewall' ) } />
+		);
+	}
 
 	const availableBindings = schemaProps
 		? Object.entries( schemaProps ).flatMap( ( [ key, cfg ] ) => {
@@ -416,21 +500,64 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 		: FALLBACK_BINDINGS;
 
 	return (
-		<Stack p={ 4 } spacing={ 3 } flexGrow={ 1 }>
+		<Stack spacing={ 3 } flexGrow={ 1 }>
 			{ objectType && (
-				<Stack direction="row" gap={2} alignItems="center">
-					<Typography variant="subtitle1" fontWeight="600">
-						{ __('Object Type', 'rest-api-firewall') }
-					</Typography>
-					<Chip 
-					size="large"
-					label={ objectType } 
-					variant="outlined" 
-					color="primary"
-					sx={ { fontFamily: 'monospace' } } />
+				<Stack direction="row" gap={2} alignItems="center" justifyContent="space-between" maxWidth={ 800 }>
+					<Stack direction="row" gap={2} alignItems="center">
+						<Typography variant="subtitle1" fontWeight="600">
+							{ __('Object Type', 'rest-api-firewall') }
+						</Typography>
+						<Chip
+							size="large"
+							label={ objectType }
+							variant="outlined"
+							color="primary"
+							sx={ { fontFamily: 'monospace' } }
+						/>
+					</Stack>
+					{ ! isNew && (
+						testMode ? (
+							<Button
+								variant="outlined"
+								size="small"
+								onClick={ () => {
+									if ( testAbortRef.current ) {
+										testAbortRef.current.abort();
+									}
+									setTestMode( false );
+									setTestStatus( 'idle' );
+									setTestResult( null );
+								} }
+							>
+								<Typography variant="caption">
+									{ __( 'Close Test', 'rest-api-firewall' ) }
+								</Typography>
+							</Button>
+						) : (
+							<Button
+								variant="contained"
+								size="small"
+								disableElevation
+								disabled={ testStatus === 'running' }
+								onClick={ () => {
+									setTestMode( true );
+									setTestStatus( 'idle' );
+									setTestResult( null );
+									runTest();
+								} }
+							>
+								<Typography variant="caption">
+									{ testStatus === 'running'
+										? __( 'Testing…', 'rest-api-firewall' )
+										: __( 'Test', 'rest-api-firewall' ) }
+								</Typography>
+							</Button>
+						)
+					) }
 				</Stack>
 			) }
-			<Stack spacing={3} maxWidth={600}>
+			{ ! testMode && (
+				<Stack spacing={3} maxWidth={600}>
 				<TextField
 					label={ __( 'Model Name', 'rest-api-firewall' ) }
 					value={ title }
@@ -482,49 +609,31 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 					</Stack>
 				) }
 			</Stack>
+			) }
 
 			{ objectType && (
 				<Stack spacing={ 3 } maxWidth={ 800 }>
-					<Stack direction="row" alignItems="center" justifyContent="space-between" gap={ 1 } flexWrap="wrap">
-						<ToggleButtonGroup
-							value={ isCustom ? 'custom' : 'wp' }
-							exclusive
-							onChange={ handleModeChange }
-							size="small"
-						>
-							<ToggleButton value="wp">
-								<Typography variant="caption">
-									{ __( 'WordPress Schema', 'rest-api-firewall' ) }
-								</Typography>
-							</ToggleButton>
-							<ToggleButton value="custom">
-								<Typography variant="caption">
-									{ __( 'Custom Schema', 'rest-api-firewall' ) }
-								</Typography>
-							</ToggleButton>
-						</ToggleButtonGroup>
-
-						{ ! isNew && (
-							<Button
-								variant="contained"
+					{ ! testMode && (
+						<Stack direction="row" alignItems="center" gap={ 1 } flexWrap="wrap">
+							<ToggleButtonGroup
+								value={ isCustom ? 'custom' : 'wp' }
+								exclusive
+								onChange={ handleModeChange }
 								size="small"
-								disableElevation
-								disabled={ testStatus === 'running' }
-								onClick={ () => {
-									setTestMode( true );
-									setTestStatus( 'idle' );
-									setTestResult( null );
-									runTest();
-								} }
 							>
-								<Typography variant="caption">
-									{ testStatus === 'running'
-										? __( 'Testing…', 'rest-api-firewall' )
-										: __( 'Test', 'rest-api-firewall' ) }
-								</Typography>
-							</Button>
-						) }
-					</Stack>
+								<ToggleButton value="wp">
+									<Typography variant="caption">
+										{ __( 'WordPress Schema', 'rest-api-firewall' ) }
+									</Typography>
+								</ToggleButton>
+								<ToggleButton value="custom">
+									<Typography variant="caption">
+										{ __( 'Custom Schema', 'rest-api-firewall' ) }
+									</Typography>
+								</ToggleButton>
+							</ToggleButtonGroup>
+						</Stack>
+					) }
 					{ testMode ? (
 						<Stack spacing={ 2 }>
 							{ testStatus === 'running' && (
@@ -615,22 +724,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 											propConfig={ {
 												...propConfig,
 												settings: mergeFilterSettings( propConfig.settings, properties[ propName ]?.settings ),
-												properties: propConfig.properties
-													? Object.fromEntries(
-														Object.entries( propConfig.properties ).map(
-															( [ subName, subConfig ] ) => [
-																subName,
-																typeof subConfig === 'object' &&
-																subConfig !== null
-																	? {
-																		...subConfig,
-																		settings: mergeFilterSettings( subConfig.settings, properties[ propName ]?.properties?.[ subName ]?.settings ),
-																		}
-																	: subConfig,
-															]
-														)
-														)
-													: propConfig.properties,
+												properties: mergePropertiesRecursively( propConfig.properties, properties[ propName ]?.properties ),
 											} }
 											selectedObjectType={ objectType }
 											setField={ ( e ) => {
@@ -638,11 +732,16 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 												const parts = path.split( '.' );
 												const propsIdx = parts.indexOf( 'props' );
 												const propKey = parts[ propsIdx + 1 ] || propName;
-												const subPropsIdx = parts.indexOf( 'properties', propsIdx + 2 );
-												const isSubProp = subPropsIdx > -1;
-												const subPropKey = isSubProp ? parts[ subPropsIdx + 1 ] : null;
-												const setting = parts[ parts.length - 2 ];
-												const key = parts[ parts.length - 1 ];
+
+												const subPath = [];
+												let i = propsIdx + 2;
+												while ( i < parts.length && parts[ i ] === 'properties' ) {
+													subPath.push( parts[ i + 1 ] );
+													i += 2;
+												}
+												const setting = parts[ i ];
+												const key = parts[ i + 1 ];
+
 												setProperties( ( prev ) => {
 													const next = { ...prev };
 													if ( ! next[ propKey ] ) {
@@ -657,51 +756,23 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 															};
 														}
 													}
-													if ( isSubProp ) {
-														if ( ! next[ propKey ].properties ) {
-															next[ propKey ] = { ...next[ propKey ], properties: {} };
-														}
-														if ( ! next[ propKey ].properties[ subPropKey ] ) {
-															const subCfgInit = schemaProps?.[ propKey ]?.properties?.[ subPropKey ];
-															next[ propKey ].properties[ subPropKey ] = {
-																settings: {
-																	disable: false,
-																	filters: ( subCfgInit?.settings?.filters || [] ).map( ( f ) => ( { ...f } ) ),
-																},
-															};
-														}
-														if ( setting === 'settings' ) {
-															next[ propKey ].properties[ subPropKey ].settings = {
-																...next[ propKey ].properties[ subPropKey ].settings,
-																[ key ]: e.target.value,
-															};
-														} else if ( setting === 'filters' ) {
-															const subCfg = schemaProps?.[ propKey ]?.properties?.[ subPropKey ];
-															const currentFilters =
-																next[ propKey ].properties[ subPropKey ].settings?.filters ||
-																subCfg?.settings?.filters ||
-																[];
-															next[ propKey ].properties[ subPropKey ].settings = {
-																...next[ propKey ].properties[ subPropKey ].settings,
-																filters: currentFilters.map( ( f ) => f.key === key ? { ...f, value: e.target.value } : f ),
-															};
-														}
+													if ( subPath.length === 0 ) {
+														next[ propKey ] = applySettingToNode(
+															next[ propKey ],
+															setting,
+															key,
+															e.target.value,
+															propConfig.settings?.filters
+														);
 													} else {
-														if ( setting === 'settings' ) {
-															next[ propKey ].settings = {
-																...next[ propKey ].settings,
-																[ key ]: e.target.value,
-															};
-														} else if ( setting === 'filters' ) {
-															const currentFilters =
-																next[ propKey ].settings?.filters ||
-																propConfig.settings?.filters ||
-																[];
-															next[ propKey ].settings = {
-																...next[ propKey ].settings,
-																filters: currentFilters.map( ( f ) => f.key === key ? { ...f, value: e.target.value } : f ),
-															};
-														}
+														next[ propKey ] = deepSetSubPropSetting(
+															next[ propKey ],
+															subPath,
+															setting,
+															key,
+															e.target.value,
+															schemaProps?.[ propKey ]
+														);
 													}
 													return next;
 												} );

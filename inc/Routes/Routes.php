@@ -89,7 +89,6 @@ class Routes {
 			return;
 		}
 
-		// Handle post types.
 		foreach ( get_post_types(
 			array(
 				'show_in_rest' => true,
@@ -119,7 +118,6 @@ class Routes {
 			);
 		}
 
-		// Handle taxonomies.
 		foreach ( get_taxonomies(
 			array(
 				'show_in_rest' => true,
@@ -163,7 +161,6 @@ class Routes {
 		$per_page_settings = is_array( $per_page_settings ) ? $per_page_settings : array();
 		$collection_orders = is_array( $collection_orders ) ? $collection_orders : array();
 
-		// Handle post types.
 		foreach ( get_post_types(
 			array(
 				'show_in_rest' => true,
@@ -195,7 +192,6 @@ class Routes {
 			);
 		}
 
-		// Handle taxonomies.
 		foreach ( get_taxonomies(
 			array(
 				'show_in_rest' => true,

@@ -10,6 +10,11 @@ The Routes panel gives you visibility and control over every REST API endpoint W
 
 Global settings apply to every route and can be overridden per-route in Pro.
 
+<figure>
+  <img src="/wordpress-application-layer-routes-global-settings.webp" alt="Routes — Global Settings" />
+  <figcaption>Routes — Global Settings</figcaption>
+</figure>
+
 <details>
 <summary>Auth. &amp; Rate Limiting</summary>
 
