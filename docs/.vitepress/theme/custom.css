@@ -31,6 +31,19 @@
   text-decoration: underline;
 }
 
+/* ── Hero image ─────────────────────────────────────────────────── */
+.VPHero .image-container {
+  max-width: 680px !important;
+  width: 100% !important;
+}
+
+.VPHero .image-bg,
+.VPHero .image-src {
+  max-width: 680px !important;
+  width: 100% !important;
+  height: auto !important;
+}
+
 /* ── Sidebar slide animation ────────────────────────────────────── */
 /* Use !important to override VitePress scoped-style specificity.    */
 .VPSidebar {
