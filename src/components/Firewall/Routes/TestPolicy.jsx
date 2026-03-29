@@ -339,8 +339,8 @@ export default function TestPolicy( {
 				open={ open }
 				onClose={ handleClose }
 				onClick={ ( e ) => e.stopPropagation() }
-				PaperProps={ {
-					sx: {
+				sx={ {
+					'& .MuiPaper-root': {
 						width: { xs: '100%', sm: 560, md: 680 },
 						display: 'flex',
 						flexDirection: 'column',
