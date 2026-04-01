@@ -67,6 +67,8 @@ export default function GlobalProperties( { form, setField } ) {
 						tip={ __( 'Remove the host from post and term URLs.', 'rest-api-firewall' ) }
 					/>
 					<Item
+						disabled={ ! form.rest_models_relative_url_enabled }
+						indent
 						name="rest_models_relative_attachment_url_enabled"
 						label={ __( 'Relative Attachment URLs', 'rest-api-firewall' ) }
 						tip={ __( 'Remove the host and upload path from attachment URLs. Require License', 'rest-api-firewall' ) }

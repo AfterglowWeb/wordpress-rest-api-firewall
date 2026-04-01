@@ -23,7 +23,7 @@ import { TreeItem, TreeItemContent, treeItemClasses } from '@mui/x-tree-view/Tre
 import { useTreeItem } from '@mui/x-tree-view/useTreeItem';
 
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import CopyButton from '../../CopyButton';
+import CopyButton from '../../shared/CopyButton';
 import {
 	isNodeCustom,
 	countModifiedDescendants,

@@ -1,4 +1,4 @@
-import { useAdminData } from '../contexts/AdminDataContext';
+import { useAdminData } from '../../contexts/AdminDataContext';
 import MultipleSelect from './MultipleSelect';
 
 import FormControl from '@mui/material/FormControl';

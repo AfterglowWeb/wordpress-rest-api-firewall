@@ -16,8 +16,8 @@ import Checkbox from '@mui/material/Checkbox';
 
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
-import AllowedIps from '../IpFilter/AllowedIps';
-import AllowedOrigins from '../IpFilter/AllowedOrigins';
+import AllowedIps from '../../IpFilter/AllowedIps';
+import AllowedOrigins from '../../IpFilter/AllowedOrigins';
 import { JwtConfig } from './AuthManager';
 
 import { RateLimitFields } from './RateLimit';

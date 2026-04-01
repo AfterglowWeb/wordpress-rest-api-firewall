@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
-import { useAdminData } from '../../../contexts/AdminDataContext';
-import { useLicense } from '../../../contexts/LicenseContext';
+import { useAdminData } from '../../contexts/AdminDataContext';
+import { useLicense } from '../../contexts/LicenseContext';
 
 import { DataGrid } from '@mui/x-data-grid';
 
@@ -16,12 +16,11 @@ import Typography from '@mui/material/Typography';
 
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import LockIcon from '@mui/icons-material/Lock';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
 import * as Flags from 'country-flag-icons/react/3x2';
 
-import { isValidIpOrCidr } from '../../../utils/sanitizeIp';
+import { isValidIpOrCidr } from '../../utils/sanitizeIp';
 import AllowedOrigins from './AllowedOrigins';
 import ReleaseTime from './ReleaseTime';
 

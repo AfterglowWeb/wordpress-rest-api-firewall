@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from '@wordpress/element';
-import { useAdminData } from '../../../contexts/AdminDataContext';
-import { useLicense } from '../../../contexts/LicenseContext';
-import useProActions from '../../../hooks/useProActions';
+import { useAdminData } from '../../contexts/AdminDataContext';
+import { useLicense } from '../../contexts/LicenseContext';
+import useProActions from '../../hooks/useProActions';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
-import LoadingMessage from '../../LoadingMessage';
+import LoadingMessage from '../LoadingMessage';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 

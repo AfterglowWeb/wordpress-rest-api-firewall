@@ -7,8 +7,8 @@ import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
-import AllowedIps from '../Firewall/IpFilter/AllowedIps';
-import AllowedOrigins from '../Firewall/IpFilter/AllowedOrigins';
+import AllowedIps from '../IpFilter/AllowedIps';
+import AllowedOrigins from '../IpFilter/AllowedOrigins';
 import HttpMethodsSelector from '../Firewall/Users/HttpMethodsSelector';
 import { RateLimitFields } from '../Firewall/Users/RateLimit';
 import { AUTH_METHODS } from '../Firewall/Users/AuthManager';
