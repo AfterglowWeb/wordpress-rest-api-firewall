@@ -19,6 +19,7 @@ import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import CloseIcon from '@mui/icons-material/Close';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import DataPanel from '../../shared/DataPanel';
 
 const METHOD_COLOR = {
 	GET: 'primary',
@@ -27,62 +28,6 @@ const METHOD_COLOR = {
 	PATCH: 'warning',
 	DELETE: 'error',
 };
-
-function StatusBadge( { status } ) {
-	const color =
-		status >= 200 && status < 300
-			? 'success'
-			: status >= 400
-			? 'error'
-			: 'default';
-	return (
-		<Chip
-			label={ status || '—' }
-			size="small"
-			color={ color }
-			variant="outlined"
-			sx={ { fontFamily: 'monospace', fontWeight: 700 } }
-		/>
-	);
-}
-
-function DataPanel( { label, data, bgcolor } ) {
-	return (
-		<Box sx={ { flex: 1, minWidth: 0 } }>
-			<Stack
-				direction="row"
-				spacing={ 1 }
-				alignItems="center"
-				sx={ { mb: 0.5 } }
-			>
-				<Typography variant="caption" fontWeight={ 600 }>
-					{ label }
-				</Typography>
-				{ data?.status && <StatusBadge status={ data.status } /> }
-			</Stack>
-			<Box
-				component="pre"
-				sx={ {
-					p: 1.5,
-					bgcolor: bgcolor || 'grey.50',
-					borderRadius: 1,
-					overflowX: 'auto',
-					fontSize: '0.68rem',
-					lineHeight: 1.5,
-					m: 0,
-					whiteSpace: 'pre-wrap',
-					wordBreak: 'break-all',
-					maxHeight: 260,
-					overflowY: 'auto',
-				} }
-			>
-				{ data?.body !== undefined
-					? JSON.stringify( data.body, null, 2 )
-					: '—' }
-			</Box>
-		</Box>
-	);
-}
 
 export default function TestPolicy( {
 	route,
@@ -303,12 +248,16 @@ export default function TestPolicy( {
 						<Stack direction="row" spacing={ 1.5 }>
 							<DataPanel
 								label={ __( 'Raw', 'rest-api-firewall' ) }
-								data={ result.raw_data }
+								data={ result.raw_data?.body }
+								status={ result.raw_data?.status }
+								labelColor="text.secondary"
 								bgcolor="grey.50"
 							/>
 							<DataPanel
 								label={ __( 'Result', 'rest-api-firewall' ) }
-								data={ result.result_data }
+								data={ result.result_data?.body }
+								status={ result.result_data?.status }
+								labelColor="primary.main"
 								bgcolor={ ( theme ) =>
 									theme.palette.mode === 'dark'
 										? 'rgba(99, 132, 255, 0.08)'
@@ -339,8 +288,8 @@ export default function TestPolicy( {
 				open={ open }
 				onClose={ handleClose }
 				onClick={ ( e ) => e.stopPropagation() }
-				PaperProps={ {
-					sx: {
+				sx={ {
+					'& .MuiPaper-root': {
 						width: { xs: '100%', sm: 560, md: 680 },
 						display: 'flex',
 						flexDirection: 'column',

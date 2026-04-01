@@ -6,7 +6,6 @@ import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
 import useProActions from '../../hooks/useProActions';
 
 import Alert from '@mui/material/Alert';
-import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -23,15 +22,17 @@ import { PropertyRow } from './Properties';
 import JsonSchemaBuilder from '../shared/JsonSchemaBuilder';
 import useRegisterToolbar from '../../hooks/useRegisterToolbar';
 import LoadingMessage from '../LoadingMessage';
+import DataPanel from '../shared/DataPanel';
 import FormControl from '@mui/material/FormControl';
 
 function mergeFilterSettings( schemaSettings, storedSettings ) {
 	if ( ! storedSettings ) return schemaSettings || {};
 	const schemaFilters = schemaSettings?.filters || [];
+	const storedFilters = Array.isArray( storedSettings.filters ) ? storedSettings.filters : [];
 	return {
 		...storedSettings,
 		filters: schemaFilters.map( ( sf ) => {
-			const s = ( storedSettings.filters || [] ).find( ( f ) => f.key === sf.key );
+			const s = storedFilters.find( ( f ) => f.key === sf.key );
 			return s !== undefined ? { ...sf, value: s.value } : sf;
 		} ),
 	};
@@ -647,24 +648,22 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 							) }
 							{ testStatus === 'done' && testResult && (
 								<Stack direction={ { xs: 'column', md: 'row' } } spacing={ 2 } alignItems="flex-start">
-									<Stack flex={ 1 } spacing={ 1 } sx={ { minWidth: 0 } }>
-										<Typography variant="subtitle2" fontWeight={ 600 } color="text.secondary">{ __( 'Raw', 'rest-api-firewall' ) }</Typography>
-										<Box
-											component="pre"
-											sx={ { p: 2, bgcolor: 'grey.50', borderRadius: 1, overflowX: 'auto', fontSize: '0.72rem', lineHeight: 1.5, m: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' } }
-										>
-											{ JSON.stringify( testResult.raw, null, 2 ) }
-										</Box>
-									</Stack>
-									<Stack flex={ 1 } spacing={ 1 } sx={ { minWidth: 0 } }>
-										<Typography variant="subtitle2" fontWeight={ 600 } color="primary.main">{ __( 'Transformed', 'rest-api-firewall' ) }</Typography>
-										<Box
-											component="pre"
-											sx={ { p: 2, bgcolor: 'primary.50', borderRadius: 1, overflowX: 'auto', fontSize: '0.72rem', lineHeight: 1.5, m: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' } }
-										>
-											{ JSON.stringify( testResult.transformed, null, 2 ) }
-										</Box>
-									</Stack>
+									<DataPanel
+										label={ __( 'Raw', 'rest-api-firewall' ) }
+										data={ testResult.raw }
+										labelColor="text.secondary"
+										bgcolor="grey.50"
+									/>
+									<DataPanel
+										label={ __( 'Transformed', 'rest-api-firewall' ) }
+										data={ testResult.transformed }
+										labelColor="primary.main"
+										bgcolor={ ( theme ) =>
+											theme.palette.mode === 'dark'
+												? 'rgba(99, 132, 255, 0.08)'
+												: 'rgba(25, 118, 210, 0.04)'
+										}
+									/>
 								</Stack>
 							) }
 						</Stack>
@@ -739,8 +738,13 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 													subPath.push( parts[ i + 1 ] );
 													i += 2;
 												}
-												const setting = parts[ i ];
-												const key = parts[ i + 1 ];
+												// Handle settings.filters.{filterKey} → re-route to the 'filters' branch.
+												let setting = parts[ i ];
+												let key = parts[ i + 1 ];
+												if ( setting === 'settings' && key === 'filters' && parts[ i + 2 ] !== undefined ) {
+													setting = 'filters';
+													key     = parts[ i + 2 ];
+												}
 
 												setProperties( ( prev ) => {
 													const next = { ...prev };

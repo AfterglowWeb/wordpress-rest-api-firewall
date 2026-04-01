@@ -173,7 +173,7 @@ export function PostOrderList( { items, orderedIds, originalOrderedIds, objectKi
 						</Stack>
 
 						<Stack direction="row" spacing={ 0.5 } alignItems="center" flexShrink={ 0 }>
-							{ 'post_type' === objectKind && item.status && item.status !== 'publish' && (
+							{ 'post_type' === objectKind && item.status && item.status !== 'publish' && item.status !== 'inherit' && (
 								<Chip
 									label={ item.status }
 									size="small"
@@ -231,8 +231,8 @@ export function PageDropZone( { direction, disabled, onDrop, setPage } ) {
 	const isExpanded = hovered || !! dragOver;
 
 	const pageLabel = isPrev
-		? __( 'Prev. Page', 'rest-api-firewall' )
-		: __( 'Next Page', 'rest-api-firewall' );
+		? __( 'Drop in Prev. Page', 'rest-api-firewall' )
+		: __( 'Drop in Next Page', 'rest-api-firewall' );
 
 	const zoneLabel = ( zone ) =>
 		zone === 'drop'

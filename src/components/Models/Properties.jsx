@@ -25,8 +25,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import TuneIcon from '@mui/icons-material/Tune';
 import LockIcon from '@mui/icons-material/Lock';
 
-import CopyButton from '../CopyButton';
-import ObjectTypeSelect from '../ObjectTypeSelect';
+import CopyButton from '../shared/CopyButton';
+import ObjectTypeSelect from '../shared/ObjectTypeSelect';
 import GlobalProperties from './GlobalProperties';
 
 const TYPE_COLORS = {
@@ -49,6 +49,8 @@ function resolveGlobalFilterValue( filterKey, propName, globalForm ) {
 	switch ( filterKey ) {
 		case 'relative_url':
 			return !! globalForm.rest_models_relative_url_enabled;
+		case 'remove_uploads_path':
+			return !! globalForm.rest_models_relative_attachment_url_enabled;
 		case 'rendered':
 			return !! globalForm.rest_models_resolve_rendered_props;
 		case 'embed':
@@ -143,17 +145,21 @@ export function FiltersMenu( {
 		const local = localFilters.find( ( f ) => f.key === filter.key );
 		const checked = local ? !! local.value : false;
 
+		const relUrlLocal = localFilters.find( ( f ) => f.key === 'relative_url' );
+		const isDepDisabled = 'remove_uploads_path' === filter.key && ! ( relUrlLocal ? !! relUrlLocal.value : false );
+		const effectivelyDisabled = isFormDisabled || isDepDisabled;
+
 		return (
 			<MenuItem
 				key={ filter.key }
 				dense
 				sx={ { gap: 1 } }
-				onClick={ () => ! isFormDisabled && patchLocal( filter.key, ! checked ) }
+				onClick={ () => ! effectivelyDisabled && patchLocal( filter.key, ! checked ) }
 			>
 				<Checkbox
 					size="small"
 					checked={ checked }
-					disabled={ isFormDisabled }
+					disabled={ effectivelyDisabled }
 					tabIndex={ -1 }
 					disableRipple
 					sx={ { p: 0.25 } }
@@ -161,7 +167,7 @@ export function FiltersMenu( {
 				<Typography
 					variant="body2"
 					sx={ { flex: 1 } }
-					color={ isFormDisabled ? 'text.disabled' : 'text.primary' }
+					color={ effectivelyDisabled ? 'text.disabled' : 'text.primary' }
 				>
 					{ filter.tooltip || filter.label }
 				</Typography>
@@ -256,7 +262,7 @@ export function FiltersMenu( {
 				anchorOrigin={ { horizontal: 'right', vertical: 'bottom' } }
 			>
 				{ ( () => {
-					const BOOL_ORDER = [ 'embed', 'rendered', 'date_format' ];
+					const BOOL_ORDER = [ 'embed', 'rendered', 'date_format', 'relative_url', 'remove_uploads_path' ];
 					const boolFilters = [ ...localFilters ]
 						.filter( ( f ) => f.type !== 'search_replace' )
 						.sort( ( a, b ) => {

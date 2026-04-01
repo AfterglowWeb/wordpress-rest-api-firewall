@@ -23,7 +23,7 @@ import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 
 import useProActions from '../../hooks/useProActions';
 import ModelEditor from './ModelEditor';
-import ObjectTypeSelect from '../ObjectTypeSelect';
+import ObjectTypeSelect from '../shared/ObjectTypeSelect';
 import Tooltip from '@mui/material/Tooltip';
 
 export default function Models( { globalForm = null, onEditingChange } ) {

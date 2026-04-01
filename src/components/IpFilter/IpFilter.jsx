@@ -1,6 +1,6 @@
-import { useLicense } from '../../../contexts/LicenseContext';
-import { useNavigation } from '../../../contexts/NavigationContext';
-import { useApplication } from '../../../contexts/ApplicationContext';
+import { useLicense } from '../../contexts/LicenseContext';
+import { useNavigation } from '../../contexts/NavigationContext';
+import { useApplication } from '../../contexts/ApplicationContext';
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import Link from '@mui/material/Link';

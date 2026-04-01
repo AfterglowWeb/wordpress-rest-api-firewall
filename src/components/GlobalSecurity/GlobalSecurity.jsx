@@ -13,7 +13,7 @@ import Divider from '@mui/material/Divider';
 
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
-import CopyButton from '../CopyButton';
+import CopyButton from '../shared/CopyButton';
 
 function FileActionSwitch( {
 	checked,

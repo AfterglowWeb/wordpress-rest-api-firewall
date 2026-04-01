@@ -23,10 +23,10 @@ import Navigation, {
 	WP_ADMIN_BAR_HEIGHT_MOBILE,
 } from './components/Navigation';
 
-import ConfigurationPanel from './components/ConfigurationDialog';
+import ConfigurationPanel from './components/Configuration/ConfigurationDialog';
 
 import RoutesPanel from './components/Firewall/Routes/RoutesPanel';
-import IpFilter from './components/Firewall/IpFilter/IpFilter';
+import IpFilter from './components/IpFilter/IpFilter';
 import RestApiSingleUser from './components/Firewall/Users/RestApiSingleUser';
 
 import Properties from './components/Models/Properties';
