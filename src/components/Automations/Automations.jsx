@@ -145,24 +145,6 @@ export default function Automations() {
 	const columns = useMemo(
 		() => [
 			{
-				field: '_actions',
-				headerName: __( 'Actions', 'rest-api-firewall' ),
-				width: 80,
-				sortable: false,
-				filterable: false,
-				renderCell: ( params ) => (
-					<IconButton
-						size="small"
-						color="default"
-						onClick={ () =>
-							handleDeleteOne( params.row.id, params.row.title )
-						}
-					>
-						<DeleteOutlineIcon fontSize="small" />
-					</IconButton>
-				),
-			},
-			{
 				field: 'enabled',
 				headerName: __( 'Active', 'rest-api-firewall' ),
 				width: 100,
@@ -197,7 +179,7 @@ export default function Automations() {
 						fontFamily: 'monospace',
 						color: 'primary.main',
 					} }
-					onClick={ () => navigate( 'automations', params.row.id ) }
+					onClick={ ( e ) => { e.preventDefault(); e.stopPropagation(); navigate( 'automations', params.row.id ); } }
 					>
 					{ params.value }
 						<OpenInNewIcon
@@ -270,6 +252,24 @@ export default function Automations() {
 				headerName: __( 'Date Modified', 'rest-api-firewall' ),
 				width: 150,
 				renderCell: ( params ) => params.value || '-',
+			},
+			{
+				field: '_actions',
+				headerName: '',
+				width: 80,
+				sortable: false,
+				filterable: false,
+				renderCell: ( params ) => (
+					<IconButton
+						size="small"
+						color="default"
+						onClick={ () =>
+							handleDeleteOne( params.row.id, params.row.title )
+						}
+					>
+						<DeleteOutlineIcon fontSize="small" />
+					</IconButton>
+				),
 			},
 			
 		],
