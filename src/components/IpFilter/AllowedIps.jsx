@@ -14,7 +14,7 @@ import Typography from '@mui/material/Typography';
 import AddIcon from '@mui/icons-material/Add';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 
-import { isValidIpOrCidr } from '../../../utils/sanitizeIp';
+import { isValidIpOrCidr } from '../../utils/sanitizeIp';
 
 /**
  * Controlled repeater for allowed IP addresses / CIDR ranges.

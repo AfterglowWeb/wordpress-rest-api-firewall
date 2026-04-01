@@ -231,7 +231,7 @@ class CollectionOrderController {
 		$query = new \WP_Query(
 			array(
 				'post_type'      => $post_type,
-				'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future' ),
+				'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future', 'inherit' ),
 				'posts_per_page' => -1,
 				'fields'         => 'ids',
 				'no_found_rows'  => true,
@@ -257,7 +257,7 @@ class CollectionOrderController {
 		$query = new \WP_Query(
 			array(
 				'post_type'      => $post_type,
-				'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future' ),
+				'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future', 'inherit' ),
 				'posts_per_page' => count( $ids ),
 				'post__in'       => $ids,
 				'orderby'        => 'post__in',
@@ -335,7 +335,7 @@ class CollectionOrderController {
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		if ( ! $object_key ) {
-			$object_key = $post_type ?: $taxonomy;
+			$object_key = $post_type ? $post_type : $taxonomy;
 		}
 
 		if ( ! $object_kind ) {
@@ -395,7 +395,7 @@ class CollectionOrderController {
 		$count_query   = new \WP_Query(
 			array(
 				'post_type'      => $post_type,
-				'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future' ),
+				'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future', 'inherit' ),
 				'posts_per_page' => 1,
 				'no_found_rows'  => false,
 				'fields'         => 'ids',
@@ -485,7 +485,7 @@ class CollectionOrderController {
 			$query       = new \WP_Query(
 				array(
 					'post_type'      => $post_type,
-					'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future' ),
+					'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future', 'inherit' ),
 					'posts_per_page' => count( $ordered_slice ),
 					'post__in'       => $ordered_slice,
 					'orderby'        => 'post__in',
@@ -509,7 +509,7 @@ class CollectionOrderController {
 			$query            = new \WP_Query(
 				array(
 					'post_type'      => $post_type,
-					'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future' ),
+					'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future', 'inherit' ),
 					'posts_per_page' => $unordered_needed,
 					'offset'         => $unordered_offset,
 					'post__not_in'   => $saved_order,
@@ -573,7 +573,7 @@ class CollectionOrderController {
 		$query = new \WP_Query(
 			array(
 				'post_type'      => $post_type,
-				'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future' ),
+				'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future', 'inherit' ),
 				'posts_per_page' => count( $saved_order ),
 				'post__in'       => $saved_order,
 				'orderby'        => 'post__in',

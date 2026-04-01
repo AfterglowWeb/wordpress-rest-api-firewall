@@ -18,7 +18,7 @@ import formatDate from '../../utils/formatDate';
 import { countAllCustomNodes } from '../Firewall/Routes/routesPolicyUtils';
 import LoadingMessage from '../LoadingMessage';
 import useRegisterToolbar from '../../hooks/useRegisterToolbar';
-import ConfirmWithInputDialog from '../ConfirmWithInputDialog';
+import ConfirmWithInputDialog from '../shared/ConfirmWithInputDialog';
 import ApplicationEditorSettings from './ApplicationEditorSettings';
 import ApplicationEditorModules from './ApplicationEditorModules';
 

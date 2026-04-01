@@ -18,7 +18,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import ApplicationEditorPanel from './ApplicationEditorPanel';
 import useProActions from '../../hooks/useProActions';
-import ConfirmWithInputDialog from '../ConfirmWithInputDialog';
+import ConfirmWithInputDialog from '../shared/ConfirmWithInputDialog';
 
 export default function Applications() {
 	const { adminData } = useAdminData();

@@ -16,7 +16,7 @@ import CardContent from '@mui/material/CardContent';
 import CircularProgress from '@mui/material/CircularProgress';
 import Chip from '@mui/material/Chip';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import CopyButton from '../CopyButton';
+import CopyButton from '../shared/CopyButton';
 
 export default function WebhookTest( { hasSecret } ) {
 	const { adminData } = useAdminData();

@@ -22,7 +22,7 @@ import Typography from '@mui/material/Typography';
 import UndoIcon from '@mui/icons-material/Undo';
 import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
 
-import ObjectTypeSelect from '../ObjectTypeSelect';
+import ObjectTypeSelect from '../shared/ObjectTypeSelect';
 import Tooltip from '@mui/material/Tooltip';
 
 import { PostOrderList, PageDropZone } from './SortCollectionsUtils';
@@ -223,6 +223,7 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 			if ( isPro && selectedApplicationId ) {
 				params.application_id = selectedApplicationId;
 			}
+			console.log( '[Collections] fetchAllIds params:', Object.fromEntries( new URLSearchParams( params ) ) );
 			const res = await fetch( adminData.ajaxurl, { method: 'POST', body: new URLSearchParams( params ) } );
 			const json = await res.json();
 			if ( json.success ) {
@@ -307,6 +308,7 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 		if ( byTypeRef.current[ selectedType ]?.loaded && ! contextChanged ) {
 			return;
 		}
+		console.log( '[Collections] fetchAllIds called with:', { selectedType, objectKind, contextKey } );
 		fetchAllIds( selectedType, objectKind );
 	}, [ selectedType, objectKind, contextKey ] ); // eslint-disable-line react-hooks/exhaustive-deps
 

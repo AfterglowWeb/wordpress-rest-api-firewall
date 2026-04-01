@@ -1,5 +1,5 @@
 import { useAdminData } from '../../contexts/AdminDataContext';
-import MultipleSelect from '../MultipleSelect';
+import MultipleSelect from '../shared/MultipleSelect';
 
 import Stack from '@mui/material/Stack';
 

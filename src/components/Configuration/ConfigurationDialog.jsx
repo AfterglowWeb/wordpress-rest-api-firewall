@@ -1,7 +1,7 @@
 import { useState, useCallback } from '@wordpress/element';
-import { useAdminData } from '../contexts/AdminDataContext';
-import { useLicense } from '../contexts/LicenseContext';
-import { useDialog, DIALOG_TYPES } from '../contexts/DialogContext';
+import { useAdminData } from '../../contexts/AdminDataContext';
+import { useLicense } from '../../contexts/LicenseContext';
+import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
 
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';

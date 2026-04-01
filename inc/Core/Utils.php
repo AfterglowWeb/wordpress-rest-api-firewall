@@ -72,7 +72,7 @@ class Utils {
 				'label'     => property_exists( $post_type->labels, 'singular_name' )
 					? sanitize_text_field( $post_type->labels->singular_name )
 					: sanitize_key( $post_type->name ),
-				'public'    => $post_type->public,
+				'public'    => $post_type->public || $post_type->publicly_queryable,
 				'_builtin'  => $post_type->_builtin,
 				'type'      => 'post_type',
 				'rest_base' => sanitize_key( property_exists( $post_type, 'rest_base' ) ? $post_type->rest_base : $post_type->name ),

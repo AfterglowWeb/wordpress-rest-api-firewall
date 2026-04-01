@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from '@wordpress/element';
-import { useAdminData } from '../../../contexts/AdminDataContext';
-import { useLicense } from '../../../contexts/LicenseContext';
-import { useApplication } from '../../../contexts/ApplicationContext';
-import { useDialog, DIALOG_TYPES } from '../../../contexts/DialogContext';
-import { isValidOrigin } from '../../../utils/sanitizeHost';
+import { useAdminData } from '../../contexts/AdminDataContext';
+import { useLicense } from '../../contexts/LicenseContext';
+import { useApplication } from '../../contexts/ApplicationContext';
+import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
+import { isValidOrigin } from '../../utils/sanitizeHost';
 
 /**
  * Allowed Origins component. Supports two modes:

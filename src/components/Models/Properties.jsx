@@ -25,8 +25,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import TuneIcon from '@mui/icons-material/Tune';
 import LockIcon from '@mui/icons-material/Lock';
 
-import CopyButton from '../CopyButton';
-import ObjectTypeSelect from '../ObjectTypeSelect';
+import CopyButton from '../shared/CopyButton';
+import ObjectTypeSelect from '../shared/ObjectTypeSelect';
 import GlobalProperties from './GlobalProperties';
 
 const TYPE_COLORS = {

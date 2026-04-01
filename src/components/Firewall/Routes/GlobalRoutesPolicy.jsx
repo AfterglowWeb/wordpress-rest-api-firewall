@@ -9,7 +9,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 
-import ObjectTypeSelect from '../../ObjectTypeSelect';
+import ObjectTypeSelect from '../../shared/ObjectTypeSelect';
 import DisabledRouteResponse from './DisabledRouteResponse';
 
 const HTTP_METHODS = [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ];
