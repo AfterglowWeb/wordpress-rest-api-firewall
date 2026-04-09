@@ -277,10 +277,11 @@ class CollectionOrderController {
 						$taxonomies[ $tax_slug ] = $terms;
 					}
 				}
+				$label = get_the_title( $post );
 				return array(
 					'id'            => $post->ID,
 					'kind'          => 'post_type',
-					'label'         => get_the_title( $post ) ?: '#' . $post->ID,
+					'label'         => '' !== $label ? $label : '#' . $post->ID,
 					'status'        => $post->post_status,
 					'author_name'   => $author ? $author->display_name : '',
 					'date_created'  => get_the_date( '', $post ),
@@ -310,7 +311,7 @@ class CollectionOrderController {
 				return array(
 					'id'       => $term->term_id,
 					'kind'     => 'taxonomy',
-					'label'    => $term->name ?: '#' . $term->term_id,
+					'label'    => '' !== $term->name ? $term->name : '#' . $term->term_id,
 					'slug'     => $term->slug,
 					'count'    => (int) $term->count,
 					'position' => null,
@@ -422,10 +423,11 @@ class CollectionOrderController {
 						}
 					}
 
+					$label = get_the_title( $post );
 					return array(
 						'id'            => $post->ID,
 						'kind'          => 'post_type',
-						'label'         => get_the_title( $post ) ?: '#' . $post->ID,
+						'label'         => '' !== $label ? $label : '#' . $post->ID,
 						'status'        => $post->post_status,
 						'author_name'   => $author ? $author->display_name : '',
 						'date_created'  => get_the_date( '', $post ),
@@ -462,7 +464,7 @@ class CollectionOrderController {
 					return array(
 						'id'       => $term->term_id,
 						'kind'     => 'taxonomy',
-						'label'    => $term->name ?: '#' . $term->term_id,
+						'label'    => '' !== $term->name ? $term->name : '#' . $term->term_id,
 						'slug'     => $term->slug,
 						'count'    => (int) $term->count,
 						'position' => false !== $pos ? (int) $pos + 1 : null,
@@ -583,9 +585,10 @@ class CollectionOrderController {
 
 		return array_map(
 			static function ( $post ) {
+				$label = get_the_title( $post );
 				return array(
 					'id'    => $post->ID,
-					'label' => get_the_title( $post ) ?: '#' . $post->ID,
+					'label' => '' !== $label ? $label : '#' . $post->ID,
 				);
 			},
 			$query->posts
@@ -614,7 +617,7 @@ class CollectionOrderController {
 			static function ( $term ) {
 				return array(
 					'id'    => $term->term_id,
-					'label' => $term->name ?: '#' . $term->term_id,
+					'label' => '' !== $term->name ? $term->name : '#' . $term->term_id,
 				);
 			},
 			$terms

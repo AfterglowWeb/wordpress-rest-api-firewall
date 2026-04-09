@@ -69,6 +69,7 @@ class Routes {
 
 		add_filter(
 			'rest_pre_dispatch',
+			// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
 			function ( $result, $_server, WP_REST_Request $_request ) {
 				$pending = Firewall::get_pending_pre_dispatch_error();
 				if ( $pending && ! is_wp_error( $result ) ) {
