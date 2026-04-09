@@ -195,8 +195,9 @@ class ModelsPropertiesRepository {
 			if ( is_wp_error( $response ) || 200 !== $response->get_status() ) {
 				continue;
 			}
-			$raw  = rest_get_server()->response_to_data( $response, true );
-			$data = json_decode( wp_json_encode( $raw ), true ) ?: array();
+			$raw     = rest_get_server()->response_to_data( $response, true );
+			$decoded = json_decode( wp_json_encode( $raw ), true );
+			$data    = null !== $decoded ? $decoded : array();
 			if ( ! is_array( $data ) ) {
 				continue;
 			}
@@ -272,8 +273,9 @@ class ModelsPropertiesRepository {
 			return array();
 		}
 
-		$raw = rest_get_server()->response_to_data( $response, true );
-		return json_decode( wp_json_encode( $raw ), true ) ?: array();
+		$raw     = rest_get_server()->response_to_data( $response, true );
+		$decoded = json_decode( wp_json_encode( $raw ), true );
+		return null !== $decoded ? $decoded : array();
 	}
 
 	private static function settings_route_properties(): array {

@@ -313,7 +313,7 @@ class IpEntryRepository {
 				GROUP BY country_code, country_name
 				ORDER BY count DESC';
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 		$results = $wpdb->get_results( $wpdb->prepare( $sql, $list_type ), ARRAY_A );
 		return is_array( $results ) ? $results : array();
 	}
