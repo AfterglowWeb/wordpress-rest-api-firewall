@@ -3,11 +3,6 @@ namespace cmk\RestApiFirewall\Admin;
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Core\Permissions;
-
-/**
- * Handles admin notices for Pro→Free tier fallback when Pro plugin deactivates.
- */
 class ProFallbackNotice {
 
 	protected static $instance = null;
@@ -26,9 +21,6 @@ class ProFallbackNotice {
 		add_action( 'wp_ajax_rest_api_firewall_dismiss_pro_fallback', array( $this, 'ajax_dismiss_fallback' ) );
 	}
 
-	/**
-	 * Show admin notice if Pro→Free fallback is needed.
-	 */
 	public function show_fallback_notice(): void {
 		if ( ! $this->should_show_notice() ) {
 			return;
@@ -69,7 +61,6 @@ class ProFallbackNotice {
 			const $dismissBtn = $('#raf-dismiss-fallback-btn');
 			const $result = $('#raf-fallback-result');
 
-			// Load applications
 			$.post(ajaxurl, {
 				action: 'rest_api_firewall_get_pro_applications',
 				nonce: '<?php echo esc_js( wp_create_nonce( 'rest_api_firewall_pro_fallback' ) ); ?>'
@@ -84,12 +75,10 @@ class ProFallbackNotice {
 				}
 			});
 
-			// Enable export button when application selected
 			$select.on('change', function() {
 				$exportBtn.prop('disabled', !$(this).val());
 			});
 
-			// Handle export
 			$exportBtn.on('click', function() {
 				const appId = $select.val();
 				if (!appId) return;
@@ -117,7 +106,6 @@ class ProFallbackNotice {
 				});
 			});
 
-			// Handle dismiss
 			$dismissBtn.on('click', function() {
 				$.post(ajaxurl, {
 					action: 'rest_api_firewall_dismiss_pro_fallback',
@@ -127,7 +115,6 @@ class ProFallbackNotice {
 				});
 			});
 
-			// Handle dismiss button (X)
 			$notice.on('click', '.notice-dismiss', function() {
 				$.post(ajaxurl, {
 					action: 'rest_api_firewall_dismiss_pro_fallback',
@@ -139,27 +126,20 @@ class ProFallbackNotice {
 		<?php
 	}
 
-	/**
-	 * Check if notice should be shown.
-	 */
 	private function should_show_notice(): bool {
-		// Only show to administrators
 		if ( ! current_user_can( 'rest_api_firewall_edit_options' ) ) {
 			return false;
 		}
 
-		// Only show on admin pages
 		if ( ! is_admin() ) {
 			return false;
 		}
 
-		// Check if Pro fallback transient exists
 		$transient = get_transient( 'rest_api_firewall_pro_fallback_prompt' );
 		if ( ! $transient ) {
 			return false;
 		}
 
-		// Don't show if Pro plugin is active
 		if ( class_exists( '\cmk\RestApiFirewallPro\Core\License' ) ) {
 			return false;
 		}
@@ -167,9 +147,7 @@ class ProFallbackNotice {
 		return true;
 	}
 
-	/**
-	 * AJAX: Get available Pro applications for export.
-	 */
+
 	public function ajax_get_applications(): void {
 		check_ajax_referer( 'rest_api_firewall_pro_fallback', 'nonce' );
 
@@ -177,7 +155,6 @@ class ProFallbackNotice {
 			wp_send_json_error( array( 'message' => esc_html__( 'Unauthorized', 'rest-api-firewall' ) ), 403 );
 		}
 
-		// Get applications from Pro plugin if available
 		$applications = array();
 		if ( class_exists( '\cmk\RestApiFirewallPro\Migration\ProToFreeFallbackService' ) ) {
 			$applications = \cmk\RestApiFirewallPro\Migration\ProToFreeFallbackService::get_available_applications();
@@ -186,9 +163,6 @@ class ProFallbackNotice {
 		wp_send_json_success( array( 'applications' => $applications ) );
 	}
 
-	/**
-	 * AJAX: Export Pro application to free tier.
-	 */
 	public function ajax_export_to_free(): void {
 		check_ajax_referer( 'rest_api_firewall_pro_fallback', 'nonce' );
 
@@ -196,14 +170,12 @@ class ProFallbackNotice {
 			wp_send_json_error( array( 'message' => esc_html__( 'Unauthorized', 'rest-api-firewall' ) ), 403 );
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above
 		$application_id = isset( $_POST['application_id'] ) ? sanitize_text_field( wp_unslash( $_POST['application_id'] ) ) : '';
 
 		if ( empty( $application_id ) ) {
 			wp_send_json_error( array( 'message' => esc_html__( 'Application ID is required.', 'rest-api-firewall' ) ), 400 );
 		}
 
-		// Call Pro service if available
 		if ( class_exists( '\cmk\RestApiFirewallPro\Migration\ProToFreeFallbackService' ) ) {
 			$result = \cmk\RestApiFirewallPro\Migration\ProToFreeFallbackService::export_to_free_tier( $application_id );
 
@@ -217,9 +189,6 @@ class ProFallbackNotice {
 		}
 	}
 
-	/**
-	 * AJAX: Dismiss the fallback notice.
-	 */
 	public function ajax_dismiss_fallback(): void {
 		check_ajax_referer( 'rest_api_firewall_pro_fallback', 'nonce' );
 
@@ -227,11 +196,9 @@ class ProFallbackNotice {
 			wp_send_json_error( array( 'message' => esc_html__( 'Unauthorized', 'rest-api-firewall' ) ), 403 );
 		}
 
-		// Call Pro service if available
 		if ( class_exists( '\cmk\RestApiFirewallPro\Migration\ProToFreeFallbackService' ) ) {
 			\cmk\RestApiFirewallPro\Migration\ProToFreeFallbackService::dismiss_prompt();
 		} else {
-			// Fallback: delete transient directly
 			delete_transient( 'rest_api_firewall_pro_fallback_prompt' );
 		}
 

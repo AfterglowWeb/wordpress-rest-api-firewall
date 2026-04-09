@@ -246,7 +246,7 @@ class ModelsPropertiesRepository {
 				return self::get_attachment_sample_data( $rest_base );
 			}
 
-			$posts     = get_posts(
+			$posts = get_posts(
 				array(
 					'post_type'      => $object_type,
 					'posts_per_page' => 1,
@@ -661,8 +661,8 @@ class ModelsPropertiesRepository {
 		return array(
 			array(
 				'key'        => 'embed',
-				'tooltip'    => esc_html__('Resolve Object', 'rest-api-firewall'),
-				'label'      => esc_html__('Resolve Object', 'rest-api-firewall'),
+				'tooltip'    => esc_html__( 'Resolve Object', 'rest-api-firewall' ),
+				'label'      => esc_html__( 'Resolve Object', 'rest-api-firewall' ),
 				'properties' => array_merge(
 					array(
 						'featured_media',
@@ -673,14 +673,14 @@ class ModelsPropertiesRepository {
 			),
 			array(
 				'key'        => 'rendered',
-				'tooltip'    => esc_html__('Flatten Rendered', 'rest-api-firewall'),
-				'label'      => esc_html__('Flatten Rendered', 'rest-api-firewall'),
+				'tooltip'    => esc_html__( 'Flatten Rendered', 'rest-api-firewall' ),
+				'label'      => esc_html__( 'Flatten Rendered', 'rest-api-firewall' ),
 				'properties' => array(),
 			),
 			array(
 				'key'        => 'date_format',
-				'tooltip'    => esc_html__('Date Format', 'rest-api-firewall'),
-				'label'      => esc_html__('DateFormat', 'rest-api-firewall'),
+				'tooltip'    => esc_html__( 'Date Format', 'rest-api-firewall' ),
+				'label'      => esc_html__( 'DateFormat', 'rest-api-firewall' ),
 				'properties' => array(
 					'date',
 					'date_gmt',
@@ -691,8 +691,8 @@ class ModelsPropertiesRepository {
 			),
 			array(
 				'key'        => 'relative_url',
-				'tooltip'    => esc_html__('Relative URL', 'rest-api-firewall'),
-				'label'      => esc_html__('Relative URL', 'rest-api-firewall'),
+				'tooltip'    => esc_html__( 'Relative URL', 'rest-api-firewall' ),
+				'label'      => esc_html__( 'Relative URL', 'rest-api-firewall' ),
 				'properties' => array(
 					'file',
 					'link',
@@ -702,8 +702,8 @@ class ModelsPropertiesRepository {
 			),
 			array(
 				'key'        => 'remove_uploads_path',
-				'tooltip'    => esc_html__('Remove Uploads Path', 'rest-api-firewall'),
-				'label'      => esc_html__('Remove Uploads Path', 'rest-api-firewall'),
+				'tooltip'    => esc_html__( 'Remove Uploads Path', 'rest-api-firewall' ),
+				'label'      => esc_html__( 'Remove Uploads Path', 'rest-api-firewall' ),
 				'properties' => array(
 					'file',
 					'source_url',
@@ -714,8 +714,8 @@ class ModelsPropertiesRepository {
 			array(
 				'key'        => 'search_replace',
 				'type'       => 'search_replace',
-				'tooltip'    => esc_html__('Search & Replace', 'rest-api-firewall'),
-				'label'      => esc_html__('Search & Replace', 'rest-api-firewall'),
+				'tooltip'    => esc_html__( 'Search & Replace', 'rest-api-firewall' ),
+				'label'      => esc_html__( 'Search & Replace', 'rest-api-firewall' ),
 				'properties' => array(
 					'title',
 					'content',
@@ -832,9 +832,18 @@ class ModelsPropertiesRepository {
 	}
 
 	private static function build_media_details_fallback_props(): array {
-		$empty_settings = array( 'disable' => false, 'filters' => array() );
-		$string_prop    = array( 'type' => 'string',  'settings' => $empty_settings );
-		$integer_prop   = array( 'type' => 'integer', 'settings' => $empty_settings );
+		$empty_settings = array(
+			'disable' => false,
+			'filters' => array(),
+		);
+		$string_prop    = array(
+			'type'     => 'string',
+			'settings' => $empty_settings,
+		);
+		$integer_prop   = array(
+			'type'     => 'integer',
+			'settings' => $empty_settings,
+		);
 
 		$size_properties = array(
 			'file'       => $string_prop,
@@ -865,7 +874,10 @@ class ModelsPropertiesRepository {
 				'settings'   => $empty_settings,
 				'properties' => $sizes_props,
 			),
-			'image_meta' => array( 'type' => 'object', 'settings' => $empty_settings ),
+			'image_meta' => array(
+				'type'     => 'object',
+				'settings' => $empty_settings,
+			),
 		);
 	}
 }

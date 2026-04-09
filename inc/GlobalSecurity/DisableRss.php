@@ -4,12 +4,6 @@ use cmk\RestApiFirewall\Core\CoreOptions;
 
 defined( 'ABSPATH' ) || exit;
 
-/**
- * List of hooks extracted from Plugin "Disable RSS, RDF, Atom Feeds"
- * Version 1.1 by Ataurr
- * https://wpmet.com/
- **/
-
 class DisableRss {
 	private static $instance = null;
 
