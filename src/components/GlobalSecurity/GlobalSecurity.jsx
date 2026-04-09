@@ -1,19 +1,41 @@
-import { useState, useCallback, useEffect } from '@wordpress/element';
+import { useState, useCallback, useEffect, useMemo } from '@wordpress/element';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormHelperText from '@mui/material/FormHelperText';
 import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
+import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 
 import { useAdminData } from '../../contexts/AdminDataContext';
+import { useApplication } from '../../contexts/ApplicationContext';
 import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
+import useSaveOptions from '../../hooks/useSaveOptions';
 import CopyButton from '../shared/CopyButton';
+
+// Keys tracked in this panel's local form state.
+const SECURITY_FIELDS = [
+	'theme_disable_xmlrpc',
+	'theme_disable_comments',
+	'theme_disable_pingbacks',
+	'theme_disable_rss',
+	'theme_disable_sitemap',
+	'theme_enforce_wpconfig_permissions',
+	'theme_secure_uploads_dir',
+	'theme_secure_http_headers',
+	'theme_compression_http_headers',
+	'theme_wp_http_headers',
+];
+
+function pickSecurityFields( source ) {
+	return Object.fromEntries( SECURITY_FIELDS.map( ( k ) => [ k, !! source?.[ k ] ] ) );
+}
 
 function FileActionSwitch( {
 	checked,
@@ -62,8 +84,6 @@ function FileActionSwitch( {
 	}, [ adminData, ajaxAction, __ ] );
 
 	const handleChange = ( e ) => {
-		onToggle( e );
-
 		if ( e.target.checked ) {
 			openDialog( {
 				type: DIALOG_TYPES.CONFIRM,
@@ -72,10 +92,12 @@ function FileActionSwitch( {
 				confirmLabel: __( 'Apply now', 'rest-api-firewall' ),
 				onConfirm: () => {
 					closeDialog();
+					onToggle( e );
 					runAction();
 				},
 			} );
 		} else {
+			onToggle( e );
 			setResult( null );
 		}
 	};
@@ -134,9 +156,41 @@ function FileActionSwitch( {
 	);
 }
 
-export default function GlobalSecurity( { form, setField } ) {
+export default function GlobalSecurity() {
 	const { __ } = wp.i18n || {};
 	const { adminData } = useAdminData();
+	const { setDirtyFlag } = useApplication();
+
+	const [ form, setFormState ] = useState( () => pickSecurityFields( adminData.admin_options ) );
+	const [ savedForm, setSavedForm ] = useState( () => pickSecurityFields( adminData.admin_options ) );
+
+	const isDirty = useMemo(
+		() => SECURITY_FIELDS.some( ( k ) => form[ k ] !== savedForm[ k ] ),
+		[ form, savedForm ]
+	);
+
+	useEffect( () => {
+		setDirtyFlag( { has: isDirty } );
+	}, [ isDirty, setDirtyFlag ] );
+
+	const setField = useCallback( ( e ) => {
+		const { name, checked } = e.target;
+		setFormState( ( prev ) => ( { ...prev, [ name ]: Boolean( checked ) } ) );
+	}, [] );
+
+	const { save, saving } = useSaveOptions();
+
+	const handleSave = useCallback( () => {
+		save(
+			Object.fromEntries( SECURITY_FIELDS.map( ( k ) => [ k, form[ k ] ] ) ),
+			{
+				skipConfirm: true,
+				successTitle: __( 'Global Security Saved', 'rest-api-firewall' ),
+				successMessage: __( 'Global security settings saved successfully.', 'rest-api-firewall' ),
+				onSuccess: () => setSavedForm( { ...form } ),
+			}
+		);
+	}, [ save, form, __ ] );
 
 	const [ fileStatus, setFileStatus ] = useState( null );
 
@@ -152,6 +206,18 @@ export default function GlobalSecurity( { form, setField } ) {
 	}, [ adminData ] );
 
 	return (
+		<Stack flexGrow={ 1 } overflow="auto">
+			<Toolbar variant="dense" disableGutters sx={ { px: 2, borderBottom: 1, borderColor: 'divider', gap: 1 } }>
+				<Box flexGrow={ 1 } />
+				<Button
+					size="small"
+					variant="contained"
+					disabled={ ! isDirty || saving }
+					onClick={ handleSave }
+				>
+					{ __( 'Save', 'rest-api-firewall' ) }
+				</Button>
+			</Toolbar>
 		<Stack p={ 4 } flexGrow={ 1 } spacing={ 3 }>
 
 			<Stack spacing={ 3 } maxWidth={ 600 }>
@@ -388,6 +454,7 @@ export default function GlobalSecurity( { form, setField } ) {
 
 			</Stack>
 
+		</Stack>
 		</Stack>
 	);
 }

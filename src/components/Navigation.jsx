@@ -1,6 +1,7 @@
 import { useState, useCallback } from '@wordpress/element';
 import { useLicense } from '../contexts/LicenseContext';
 import { useAdminData } from '../contexts/AdminDataContext';
+import { useApplication } from '../contexts/ApplicationContext';
 import useProActions from '../hooks/useProActions';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
@@ -41,16 +42,15 @@ import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import ShieldIcon from '@mui/icons-material/Shield';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import PendingOutlinedIcon from '@mui/icons-material/PendingOutlined';
 
 
 import { useNavigation } from '../contexts/NavigationContext';
 import { useEntryToolbarContext } from '../contexts/EntryToolbarContext';
 import AppIdentity from './AppIdentity';
-import ApplicationSelector, { listItemTextSx, listItemIconSx} from './ApplicationSelector';
+import ApplicationSelector, { listItemIconSx } from './ApplicationSelector';
 import Documentation from './Documentation/Documentation';
 import PanelBreadcrumb from './shared/PanelBreadcrumb';
-import ListItem from '@mui/material/ListItem';
 
 export const DRAWER_WIDTH = 220;
 export const APP_BAR_HEIGHT = 75;
@@ -72,12 +72,15 @@ export default function Navigation( {
 } ) {
 	const { hasValidLicense } = useLicense();
 	const { adminData, updateAdminData } = useAdminData();
+	const { applications } = useApplication();
 	const { save } = useProActions();
 	const { panel, navigateGuarded } = useNavigation();
 	const { toolbarConfig } = useEntryToolbarContext();
 	const { __ } = wp.i18n || {};
 	const theme = useTheme();
 	const isMobile = useMediaQuery( theme.breakpoints.down( 'md' ) );
+
+	const hasApplications = hasValidLicense && applications && applications.length > 0;
 
 	const [ mobileOpen, setMobileOpen ] = useState( false );
 
@@ -154,74 +157,56 @@ export default function Navigation( {
 			disabled: ! hasValidLicense,
 			hidden: true,
 		},
-		{ type: 'app-selector' },
+		{ type: 'app-selector', hideWhenNoApps: false },
+
+		// Metadata-only entries for breadcrumb resolution (not rendered in drawer).
+		// These panels are accessed via ApplicationSelector in pro tier.
+		{ key: 'per-route-settings', label: __( 'Routes',       'rest-api-firewall' ), breadcrumbPrefix: 'REST API Firewall', icon: AccountTreeOutlinedIcon,  hidden: true },
+		{ key: 'user-rate-limiting', label: __( 'Users',        'rest-api-firewall' ), breadcrumbPrefix: 'REST API Firewall', icon: SmartToyOutlinedIcon,    hidden: true },
+		{ key: 'collections',        label: __( 'Collections',  'rest-api-firewall' ), breadcrumbPrefix: 'REST API Output',   icon: ApiIcon,                  hidden: true },
+		{ key: 'models-properties',  label: __( 'Properties',   'rest-api-firewall' ), breadcrumbPrefix: 'REST API Output',   icon: RuleOutlinedIcon,         hidden: true },
+		{ key: 'automations',        label: __( 'Automations',  'rest-api-firewall' ), breadcrumbPrefix: 'Integrations',      icon: AutoFixHighOutlinedIcon,  hidden: true },
+		{ key: 'webhook',            label: __( 'Webhooks',     'rest-api-firewall' ), breadcrumbPrefix: 'Integrations',      icon: WebhookIcon,              hidden: true },
+		{ key: 'emails',             label: __( 'Emails',       'rest-api-firewall' ), breadcrumbPrefix: 'Integrations',      icon: EmailOutlined,            hidden: true },
+
+		{ type: 'section', label: '' },
+
+		// Global settings — visible in free tier and pro when no applications exist.
 		{
-			type: 'section',
-			label: '',
-		},
-		{
-			key: 'user-rate-limiting',
-			label: hasValidLicense
-				? __( 'Users', 'rest-api-firewall' )
-				: __( 'User', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'REST API Firewall',
-			icon: SmartToyOutlinedIcon,
-			pl:5,
+			key: 'firewall_auth_rate',
+			label: __( 'Auth & Rate Limiting', 'rest-api-firewall' ),
+			breadcrumbPrefix: 'Global Settings',
+			icon: ShieldIcon,
+			hidden: hasValidLicense && hasApplications,
 		},
 		{
 			key: 'per-route-settings',
 			label: __( 'Routes', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'REST API Firewall',
+			breadcrumbPrefix: 'Global Settings',
 			icon: AccountTreeOutlinedIcon,
-			pl:5,
+			hidden: hasValidLicense, // free tier only
+		},
+		{
+			key: 'webhook',
+			label: __( 'Webhook', 'rest-api-firewall' ),
+			breadcrumbPrefix: 'Global Settings',
+			icon: WebhookIcon,
+			hidden: hasValidLicense, // free tier only
 		},
 		{
 			key: 'collections',
 			label: __( 'Collections', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'REST API Output',
+			breadcrumbPrefix: 'Global Settings',
 			icon: ApiIcon,
-			pl:5,
+			hidden: hasValidLicense, // free tier only
 		},
-		{
-			key: 'models-properties',
-			label: __( 'Properties', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'REST API Output',
-			icon: RuleOutlinedIcon,
-			pl:5,
-		},
-		{ type: 'section', label: ''},
-		{
-			key: 'automations',
-			label: __( 'Automations', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'Integrations',
-			icon: AutoFixHighOutlinedIcon,
-			disabled: ! hasValidLicense,
-			pl:5,
-		},
-		{
-			key: 'webhook',
-			label: hasValidLicense
-				? __( 'Webhooks', 'rest-api-firewall' )
-				: __( 'Webhook', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'Integrations',
-			icon: WebhookIcon,
-			pl:5,
-		},
-		{
-			key: 'emails',
-			label: __( 'Emails', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'Integrations',
-			icon: EmailOutlined,
-			disabled: ! hasValidLicense,
-			pl:5,
-		},
+		
 		{
 			key: 'logs',
 			label: __( 'Logs', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'All Applications',
 			icon: AssessmentOutlinedIcon,
 			disabled: ! hasValidLicense,
-			pl:5,
 		},
 
 		{ type: 'section', label: __( '', 'rest-api-firewall' ) },
@@ -309,6 +294,7 @@ export default function Navigation( {
 
 				<List component="nav" disablePadding sx={{pb:4}}>
 					{ menuItems.map( ( item, index ) => {
+						if ( item.hidden ) return null;
 						if ( item.type === 'section' ) {
 							return (
 								<Stack
@@ -341,46 +327,30 @@ export default function Navigation( {
 							);
 						}
 
-					if ( item.hidden ) return null;
+				if ( item.type === 'app-selector' ) {
+					return <ApplicationSelector key="app-selector" />;
+				}
 
-					if ( item.type === 'app-selector' ) {
-						if ( ! hasValidLicense ) return (
-						<Tooltip
-								disableInteractive
-								followCursor
-								title={'License required'}
-							>
-	
-							<ListItem sx={ { px: 3, mt: 1, userSelect: 'none' } }>
-								<ListItemIcon sx={ listItemIconSx }>
-									<AppsOutlinedIcon color="disabled" fontSize="small" />
-								</ListItemIcon>
-								<ListItemText
-									sx={{ ...listItemTextSx, '& .MuiListItemText-primary': { color: 'text.disabled' } }}
-									primary={ __( 'Applications', 'rest-api-firewall' ) }
-								/>
-								<ExpandMoreIcon fontSize="small" sx={ { color: 'text.disabled' } } />
-							</ListItem>
-				
-						</Tooltip>
-						);
-						return <ApplicationSelector key="app-selector" />;
+					const Icon = item.icon;
+					
+					// Determine tooltip message based on disabled state reason
+					let tooltipTitle = '';
+					if ( item.disabled ) {
+						if ( hasValidLicense && ! hasApplications ) {
+							// Pro is active but no applications - guide user to create one
+							tooltipTitle = __( 'Create an application first', 'rest-api-firewall' );
+						} else if ( ! hasValidLicense ) {
+							// No Pro license - guide user to upgrade
+							tooltipTitle = __( 'Upgrade to Pro', 'rest-api-firewall' );
+						}
 					}
 
-						const Icon = item.icon;
 						return (
 							<Tooltip
 								key={ item.key }
 								disableInteractive
 								followCursor
-								title={
-									item.disabled
-										? __(
-												'License required',
-												'rest-api-firewall'
-										  )
-										: ''
-								}
+								title={ tooltipTitle }
 							>
 								<span>
 									<ListItemButton
@@ -406,20 +376,34 @@ export default function Navigation( {
 													minWidth: 32,
 												} }
 											>
-												<Badge
-													color="error"
-													variant="dot"
-													invisible={ ! item.badge }
-												>
-													<Icon color={ panel === item.key ? 'primary' : ''} fontSize="small" />
-												</Badge>
+							{ item.pendingBadge ? (
+								<Badge
+									badgeContent={ <PendingOutlinedIcon sx={ { fontSize: 10 } } /> }
+									color="default"
+									sx={ {
+										'& .MuiBadge-badge': {
+											backgroundColor: 'grey.400',
+											color: 'white',
+											padding: '2px',
+										},
+									} }
+								>
+									<Icon color={ panel === item.key ? 'primary' : ''} fontSize="small" />
+								</Badge>
+							) : (
+								<Badge
+									color="error"
+									variant="dot"
+									invisible={ ! item.badge }
+								>
+									<Icon color={ panel === item.key ? 'primary' : ''} fontSize="small" />
+								</Badge>
+							) }
 											</ListItemIcon>
 										) }
-
 										<ListItemText
 											sx={ {
 												'& .MuiListItemText-primary': {
-													fontSize: '0.9rem',
 													lineHeight: 'normal',
 													color: panel === item.key ? 'primary.main' : 'text.primary'
 												},

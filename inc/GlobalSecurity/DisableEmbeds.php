@@ -1,12 +1,5 @@
 <?php namespace cmk\RestApiFirewall\GlobalSecurity;
 
-/**
- * Extracted from Plugin "Disable Embeds" version 1.5.0 by Pascal Birchler
- * https://pascalbirchler.com
- *
- * @package disable-embeds
- */
-
 use cmk\RestApiFirewall\Core\Permissions;
 use cmk\RestApiFirewall\Core\CoreOptions;
 

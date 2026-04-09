@@ -41,7 +41,7 @@ export default function ApplicationEditorPanel( { application, onBack } ) {
 
 	const { __ } = wp.i18n || {};
 
-	const { setDirtyFlag } = useApplication();
+	const { setDirtyFlag, selectedApplicationId, setSelectedApplicationId } = useApplication();
 	const { save, remove, saving } = useProActions();
 
 	const isNew = ! application.id;
@@ -65,7 +65,7 @@ export default function ApplicationEditorPanel( { application, onBack } ) {
 
 	// ── Entry fields ──────────────────────────────────────────────────────────
 	const [ title, setTitle ] = useState( application.title || '' );
-	const [ enabled, setEnabled ] = useState( application.enabled ?? true );
+	const [ enabled, setEnabled ] = useState( application.enabled ?? false );
 	const [ description, setDescription ] = useState( '' );
 	const [ author, setAuthor ] = useState( '' );
 	const [ dateCreated, setDateCreated ] = useState( '' );
@@ -326,7 +326,14 @@ export default function ApplicationEditorPanel( { application, onBack } ) {
 				skipConfirm: true,
 				successTitle:   __( 'Application Deleted', 'rest-api-firewall' ),
 				successMessage: __( 'The application has been removed.', 'rest-api-firewall' ),
-				onSuccess: () => { clearDirty(); onBack(); },
+				onSuccess: () => {
+					clearDirty();
+					// Clear selection if deleting the currently selected application
+					if ( application.id === selectedApplicationId ) {
+						setSelectedApplicationId( '' );
+					}
+					onBack();
+				},
 			}
 		);
 	};

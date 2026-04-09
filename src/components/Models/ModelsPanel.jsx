@@ -1,5 +1,7 @@
 import { useState } from '@wordpress/element';
 import { useNavigation } from '../../contexts/NavigationContext';
+import { useApplication } from '../../contexts/ApplicationContext';
+import { useLicense } from '../../contexts/LicenseContext';
 import useSettingsForm from '../../hooks/useSettingsForm';
 import useSaveOptions from '../../hooks/useSaveOptions';
 import { useAdminData } from '../../contexts/AdminDataContext';
@@ -18,6 +20,8 @@ import Models from './Models';
 export default function ModelsPanel() {
 	const { adminData } = useAdminData();
 	const { subKey, navigate } = useNavigation();
+	const { hasValidLicense } = useLicense();
+	const { applications } = useApplication();
 	const { __ } = wp.i18n || {};
 
 	const { form, setField, pickGroup } = useSettingsForm( { adminData } );

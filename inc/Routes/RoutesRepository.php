@@ -23,8 +23,6 @@ class RoutesRepository {
 			return $cached;
 		}
 
-		do_action( 'rest_api_init' );
-
 		$server = rest_get_server();
 		$routes = $server->get_routes();
 
