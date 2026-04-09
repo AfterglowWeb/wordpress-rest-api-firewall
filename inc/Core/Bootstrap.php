@@ -7,6 +7,7 @@ use cmk\RestApiFirewall\Core\CoreOptions;
 use cmk\RestApiFirewall\Core\CoreOptionsService;
 use cmk\RestApiFirewall\Admin\AdminPage;
 use cmk\RestApiFirewall\Admin\Documentation;
+use cmk\RestApiFirewall\Admin\ProFallbackNotice;
 use cmk\RestApiFirewall\Routes\Routes;
 use cmk\RestApiFirewall\Firewall\GlobalIpBlackList;
 use cmk\RestApiFirewall\Firewall\IpBlackList;
@@ -64,6 +65,7 @@ final class Bootstrap {
 			Documentation::get_instance();
 			TestPolicy::get_instance();
 			DeployTheme::get_instance();
+			ProFallbackNotice::get_instance();
 		}
 	}
 

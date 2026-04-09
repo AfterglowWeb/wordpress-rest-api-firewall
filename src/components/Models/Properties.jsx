@@ -9,7 +9,6 @@ import Switch from '@mui/material/Switch';
 import Button from '@mui/material/Button';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
-import Tooltip from '@mui/material/Tooltip';
 import Chip from '@mui/material/Chip';
 import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
@@ -23,7 +22,6 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import TuneIcon from '@mui/icons-material/Tune';
-import LockIcon from '@mui/icons-material/Lock';
 
 import CopyButton from '../shared/CopyButton';
 import ObjectTypeSelect from '../shared/ObjectTypeSelect';

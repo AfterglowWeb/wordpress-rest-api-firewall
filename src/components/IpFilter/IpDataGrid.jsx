@@ -21,7 +21,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import * as Flags from 'country-flag-icons/react/3x2';
 
 import { isValidIpOrCidr } from '../../utils/sanitizeIp';
-import AllowedOrigins from './AllowedOrigins';
+
 import ReleaseTime from './ReleaseTime';
 
 export default function IpDataGrid( { listType = 'blacklist' } ) {
@@ -443,14 +443,12 @@ export default function IpDataGrid( { listType = 'blacklist' } ) {
 					</Button>
 				) }
 
-				{ listType === 'blacklist' ? (
+				{ listType === 'blacklist' && (
 					<ReleaseTime
 						listType={ listType }
 						rowSelectionModel={ rowSelectionModel }
 						onExpirySaved={ fetchEntries }
 					/>
-				) : (
-					<AllowedOrigins />
 				) }
 
 				<IconButton onClick={ fetchEntries } disabled={ loading }>

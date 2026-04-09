@@ -13,19 +13,24 @@ import Chip from '@mui/material/Chip';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormHelperText from '@mui/material/FormHelperText';
+import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import TablePagination from '@mui/material/TablePagination';
 import TextField from '@mui/material/TextField';
+import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 
 import UndoIcon from '@mui/icons-material/Undo';
 import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 
+import { DataGrid } from '@mui/x-data-grid';
 import ObjectTypeSelect from '../shared/ObjectTypeSelect';
 import Tooltip from '@mui/material/Tooltip';
 
 import { PostOrderList, PageDropZone } from './SortCollectionsUtils';
+import CollectionEditor from './CollectionEditor';
 
 const initTypeEntry = ( ids ) => ( {
 	masterOrder: ids,
@@ -126,7 +131,7 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 	const { __, sprintf } = wp.i18n || {};
 	const { adminData } = useAdminData();
 	const { hasValidLicense, proNonce } = useLicense();
-	const { selectedApplicationId } = useApplication();
+	const { selectedApplicationId, applications } = useApplication();
 	const nonce = proNonce || adminData.nonce;
 	const objectTypes = adminData?.post_types || postTypes || [];
 	const publicObjectTypes = objectTypes.filter( ( obj ) => obj.public );
@@ -223,7 +228,6 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 			if ( isPro && selectedApplicationId ) {
 				params.application_id = selectedApplicationId;
 			}
-			console.log( '[Collections] fetchAllIds params:', Object.fromEntries( new URLSearchParams( params ) ) );
 			const res = await fetch( adminData.ajaxurl, { method: 'POST', body: new URLSearchParams( params ) } );
 			const json = await res.json();
 			if ( json.success ) {
@@ -308,7 +312,6 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 		if ( byTypeRef.current[ selectedType ]?.loaded && ! contextChanged ) {
 			return;
 		}
-		console.log( '[Collections] fetchAllIds called with:', { selectedType, objectKind, contextKey } );
 		fetchAllIds( selectedType, objectKind );
 	}, [ selectedType, objectKind, contextKey ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -464,6 +467,110 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 		}
 	};
 
+	// ── Pro tier: DataGrid list + CollectionEditor (per-type) ──────────────────
+	const [ editing, setEditing ] = useState( null );
+
+	if ( isPro ) {
+		// When editing a type, render the CollectionEditor (replaces the list).
+		if ( editing !== null ) {
+			return (
+				<CollectionEditor
+					collectionType={ editing }
+					form={ form }
+					setField={ setField }
+					syncSavedField={ syncSavedField }
+					onBack={ () => setEditing( null ) }
+				/>
+			);
+		}
+
+		// Build DataGrid rows from publicObjectTypes + form state.
+		const proRows = publicObjectTypes.map( ( obj ) => {
+			const typeSettings = ( form?.rest_collection_per_page_settings || {} )[ obj.value ] || {};
+			const typeOrder    = ( form?.rest_collection_orders || {} )[ obj.value ] || [];
+			return {
+				id:              obj.value,
+				label:           obj.label,
+				object_type:     obj.type || 'post_type',
+				items_per_page:  typeSettings.enabled ? ( typeSettings.items_per_page || 25 ) : null,
+				enforce_order:   !! typeSettings.enforce_order,
+				enforce_per_page: !! typeSettings.enabled,
+				has_custom_order: Array.isArray( typeOrder ) && typeOrder.length > 0,
+				_obj:            obj,
+			};
+		} );
+
+		const proColumns = [
+			{
+				field: 'label',
+				headerName: __( 'Type', 'rest-api-firewall' ),
+				flex: 1,
+				renderCell: ( { row } ) => (
+					<Typography variant="body2" fontWeight={ 500 }>{ row.label }</Typography>
+				),
+			},
+			{
+				field: 'object_type',
+				headerName: __( 'Kind', 'rest-api-firewall' ),
+				width: 130,
+				renderCell: ( { value } ) => (
+					<Chip label={ value } size="small" variant="outlined" sx={ { fontFamily: 'monospace' } } />
+				),
+			},
+			{
+				field: 'enforce_per_page',
+				headerName: __( 'Per Page', 'rest-api-firewall' ),
+				width: 130,
+				renderCell: ( { row } ) => row.enforce_per_page
+					? <Chip label={ `${ row.items_per_page } / page` } size="small" color="primary" variant="outlined" />
+					: <Chip label={ __( 'Default', 'rest-api-firewall' ) } size="small" variant="outlined" />,
+			},
+			{
+				field: 'enforce_order',
+				headerName: __( 'Order', 'rest-api-firewall' ),
+				width: 130,
+				renderCell: ( { value } ) => value
+					? <Chip label={ __( 'Enforced', 'rest-api-firewall' ) } size="small" color="primary" variant="outlined" />
+					: <Chip label={ __( 'Default', 'rest-api-firewall' ) } size="small" variant="outlined" />,
+			},
+			{
+				field: 'has_custom_order',
+				headerName: __( 'Custom Order', 'rest-api-firewall' ),
+				width: 140,
+				renderCell: ( { value } ) => value
+					? <Chip label={ __( 'Set', 'rest-api-firewall' ) } size="small" color="success" variant="outlined" />
+					: <Chip label={ __( 'None', 'rest-api-firewall' ) } size="small" variant="outlined" />,
+			},
+			{
+				field: '_actions',
+				headerName: '',
+				width: 64,
+				sortable: false,
+				renderCell: ( { row } ) => (
+					<Tooltip disableInteractive title={ __( 'Edit', 'rest-api-firewall' ) }>
+						<IconButton size="small" onClick={ () => setEditing( row._obj ) }>
+							<EditOutlinedIcon fontSize="small" />
+						</IconButton>
+					</Tooltip>
+				),
+			},
+		];
+
+		return (
+			<Stack sx={ { height: '100%', flexGrow: 1 } }>
+				<DataGrid
+					rows={ proRows }
+					columns={ proColumns }
+					loading={ false }
+					disableRowSelectionOnClick
+					onRowDoubleClick={ ( { row } ) => setEditing( row._obj ) }
+					showToolbar
+					sx={ { border: 0 } }
+				/>
+			</Stack>
+		);
+	}
+	// ── End pro tier ────────────────────────────────────────────────────────────
 
 	return (
 		<Stack gap={4} direction={{xs:'column', xl: 'row'}} p={ 4 }>

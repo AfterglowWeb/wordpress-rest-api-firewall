@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
-
 import { DataGrid } from '@mui/x-data-grid';
 
 import Alert from '@mui/material/Alert';

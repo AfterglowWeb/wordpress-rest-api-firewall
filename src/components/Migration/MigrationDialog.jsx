@@ -1,5 +1,6 @@
 import { useState, useEffect } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
+import { useLicense } from '../../contexts/LicenseContext';
 
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -13,18 +14,23 @@ import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import Chip from '@mui/material/Chip';
 import Snackbar from '@mui/material/Snackbar';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
 
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import StorageIcon from '@mui/icons-material/Storage';
 import RocketLaunchOutlinedIcon from '@mui/icons-material/RocketLaunchOutlined';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 export default function MigrationDialog( {
 	open,
 	onClose,
 	onDone,
 	onOpenRequest,
+	onNavigateToGlobalSettings,
+	onCreateNewApp,
 	migrationNeeded = false,
 	schemaUpdateNeeded = false,
 	migrationDone = false,
@@ -35,9 +41,11 @@ export default function MigrationDialog( {
 		? 'free_to_pro'
 		: 'already_migrated';
 	const { adminData } = useAdminData();
+	const { hasValidLicense } = useLicense();
 	const { __ } = wp.i18n || {};
 
 	const [ title, setTitle ] = useState( '' );
+	const [ enableImmediately, setEnableImmediately ] = useState( false );
 	const [ running, setRunning ] = useState( false );
 	const [ result, setResult ] = useState( null ); // null | { success: bool, message: string }
 	const [ snackDismissed, setSnackDismissed ] = useState( false );
@@ -45,6 +53,7 @@ export default function MigrationDialog( {
 	useEffect( () => {
 		if ( open ) {
 			setTitle( '' );
+			setEnableImmediately( false );
 			setRunning( false );
 			setResult( null );
 		}
@@ -80,6 +89,7 @@ export default function MigrationDialog( {
 		try {
 			const data = await postAjax( 'rest_api_firewall_pro_migrate', {
 				title: title.trim(),
+				enabled: enableImmediately ? '1' : '0',
 			} );
 			setResult( {
 				success: !! data.success,
@@ -136,8 +146,11 @@ export default function MigrationDialog( {
 		}
 	};
 
+	// Snack is only relevant for free→pro migration on the free tier side.
+	// When pro license is valid, the auto-opening dialog + navigation item are sufficient.
 	const showSnack =
 		( migrationNeeded || schemaUpdateNeeded ) &&
+		! hasValidLicense &&
 		! migrationDone &&
 		! open &&
 		! snackDismissed;
@@ -413,6 +426,25 @@ export default function MigrationDialog( {
 										'rest-api-firewall'
 									) }
 									size="small"
+								/>
+
+								<FormControlLabel
+									control={
+										<Checkbox
+											checked={ enableImmediately }
+											onChange={ ( e ) =>
+												setEnableImmediately(
+													e.target.checked
+												)
+											}
+											disabled={ running }
+											size="small"
+										/>
+									}
+									label={ __(
+										'Activate this application immediately',
+										'rest-api-firewall'
+									) }
 								/>
 							</Stack>
 						) }

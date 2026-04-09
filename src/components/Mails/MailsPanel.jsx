@@ -3,12 +3,16 @@ import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 
 import { useNavigation } from '../../contexts/NavigationContext';
+import { useApplication } from '../../contexts/ApplicationContext';
+import { useLicense } from '../../contexts/LicenseContext';
 import Mails from './Mails';
 import Smtp from './Smtp';
 
 export default function MailsPanel() {
 	const { __ } = wp.i18n || {};
 	const { subKey, navigate } = useNavigation();
+	const { hasValidLicense } = useLicense();
+	const { applications } = useApplication();
 	const emailTab = subKey === 'smtp' ? 1 : 0;
 
 	return (
