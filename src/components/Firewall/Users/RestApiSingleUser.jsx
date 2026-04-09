@@ -18,7 +18,7 @@ import Checkbox from '@mui/material/Checkbox';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import AllowedIps from '../../IpFilter/AllowedIps';
-import AllowedOrigins from '../../IpFilter/AllowedOrigins';
+
 import { JwtConfig } from './AuthManager';
 
 import { RateLimitFields } from './RateLimit';
@@ -32,7 +32,7 @@ export default function RestApiSingleUser( { form, setField } ) {
 
 	const [ restApiUser, setRestApiUser ] = useState( [] );
 	const [ allowedIps, setAllowedIps ] = useState( [] );
-	const [ allowedOrigins, setAllowedOrigins ] = useState( [] );
+
 	const [ saving, setSaving ] = useState( false );
 	const [ settingsLoaded, setSettingsLoaded ] = useState( false );
 	const [ rateLimitFields, setRateLimitFields ] = useState( {
@@ -69,7 +69,7 @@ export default function RestApiSingleUser( { form, setField } ) {
 			.then( ( result ) => {
 				if ( result?.success && result?.data ) {
 					setAllowedIps( result.data.allowed_ips || [] );
-					setAllowedOrigins( result.data.allowed_origins || [] );
+
 					setRateLimitFields( {
 						rateLimitRequests:       result.data.rate_limit || 30,
 						rateLimitWindow:         result.data.rate_limit_time || 60,
@@ -267,25 +267,7 @@ export default function RestApiSingleUser( { form, setField } ) {
 					saving={ saving }
 				/>
 
-				<Divider />	
-			
-				<Stack spacing={ 0 }>
-					<Typography variant="subtitle1" fontWeight={ 600 }>
-						{ __( 'Allowed Origins', 'rest-api-firewall' ) }
-					</Typography>
-					<Typography variant="caption" color="text.secondary">
-						{ __( 'Only authorized requests from these origins will be accepted.', 'rest-api-firewall' ) }
-					</Typography>
-				</Stack>
-
-				<AllowedOrigins
-					inline
-					value={ allowedOrigins || [] }
-					onChange={ setAllowedOrigins }
-					onSave={ () => saveSetting( 'allowed_origins', allowedOrigins ) }
-					saving={ saving }
-				/>
-			
+				
 			</Stack>
 		) : (
 			<Stack

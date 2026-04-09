@@ -1,28 +1,50 @@
 import { useState } from '@wordpress/element';
 import { useApplication } from '../contexts/ApplicationContext';
 import { useNavigation } from '../contexts/NavigationContext';
+import { useLicense } from '../contexts/LicenseContext';
 
 import Alert from '@mui/material/Alert';
 import Collapse from '@mui/material/Collapse';
-import Divider from '@mui/material/Divider';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Snackbar from '@mui/material/Snackbar';
+import Tooltip from '@mui/material/Tooltip';
 
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import AddIcon from '@mui/icons-material/Add';
+import ApiIcon from '@mui/icons-material/Api';
+import AppSettingsAltOutlinedIcon from '@mui/icons-material/AppSettingsAltOutlined';
 import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined';
+import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
+import EmailOutlined from '@mui/icons-material/EmailOutlined';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import AppSettingsAltOutlinedIcon from '@mui/icons-material/AppSettingsAltOutlined';
-import Link from '@mui/material/Link';
+import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined';
+import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
+import WebhookIcon from '@mui/icons-material/Webhook';
 
 export const listItemIconSx = { px: 1, minWidth: 32, color: 'text.secondary' };
 export const listItemTextSx = { '& .MuiListItemText-primary': { fontSize: '0.9rem', lineHeight: 'normal' } };
 
+/**
+ * Per-application module items shown nested under the active application
+ * (or disabled under "No application" when none is selected).
+ */
+const MODULE_ITEMS = [
+	{ key: 'per-route-settings', label: 'Routes',      Icon: AccountTreeOutlinedIcon },
+	{ key: 'user-rate-limiting', label: 'Users',       Icon: SmartToyOutlinedIcon },
+	{ key: 'collections',        label: 'Collections', Icon: ApiIcon },
+	{ key: 'models-properties',  label: 'Properties',  Icon: RuleOutlinedIcon },
+	{ key: 'automations',        label: 'Automations', Icon: AutoFixHighOutlinedIcon },
+	{ key: 'webhook',            label: 'Webhooks',    Icon: WebhookIcon },
+	{ key: 'emails',             label: 'Emails',      Icon: EmailOutlined },
+];
+
 export default function ApplicationSelector() {
 	const { __ } = wp.i18n || {};
+	const { hasValidLicense } = useLicense();
 	const {
 		applications,
 		selectedApplicationId,
@@ -30,7 +52,11 @@ export default function ApplicationSelector() {
 		setSelectedApplicationId,
 	} = useApplication();
 	const { navigateGuarded, panel, subKey } = useNavigation();
-	const [ open, setOpen ] = useState( false );
+
+	// Free tier: collapsed by default.
+	// Pro + no apps: expanded so user sees "New Application".
+	// Pro + apps: collapsed by default.
+	const [ open, setOpen ] = useState( () => hasValidLicense && applications.length === 0 );
 	const [ snackOpen, setSnackOpen ] = useState( false );
 
 	const handleSelectApp = ( id ) => {
@@ -43,9 +69,25 @@ export default function ApplicationSelector() {
 		}
 	};
 
+	const modulesDisabled = ! hasValidLicense || ! selectedApplicationId;
+	const moduleTooltip   = ! hasValidLicense
+		? __( 'Upgrade to Pro', 'rest-api-firewall' )
+		: ! selectedApplicationId
+			? __( 'Create an application first', 'rest-api-firewall' )
+			: '';
+
+	const activeApp = applications.find( ( a ) => a.id === selectedApplicationId );
+	const appLabel  = applicationsLoading
+		? __( 'Loading…', 'rest-api-firewall' )
+		: ( activeApp?.title || __( 'No application', 'rest-api-firewall' ) );
+
 	return (
 		<>
-			<ListItemButton onClick={ () => setOpen( ( o ) => ! o ) } sx={ { px: 3, mt: 1 } }>
+			<ListItemButton
+			onClick={ hasValidLicense ? () => setOpen( ( o ) => ! o ) : undefined }
+			disabled={ ! hasValidLicense }
+			sx={ { px: 3, mt: 1 } }
+		>
 				<ListItemIcon sx={ listItemIconSx }>
 					<AppsOutlinedIcon fontSize="small" />
 				</ListItemIcon>
@@ -60,53 +102,80 @@ export default function ApplicationSelector() {
 			</ListItemButton>
 
 			<Collapse in={ open } timeout="auto" unmountOnExit>
-				<List component="div" disablePadding>
-					<ListItemButton
-						selected={ panel === 'applications' && ! subKey }
-						disabled={ panel === 'applications' && ! subKey }
-						onClick={ () => navigateGuarded( 'applications' ) }
-						sx={ { pl: 6, pr: 3 } }
-					>
-						<ListItemText
-							sx={ listItemTextSx }
-							primary={ __( 'All Applications', 'rest-api-firewall' ) }
-						/>
-					</ListItemButton>
 
-					<ListItemButton
-						onClick={ () => navigateGuarded( 'applications', 'new' ) }
-						sx={ { pl: 6, pr: 3 } }
-					>
-						
-						<ListItemText
-							sx={ listItemTextSx }
-							primary={ __( 'New Application', 'rest-api-firewall' ) }
-						/>
-						<AddIcon fontSize="small" />
-					</ListItemButton>
-					
-				</List>
-			</Collapse>
+				{ /* Pro: app navigation links */ }
+				{ hasValidLicense && (
+					<List component="div" disablePadding>
+						<ListItemButton
+							selected={ panel === 'applications' && ! subKey }
+							disabled={ panel === 'applications' && ! subKey }
+							onClick={ () => navigateGuarded( 'applications' ) }
+							sx={ { pl: 6, pr: 3 } }
+						>
+							<ListItemText
+								sx={ listItemTextSx }
+								primary={ __( 'All Applications', 'rest-api-firewall' ) }
+							/>
+						</ListItemButton>
 
-			{applications.length > 0 && (<ListItemButton
-				selected={ !!selectedApplicationId }
-				onClick={ selectedApplicationId ? () => navigateGuarded( 'applications', selectedApplicationId ) : null }
-				sx={ { px: 3 } }
-			>
-				<ListItemIcon
-					sx={ {
-						px: 1,
-						minWidth: 32,
-					} }
+						<ListItemButton
+							onClick={ () => navigateGuarded( 'applications', 'new' ) }
+							sx={ { pl: 6, pr: 3 } }
+						>
+							<ListItemText
+								sx={ listItemTextSx }
+								primary={ __( 'New Application', 'rest-api-firewall' ) }
+							/>
+							<AddIcon fontSize="small" />
+						</ListItemButton>
+					</List>
+				) }
+
+				{ /* Active app / No application placeholder */ }
+				<ListItemButton
+					disabled={ ! selectedApplicationId }
+					selected={ !! selectedApplicationId && panel === 'applications' && !! subKey }
+					onClick={ selectedApplicationId
+						? () => handleSelectApp( selectedApplicationId )
+						: undefined }
+					sx={ { pl: hasValidLicense ? 5 : 3, pr: 3, mt: 1 } }
 				>
-					<AppSettingsAltOutlinedIcon fontSize="small" />
-				</ListItemIcon>
-				<ListItemText
-					sx={{ ...listItemTextSx }}
-					primary={ applicationsLoading ? __( 'Loading...', 'rest-api-firewall' ) 
-						: ( applications.find( ( app ) => app.id === selectedApplicationId )?.title || __( 'No application', 'rest-api-firewall' ) ) }
-				/>
-			</ListItemButton>) }
+					<ListItemIcon sx={ { px: 1, minWidth: 32 } }>
+						<AppSettingsAltOutlinedIcon fontSize="small" />
+					</ListItemIcon>
+					<ListItemText sx={ listItemTextSx } primary={ appLabel } />
+				</ListItemButton>
+
+				{ /* Per-app module items */ }
+				<List component="div" disablePadding>
+					{ MODULE_ITEMS.map( ( { key, label, Icon } ) => (
+						<Tooltip
+							key={ key }
+							title={ moduleTooltip }
+							followCursor
+							disableInteractive
+						>
+							<span>
+								<ListItemButton
+									selected={ panel === key }
+									disabled={ modulesDisabled }
+									onClick={ () => navigateGuarded( key ) }
+									sx={ { pl: hasValidLicense ? 6 : 5, pr: 3 } }
+								>
+									<ListItemIcon sx={ { px: 1, minWidth: 32 } }>
+										<Icon fontSize="small" />
+									</ListItemIcon>
+									<ListItemText
+										sx={ listItemTextSx }
+										primary={ __( label, 'rest-api-firewall' ) }
+									/>
+								</ListItemButton>
+							</span>
+						</Tooltip>
+					) ) }
+				</List>
+
+			</Collapse>
 
 			<Snackbar
 				open={ snackOpen }

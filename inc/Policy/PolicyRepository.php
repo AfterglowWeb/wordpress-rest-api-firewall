@@ -276,10 +276,6 @@ class PolicyRepository {
 		RoutesRepository::flush_routes_cache();
 	}
 
-	/**
-	 * Sanitise a users array coming from the front-end.
-	 * Keeps only id (int) and related_routes_uuid (array of strings).
-	 */
 	private static function normalize_users( array $users ): array {
 		$out = array();
 		foreach ( $users as $user ) {
@@ -324,7 +320,16 @@ class PolicyRepository {
 			}
 
 			if ( empty( $segments ) ) {
-				$tree[ $namespace ]['routes'][] = self::build_route_entry( $route );
+				$already_exists = false;
+				foreach ( $tree[ $namespace ]['routes'] as $existing ) {
+					if ( $existing['method'] === $route['method'] && $existing['route'] === $route['route'] ) {
+						$already_exists = true;
+						break;
+					}
+				}
+				if ( ! $already_exists ) {
+					$tree[ $namespace ]['routes'][] = self::build_route_entry( $route );
+				}
 				continue;
 			}
 

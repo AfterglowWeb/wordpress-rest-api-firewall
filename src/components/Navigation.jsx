@@ -42,17 +42,15 @@ import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import ShieldIcon from '@mui/icons-material/Shield';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import PendingOutlinedIcon from '@mui/icons-material/PendingOutlined';
 
 
 import { useNavigation } from '../contexts/NavigationContext';
 import { useEntryToolbarContext } from '../contexts/EntryToolbarContext';
 import AppIdentity from './AppIdentity';
-import ApplicationSelector, { listItemIconSx} from './ApplicationSelector';
+import ApplicationSelector, { listItemIconSx } from './ApplicationSelector';
 import Documentation from './Documentation/Documentation';
 import PanelBreadcrumb from './shared/PanelBreadcrumb';
-import ListItem from '@mui/material/ListItem';
 
 export const DRAWER_WIDTH = 220;
 export const APP_BAR_HEIGHT = 75;
@@ -160,19 +158,20 @@ export default function Navigation( {
 			hidden: true,
 		},
 		{ type: 'app-selector', hideWhenNoApps: false },
-		
-		{
-			key: 'per-route-settings',
-			label: __( 'Routes', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'REST API Firewall',
-			icon: AccountTreeOutlinedIcon,
-			pl: 5,
-			disabled: hasValidLicense && ! hasApplications,
-		},
-		{
-			type: 'section',
-			label: '',
-		},
+
+		// Metadata-only entries for breadcrumb resolution (not rendered in drawer).
+		// These panels are accessed via ApplicationSelector in pro tier.
+		{ key: 'per-route-settings', label: __( 'Routes',       'rest-api-firewall' ), breadcrumbPrefix: 'REST API Firewall', icon: AccountTreeOutlinedIcon,  hidden: true },
+		{ key: 'user-rate-limiting', label: __( 'Users',        'rest-api-firewall' ), breadcrumbPrefix: 'REST API Firewall', icon: SmartToyOutlinedIcon,    hidden: true },
+		{ key: 'collections',        label: __( 'Collections',  'rest-api-firewall' ), breadcrumbPrefix: 'REST API Output',   icon: ApiIcon,                  hidden: true },
+		{ key: 'models-properties',  label: __( 'Properties',   'rest-api-firewall' ), breadcrumbPrefix: 'REST API Output',   icon: RuleOutlinedIcon,         hidden: true },
+		{ key: 'automations',        label: __( 'Automations',  'rest-api-firewall' ), breadcrumbPrefix: 'Integrations',      icon: AutoFixHighOutlinedIcon,  hidden: true },
+		{ key: 'webhook',            label: __( 'Webhooks',     'rest-api-firewall' ), breadcrumbPrefix: 'Integrations',      icon: WebhookIcon,              hidden: true },
+		{ key: 'emails',             label: __( 'Emails',       'rest-api-firewall' ), breadcrumbPrefix: 'Integrations',      icon: EmailOutlined,            hidden: true },
+
+		{ type: 'section', label: '' },
+
+		// Global settings — visible in free tier and pro when no applications exist.
 		{
 			key: 'firewall_auth_rate',
 			label: __( 'Auth & Rate Limiting', 'rest-api-firewall' ),
@@ -181,58 +180,27 @@ export default function Navigation( {
 			hidden: hasValidLicense && hasApplications,
 		},
 		{
-			key: 'user-rate-limiting',
-			label: hasValidLicense
-				? __( 'Users', 'rest-api-firewall' )
-				: __( 'User', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'REST API Firewall',
-			icon: SmartToyOutlinedIcon,
-			pl: 5,
-			disabled: hasValidLicense && ! hasApplications,
+			key: 'per-route-settings',
+			label: __( 'Routes', 'rest-api-firewall' ),
+			breadcrumbPrefix: 'Global Settings',
+			icon: AccountTreeOutlinedIcon,
+			hidden: hasValidLicense, // free tier only
+		},
+		{
+			key: 'webhook',
+			label: __( 'Webhook', 'rest-api-firewall' ),
+			breadcrumbPrefix: 'Global Settings',
+			icon: WebhookIcon,
+			hidden: hasValidLicense, // free tier only
 		},
 		{
 			key: 'collections',
 			label: __( 'Collections', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'REST API Output',
+			breadcrumbPrefix: 'Global Settings',
 			icon: ApiIcon,
-			pl: 5,
-			disabled: hasValidLicense && ! hasApplications,
+			hidden: hasValidLicense, // free tier only
 		},
-		{
-			key: 'models-properties',
-			label: __( 'Properties', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'REST API Output',
-			icon: RuleOutlinedIcon,
-			pl: 5,
-			disabled: hasValidLicense && ! hasApplications,
-		},
-		{ type: 'section', label: ''},
-		{
-			key: 'automations',
-			label: __( 'Automations', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'Integrations',
-			icon: AutoFixHighOutlinedIcon,
-			pl: 5,
-			disabled: hasValidLicense && ! hasApplications,
-		},
-		{
-			key: 'webhook',
-			label: hasValidLicense
-				? __( 'Webhooks', 'rest-api-firewall' )
-				: __( 'Webhook', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'Integrations',
-			icon: WebhookIcon,
-			pl: 5,
-			disabled: hasValidLicense && ! hasApplications,
-		},
-		{
-			key: 'emails',
-			label: __( 'Emails', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'Integrations',
-			icon: EmailOutlined,
-			pl: 5,
-			disabled: hasValidLicense && ! hasApplications,
-		},
+		
 		{
 			key: 'logs',
 			label: __( 'Logs', 'rest-api-firewall' ),
@@ -326,6 +294,7 @@ export default function Navigation( {
 
 				<List component="nav" disablePadding sx={{pb:4}}>
 					{ menuItems.map( ( item, index ) => {
+						if ( item.hidden ) return null;
 						if ( item.type === 'section' ) {
 							return (
 								<Stack
@@ -358,30 +327,7 @@ export default function Navigation( {
 							);
 						}
 
-					if ( item.hidden ) return null;
-
 				if ( item.type === 'app-selector' ) {
-					// In Pro tier, always show selector (even with no apps) so users can create first application
-					if ( ! hasValidLicense ) return (
-						<Tooltip
-							disableInteractive
-							followCursor
-							title={ __( 'Upgrade to Pro', 'rest-api-firewall' ) }
-						>
-	
-							<ListItem sx={ { px: 3, mt: 1, userSelect: 'none' } }>
-								<ListItemIcon sx={ listItemIconSx }>
-									<AppsOutlinedIcon color="disabled" fontSize="small" />
-								</ListItemIcon>
-								<ListItemText
-									sx={{ '& .MuiListItemText-primary': { color: 'text.disabled' } }}
-									primary={ __( 'Applications', 'rest-api-firewall' ) }
-								/>
-								<ExpandMoreIcon fontSize="small" sx={ { color: 'text.disabled' } } />
-							</ListItem>
-			
-						</Tooltip>
-					);
 					return <ApplicationSelector key="app-selector" />;
 				}
 

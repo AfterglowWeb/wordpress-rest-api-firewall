@@ -15,6 +15,7 @@ import Stack from '@mui/material/Stack';
 import ConfirmDialog from './components/ConfirmDialog';
 import EntryToolbar from './components/shared/EntryToolbar';
 import MigrationDialog from './components/Migration/MigrationDialog';
+import ProToFreeDialog from './components/Migration/ProToFreeDialog';
 import Navigation, {
 	APP_BAR_HEIGHT,
 	APP_FOOTER_HEIGHT,
@@ -35,6 +36,7 @@ import ModelsPanel from './components/Models/ModelsPanel';
 
 import Webhook from './components/Webhooks/Webhook';
 import Webhooks from './components/Webhooks/Webhooks';
+
 
 import MailsPanel from './components/Mails/MailsPanel';
 
@@ -72,6 +74,10 @@ function AppContent() {
 		schemaUpdateNeeded || migrationNeeded
 	);
 	const [ migrationDone, setMigrationDone ] = useState( false );
+
+	const [ proFallbackOpen, setProFallbackOpen ] = useState(
+		!! window.restApiFirewallPro?.shouldPromptFallback
+	);
 
 	const { form, setField, setSlider, syncSavedField, pickGroup, isGroupDirty } = useSettingsForm( {
 		adminData,
@@ -149,27 +155,16 @@ function AppContent() {
 			),
 			confirmMessage: __( 'Save theme settings?', 'rest-api-firewall' ),
 		},
-		global_security: {
-			successTitle: __( 'Global Security Saved', 'rest-api-firewall' ),
-			successMessage: __(
-				'Global security settings saved successfully.',
-				'rest-api-firewall'
-			),
-			confirmMessage: __(
-				'Save global security settings?',
-				'rest-api-firewall'
-			),
-		},
 	};
 
 	const PANEL_SAVE_GROUP = {
+		'firewall_auth_rate':  'firewall_auth_rate',
 		'user-rate-limiting': 'firewall_auth_rate',
 		'per-route-settings': 'firewall_routes_policy',
 		'collections':        'collections',
 		'models-properties':  'models_properties',
 		'webhook':            'webhook',
 		'theme':              'theme',
-		'global_security':    'global_security',
 	};
 	if ( hasValidLicense ) {
 		delete PANEL_SAVE_GROUP[ 'user-rate-limiting' ];
@@ -304,7 +299,7 @@ function AppContent() {
 					{ panel === 'automations' && hasValidLicense && <Automations /> }
 
 					{ panel === 'global_security' && (
-						<GlobalSecurity form={ form } setField={ setField } />
+						<GlobalSecurity />
 					) }
 
 					{ panel === 'theme' && (
@@ -356,6 +351,17 @@ function AppContent() {
 					navigate( 'applications', 'new', true );
 				} }
 			/>
+
+			{ proFallbackOpen && (
+				<ProToFreeDialog
+					open={ proFallbackOpen }
+					onClose={ () => setProFallbackOpen( false ) }
+					onExported={ () => {
+						setProFallbackOpen( false );
+						window.location.reload();
+					} }
+				/>
+			) }
 		</>
 	);
 }

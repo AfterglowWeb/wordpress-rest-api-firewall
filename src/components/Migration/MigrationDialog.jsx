@@ -1,5 +1,6 @@
 import { useState, useEffect } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
+import { useLicense } from '../../contexts/LicenseContext';
 
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -22,8 +23,6 @@ import StorageIcon from '@mui/icons-material/Storage';
 import RocketLaunchOutlinedIcon from '@mui/icons-material/RocketLaunchOutlined';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
 export default function MigrationDialog( {
 	open,
@@ -35,16 +34,14 @@ export default function MigrationDialog( {
 	migrationNeeded = false,
 	schemaUpdateNeeded = false,
 	migrationDone = false,
-	noApplications = false,
 } ) {
-	const scenario = noApplications
-		? 'no_applications_create'
-		: schemaUpdateNeeded
+	const scenario = schemaUpdateNeeded
 		? 'schema_update'
 		: migrationNeeded
 		? 'free_to_pro'
 		: 'already_migrated';
 	const { adminData } = useAdminData();
+	const { hasValidLicense } = useLicense();
 	const { __ } = wp.i18n || {};
 
 	const [ title, setTitle ] = useState( '' );
@@ -149,8 +146,11 @@ export default function MigrationDialog( {
 		}
 	};
 
+	// Snack is only relevant for free→pro migration on the free tier side.
+	// When pro license is valid, the auto-opening dialog + navigation item are sufficient.
 	const showSnack =
 		( migrationNeeded || schemaUpdateNeeded ) &&
+		! hasValidLicense &&
 		! migrationDone &&
 		! open &&
 		! snackDismissed;
@@ -190,80 +190,6 @@ export default function MigrationDialog( {
 			</Alert>
 		</Snackbar>
 	);
-
-	if ( scenario === 'no_applications_create' ) {
-		return (
-			<>
-				<Dialog open={ open } maxWidth="sm" fullWidth>
-					<DialogTitle
-						sx={ {
-							display: 'flex',
-							alignItems: 'center',
-							gap: 1.5,
-						} }
-					>
-						<InfoOutlinedIcon color="info" />
-						{ __(
-							'No Applications Configured',
-							'rest-api-firewall'
-						) }
-					</DialogTitle>
-					<DialogContent>
-						<Stack spacing={ 3 } pt={ 1 }>
-							<Alert severity="info" icon={ <InfoOutlinedIcon /> }>
-								{ __(
-									'With no applications, the REST API is accessible with global rate limiting and IP filtering only.',
-									'rest-api-firewall'
-								) }
-							</Alert>
-							<Typography variant="body2" color="text.secondary">
-								{ __(
-									'You can create a new application to enable per-app policies, or configure global authentication and rate limiting settings.',
-									'rest-api-firewall'
-								) }
-							</Typography>
-							<Stack spacing={ 2 }>
-								<Button
-									variant="contained"
-									disableElevation
-									startIcon={ <AddCircleOutlineIcon /> }
-									onClick={ () => {
-										onClose();
-										onCreateNewApp?.();
-									} }
-									fullWidth
-								>
-									{ __(
-										'Create New Application',
-										'rest-api-firewall'
-									) }
-								</Button>
-								<Button
-									variant="outlined"
-									startIcon={ <SettingsOutlinedIcon /> }
-									onClick={ () => {
-										onClose();
-										onNavigateToGlobalSettings?.();
-									} }
-									fullWidth
-								>
-									{ __(
-										'Configure Global Settings',
-										'rest-api-firewall'
-									) }
-								</Button>
-							</Stack>
-						</Stack>
-					</DialogContent>
-					<DialogActions sx={ { px: 3, pb: 2 } }>
-						<Button variant="text" onClick={ onClose }>
-							{ __( 'Skip', 'rest-api-firewall' ) }
-						</Button>
-					</DialogActions>
-				</Dialog>
-			</>
-		);
-	}
 
 	if ( scenario === 'already_migrated' ) {
 		return (
