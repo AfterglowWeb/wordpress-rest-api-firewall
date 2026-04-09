@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
+import { useApplication } from '../../contexts/ApplicationContext';
 import { useNavigation } from '../../contexts/NavigationContext';
 
 import { DataGrid } from '@mui/x-data-grid';
@@ -24,6 +25,7 @@ import formatDate from '../../utils/formatDate';
 
 export default function Automations() {
 	const { adminData } = useAdminData();
+	const { applications } = useApplication();
 	const { hasValidLicense, proNonce } = useLicense();
 	const nonce = proNonce || adminData.nonce;
 	const { __ } = wp.i18n || {};

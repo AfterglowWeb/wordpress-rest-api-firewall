@@ -16,6 +16,7 @@ import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AppSettingsAltOutlinedIcon from '@mui/icons-material/AppSettingsAltOutlined';
+import Link from '@mui/material/Link';
 
 export const listItemIconSx = { px: 1, minWidth: 32, color: 'text.secondary' };
 export const listItemTextSx = { '& .MuiListItemText-primary': { fontSize: '0.9rem', lineHeight: 'normal' } };
@@ -68,7 +69,7 @@ export default function ApplicationSelector() {
 					>
 						<ListItemText
 							sx={ listItemTextSx }
-							primary={ __( 'All', 'rest-api-firewall' ) }
+							primary={ __( 'All Applications', 'rest-api-firewall' ) }
 						/>
 					</ListItemButton>
 
@@ -79,40 +80,15 @@ export default function ApplicationSelector() {
 						
 						<ListItemText
 							sx={ listItemTextSx }
-							primary={ __( 'New', 'rest-api-firewall' ) }
+							primary={ __( 'New Application', 'rest-api-firewall' ) }
 						/>
 						<AddIcon fontSize="small" />
 					</ListItemButton>
-
-					{ applications.length > 0 && <Divider /> }
-
-					{ applicationsLoading ? (
-						<ListItemButton disabled sx={ { pl: 6, pr: 3 } }>
-							<ListItemText
-								sx={ listItemTextSx }
-								primary={ __( 'Loading…', 'rest-api-firewall' ) }
-							/>
-						</ListItemButton>
-					) : (
-						applications.map( ( app ) => (
-							<ListItemButton
-								key={ app.id }
-								disabled={ app.id === selectedApplicationId }
-								selected={ app.id === selectedApplicationId }
-								onClick={ () => handleSelectApp( app.id ) }
-								sx={ { pl: 6, pr: 3 } }
-							>
-								<ListItemText
-									sx={listItemTextSx}
-									primary={ app.title }
-								/>
-							</ListItemButton>
-						) )
-					) }
+					
 				</List>
 			</Collapse>
 
-			<ListItemButton
+			{applications.length > 0 && (<ListItemButton
 				selected={ !!selectedApplicationId }
 				onClick={ selectedApplicationId ? () => navigateGuarded( 'applications', selectedApplicationId ) : null }
 				sx={ { px: 3 } }
@@ -130,7 +106,7 @@ export default function ApplicationSelector() {
 					primary={ applicationsLoading ? __( 'Loading...', 'rest-api-firewall' ) 
 						: ( applications.find( ( app ) => app.id === selectedApplicationId )?.title || __( 'No application', 'rest-api-firewall' ) ) }
 				/>
-			</ListItemButton>
+			</ListItemButton>) }
 
 			<Snackbar
 				open={ snackOpen }

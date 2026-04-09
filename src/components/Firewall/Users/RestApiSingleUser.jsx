@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
+import { useLicense } from '../../../contexts/LicenseContext';
 
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
@@ -26,6 +27,7 @@ import Tooltip from '@mui/material/Tooltip';
 export default function RestApiSingleUser( { form, setField } ) {
 	const { __, sprintf } = wp.i18n || {};
 	const { adminData } = useAdminData();
+	const { hasValidLicense } = useLicense();
 	const nonce = adminData?.nonce;
 
 	const [ restApiUser, setRestApiUser ] = useState( [] );
@@ -245,6 +247,7 @@ export default function RestApiSingleUser( { form, setField } ) {
 	
 			<Divider />
 
+		{ hasValidLicense ? (
 			<Stack spacing={ 3 } sx={ { maxWidth: 760 } }>
 				
 				<Stack spacing={ 0 }>
@@ -284,49 +287,63 @@ export default function RestApiSingleUser( { form, setField } ) {
 				/>
 			
 			</Stack>
-
-			<Divider />
-
-			<Tooltip title={ __( 'License required.', 'rest-api-firewall' ) } followCursor disableInteractive>
-			<Stack spacing={ 3 } sx={{ userSelect: 'none' }}>
-				<Stack spacing={ 0 }>
-					<Typography variant="subtitle1" fontWeight={ 600 } color="text.disabled">
-						{ __( 'Allowed HTTP Methods', 'rest-api-firewall' ) }
+		) : (
+			<Stack
+				spacing={ 2 }
+				sx={ {
+					p: 3,
+					border: '1px dashed',
+					borderColor: 'divider',
+					borderRadius: 1,
+					bgcolor: 'action.hover',
+					maxWidth: 760,
+				} }
+			>
+				<Stack direction="row" alignItems="center" spacing={ 1 }>
+					<Typography variant="subtitle1" fontWeight={ 600 }>
+						{ __( 'IP & Origin Filtering', 'rest-api-firewall' ) }
 					</Typography>
-					<Typography variant="caption" color="text.disabled">
-						{ __( 'Which HTTP verbs this user is allowed to use against the REST API.', 'rest-api-firewall.' ) }
+					<Typography variant="caption" color="primary.main" sx={ { fontWeight: 600 } }>
+						{ __( '— Pro Feature', 'rest-api-firewall' ) }
 					</Typography>
 				</Stack>
-				<Stack direction="row" flexWrap="wrap" gap={ 1 }>
-				{ ['GET','POST','PUT','PATCH','DELETE'].map( ( method ) => (
-					<FormControlLabel
-						key={ method }
-						disabled
-						label={
-							method
-						}
-						control={
-							<Checkbox
-								size="small"
-								disabled
-							/>
-						}
-						sx={ {
-							m: 0,
-							px: 1.5,
-							userSelect: 'none',
-						} }
-					/>
-				) ) }
+				<Typography variant="body2" color="text.secondary">
+					{ __( 'Control REST API access by whitelisting specific IP addresses and origins. Available in the Pro tier with per-application configuration.', 'rest-api-firewall' ) }
+				</Typography>
+				<Stack spacing={ 0.75 }>
+					<Stack direction="row" spacing={ 1 } alignItems="flex-start">
+						<Typography variant="body2" color="text.disabled" sx={ { flexShrink: 0, mt: '1px' } }>
+							›
+						</Typography>
+						<Typography variant="body2" color="text.secondary">
+							{ __( 'Whitelist IP addresses with full CIDR support', 'rest-api-firewall' ) }
+						</Typography>
+					</Stack>
+					<Stack direction="row" spacing={ 1 } alignItems="flex-start">
+						<Typography variant="body2" color="text.disabled" sx={ { flexShrink: 0, mt: '1px' } }>
+							›
+						</Typography>
+						<Typography variant="body2" color="text.secondary">
+							{ __( 'Control CORS with allowed origins configuration', 'rest-api-firewall' ) }
+						</Typography>
+					</Stack>
+					<Stack direction="row" spacing={ 1 } alignItems="flex-start">
+						<Typography variant="body2" color="text.disabled" sx={ { flexShrink: 0, mt: '1px' } }>
+							›
+						</Typography>
+						<Typography variant="body2" color="text.secondary">
+							{ __( 'Per-application isolation for multi-tenant setups', 'rest-api-firewall' ) }
+						</Typography>
+					</Stack>
 				</Stack>
 			</Stack>
-			</Tooltip>
+		) }
 
-			<Divider />
+		<Divider />
 
-			<Stack spacing={ 3 }>
+		<Stack spacing={ 3 }>
 
-				<Stack direction="row" alignItems="flex-start" justifyContent="space-between">
+			<Stack direction="row" alignItems="flex-start" justifyContent="space-between">
 					<Box>
 						<Typography variant="subtitle1" fontWeight={ 600 }>
 							{ __( 'Rate Limit', 'rest-api-firewall' ) }

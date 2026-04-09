@@ -13,23 +13,33 @@ import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import Chip from '@mui/material/Chip';
 import Snackbar from '@mui/material/Snackbar';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
 
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import StorageIcon from '@mui/icons-material/Storage';
 import RocketLaunchOutlinedIcon from '@mui/icons-material/RocketLaunchOutlined';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
 export default function MigrationDialog( {
 	open,
 	onClose,
 	onDone,
 	onOpenRequest,
+	onNavigateToGlobalSettings,
+	onCreateNewApp,
 	migrationNeeded = false,
 	schemaUpdateNeeded = false,
 	migrationDone = false,
+	noApplications = false,
 } ) {
-	const scenario = schemaUpdateNeeded
+	const scenario = noApplications
+		? 'no_applications_create'
+		: schemaUpdateNeeded
 		? 'schema_update'
 		: migrationNeeded
 		? 'free_to_pro'
@@ -38,6 +48,7 @@ export default function MigrationDialog( {
 	const { __ } = wp.i18n || {};
 
 	const [ title, setTitle ] = useState( '' );
+	const [ enableImmediately, setEnableImmediately ] = useState( false );
 	const [ running, setRunning ] = useState( false );
 	const [ result, setResult ] = useState( null ); // null | { success: bool, message: string }
 	const [ snackDismissed, setSnackDismissed ] = useState( false );
@@ -45,6 +56,7 @@ export default function MigrationDialog( {
 	useEffect( () => {
 		if ( open ) {
 			setTitle( '' );
+			setEnableImmediately( false );
 			setRunning( false );
 			setResult( null );
 		}
@@ -80,6 +92,7 @@ export default function MigrationDialog( {
 		try {
 			const data = await postAjax( 'rest_api_firewall_pro_migrate', {
 				title: title.trim(),
+				enabled: enableImmediately ? '1' : '0',
 			} );
 			setResult( {
 				success: !! data.success,
@@ -177,6 +190,80 @@ export default function MigrationDialog( {
 			</Alert>
 		</Snackbar>
 	);
+
+	if ( scenario === 'no_applications_create' ) {
+		return (
+			<>
+				<Dialog open={ open } maxWidth="sm" fullWidth>
+					<DialogTitle
+						sx={ {
+							display: 'flex',
+							alignItems: 'center',
+							gap: 1.5,
+						} }
+					>
+						<InfoOutlinedIcon color="info" />
+						{ __(
+							'No Applications Configured',
+							'rest-api-firewall'
+						) }
+					</DialogTitle>
+					<DialogContent>
+						<Stack spacing={ 3 } pt={ 1 }>
+							<Alert severity="info" icon={ <InfoOutlinedIcon /> }>
+								{ __(
+									'With no applications, the REST API is accessible with global rate limiting and IP filtering only.',
+									'rest-api-firewall'
+								) }
+							</Alert>
+							<Typography variant="body2" color="text.secondary">
+								{ __(
+									'You can create a new application to enable per-app policies, or configure global authentication and rate limiting settings.',
+									'rest-api-firewall'
+								) }
+							</Typography>
+							<Stack spacing={ 2 }>
+								<Button
+									variant="contained"
+									disableElevation
+									startIcon={ <AddCircleOutlineIcon /> }
+									onClick={ () => {
+										onClose();
+										onCreateNewApp?.();
+									} }
+									fullWidth
+								>
+									{ __(
+										'Create New Application',
+										'rest-api-firewall'
+									) }
+								</Button>
+								<Button
+									variant="outlined"
+									startIcon={ <SettingsOutlinedIcon /> }
+									onClick={ () => {
+										onClose();
+										onNavigateToGlobalSettings?.();
+									} }
+									fullWidth
+								>
+									{ __(
+										'Configure Global Settings',
+										'rest-api-firewall'
+									) }
+								</Button>
+							</Stack>
+						</Stack>
+					</DialogContent>
+					<DialogActions sx={ { px: 3, pb: 2 } }>
+						<Button variant="text" onClick={ onClose }>
+							{ __( 'Skip', 'rest-api-firewall' ) }
+						</Button>
+					</DialogActions>
+				</Dialog>
+			</>
+		);
+	}
 
 	if ( scenario === 'already_migrated' ) {
 		return (
@@ -413,6 +500,25 @@ export default function MigrationDialog( {
 										'rest-api-firewall'
 									) }
 									size="small"
+								/>
+
+								<FormControlLabel
+									control={
+										<Checkbox
+											checked={ enableImmediately }
+											onChange={ ( e ) =>
+												setEnableImmediately(
+													e.target.checked
+												)
+											}
+											disabled={ running }
+											size="small"
+										/>
+									}
+									label={ __(
+										'Activate this application immediately',
+										'rest-api-firewall'
+									) }
 								/>
 							</Stack>
 						) }

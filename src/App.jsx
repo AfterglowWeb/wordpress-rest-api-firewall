@@ -64,7 +64,8 @@ function AppContent() {
 	const [ postTypes, setPostTypes ] = useState( [] );
 	const [ themeStatus, setThemeStatus ] = useState( null );
 
-	const migrationNeeded = !! window.restApiFirewallPro?.migrationNeeded;
+	const isMigrated = !! window.restApiFirewallPro?.isMigrated;
+	const migrationNeeded = !! window.restApiFirewallPro?.migrationNeeded && ! isMigrated;
 	const schemaUpdateNeeded = !! window.restApiFirewallPro?.schemaUpdateNeeded;
 
 	const [ migrationOpen, setMigrationOpen ] = useState(
@@ -240,7 +241,12 @@ function AppContent() {
 					{ editorOpen && <EntryToolbar { ...toolbarConfig } /> }
 
 					{ hasValidLicense && panel === 'applications' && <Applications /> }
-
+				{ panel === 'firewall_auth_rate' && (
+					<RestApiSingleUser
+						form={ form }
+						setField={ setField }
+					/>
+				) }
 					{ panel === 'user-rate-limiting' && (
 						<>
 							{ hasValidLicense ? (
@@ -340,6 +346,14 @@ function AppContent() {
 					setMigrationDone( true );
 					setMigrationOpen( false );
 					window.location.reload();
+				} }
+				onNavigateToGlobalSettings={ () => {
+					setMigrationOpen( false );
+					navigate( 'firewall_auth_rate', null, true );
+				} }
+				onCreateNewApp={ () => {
+					setMigrationOpen( false );
+					navigate( 'applications', 'new', true );
 				} }
 			/>
 		</>
