@@ -57,9 +57,11 @@ function buildOptions( items, types, visibility, __, extraGroups = [] ) {
 				result.push( {
 					value: item.value,
 					label: item.label,
-					secondary: item._builtin
-						? __( 'builtin', 'rest-api-firewall' )
-						: __( 'custom', 'rest-api-firewall' ),
+					secondary: item.source
+						? item.source
+						: item._builtin
+							? __( 'builtin', 'rest-api-firewall' )
+							: __( 'custom', 'rest-api-firewall' ),
 				} )
 			);
 		};

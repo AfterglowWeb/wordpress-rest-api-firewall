@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useReducer } from '@wordpress/element';
+import { useState, useEffect, useCallback, useRef, useReducer, useMemo } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
@@ -7,6 +7,7 @@ import useSaveOptions from '../../hooks/useSaveOptions';
 import useProActions from '../../hooks/useProActions';
 
 import Alert from '@mui/material/Alert';
+import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
@@ -25,9 +26,12 @@ import UndoIcon from '@mui/icons-material/Undo';
 import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 
-import { DataGrid } from '@mui/x-data-grid';
-import ObjectTypeSelect from '../shared/ObjectTypeSelect';
+import List from '@mui/material/List';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListSubheader from '@mui/material/ListSubheader';
 import Tooltip from '@mui/material/Tooltip';
+
+import { DataGrid } from '@mui/x-data-grid';
 
 import { PostOrderList, PageDropZone } from './SortCollectionsUtils';
 import CollectionEditor from './CollectionEditor';
@@ -137,7 +141,7 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 	const publicObjectTypes = objectTypes.filter( ( obj ) => obj.public );
 	const isPro = hasValidLicense && !! selectedApplicationId;
 
-	const { saving: savingOptions } = useSaveOptions();
+	const { save: saveOptions, saving: savingOptions } = useSaveOptions();
 	const { save: saveProAction, saving: savingProOrder } = useProActions();
 	const { openDialog } = useDialog();
 
@@ -354,6 +358,43 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 			onConfirm: async () => {
 				setResetting( true );
 				try {
+					// 1. Clear enforce_order and silently save per-page settings.
+					const currentTypeSettings = ( form.rest_collection_per_page_settings || {} )[ selectedType ] || {};
+					const updatedTypeSettings = { ...currentTypeSettings, enforce_order: false };
+					const updatedPerPageSettings = {
+						...( form.rest_collection_per_page_settings || {} ),
+						[ selectedType ]: updatedTypeSettings,
+					};
+					if ( isPro ) {
+						syncSavedField( 'rest_collection_per_page_settings', updatedPerPageSettings );
+						dispatch( { type: 'SET_SETTINGS_DIRTY', typeKey: selectedType, dirty: false } );
+						await fetch( adminData.ajaxurl, {
+							method: 'POST',
+							body: new URLSearchParams( {
+								action: 'save_application_collection_per_page_setting',
+								nonce,
+								application_id: selectedApplicationId,
+								object_key: selectedType,
+								settings: JSON.stringify( updatedTypeSettings ),
+							} ),
+						} );
+					} else {
+						setField( { target: { name: 'rest_collection_per_page_settings', value: updatedPerPageSettings, type: 'object' } } );
+						await fetch( adminData.ajaxurl, {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+							body: new URLSearchParams( {
+								action: 'rest_api_firewall_update_options',
+								nonce: adminData.nonce,
+								options: JSON.stringify( {
+									rest_collection_per_page_settings: updatedPerPageSettings,
+									rest_collection_orders: formOrdersRef.current,
+								} ),
+							} ),
+						} );
+					}
+
+					// 2. Reset order.
 					const params = {
 						action: isPro ? 'reset_application_collection_order' : 'reset_collection_order',
 						nonce,
@@ -448,6 +489,21 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 		} );
 	}, [ saveProAction, masterOrder, selectedType, objectKind, objectLabel, __, sprintf, syncSavedField, form.rest_collection_per_page_settings, nonce, selectedApplicationId, adminData.ajaxurl ] );
 
+	const handleSaveFree = useCallback( () => {
+		saveOptions(
+			{
+				rest_collection_per_page_settings: form.rest_collection_per_page_settings,
+				rest_collection_orders: form.rest_collection_orders,
+			},
+			{
+				skipConfirm: true,
+				onSuccess: () => {
+					dispatch( { type: 'MARK_SAVED', typeKey: selectedType, savedOrder: masterOrder } );
+				},
+			}
+		);
+	}, [ saveOptions, form.rest_collection_per_page_settings, form.rest_collection_orders, selectedType, masterOrder ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
 	const handlePerPageSettingChange = ( field, value ) => {
 		const currentTypeSettings = ( form.rest_collection_per_page_settings || {} )[ selectedType ] || {};
 		const newTypeSettings = { ...currentTypeSettings, [ field ]: value };
@@ -464,6 +520,7 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 				value: updated,
 				type: 'object',
 			} } );
+			dispatch( { type: 'SET_SETTINGS_DIRTY', typeKey: selectedType, dirty: true } );
 		}
 	};
 
@@ -491,7 +548,9 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 			return {
 				id:              obj.value,
 				label:           obj.label,
-				object_type:     obj.type || 'post_type',
+				object_type:     obj.value,
+				source:          obj.source || '',
+				count:           obj.count ?? 0,
 				items_per_page:  typeSettings.enabled ? ( typeSettings.items_per_page || 25 ) : null,
 				enforce_order:   !! typeSettings.enforce_order,
 				enforce_per_page: !! typeSettings.enabled,
@@ -506,15 +565,33 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 				headerName: __( 'Type', 'rest-api-firewall' ),
 				flex: 1,
 				renderCell: ( { row } ) => (
-					<Typography variant="body2" fontWeight={ 500 }>{ row.label }</Typography>
+					<Stack direction="row" alignItems="center" gap={ 1 }>
+						<Typography variant="body2" fontWeight={ 500 }>{ row.label }</Typography>
+						{ row.source && (
+							<Chip label={ row.source } size="small" variant="outlined" sx={ { fontSize: '0.7rem', height: 18 } } />
+						) }
+					</Stack>
 				),
 			},
 			{
 				field: 'object_type',
 				headerName: __( 'Kind', 'rest-api-firewall' ),
-				width: 130,
+				width: 110,
 				renderCell: ( { value } ) => (
 					<Chip label={ value } size="small" variant="outlined" sx={ { fontFamily: 'monospace' } } />
+				),
+			},
+			{
+				field: 'count',
+				headerName: __( 'Items', 'rest-api-firewall' ),
+				width: 80,
+				renderCell: ( { value } ) => (
+					<Badge badgeContent={ value } color="primary" max={ 99999 } showZero
+						anchorOrigin={ { vertical: 'top', horizontal: 'right' } }
+						sx={ { '& .MuiBadge-badge': { position: 'static', transform: 'none', fontWeight: 600 } } }
+					>
+						{ null }
+					</Badge>
 				),
 			},
 			{
@@ -572,87 +649,183 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 	}
 	// ── End pro tier ────────────────────────────────────────────────────────────
 
+	// ── Free tier: grouped left nav + right form ────────────────────────────────
+
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	const groupedTypes = useMemo( () => {
+		const groups = {};
+		publicObjectTypes.forEach( ( obj ) => {
+			const src = obj.source || '';
+			if ( ! groups[ src ] ) {
+				groups[ src ] = [];
+			}
+			groups[ src ].push( obj );
+		} );
+		return Object.entries( groups )
+			.sort( ( [ a ], [ b ] ) => {
+				if ( a === 'WordPress' ) { return -1; }
+				if ( b === 'WordPress' ) { return 1; }
+				if ( a === '' ) { return 1; }
+				if ( b === '' ) { return -1; }
+				return a.localeCompare( b );
+			} )
+			.map( ( [ source, items ] ) => ( { source, items } ) );
+	}, [ publicObjectTypes ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
 	return (
-		<Stack gap={4} direction={{xs:'column', xl: 'row'}} p={ 4 }>
-            
-            <Stack spacing={ 3 } minWidth={600} flex={1}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" gap={ 1 }>
-                    <Typography variant="subtitle1" fontWeight={ 600 }>
-                        { __( 'Set Collections Per Page And Order', 'rest-api-firewall' ) }
-                    </Typography>
-                    { isPro && (
-                        <Button
-                            size="small"
-                            variant="contained"
-                            disableElevation
-                            disabled={ ( ! hasDragged && ! proSettingsDirty ) || savingProOrder }
-                            onClick={ handleSavePro }
-                        >
-                            { savingProOrder ? __( 'Saving…', 'rest-api-firewall' ) : __( 'Save Settings', 'rest-api-firewall' ) }
-                        </Button>
-                    ) }
-                </Stack>
-                <ObjectTypeSelect
-                    types={ [ 'post_type', 'taxonomy' ] }
-                    visibility={ [ 'public' ] }
-                    isSingle
-                    name="collection_object_type_select"
-                    label={ __( 'Select Post Type Or Taxonomy', 'rest-api-firewall' ) }
-                    value={ selectedType }
-                    onChange={ handleTypeChange }
-                    sx={ { maxWidth: 320} }
-                />
+		<Stack direction="row" sx={ { height: '100%', flexGrow: 1, overflow: 'hidden' } }>
 
-                { selectedType && (
-                    <Stack spacing={ 2 } pl={ 3 }>
-                        <FormControl>
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        checked={ !! ( form.rest_collection_per_page_settings?.[ selectedType ]?.enabled ) }
-                                        onChange={ ( e ) => handlePerPageSettingChange( 'enabled', e.target.checked ) }
-                                        size="small"
-                                    />
-                                }
-                                label={ sprintf( __( 'Enforce %s Items Per Page', 'rest-api-firewall' ), objectLabel) }
-                            />
-                            <FormHelperText>
-                                { sprintf( __( 'Override the per_page parameter on `%s` collection requests.', 'rest-api-firewall' ), objectLabel ) }
-                            </FormHelperText>
-                        </FormControl>
+			{ /* Left nav */ }
+			<Box sx={ { width: 220, flexShrink: 0, borderRight: 1, borderColor: 'divider', overflowY: 'auto', py: 1 } }>
+				<List dense disablePadding>
+					{ groupedTypes.map( ( { source, items } ) => (
+						<li key={ source }>
+							<ul style={ { padding: 0, margin: 0, listStyle: 'none' } }>
+								{ source && (
+									<ListSubheader sx={ { lineHeight: '28px', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 700 } }>
+										{ source }
+									</ListSubheader>
+								) }
+								{ items.map( ( obj ) => {
+									const typeSettings    = ( form?.rest_collection_per_page_settings || {} )[ obj.value ] || {};
+									const typeOrder       = ( form?.rest_collection_orders || {} )[ obj.value ] || [];
+									const hasPerPage      = !! typeSettings.enabled;
+									const hasOrder        = Array.isArray( typeOrder ) && typeOrder.length > 0;
+									const hasEnforceOrder = !! typeSettings.enforce_order;
+									const isSelected      = selectedType === obj.value;
+									return (
+										<ListItemButton
+											key={ obj.value }
+											dense
+											selected={ isSelected }
+											onClick={ () => setSelectedType( obj.value ) }
+											sx={ { borderRadius: 1, mx: 0.5, px: 1, py: 0.75 } }
+										>
+											<Stack width="100%" gap={ 0.5 }>
+												<Stack direction="row" alignItems="center" justifyContent="space-between" gap={ 0.5 }>
+													<Stack direction="row" alignItems="center" gap={ 0.75 } flex={ 1 } minWidth={ 0 }>
+														<Typography variant="body2" noWrap fontWeight={ isSelected ? 600 : 400 }>
+															{ obj.label }
+														</Typography>
+														<Chip
+															label={ obj.value }
+															size="small"
+															variant="outlined"
+															sx={ { fontFamily: 'monospace', fontSize: '0.6rem', height: 16, flexShrink: 0 } }
+														/>
+													</Stack>
+													<Chip
+														label={ obj.count ?? 0 }
+														size="small"
+														color={ isSelected ? 'primary' : 'default' }
+														sx={ { fontWeight: 700, fontSize: '0.7rem', height: 18, minWidth: 28, flexShrink: 0 } }
+													/>
+												</Stack>
+												{ ( hasPerPage || hasOrder || hasEnforceOrder ) && (
+													<Stack direction="row" flexWrap="wrap" gap={ 0.5 }>
+														{ hasPerPage && (
+															<Chip size="small" color={ isSelected ? 'primary' : 'default' } variant="outlined"
+																label={ sprintf( __( '%d/pg', 'rest-api-firewall' ), typeSettings.items_per_page || 25 ) }
+																sx={ { fontSize: '0.6rem', height: 14 } }
+															/>
+														) }
+														{ hasOrder && (
+															<Chip size="small" color={ isSelected ? 'primary' : 'default' } variant="outlined"
+																label={ __( 'ordered', 'rest-api-firewall' ) }
+																sx={ { fontSize: '0.6rem', height: 14 } }
+															/>
+														) }
+														{ hasEnforceOrder && (
+															<Chip size="small" color={ isSelected ? 'primary' : 'default' } variant="outlined"
+																label={ __( 'enforced', 'rest-api-firewall' ) }
+																sx={ { fontSize: '0.6rem', height: 14 } }
+															/>
+														) }
+													</Stack>
+												) }
+											</Stack>
+										</ListItemButton>
+									);
+								} ) }
+							</ul>
+						</li>
+					) ) }
+				</List>
+			</Box>
 
-                        <TextField
-                            label={ sprintf( __( '`%s` Items Per Page', 'rest-api-firewall' ), objectLabel ) }
-                            type="number"
-                            min="1"
-                            max="100"
-                            size="small"
-                            disabled={ ! ( form.rest_collection_per_page_settings?.[ selectedType ]?.enabled ) }
-                            value={ form.rest_collection_per_page_settings?.[ selectedType ]?.items_per_page || 25 }
-                            onChange={ ( e ) => handlePerPageSettingChange( 'items_per_page', parseInt( e.target.value, 10 ) || 25 ) }
-                            sx={ { maxWidth: 200 } }
-                        />
+			{ /* Right form */ }
+			<Stack flex={ 1 } p={ 4 } spacing={ 3 } overflow="auto">
+				<Stack direction="row" alignItems="center" justifyContent="space-between" gap={ 1 }>
+					<Typography variant="subtitle1" fontWeight={ 600 }>
+						{ selectedType
+							? sprintf( __( '%s — Per Page & Order', 'rest-api-firewall' ), objectLabel )
+							: __( 'Set Collections Per Page And Order', 'rest-api-firewall' ) }
+					</Typography>
+					<Button
+						size="small"
+						variant="contained"
+						disableElevation
+						disabled={ isPro
+							? ( ( ! hasDragged && ! proSettingsDirty ) || savingProOrder )
+							: ( ( ! hasDragged && ! proSettingsDirty ) || savingOptions )
+						}
+						onClick={ isPro ? handleSavePro : handleSaveFree }
+					>
+						{ ( isPro ? savingProOrder : savingOptions ) ? __( 'Saving…', 'rest-api-firewall' ) : __( 'Save', 'rest-api-firewall' ) }
+					</Button>
+				</Stack>
 
-                        <Stack spacing={ 2 }>
-                            { fetchError && <Alert severity="error">{ fetchError }</Alert> }
-                            <FormControl maxWidth={ 300 }>
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={ !! ( form.rest_collection_per_page_settings?.[ selectedType ]?.enforce_order ) }
-                                            onChange={ ( e ) => handlePerPageSettingChange( 'enforce_order', e.target.checked ) }
-                                            size="small"
-                                        />
-                                    }
-                                    label={ sprintf( __( 'Enforce %s Items Order', 'rest-api-firewall' ), objectLabel) }
-                                />
-                                <FormHelperText>
-                                    { sprintf( __( 'Override the order_by parameter on `%s` collection requests.', 'rest-api-firewall' ), objectLabel ) }<br />
-                                    { sprintf( __( 'If disabled, use `menu_order` as order by parameter.', 'rest-api-firewall' ), objectLabel ) }
-                                </FormHelperText>
-                            </FormControl>
+				{ selectedType && (
+					<Stack spacing={ 2 }>
+						<FormControl>
+							<FormControlLabel
+								control={
+									<Switch
+										checked={ !! ( form.rest_collection_per_page_settings?.[ selectedType ]?.enabled ) }
+										onChange={ ( e ) => handlePerPageSettingChange( 'enabled', e.target.checked ) }
+										size="small"
+									/>
+								}
+								label={ sprintf( __( 'Enforce %s Items Per Page', 'rest-api-firewall' ), objectLabel ) }
+							/>
+							<FormHelperText>
+								{ sprintf( __( 'Override the per_page parameter on `%s` collection requests.', 'rest-api-firewall' ), objectLabel ) }
+							</FormHelperText>
+						</FormControl>
 
-                            <Stack direction="row" alignItems="center" flexWrap="wrap" justifyContent="space-between" gap={ 1 }>
+						<TextField
+							label={ sprintf( __( '`%s` Items Per Page', 'rest-api-firewall' ), objectLabel ) }
+							type="number"
+							min="1"
+							max="100"
+							size="small"
+							disabled={ ! ( form.rest_collection_per_page_settings?.[ selectedType ]?.enabled ) }
+							value={ form.rest_collection_per_page_settings?.[ selectedType ]?.items_per_page || 25 }
+							onChange={ ( e ) => handlePerPageSettingChange( 'items_per_page', parseInt( e.target.value, 10 ) || 25 ) }
+							sx={ { maxWidth: 200 } }
+						/>
+
+						<Stack spacing={ 2 }>
+							{ fetchError && <Alert severity="error">{ fetchError }</Alert> }
+							<FormControl>
+								<FormControlLabel
+									control={
+										<Switch
+											checked={ !! ( form.rest_collection_per_page_settings?.[ selectedType ]?.enforce_order ) }
+											onChange={ ( e ) => handlePerPageSettingChange( 'enforce_order', e.target.checked ) }
+											size="small"
+																				disabled={ resetting }
+									/>
+									}
+									label={ sprintf( __( 'Enforce %s Items Order', 'rest-api-firewall' ), objectLabel ) }
+								/>
+								<FormHelperText>
+									{ sprintf( __( 'Override the order_by parameter on `%s` collection requests.', 'rest-api-firewall' ), objectLabel ) }<br />
+									{ sprintf( __( 'If disabled, use `menu_order` as order by parameter.', 'rest-api-firewall' ), objectLabel ) }
+								</FormHelperText>
+							</FormControl>
+
+							<Stack direction="row" alignItems="center" flexWrap="wrap" justifyContent="space-between" gap={ 1 }>
 								{ needsPagination && (
 									<TablePagination
 										component="div"
@@ -668,118 +841,67 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 
 								<Stack flex={ 1 } />
 								<Tooltip disableInteractive title={ __( 'Undo Current Changes', 'rest-api-firewall' ) }>
-								<Button
-                                    size="small"
-                                    variant="text"
-									startIcon={ <UndoIcon /> }
-                                    disabled={ ! hasDragged || ! originalMasterOrder.length }
-                                    onClick={ () => {
-										dispatch( { type: 'UNDO', typeKey: selectedType } );
-										syncOrderField( originalMasterOrder );
-									} }
-                                >
-                                    { __( 'Undo', 'rest-api-firewall' ) }
-                                </Button>
+									<Button
+										size="small"
+										variant="text"
+										startIcon={ <UndoIcon /> }
+										disabled={ ! hasDragged || ! originalMasterOrder.length }
+										onClick={ () => {
+											dispatch( { type: 'UNDO', typeKey: selectedType } );
+											syncOrderField( originalMasterOrder );
+										} }
+									>
+										{ __( 'Undo', 'rest-api-firewall' ) }
+									</Button>
 								</Tooltip>
-
 
 								<Tooltip disableInteractive title={ __( 'Restore WordPress Default Order', 'rest-api-firewall' ) }>
-								<Button
-                                    size="small"
-                                    variant="text"
-									color="error"
-                                    startIcon={ <SettingsBackupRestoreIcon /> }
-                                    disabled={ ! ( form.rest_collection_orders?.[ selectedType ]?.length > 0 ) || loading || loadingIds || resetting || savingOptions }
-                                    onClick={ handleReset }
-                                >
-                                    { resetting ? __( 'Resetting…', 'rest-api-firewall' ) : sprintf( __( 'Restore', 'rest-api-firewall' ), objectLabel ) }
-                                </Button>
+									<Button
+										size="small"
+										variant="text"
+										color="error"
+										startIcon={ <SettingsBackupRestoreIcon /> }
+										disabled={ ! ( form.rest_collection_orders?.[ selectedType ]?.length > 0 ) || loading || loadingIds || resetting || savingOptions }
+										onClick={ handleReset }
+									>
+										{ resetting ? __( 'Resetting…', 'rest-api-firewall' ) : sprintf( __( 'Restore', 'rest-api-firewall' ), objectLabel ) }
+									</Button>
 								</Tooltip>
-                            </Stack>
+							</Stack>
 
-                            <Box sx={ { display: 'flex', flexDirection: 'row', alignItems: 'stretch', gap: 0.75 } }>
-
-                                { needsPagination && (
-                                    <PageDropZone
-                                        direction="prev"
-                                        disabled={ page === 0 }
-                                        onDrop={ handleCrossPageMove }
-                                        setPage={ setPage }
-                                    />
-                                ) }
-
-                                <Box sx={ { flex: 1, minWidth: 0 } }>
-                                    <PostOrderList
-                                        items={ currentPageItems }
-                                        orderedIds={ masterOrder }
-                                        originalOrderedIds={ originalMasterOrder }
-                                        objectKind={ objectKind }
-                                        loading={ loading || loadingIds }
-                                        onReorder={ handleReorder }
-                                        singleItem={ singleItem }
-                                    />
-                                </Box>
-
-                                { needsPagination && (
-                                    <PageDropZone
-                                        direction="next"
-                                        disabled={ isLastPage }
-                                        onDrop={ handleCrossPageMove }
-                                        setPage={ setPage }
-                                    />
-                                ) }
-
-                            </Box>
-                        </Stack>
-                    </Stack>
-                ) }
-            </Stack>
-
-            <Stack spacing={ 2 } sx={{ width:300 }} >
-                <Typography variant="subtitle1" fontWeight={ 600 }>
-                    { __( 'Current Settings', 'rest-api-firewall' ) }
-                </Typography>
-                { publicObjectTypes.length > 0 && (
-                    <Stack spacing={ 1 } maxWidth="100%" overflow="hidden">
-                        { publicObjectTypes.map( ( obj ) => {
-                            const typeSettings = ( form?.rest_collection_per_page_settings || {} )[ obj.value ] || {};
-                            const typeOrder = ( form?.rest_collection_orders || {} )[ obj.value ] || [];
-                            const hasPerPage = !! typeSettings.enabled;
-                            const hasOrder = Array.isArray( typeOrder ) && typeOrder.length > 0;
-                            const hasEnforceOrder = !! typeSettings.enforce_order;
-                            const isSelected = selectedType === obj.value;
-
-                            return (
-                                <Stack key={ obj.value } sx={{p:1, mb:1, bgcolor: 'grey.100', borderRadius: 0.5}} maxWidth="100%" direction="row" flexWrap="wrap" gap={ 1 }>
-                                    <Typography variant="body2" color={ isSelected ? 'primary.main' : 'text.primary' } fontWeight={ isSelected ? 600 : 500 }>
-                                        { obj.label }
-                                    </Typography>
-                                    { hasPerPage && <Chip
-                                        size="small"
-                                        color={ isSelected ? 'primary' : 'default' }
-                                        variant="outlined"
-                                        label={sprintf( __( 'Per page: %d', 'rest-api-firewall' ), typeSettings.items_per_page || 25 ) }
-                                            
-                                    />}
-                                    { hasOrder && <Chip
-                                        size="small"
-                                        color={ isSelected ? 'primary' : 'default' }
-                                        variant="outlined"
-                                        label={ __( 'Order set', 'rest-api-firewall' ) }
-                                    />}
-                                    { hasEnforceOrder && <Chip
-                                        size="small"
-                                        color={ isSelected ? 'primary' : 'default' }
-                                        variant="outlined"
-                                        label={  __( 'Order enforced', 'rest-api-firewall' )}
-                                    />}
-                                </Stack>
-                            );
-                        } ) }
-                    </Stack>
-                ) }
-            </Stack>
-                
+							<Box sx={ { display: 'flex', flexDirection: 'row', alignItems: 'stretch', gap: 0.75 } }>
+								{ needsPagination && (
+									<PageDropZone
+										direction="prev"
+										disabled={ page === 0 }
+										onDrop={ handleCrossPageMove }
+										setPage={ setPage }
+									/>
+								) }
+								<Box sx={ { flex: 1, minWidth: 0 } }>
+									<PostOrderList
+										items={ currentPageItems }
+										orderedIds={ masterOrder }
+										originalOrderedIds={ originalMasterOrder }
+										objectKind={ objectKind }
+										loading={ loading || loadingIds }
+										onReorder={ handleReorder }
+										singleItem={ singleItem }
+									/>
+								</Box>
+								{ needsPagination && (
+									<PageDropZone
+										direction="next"
+										disabled={ isLastPage }
+										onDrop={ handleCrossPageMove }
+										setPage={ setPage }
+									/>
+								) }
+							</Box>
+						</Stack>
+					</Stack>
+				) }
+			</Stack>
 		</Stack>
 	);
 }

@@ -244,6 +244,55 @@ export default function RestApiSingleUser( { form, setField } ) {
 					<JwtConfig config={ jwtConfig } onChange={ handleJwtConfigChange } />
 				) }
 			</Stack>
+
+			<Divider />
+
+		<Stack spacing={ 3 }>
+
+			<Stack direction="row" alignItems="flex-start" justifyContent="space-between">
+					<Box>
+						<Typography variant="subtitle1" fontWeight={ 600 }>
+							{ __( 'Rate Limit', 'rest-api-firewall' ) }
+						</Typography>
+					</Box>
+					<FormControlLabel
+						control={
+							<Switch
+								size="small"
+								checked={ rateLimitFields.rateLimitEnabled }
+								onChange={ ( e ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitEnabled: e.target.checked } ) ) }
+							/>
+						}
+						label={ __( 'Enable', 'rest-api-firewall' ) }
+						sx={ { m: 0 } }
+					/>
+				</Stack>
+
+				<RateLimitFields
+					values={ {
+						max_requests:    rateLimitFields.rateLimitRequests,
+						window_seconds:  rateLimitFields.rateLimitWindow,
+						release_seconds: rateLimitFields.rateLimitReleaseSeconds,
+						blacklist_after: rateLimitFields.rateLimitBlacklistAfter,
+						blacklist_window: rateLimitFields.rateLimitBlacklistWindow,
+						enabled:         rateLimitFields.rateLimitEnabled,
+					} }
+					onChange={ ( key, val ) => {
+						const setters = {
+							max_requests:    ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitRequests: v } ) ),
+							window_seconds:  ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitWindow: v } ) ),
+							release_seconds: ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitReleaseSeconds: v } ) ),
+							blacklist_after: ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitBlacklistAfter: v } ) ),
+							blacklist_window: ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitBlacklistWindow: v } ) ),
+							enabled:         ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitEnabled: v } ) ),
+						};
+						if ( setters[ key ] ) {
+							setters[ key ]?.( val );
+						}
+					} }
+				/>
+
+			</Stack>
 	
 			<Divider />
 
@@ -321,54 +370,7 @@ export default function RestApiSingleUser( { form, setField } ) {
 			</Stack>
 		) }
 
-		<Divider />
-
-		<Stack spacing={ 3 }>
-
-			<Stack direction="row" alignItems="flex-start" justifyContent="space-between">
-					<Box>
-						<Typography variant="subtitle1" fontWeight={ 600 }>
-							{ __( 'Rate Limit', 'rest-api-firewall' ) }
-						</Typography>
-					</Box>
-					<FormControlLabel
-						control={
-							<Switch
-								size="small"
-								checked={ rateLimitFields.rateLimitEnabled }
-								onChange={ ( e ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitEnabled: e.target.checked } ) ) }
-							/>
-						}
-						label={ __( 'Enable', 'rest-api-firewall' ) }
-						sx={ { m: 0 } }
-					/>
-				</Stack>
-
-				<RateLimitFields
-					values={ {
-						max_requests:    rateLimitFields.rateLimitRequests,
-						window_seconds:  rateLimitFields.rateLimitWindow,
-						release_seconds: rateLimitFields.rateLimitReleaseSeconds,
-						blacklist_after: rateLimitFields.rateLimitBlacklistAfter,
-						blacklist_window: rateLimitFields.rateLimitBlacklistWindow,
-						enabled:         rateLimitFields.rateLimitEnabled,
-					} }
-					onChange={ ( key, val ) => {
-						const setters = {
-							max_requests:    ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitRequests: v } ) ),
-							window_seconds:  ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitWindow: v } ) ),
-							release_seconds: ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitReleaseSeconds: v } ) ),
-							blacklist_after: ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitBlacklistAfter: v } ) ),
-							blacklist_window: ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitBlacklistWindow: v } ) ),
-							enabled:         ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitEnabled: v } ) ),
-						};
-						if ( setters[ key ] ) {
-							setters[ key ]?.( val );
-						}
-					} }
-				/>
-
-			</Stack>
+		
 		</Stack>
 	);
 }

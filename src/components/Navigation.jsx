@@ -44,11 +44,10 @@ import ShieldIcon from '@mui/icons-material/Shield';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import PendingOutlinedIcon from '@mui/icons-material/PendingOutlined';
 
-
 import { useNavigation } from '../contexts/NavigationContext';
 import { useEntryToolbarContext } from '../contexts/EntryToolbarContext';
 import AppIdentity from './AppIdentity';
-import ApplicationSelector, { listItemIconSx } from './ApplicationSelector';
+import ApplicationSelector from './ApplicationSelector';
 import Documentation from './Documentation/Documentation';
 import PanelBreadcrumb from './shared/PanelBreadcrumb';
 
@@ -158,13 +157,10 @@ export default function Navigation( {
 			hidden: true,
 		},
 		{ type: 'app-selector', hideWhenNoApps: false },
-
-		// Metadata-only entries for breadcrumb resolution (not rendered in drawer).
-		// These panels are accessed via ApplicationSelector in pro tier.
-		{ key: 'per-route-settings', label: __( 'Routes',       'rest-api-firewall' ), breadcrumbPrefix: 'REST API Firewall', icon: AccountTreeOutlinedIcon,  hidden: true },
-		{ key: 'user-rate-limiting', label: __( 'Users',        'rest-api-firewall' ), breadcrumbPrefix: 'REST API Firewall', icon: SmartToyOutlinedIcon,    hidden: true },
-		{ key: 'collections',        label: __( 'Collections',  'rest-api-firewall' ), breadcrumbPrefix: 'REST API Output',   icon: ApiIcon,                  hidden: true },
-		{ key: 'models-properties',  label: __( 'Properties',   'rest-api-firewall' ), breadcrumbPrefix: 'REST API Output',   icon: RuleOutlinedIcon,         hidden: true },
+		{ key: 'per-route-settings', label: __( 'Routes',       'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', icon: AccountTreeOutlinedIcon,  hidden: true },
+		{ key: 'user-rate-limiting', label: __( 'Users',        'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', icon: SmartToyOutlinedIcon,    hidden: true },
+		{ key: 'collections',        label: __( 'Collections',  'rest-api-firewall' ), breadcrumbPrefix: 'Output',   icon: ApiIcon,                  hidden: true },
+		{ key: 'models-properties',  label: __( 'Properties',   'rest-api-firewall' ), breadcrumbPrefix: 'Output',   icon: RuleOutlinedIcon,         hidden: true },
 		{ key: 'automations',        label: __( 'Automations',  'rest-api-firewall' ), breadcrumbPrefix: 'Integrations',      icon: AutoFixHighOutlinedIcon,  hidden: true },
 		{ key: 'webhook',            label: __( 'Webhooks',     'rest-api-firewall' ), breadcrumbPrefix: 'Integrations',      icon: WebhookIcon,              hidden: true },
 		{ key: 'emails',             label: __( 'Emails',       'rest-api-firewall' ), breadcrumbPrefix: 'Integrations',      icon: EmailOutlined,            hidden: true },
@@ -518,7 +514,7 @@ export default function Navigation( {
 								buttonText="Doc."
 							/>
 
-							{ showSaveButton && (
+							{ showSaveButton && hasValidLicense && (
 								<Box>
 									<Button
 										variant="contained"

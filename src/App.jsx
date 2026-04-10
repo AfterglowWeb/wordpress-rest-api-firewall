@@ -236,12 +236,14 @@ function AppContent() {
 					{ editorOpen && <EntryToolbar { ...toolbarConfig } /> }
 
 					{ hasValidLicense && panel === 'applications' && <Applications /> }
-				{ panel === 'firewall_auth_rate' && (
-					<RestApiSingleUser
-						form={ form }
-						setField={ setField }
-					/>
-				) }
+					
+					{ panel === 'firewall_auth_rate' && (
+						<RestApiSingleUser
+							form={ form }
+							setField={ setField }
+						/>
+					) }
+					
 					{ panel === 'user-rate-limiting' && (
 						<>
 							{ hasValidLicense ? (

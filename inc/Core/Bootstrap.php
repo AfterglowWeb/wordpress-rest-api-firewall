@@ -25,6 +25,7 @@ use cmk\RestApiFirewall\Webhook\WebhookAutoTrigger;
 use cmk\RestApiFirewall\Webhook\InboundWebhookReceiver;
 use cmk\RestApiFirewall\Collections\CollectionOrderController;
 use cmk\RestApiFirewall\Collections\CollectionsRouter;
+use cmk\RestApiFirewall\Core\ObjectTypeSourceTracker;
 
 final class Bootstrap {
 
@@ -60,6 +61,7 @@ final class Bootstrap {
 		CollectionOrderController::get_instance();
 
 		if ( is_admin() ) {
+			ObjectTypeSourceTracker::init();
 			CoreOptionsService::get_instance();
 			AdminPage::get_instance();
 			Documentation::get_instance();
