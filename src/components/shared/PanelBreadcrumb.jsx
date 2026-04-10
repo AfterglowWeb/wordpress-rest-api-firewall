@@ -17,16 +17,6 @@ const linkSx = {
     '&:hover': { textDecoration: 'underline', bgcolor: 'transparent' },
 };
 
-/**
- * Renders a breadcrumb row: [App name] / [label]
- *
- * - showAppLink: show the selected application as a clickable parent link.
- * - navigable:   when true, `label` is rendered as a Button that navigates
- *                back to the current panel (strips the subKey).
- *                When false (default), `label` is plain text — use this in
- *                the top-level AppBar where the user is already at the panel.
- * - disabled:    disables all interactive elements (e.g. while saving).
- */
 export default function PanelBreadcrumb( {
     label = null,
     navigable = false,
@@ -47,6 +37,7 @@ export default function PanelBreadcrumb( {
                 <Button
                     disabled={ disabled }
                     variant="text"
+                    color="primary"
                     onClick={ () => navigateGuarded( 'applications', selectedApplicationId ) }
                     sx={ { ...linkSx, cursor: disabled ? 'default' : 'pointer' } }
                 >
@@ -69,6 +60,7 @@ export default function PanelBreadcrumb( {
                 ) : (
                     <Typography
                         sx={ {
+                            color: 'text.primary',
                             fontSize: '12px',
                             display: 'block',
                             lineHeight: 'normal',

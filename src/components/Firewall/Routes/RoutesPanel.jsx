@@ -111,11 +111,6 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
 		loadAppSettings();
 	}, [ loadAppSettings ] );
 
-	/**
-	 * Effective global values for the route tree.
-	 * In pro mode these come from per-application proSettings; in free mode from wp_options form.
-	 * Rate-limit thresholds (rate_limit, rate_limit_time) are always global (wp_options).
-	 */
 	const effectiveForm = hasValidLicense ? {
 		...form,
 		enforce_auth:        proSettings.enforce_auth,
@@ -152,9 +147,9 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
 
 			{ currentTab === 0 && (
 				<Stack spacing={ 3 }>
-					<Alert severity="info" sx={ { maxWidth: 640 } }>
+					{hasValidLicense && <Alert severity="info" sx={ { maxWidth: 640 } }>
 						{ __( 'These settings apply globally to all routes. They can be overridden on a per-route basis in the "Per Route Settings" tab.', 'rest-api-firewall' ) }
-					</Alert>
+					</Alert>}
 					<GlobalRoutesPolicy
 						form={ form }
 						setField={ setField }

@@ -4,6 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Core\Permissions;
 use cmk\RestApiFirewall\Core\CoreOptions;
+use cmk\RestApiFirewall\Firewall\Firewall;
 use cmk\RestApiFirewall\Policy\PolicyRuntime;
 use cmk\RestApiFirewall\Policy\PolicyRepository;
 use WP_REST_Request;
@@ -40,6 +41,8 @@ class TestPolicy {
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		$this->current_test_application_id = $application_id;
+
+		$this->cleanup_test_app_passwords();
 
 		if ( empty( $route ) ) {
 			wp_send_json_error( array( 'message' => 'Route is required' ), 400 );
@@ -143,8 +146,10 @@ class TestPolicy {
 					'auth'       => $this->test_auth( $route, $method, $policy ),
 					'rate_limit' => $this->test_rate_limit( $route, $method, $policy ),
 				),
-				'raw_data'     => $this->fetch_data( $route, $method, false ),
-				'result_data'  => $this->fetch_data( $route, $method, $use_auth_for_result ),
+				'raw_data'     => $this->fetch_data( $route, $method ),
+				'result_data'  => $use_auth_for_result
+					? $this->fetch_data_internal( $route, $method )
+					: $this->fetch_data( $route, $method ),
 			);
 
 			$model = $this->get_model_for_route( $route );
@@ -205,8 +210,8 @@ class TestPolicy {
 		return null;
 	}
 
-	protected function fetch_data( string $route, string $method, bool $with_auth ): array {
-		$response    = $this->make_request( $route, $method, $with_auth );
+	protected function fetch_data( string $route, string $method ): array {
+		$response    = $this->make_request( $route, $method );
 		$status_code = wp_remote_retrieve_response_code( $response );
 		$body_raw    = wp_remote_retrieve_body( $response );
 		$body        = json_decode( $body_raw, true );
@@ -270,7 +275,7 @@ class TestPolicy {
 			? 'global + per-route'
 			: ( $enforce_auth_global ? 'global — all routes enforced' : 'per-route policy' );
 
-		$response    = $this->make_request( $route, $method, false );
+		$response    = $this->make_request( $route, $method );
 		$status_code = wp_remote_retrieve_response_code( $response );
 		$expected    = 401;
 		$pass        = $status_code === $expected;
@@ -306,7 +311,7 @@ class TestPolicy {
 			);
 		}
 
-		$response    = $this->make_request( $route, $method, false );
+		$response    = $this->make_request( $route, $method );
 		$status_code = wp_remote_retrieve_response_code( $response );
 
 		return array(
@@ -319,7 +324,7 @@ class TestPolicy {
 		);
 	}
 
-	protected function make_request( string $route, string $method, bool $with_auth = false ) {
+	protected function make_request( string $route, string $method ) {
 		$test_token = wp_generate_password( 32, false );
 		$test_ctx   = array( 'app_id' => null );
 		if ( ! empty( $this->current_test_application_id ) ) {
@@ -344,60 +349,55 @@ class TestPolicy {
 			),
 		);
 
-		if ( $with_auth ) {
-			$user_id = CoreOptions::read_option( 'user_id' );
-			if ( $user_id ) {
-				$user = get_user_by( 'id', $user_id );
-				if ( $user ) {
-					$app_pass = $this->get_or_create_test_app_password( $user_id );
-					if ( $app_pass ) {
-						// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Used for encoding API response data, not obfuscation
-						$args['headers']['Authorization'] = 'Basic ' . base64_encode( $user->user_login . ':' . $app_pass );
-					}
-				}
-			}
-		}
-
 		$response = wp_remote_request( $url, $args );
 
 		return $response;
 	}
 
-	protected function get_or_create_test_app_password( int $user_id ): ?string {
-		$transient_key = 'rest_firewall_test_app_pass_' . $user_id;
-		$cached        = get_transient( $transient_key );
+	protected function fetch_data_internal( string $route, string $method ): array {
+		$user_id = (int) CoreOptions::read_option( 'firewall_user_id' );
 
-		if ( $cached ) {
-			return $cached;
+		if ( ! $user_id ) {
+			return array( 'status' => null, 'body' => null );
 		}
 
+		$prev_user_id = get_current_user_id();
+		wp_set_current_user( $user_id );
+		Firewall::begin_internal_test( $user_id, $this->current_test_application_id ?: null );
+
+		try {
+			$request  = new WP_REST_Request( $method, $route );
+			$response = rest_do_request( $request );
+			$body     = rest_get_server()->response_to_data( $response, false );
+
+			return array(
+				'status' => $response->get_status(),
+				'body'   => $body,
+			);
+		} finally {
+			Firewall::end_internal_test();
+			wp_set_current_user( $prev_user_id );
+		}
+	}
+
+	private function cleanup_test_app_passwords(): void {
 		if ( ! class_exists( 'WP_Application_Passwords' ) ) {
-			return null;
+			return;
 		}
 
-		$app_name = 'Firewall Policy Test';
+		$user_id = (int) CoreOptions::read_option( 'firewall_user_id' );
+		if ( ! $user_id ) {
+			return;
+		}
 
+		delete_transient( 'rest_firewall_test_app_pass_' . $user_id );
+
+		$app_name  = 'Firewall Policy Test';
 		$passwords = \WP_Application_Passwords::get_user_application_passwords( $user_id );
 		foreach ( $passwords as $pass_data ) {
 			if ( $pass_data['name'] === $app_name ) {
 				\WP_Application_Passwords::delete_application_password( $user_id, $pass_data['uuid'] );
-				break;
 			}
 		}
-
-		$result = \WP_Application_Passwords::create_new_application_password(
-			$user_id,
-			array( 'name' => $app_name )
-		);
-
-		if ( is_wp_error( $result ) ) {
-			return null;
-		}
-
-		$password = $result[0];
-
-		set_transient( $transient_key, $password, 5 * MINUTE_IN_SECONDS );
-
-		return $password;
 	}
 }

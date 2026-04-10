@@ -28,10 +28,6 @@ import WebhookIcon from '@mui/icons-material/Webhook';
 export const listItemIconSx = { px: 1, minWidth: 32, color: 'text.secondary' };
 export const listItemTextSx = { '& .MuiListItemText-primary': { fontSize: '0.9rem', lineHeight: 'normal' } };
 
-/**
- * Per-application module items shown nested under the active application
- * (or disabled under "No application" when none is selected).
- */
 const MODULE_ITEMS = [
 	{ key: 'per-route-settings', label: 'Routes',      Icon: AccountTreeOutlinedIcon },
 	{ key: 'user-rate-limiting', label: 'Users',       Icon: SmartToyOutlinedIcon },
@@ -52,10 +48,6 @@ export default function ApplicationSelector() {
 		setSelectedApplicationId,
 	} = useApplication();
 	const { navigateGuarded, panel, subKey } = useNavigation();
-
-	// Free tier: collapsed by default.
-	// Pro + no apps: expanded so user sees "New Application".
-	// Pro + apps: collapsed by default.
 	const [ open, setOpen ] = useState( () => hasValidLicense && applications.length === 0 );
 	const [ snackOpen, setSnackOpen ] = useState( false );
 
@@ -103,7 +95,7 @@ export default function ApplicationSelector() {
 
 			<Collapse in={ open } timeout="auto" unmountOnExit>
 
-				{ /* Pro: app navigation links */ }
+				{ /* App navigation links */ }
 				{ hasValidLicense && (
 					<List component="div" disablePadding>
 						<ListItemButton
@@ -131,7 +123,7 @@ export default function ApplicationSelector() {
 					</List>
 				) }
 
-				{ /* Active app / No application placeholder */ }
+				{ /* No app placeholder */ }
 				<ListItemButton
 					disabled={ ! selectedApplicationId }
 					selected={ !! selectedApplicationId && panel === 'applications' && !! subKey }
@@ -146,7 +138,7 @@ export default function ApplicationSelector() {
 					<ListItemText sx={ listItemTextSx } primary={ appLabel } />
 				</ListItemButton>
 
-				{ /* Per-app module items */ }
+				{ /* Per app module items */ }
 				<List component="div" disablePadding>
 					{ MODULE_ITEMS.map( ( { key, label, Icon } ) => (
 						<Tooltip
