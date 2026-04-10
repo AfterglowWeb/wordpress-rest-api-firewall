@@ -54,7 +54,8 @@ class PolicyRuntime {
 
 		$effective = self::resolve_settings(
 			$node_settings,
-			$route_settings
+			$route_settings,
+			self::is_wordpress_core_route( $route )
 		);
 
 		// Apply global disable flags (mirrors frontend NodeContent logic).
@@ -150,7 +151,7 @@ class PolicyRuntime {
 		return array();
 	}
 
-	protected static function resolve_settings( array $node_settings_chain, array $route_settings ): array {
+	protected static function resolve_settings( array $node_settings_chain, array $route_settings, bool $is_core_route = true ): array {
 
 		$firewall_options = CoreOptions::read_options();
 
@@ -182,7 +183,7 @@ class PolicyRuntime {
 
 		$final = self::merge_settings( $resolved, $route_settings );
 
-		if ( $global_enforce_auth ) {
+		if ( $global_enforce_auth && $is_core_route ) {
 			$final['protect'] = true;
 		}
 
@@ -198,6 +199,17 @@ class PolicyRuntime {
 			'rate_limit_time' => $final['rate_limit_time'],
 			'tags'            => $final['tags'] ?? array(),
 		);
+	}
+
+	/**
+	 * Returns true when $route belongs to the WordPress core REST API namespaces
+	 * (wp, oembed, batch, wp-site-health). Non-core routes (e.g. WooCommerce /wc/v3,
+	 * plugin routes) are excluded from global auth enforcement.
+	 */
+	public static function is_wordpress_core_route( string $route ): bool {
+		$segments  = explode( '/', ltrim( $route, '/' ) );
+		$namespace = $segments[0] ?? '';
+		return in_array( $namespace, array( 'wp', 'oembed', 'batch', 'wp-site-health' ), true );
 	}
 
 	private static function merge_settings( array $base, array $override ): array {

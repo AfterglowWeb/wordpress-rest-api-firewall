@@ -2,6 +2,8 @@ import { useState, useEffect } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
 import { useLicense } from '../../../contexts/LicenseContext';
 import { useApplication } from '../../../contexts/ApplicationContext';
+import CopyButton from '../../shared/CopyButton';
+import DownloadJsonButton from '../../shared/DownloadJsonButton';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -9,6 +11,9 @@ import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
 import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
@@ -22,6 +27,7 @@ import Toolbar from '@mui/material/Toolbar';
 
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import CloseIcon from '@mui/icons-material/Close';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
@@ -35,7 +41,10 @@ function StatusBadge( { status } ) {
 	);
 }
 
-function DataPanel( { label, data, bgcolor } ) {
+function DataPanel( { label, data, bgcolor, downloadFilename } ) {
+	const bodyText = data?.body !== undefined
+		? JSON.stringify( data.body, null, 2 )
+		: '—';
 	return (
 		<Box sx={ { flex: 1, minWidth: 0 } }>
 			<Stack
@@ -44,10 +53,14 @@ function DataPanel( { label, data, bgcolor } ) {
 				alignItems="center"
 				sx={ { mb: 0.5 } }
 			>
-				<Typography variant="caption" fontWeight={ 600 }>
+				<Typography variant="caption" fontWeight={ 600 } sx={ { flex: 1 } }>
 					{ label }
 				</Typography>
 				{ data?.status && <StatusBadge status={ data.status } /> }
+				<CopyButton toCopy={ bodyText } />
+				{ data?.body !== undefined && (
+					<DownloadJsonButton data={ data.body } filename={ downloadFilename || 'result.json' } />
+				) }
 			</Stack>
 			<Box
 				component="pre"
@@ -65,9 +78,7 @@ function DataPanel( { label, data, bgcolor } ) {
 					overflowY: 'auto',
 				} }
 			>
-				{ data?.body !== undefined
-					? JSON.stringify( data.body, null, 2 )
-					: '—' }
+				{ bodyText }
 			</Box>
 		</Box>
 	);
@@ -90,6 +101,7 @@ export default function TestPolicyPanel( {
 	const [ loading, setLoading ] = useState( false );
 	const [ results, setResults ] = useState( null );
 	const [ error, setError ] = useState( null );
+	const [ fullView, setFullView ] = useState( false );
 
 	const [ testSubRoutes, setTestSubRoutes ] = useState( false );
 	const [ bypassUsers, setBypassUsers ] = useState( false );
@@ -203,6 +215,30 @@ export default function TestPolicyPanel( {
 				{ __( 'Fail', 'rest-api-firewall' ) }
 			</Typography>
 		);
+	};
+
+	const buildCurlSnippet = ( result ) => {
+		const info = result.curl_info;
+		if ( ! info || ! info.rest_url ) return null;
+
+		const url = info.rest_url;
+		const m = result.method.toUpperCase();
+		const isProtected = result.policy?.protect;
+
+		const lines = [ `curl -X ${ m } "${ url }"` ];
+		lines.push( '  -H "Content-Type: application/json"' );
+
+		if ( isProtected && info.auth_type && info.auth_type.method !== 'none' ) {
+			if ( info.auth_type.login ) {
+				lines.push( `  -u "${ info.auth_type.login }:<app_password_or_password>"` );
+			}
+		}
+
+		if ( m !== 'GET' && m !== 'DELETE' ) {
+			lines.push( "  -d '{}'" );
+		}
+
+		return lines.join( ' \\\n' );
 	};
 
 	const renderResults = () => {
@@ -327,11 +363,13 @@ export default function TestPolicyPanel( {
 							<DataPanel
 								label={ __( 'Raw', 'rest-api-firewall' ) }
 								data={ result.raw_data }
+								downloadFilename={ `raw-${ result.method }-${ result.route.replace( /\//g, '-' ) }.json` }
 								bgcolor="grey.50"
 							/>
 							<DataPanel
 								label={ __( 'Result', 'rest-api-firewall' ) }
 								data={ result.result_data }
+								downloadFilename={ `result-${ result.method }-${ result.route.replace( /\//g, '-' ) }.json` }
 								bgcolor={ ( theme ) =>
 									theme.palette.mode === 'dark'
 										? 'rgba(99, 132, 255, 0.08)'
@@ -339,6 +377,37 @@ export default function TestPolicyPanel( {
 								}
 							/>
 						</Stack>
+
+						{ ( () => {
+							const curlSnippet = buildCurlSnippet( result );
+							if ( ! curlSnippet ) return null;
+							return (
+								<Box sx={ { mt: 1.5 } }>
+									<Stack direction="row" spacing={ 1 } alignItems="center" sx={ { mb: 0.5 } }>
+										<Typography variant="caption" fontWeight={ 600 } sx={ { flex: 1 } }>
+											{ __( 'Replicate with curl', 'rest-api-firewall' ) }
+										</Typography>
+										<CopyButton toCopy={ curlSnippet } />
+									</Stack>
+									<Box
+										component="pre"
+										sx={ {
+											p: 1.5,
+											bgcolor: 'grey.900',
+											color: 'grey.100',
+											borderRadius: 1,
+											overflowX: 'auto',
+											fontSize: '0.68rem',
+											lineHeight: 1.6,
+											m: 0,
+											whiteSpace: 'pre',
+										} }
+									>
+										{ curlSnippet }
+									</Box>
+								</Box>
+							);
+						} )() }
 					</Box>
 				) ) }
 			</Stack>
@@ -441,18 +510,80 @@ export default function TestPolicyPanel( {
 						: __( 'Re-run', 'rest-api-firewall' ) }
 						</Button>
 
+							{ results && (
+								<>
+									<Divider orientation="vertical" flexItem />
+									<IconButton
+										size="small"
+										onClick={ () => setFullView( true ) }
+										title={ __( 'Expand results', 'rest-api-firewall' ) }
+									>
+										<OpenInFullIcon fontSize="small" />
+									</IconButton>
+								</>
+							) }
+
+						</Stack>
+						
 					</Stack>
-					
-				</Stack>
 
-				<Stack flex={ 1 } />
+					<Stack flex={ 1 } />
 
-			</Toolbar>
+				</Toolbar>
 			
 			{ error && <Alert severity="error">{ error }</Alert> }
 
 			{ renderResults() }
-			
+
+			{ /* Full-view Dialog */ }
+			<Dialog
+				open={ fullView }
+				onClose={ () => setFullView( false ) }
+				maxWidth="xl"
+				fullWidth
+				PaperProps={ { sx: { height: '90vh' } } }
+			>
+				<DialogTitle sx={ { display: 'flex', alignItems: 'center', gap: 1, py: 1 } }>
+					<Chip label={ method } size="small" />
+					<Typography variant="body2" sx={ { fontFamily: 'monospace', flex: 1 } }>{ route }</Typography>
+					<IconButton size="small" onClick={ () => setFullView( false ) }>
+						<CloseIcon fontSize="small" />
+					</IconButton>
+				</DialogTitle>
+				<DialogContent sx={ { display: 'flex', flexDirection: 'column', overflow: 'hidden', p: 2 } }>
+					{ results && results.map( ( result, index ) => (
+						<Stack key={ index } direction="row" spacing={ 2 } sx={ { flex: 1, minHeight: 0 } }>
+							<Box sx={ { flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 } }>
+								<Stack direction="row" spacing={ 1 } alignItems="center" sx={ { mb: 0.5 } }>
+									<Typography variant="caption" fontWeight={ 600 } sx={ { flex: 1 } }>
+										{ __( 'Raw', 'rest-api-firewall' ) }
+									</Typography>
+									{ result.raw_data?.status && <StatusBadge status={ result.raw_data.status } /> }
+									<CopyButton toCopy={ JSON.stringify( result.raw_data?.body, null, 2 ) } />
+									<DownloadJsonButton data={ result.raw_data?.body } filename={ `raw-${ result.method }.json` } />
+								</Stack>
+								<Box component="pre" sx={ { flex: 1, p: 1.5, bgcolor: 'grey.50', borderRadius: 1, overflowY: 'auto', fontSize: '0.7rem', lineHeight: 1.5, m: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' } }>
+									{ result.raw_data?.body !== undefined ? JSON.stringify( result.raw_data.body, null, 2 ) : '—' }
+								</Box>
+							</Box>
+							<Divider orientation="vertical" flexItem />
+							<Box sx={ { flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 } }>
+								<Stack direction="row" spacing={ 1 } alignItems="center" sx={ { mb: 0.5 } }>
+									<Typography variant="caption" fontWeight={ 600 } sx={ { flex: 1 } }>
+										{ __( 'Result', 'rest-api-firewall' ) }
+									</Typography>
+									{ result.result_data?.status && <StatusBadge status={ result.result_data.status } /> }
+									<CopyButton toCopy={ JSON.stringify( result.result_data?.body, null, 2 ) } />
+									<DownloadJsonButton data={ result.result_data?.body } filename={ `result-${ result.method }.json` } />
+								</Stack>
+								<Box component="pre" sx={ { flex: 1, p: 1.5, bgcolor: ( theme ) => theme.palette.mode === 'dark' ? 'rgba(99,132,255,0.08)' : 'rgba(25,118,210,0.04)', borderRadius: 1, overflowY: 'auto', fontSize: '0.7rem', lineHeight: 1.5, m: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' } }>
+									{ result.result_data?.body !== undefined ? JSON.stringify( result.result_data.body, null, 2 ) : '—' }
+								</Box>
+							</Box>
+						</Stack>
+					) ) }
+				</DialogContent>
+			</Dialog>
 		</Stack>
 	);
 }

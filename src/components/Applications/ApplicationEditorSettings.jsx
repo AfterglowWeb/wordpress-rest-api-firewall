@@ -50,6 +50,7 @@ export default function ApplicationEditorSettings( {
 					value={ title }
 					onChange={ ( e ) => setTitle( e.target.value ) }
 					size="small"
+					inputProps={ { maxLength: 100 } }
 				/>
 				<TextField
 					label={ __( 'Description', 'rest-api-firewall' ) }
@@ -62,6 +63,7 @@ export default function ApplicationEditorSettings( {
 						'Optional notes about this application, its purpose, or linked services.',
 						'rest-api-firewall'
 					) }
+					inputProps={ { maxLength: 300 } }
 				/>
 			</Stack>
 

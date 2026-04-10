@@ -70,8 +70,8 @@ class WebhookService {
 			),
 			'type'            => array(
 				'type'    => 'string',
-				'default' => 'general',
-				'allowed' => array( 'general', 'notification', 'automation', 'data_sync', 'alert' ),
+				'default' => 'custom',
+				'allowed' => array( 'custom', 'slack', 'discord', 'n8n', 'zapier', 'make', 'teams', 'general', 'notification', 'automation', 'data_sync', 'alert' ),
 			),
 			'created_at'      => array(
 				'type'    => 'string',

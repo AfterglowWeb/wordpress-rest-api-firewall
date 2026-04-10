@@ -28,7 +28,7 @@ import WebhookIcon from '@mui/icons-material/Webhook';
 import WebhookEditorSecretManager from './WebhookEditorSecretManager';
 import LoadingMessage from '../LoadingMessage';
 
-const HTTP_METHODS = [ 'POST', 'PUT', 'PATCH' ];
+const HTTP_METHODS = [ 'POST', 'PUT', 'PATCH', 'DELETE' ];
 
 const WEBHOOK_TYPES = [
 	{ value: 'general', label: 'General' },
@@ -484,6 +484,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 						onChange={ ( e ) => setTitle( e.target.value ) }
 						required
 						sx={ { maxWidth: 340 } }
+						inputProps={ { maxLength: 100 } }
 					/>
 					<TextField
 						label={ __( 'Description', 'rest-api-firewall' ) }
@@ -493,6 +494,7 @@ export default function WebhookEditor( { webhook, onBack } ) {
 						multiline
 						rows={ 2 }
 						sx={ { maxWidth: 600 } }
+						inputProps={ { maxLength: 300 } }
 					/>
 					<FormControl size="small" sx={ { maxWidth: 220 } }>
 						<InputLabel>{ __( 'Direction', 'rest-api-firewall' ) }</InputLabel>

@@ -139,6 +139,7 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 	const nonce = proNonce || adminData.nonce;
 	const objectTypes = adminData?.post_types || postTypes || [];
 	const publicObjectTypes = objectTypes.filter( ( obj ) => obj.public );
+	const hideUserRoutes = !! adminData?.admin_options?.hide_user_routes;
 	const isPro = hasValidLicense && !! selectedApplicationId;
 
 	const { save: saveOptions, saving: savingOptions } = useSaveOptions();
@@ -524,6 +525,27 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 		}
 	};
 
+	// Inline toggle in the pro DataGrid row — saves directly to DB without opening the editor.
+	const handleInlineTypeToggle = useCallback( ( typeKey, field, value ) => {
+		const currentTypeSettings = ( form.rest_collection_per_page_settings || {} )[ typeKey ] || {};
+		const newTypeSettings = { ...currentTypeSettings, [ field ]: value };
+		const updated = {
+			...( form.rest_collection_per_page_settings || {} ),
+			[ typeKey ]: newTypeSettings,
+		};
+		syncSavedField( 'rest_collection_per_page_settings', updated );
+		fetch( adminData.ajaxurl, {
+			method: 'POST',
+			body: new URLSearchParams( {
+				action: 'save_application_collection_per_page_setting',
+				nonce,
+				application_id: selectedApplicationId,
+				object_key: typeKey,
+				settings: JSON.stringify( newTypeSettings ),
+			} ),
+		} ).catch( () => {} );
+	}, [ form.rest_collection_per_page_settings, syncSavedField, adminData.ajaxurl, nonce, selectedApplicationId ] );
+
 	// ── Pro tier: DataGrid list + CollectionEditor (per-type) ──────────────────
 	const [ editing, setEditing ] = useState( null );
 
@@ -543,6 +565,7 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 
 		// Build DataGrid rows from publicObjectTypes + form state.
 		const proRows = publicObjectTypes.map( ( obj ) => {
+			const isAuthorRestricted = obj.type === 'author' && hideUserRoutes;
 			const typeSettings = ( form?.rest_collection_per_page_settings || {} )[ obj.value ] || {};
 			const typeOrder    = ( form?.rest_collection_orders || {} )[ obj.value ] || [];
 			return {
@@ -555,6 +578,8 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 				enforce_order:   !! typeSettings.enforce_order,
 				enforce_per_page: !! typeSettings.enabled,
 				has_custom_order: Array.isArray( typeOrder ) && typeOrder.length > 0,
+				disabled:        isAuthorRestricted,
+				disabled_reason: isAuthorRestricted ? __( 'Hidden because /wp/v2/users/* routes are disabled in global options', 'rest-api-firewall' ) : null,
 				_obj:            obj,
 			};
 		} );
@@ -566,9 +591,14 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 				flex: 1,
 				renderCell: ( { row } ) => (
 					<Stack direction="row" alignItems="center" gap={ 1 }>
-						<Typography variant="body2" fontWeight={ 500 }>{ row.label }</Typography>
+						<Typography variant="body2" fontWeight={ 500 } color={ row.disabled ? 'text.disabled' : 'inherit' }>{ row.label }</Typography>
 						{ row.source && (
 							<Chip label={ row.source } size="small" variant="outlined" sx={ { fontSize: '0.7rem', height: 18 } } />
+						) }
+						{ row.disabled && row.disabled_reason && (
+							<Tooltip title={ row.disabled_reason }>
+								<Chip label={ __( 'Restricted', 'rest-api-firewall' ) } size="small" color="warning" variant="outlined" sx={ { fontSize: '0.7rem', height: 18 } } />
+							</Tooltip>
 						) }
 					</Stack>
 				),
@@ -619,15 +649,44 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 					: <Chip label={ __( 'None', 'rest-api-firewall' ) } size="small" variant="outlined" />,
 			},
 			{
+				field: '_enabled',
+				headerName: __( 'Active', 'rest-api-firewall' ),
+				width: 80,
+				sortable: false,
+				renderCell: ( { row } ) => (
+					<Tooltip
+						disableInteractive
+						title={ row.disabled
+							? ( row.disabled_reason || __( 'Restricted', 'rest-api-firewall' ) )
+							: ( row.enforce_per_page
+								? __( 'Disable enforcement', 'rest-api-firewall' )
+								: __( 'Enable enforcement', 'rest-api-firewall' ) )
+						}
+					>
+						<span>
+							<Switch
+								size="small"
+								checked={ row.enforce_per_page }
+								disabled={ row.disabled }
+								onChange={ ( e ) => handleInlineTypeToggle( row.id, 'enabled', e.target.checked ) }
+								onClick={ ( e ) => e.stopPropagation() }
+							/>
+						</span>
+					</Tooltip>
+				),
+			},
+			{
 				field: '_actions',
 				headerName: '',
 				width: 64,
 				sortable: false,
 				renderCell: ( { row } ) => (
-					<Tooltip disableInteractive title={ __( 'Edit', 'rest-api-firewall' ) }>
-						<IconButton size="small" onClick={ () => setEditing( row._obj ) }>
-							<EditOutlinedIcon fontSize="small" />
-						</IconButton>
+					<Tooltip disableInteractive title={ row.disabled ? ( row.disabled_reason || __( 'Restricted', 'rest-api-firewall' ) ) : __( 'Edit', 'rest-api-firewall' ) }>
+						<span>
+							<IconButton size="small" onClick={ () => setEditing( row._obj ) } disabled={ row.disabled }>
+								<EditOutlinedIcon fontSize="small" />
+							</IconButton>
+						</span>
 					</Tooltip>
 				),
 			},
@@ -654,7 +713,7 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const groupedTypes = useMemo( () => {
 		const groups = {};
-		publicObjectTypes.forEach( ( obj ) => {
+		publicObjectTypes.filter( ( obj ) => obj.type !== 'author' ).forEach( ( obj ) => {
 			const src = obj.source || '';
 			if ( ! groups[ src ] ) {
 				groups[ src ] = [];

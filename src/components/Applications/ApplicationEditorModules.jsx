@@ -1,5 +1,7 @@
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
@@ -17,7 +19,6 @@ import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import Button from '@mui/material/Button';
 
 const DISABLE_BEHAVIOR_LABELS = {
 	'404':      '404 Not Found',
@@ -97,13 +98,13 @@ function PanelCard( { title, Icon, panel, module, onNavigate, enabled, onToggleE
 
 function DataRow( { label, children } ) {
 	return (
-		<Stack 
-		direction="row" 
-		spacing={ 1 } 
-		p={ 1 } 
-		mb={1} 
-		alignItems="center"
-		sx={{ bgcolor: 'grey.50', borderRadius: 1 }}
+		<Stack
+			direction="row"
+			spacing={ 1 }
+			p={ 1 }
+			mb={1}
+			alignItems="center"
+			sx={{ bgcolor: 'grey.50', borderRadius: 1 }}
 		>
 			<Tooltip title={ label } disableInteractive placement="top">
 				<Typography
@@ -121,70 +122,41 @@ function DataRow( { label, children } ) {
 	);
 }
 
-function UserRow( { user, onClick } ) {
+function EntryRow( { label, count, onBrowse } ) {
 	const { __ } = wp.i18n || {};
-	const name = user.title || user.display_name || `User #${ user.wp_user_id }`;
-	const methods = user.allowed_methods || [];
-	const ips = user.allowed_ips || [];
-	const origins = user.allowed_origins || [];
-	const authMethod = user.auth_method && user.auth_method !== 'any' ? user.auth_method : null;
-
 	return (
 		<Stack
-			onClick={ onClick }
-			sx={ {
-				px: 0.5,
-				pb: 0.5,
-				'&:not(:last-child)': { borderBottom: '1px solid', borderColor: 'divider' },
-			} }
+			direction="row"
+			spacing={ 1 }
+			p={ 1 }
+			alignItems="center"
+			justifyContent="space-between"
+			sx={{ bgcolor: 'action.hover', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}
 		>
-			<Button
-				size="small"
-				variant="text"
-				sx={ { alignSelf: 'flex-start', fontSize: 12, mb: 0.5 } }
-				onClick={ onClick }
-				endIcon={ <ArrowForwardIosIcon sx={ { fontSize: 12 } } /> }
-			>
-				{ name }
-			</Button>
-
-			<DataRow label={ __( 'Auth', 'rest-api-firewall' ) }>
-				{ authMethod
-					? <Chip label={ authMethod } size="small" variant="outlined" />
-					: <Typography variant="caption" color="text.disabled">{ __( 'Any', 'rest-api-firewall' ) }</Typography>
-				}
-			</DataRow>
-
-			<DataRow label={ __( 'Methods', 'rest-api-firewall' ) }>
-				<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
-					{ methods.map( ( m ) => (
-						<Chip key={ m } label={ m.toUpperCase() } size="small" color="primary" variant="outlined" sx={ { fontSize: 10 } } />
-					) ) }
-				</Stack>
-			</DataRow>
-
-			{ ips.length > 0 && (
-				<DataRow label={ __( 'IPs', 'rest-api-firewall' ) }>
-					<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
-						{ ips.map( ( ip ) => (
-							<Chip key={ ip } label={ ip } size="small" sx={ { fontFamily: 'monospace', fontSize: 10 } } />
-						) ) }
-					</Stack>
-				</DataRow>
-			) }
-
-			{ origins.length > 0 && (
-				<DataRow label={ __( 'Origins', 'rest-api-firewall' ) }>
-					<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
-						{ origins.map( ( o ) => (
-							<Chip key={ o } label={ o } size="small" sx={ { fontFamily: 'monospace', fontSize: 10, maxWidth: 120 } } />
-						) ) }
-					</Stack>
-				</DataRow>
+			<Stack spacing={ 0.25 } flex={ 1 }>
+				<Typography variant="caption" color="text.secondary" fontWeight={ 600 }>
+					{ label }
+				</Typography>
+				<Typography variant="body2" fontWeight={ 600 }>
+					{ count } { count === 1 ? __( 'item', 'rest-api-firewall' ) : __( 'items', 'rest-api-firewall' ) }
+				</Typography>
+			</Stack>
+			{ onBrowse && (
+				<Button
+					size="small"
+					variant="contained"
+					disableElevation
+					onClick={ onBrowse }
+					sx={{ textTransform: 'none', fontSize: '0.75rem' }}
+				>
+					{ __( 'Browse', 'rest-api-firewall' ) }
+				</Button>
 			) }
 		</Stack>
 	);
 }
+
+
 
 export default function ApplicationEditorModules( {
 	isNew,
@@ -223,20 +195,11 @@ export default function ApplicationEditorModules( {
 				enabled={ getModuleEnabled( 1 ) }
 				onToggleEnabled={ handleModuleToggle }
 			>
-				{ appUsers.length > 0
-					? appUsers.map( ( u ) => (
-						<UserRow
-							key={ u.id }
-							user={ u }
-							onClick={ () => navigate( 'user-rate-limiting', u.id ) }
-						/>
-					) )
-					: ! isNew && (
-						<Typography variant="caption" color="text.disabled">
-							{ __( 'No users linked to this application.', 'rest-api-firewall' ) }
-						</Typography>
-					)
-				}
+				<EntryRow
+					label={ __( 'Linked Users', 'rest-api-firewall' ) }
+					count={ appUsers.length }
+					onBrowse={ appUsers.length > 0 ? () => handlePanelNavigate( 1 ) : null }
+				/>
 			</PanelCard>
 
 			{ /* Routes */ }
@@ -249,74 +212,93 @@ export default function ApplicationEditorModules( {
 				enabled={ getModuleEnabled( 2 ) }
 				onToggleEnabled={ handleModuleToggle }
 			>
-				<DataRow label={ __( 'Auth & Rate limit', 'rest-api-firewall' ) }>
-					<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
-						<Chip
-							label={ __( 'Auth', 'rest-api-firewall' ) }
-							size="small"
-							color={ serverSettings.enforce_auth ? 'success' : 'default' }
-							variant="outlined"
-							sx={ { fontSize: 10 } }
-						/>
-						<Chip
-							label={ __( 'Rate limit', 'rest-api-firewall' ) }
-							size="small"
-							color={ serverSettings.enforce_rate_limit ? 'success' : 'default' }
-							variant="outlined"
-							sx={ { fontSize: 10 } }
-						/>
-					</Stack>
-				</DataRow>
-
-				<DataRow label={ __( 'Disabled routes', 'rest-api-firewall' ) }>
-					<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
-						{ [ serverSettings.hide_user_routes && 'users', serverSettings.hide_oembed_routes && 'oembed', serverSettings.hide_batch_routes && 'batch' ].filter( Boolean ).length > 0
-							? [ serverSettings.hide_user_routes && 'users', serverSettings.hide_oembed_routes && 'oembed', serverSettings.hide_batch_routes && 'batch' ].filter( Boolean ).map( ( r ) => (
-								<Chip key={ r } label={ r } size="small" sx={ { fontFamily: 'monospace', fontSize: 10 } } />
-							) )
-							: <Typography variant="caption">{ __( 'None', 'rest-api-firewall' ) }</Typography>
-						}
-					</Stack>
-				</DataRow>
-
-				<DataRow label={ __( 'Disabled response', 'rest-api-firewall' ) }>
-					<Typography variant="caption" noWrap>
-						{ DISABLE_BEHAVIOR_LABELS[ serverSettings.disable_behavior ] || '404 Not Found' }
+				{/* Global Enforcement */}
+				<Stack spacing={ 0.75 }>
+					<Typography variant="caption" color="text.secondary" fontWeight={ 600 } sx={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>
+						{ __( 'Enforcement', 'rest-api-firewall' ) }
 					</Typography>
-				</DataRow>
-
-				<DataRow label={ __( 'Disabled methods', 'rest-api-firewall' ) }>
-					<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
-						{ ( serverSettings.disabled_methods || [] ).length > 0
-							? ( serverSettings.disabled_methods || [] ).map( ( m ) => (
-								<Chip key={ m } label={ m.toUpperCase() } size="small" sx={ { fontFamily: 'monospace', fontSize: 10 } } />
-							) )
-							: <Typography variant="caption">{ __( 'None', 'rest-api-firewall' ) }</Typography>
-						}
-					</Stack>
-				</DataRow>
-
-				<DataRow label={ __( 'Disabled types', 'rest-api-firewall' ) }>
-					<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
-						{ ( serverSettings.disabled_post_types || [] ).length > 0
-							? ( serverSettings.disabled_post_types || [] ).map( ( p ) => (
-									<Chip key={ p } label={ p } size="small" sx={ { fontSize: 10 } } />
-								) ) 
-							: <Typography variant="caption">{ __( 'None', 'rest-api-firewall' ) }</Typography>
-						}
-					</Stack>
-				</DataRow>
-
-				{ routesCustomCount !== null && (
-					<DataRow label={ __( 'Custom rules', 'rest-api-firewall' ) }>
-						<Chip
-							label={ routesCustomCount }
-							size="small"
-							color={ routesCustomCount > 0 ? 'primary' : 'default' }
-							variant="outlined"
-						/>
+					<DataRow label={ __( 'Auth & Rate limit', 'rest-api-firewall' ) }>
+						<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
+							<Chip
+								label={ __( 'Auth', 'rest-api-firewall' ) }
+								size="small"
+								color={ serverSettings.enforce_auth ? 'success' : 'default' }
+								variant="outlined"
+								sx={ { fontSize: 10 } }
+							/>
+							<Chip
+								label={ __( 'Rate limit', 'rest-api-firewall' ) }
+								size="small"
+								color={ serverSettings.enforce_rate_limit ? 'success' : 'default' }
+								variant="outlined"
+								sx={ { fontSize: 10 } }
+							/>
+						</Stack>
 					</DataRow>
-				) }
+				</Stack>
+
+				<Divider sx={{ my: 1 }} />
+
+				{/* Restrictions */}
+				<Stack spacing={ 0.75 }>
+					<Typography variant="caption" color="text.secondary" fontWeight={ 600 } sx={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>
+						{ __( 'Restrictions', 'rest-api-firewall' ) }
+					</Typography>
+					<DataRow label={ __( 'Disabled routes', 'rest-api-firewall' ) }>
+						<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
+							{ [ serverSettings.hide_user_routes && 'users', serverSettings.hide_oembed_routes && 'oembed', serverSettings.hide_batch_routes && 'batch' ].filter( Boolean ).length > 0
+								? [ serverSettings.hide_user_routes && 'users', serverSettings.hide_oembed_routes && 'oembed', serverSettings.hide_batch_routes && 'batch' ].filter( Boolean ).map( ( r ) => (
+									<Chip key={ r } label={ r } size="small" sx={ { fontFamily: 'monospace', fontSize: 10 } } />
+								) )
+								: <Typography variant="caption">{ __( 'None', 'rest-api-firewall' ) }</Typography>
+							}
+						</Stack>
+					</DataRow>
+					<DataRow label={ __( 'Disabled methods', 'rest-api-firewall' ) }>
+						<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
+							{ ( serverSettings.disabled_methods || [] ).length > 0
+								? ( serverSettings.disabled_methods || [] ).map( ( m ) => (
+									<Chip key={ m } label={ m.toUpperCase() } size="small" sx={ { fontFamily: 'monospace', fontSize: 10 } } />
+								) )
+								: <Typography variant="caption">{ __( 'None', 'rest-api-firewall' ) }</Typography>
+							}
+						</Stack>
+					</DataRow>
+					<DataRow label={ __( 'Disabled types', 'rest-api-firewall' ) }>
+						<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
+							{ ( serverSettings.disabled_post_types || [] ).length > 0
+								? ( serverSettings.disabled_post_types || [] ).map( ( p ) => (
+										<Chip key={ p } label={ p } size="small" sx={ { fontSize: 10 } } />
+									) )
+								: <Typography variant="caption">{ __( 'None', 'rest-api-firewall' ) }</Typography>
+							}
+						</Stack>
+					</DataRow>
+				</Stack>
+
+				<Divider sx={{ my: 1 }} />
+
+				{/* Advanced */}
+				<Stack spacing={ 0.75 }>
+					<Typography variant="caption" color="text.secondary" fontWeight={ 600 } sx={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>
+						{ __( 'Advanced', 'rest-api-firewall' ) }
+					</Typography>
+					<DataRow label={ __( 'Disabled response', 'rest-api-firewall' ) }>
+						<Typography variant="caption" noWrap>
+							{ DISABLE_BEHAVIOR_LABELS[ serverSettings.disable_behavior ] || '404 Not Found' }
+						</Typography>
+					</DataRow>
+					{ routesCustomCount !== null && (
+						<DataRow label={ __( 'Custom rules', 'rest-api-firewall' ) }>
+							<Chip
+								label={ routesCustomCount }
+								size="small"
+								color={ routesCustomCount > 0 ? 'primary' : 'default' }
+								variant="outlined"
+							/>
+						</DataRow>
+					) }
+				</Stack>
 			</PanelCard>
 
 			{ /* Collections */ }
@@ -329,30 +311,29 @@ export default function ApplicationEditorModules( {
 				enabled={ getModuleEnabled( 4 ) }
 				onToggleEnabled={ handleModuleToggle }
 			>
-				{/*<DataRow label={ __( 'Per Page Enforced On', 'rest-api-firewall' ) }>
-					<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
-						{ perPageSet?.length > 0 ? perPageSet.map( ( s ) => (
-							<Chip
-								key={ s.label }
-								label={ s.label }
-								size="small"
-								sx={ { fontFamily: 'monospace', fontSize: 10 } }
-							/>
-						) ) : <Typography variant="caption">{ __( 'None', 'rest-api-firewall' ) }</Typography> }
-					</Stack>
-				</DataRow>
-				<DataRow label={ __( 'Custom Order Set On', 'rest-api-firewall' ) }>
-					<Stack direction="row" gap={ 0.5 } flexWrap="wrap">
-						{ orderSet?.length > 0 ? orderSet.map( ( s ) => (
-							<Chip
-								key={ s.label }
-								label={ s.label }
-								size="small"
-								sx={ { fontFamily: 'monospace', fontSize: 10 } }
-							/>
-						) ) : <Typography variant="caption">{ __( 'None', 'rest-api-firewall' ) }</Typography> }
-					</Stack>
-				</DataRow>*/}
+				<Stack spacing={ 0.75 }>
+					<Typography variant="caption" color="text.secondary" fontWeight={ 600 } sx={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>
+						{ __( 'Settings', 'rest-api-firewall' ) }
+					</Typography>
+					<DataRow label={ __( 'Per Page', 'rest-api-firewall' ) }>
+						<Chip
+							label={ perPageSet?.length > 0 ? __( 'Enabled', 'rest-api-firewall' ) : __( 'Off', 'rest-api-firewall' ) }
+							size="small"
+							color={ perPageSet?.length > 0 ? 'success' : 'default' }
+							variant="outlined"
+							sx={ { fontSize: 10 } }
+						/>
+					</DataRow>
+					<DataRow label={ __( 'Custom Order', 'rest-api-firewall' ) }>
+						<Chip
+							label={ orderSet?.length > 0 ? __( 'Enabled', 'rest-api-firewall' ) : __( 'Off', 'rest-api-firewall' ) }
+							size="small"
+							color={ orderSet?.length > 0 ? 'success' : 'default' }
+							variant="outlined"
+							sx={ { fontSize: 10 } }
+						/>
+					</DataRow>
+				</Stack>
 			</PanelCard>
 
 			{ /* Properties */ }
@@ -365,16 +346,21 @@ export default function ApplicationEditorModules( {
 				enabled={ getModuleEnabled( 5 ) }
 				onToggleEnabled={ handleModuleToggle }
 			>
-				<DataRow label={ __( 'Transform', 'rest-api-firewall' ) }>
-					<Typography variant="caption" color="text.disabled">
-						{ __( 'REST output field filtering', 'rest-api-firewall' ) }
+				<Stack spacing={ 0.75 }>
+					<Typography variant="caption" color="text.secondary" fontWeight={ 600 } sx={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>
+						{ __( 'Configuration', 'rest-api-firewall' ) }
 					</Typography>
-				</DataRow>
-				<DataRow label={ __( 'Models', 'rest-api-firewall' ) }>
-					<Typography variant="caption" color="text.disabled">
-						{ __( 'Custom field model definitions', 'rest-api-firewall' ) }
-					</Typography>
-				</DataRow>
+					<DataRow label={ __( 'Transform', 'rest-api-firewall' ) }>
+						<Typography variant="caption" color="text.disabled">
+							{ __( 'REST output field filtering', 'rest-api-firewall' ) }
+						</Typography>
+					</DataRow>
+					<DataRow label={ __( 'Models', 'rest-api-firewall' ) }>
+						<Typography variant="caption" color="text.disabled">
+							{ __( 'Custom field model definitions', 'rest-api-firewall' ) }
+						</Typography>
+					</DataRow>
+				</Stack>
 			</PanelCard>
 
 			{ /* Automations */ }
@@ -387,11 +373,16 @@ export default function ApplicationEditorModules( {
 				enabled={ getModuleEnabled( 13 ) }
 				onToggleEnabled={ handleModuleToggle }
 			>
-				<DataRow label={ __( 'Triggers', 'rest-api-firewall' ) }>
-					<Typography variant="caption" color="text.disabled">
-						{ __( 'Event-based rules & actions', 'rest-api-firewall' ) }
+				<Stack spacing={ 0.75 }>
+					<Typography variant="caption" color="text.secondary" fontWeight={ 600 } sx={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>
+						{ __( 'Event-Based Automation', 'rest-api-firewall' ) }
 					</Typography>
-				</DataRow>
+					<DataRow label={ __( 'Triggers & Actions', 'rest-api-firewall' ) }>
+						<Typography variant="caption" color="text.disabled">
+							{ __( 'Configure automated responses', 'rest-api-firewall' ) }
+						</Typography>
+					</DataRow>
+				</Stack>
 			</PanelCard>
 
 			{ /* Webhooks */ }
@@ -404,16 +395,16 @@ export default function ApplicationEditorModules( {
 				enabled={ getModuleEnabled( 7 ) }
 				onToggleEnabled={ handleModuleToggle }
 			>
-				<DataRow label={ __( 'Settings', 'rest-api-firewall' ) }>
-					<Typography variant="caption" color="text.disabled">
-						{ __( 'Outbound event notifications', 'rest-api-firewall' ) }
+				<Stack spacing={ 0.75 }>
+					<Typography variant="caption" color="text.secondary" fontWeight={ 600 } sx={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>
+						{ __( 'Event Notifications', 'rest-api-firewall' ) }
 					</Typography>
-				</DataRow>
-				<DataRow label={ __( 'Entries', 'rest-api-firewall' ) }>
-					<Typography variant="caption" color="text.disabled">
-						{ __( 'Per-event webhook targets', 'rest-api-firewall' ) }
-					</Typography>
-				</DataRow>
+					<DataRow label={ __( 'Configuration', 'rest-api-firewall' ) }>
+						<Typography variant="caption" color="text.disabled">
+							{ __( 'Outbound event targets', 'rest-api-firewall' ) }
+						</Typography>
+					</DataRow>
+				</Stack>
 			</PanelCard>
 
 			{ /* Emails */ }
@@ -426,16 +417,21 @@ export default function ApplicationEditorModules( {
 				enabled={ getModuleEnabled( 8 ) }
 				onToggleEnabled={ handleModuleToggle }
 			>
-				<DataRow label={ __( 'SMTP', 'rest-api-firewall' ) }>
-					<Typography variant="caption" color="text.disabled">
-						{ __( 'Mail server configuration', 'rest-api-firewall' ) }
+				<Stack spacing={ 0.75 }>
+					<Typography variant="caption" color="text.secondary" fontWeight={ 600 } sx={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>
+						{ __( 'Mail & Notifications', 'rest-api-firewall' ) }
 					</Typography>
-				</DataRow>
-				<DataRow label={ __( 'Templates', 'rest-api-firewall' ) }>
-					<Typography variant="caption" color="text.disabled">
-						{ __( 'Email notification templates', 'rest-api-firewall' ) }
-					</Typography>
-				</DataRow>
+					<DataRow label={ __( 'Server', 'rest-api-firewall' ) }>
+						<Typography variant="caption" color="text.disabled">
+							{ __( 'SMTP configuration', 'rest-api-firewall' ) }
+						</Typography>
+					</DataRow>
+					<DataRow label={ __( 'Templates', 'rest-api-firewall' ) }>
+						<Typography variant="caption" color="text.disabled">
+							{ __( 'Email notification templates', 'rest-api-firewall' ) }
+						</Typography>
+					</DataRow>
+				</Stack>
 			</PanelCard>
 
 			{ /* Logs */ }
@@ -447,11 +443,16 @@ export default function ApplicationEditorModules( {
 						panel={ 12 }
 						onNavigate={ handlePanelNavigate }
 					>
-						<DataRow label={ __( 'Scope', 'rest-api-firewall' ) }>
-							<Typography variant="caption" color="text.disabled">
-								{ __( 'Global request history & audit trail', 'rest-api-firewall' ) }
+						<Stack spacing={ 0.75 }>
+							<Typography variant="caption" color="text.secondary" fontWeight={ 600 } sx={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>
+								{ __( 'Monitoring', 'rest-api-firewall' ) }
 							</Typography>
-						</DataRow>
+							<DataRow label={ __( 'Scope', 'rest-api-firewall' ) }>
+								<Typography variant="caption" color="text.disabled">
+									{ __( 'Global request history & audit trail', 'rest-api-firewall' ) }
+								</Typography>
+							</DataRow>
+						</Stack>
 					</PanelCard>
 				</span>
 			</Tooltip>

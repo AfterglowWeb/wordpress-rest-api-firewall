@@ -3,6 +3,7 @@ import { useLicense } from '../../../contexts/LicenseContext';
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import FormHelperText from '@mui/material/FormHelperText';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import Tooltip from '@mui/material/Tooltip';
@@ -42,6 +43,7 @@ export default function GlobalRoutesPolicy( { form, setField, proSettings, onPro
 						}
 						label={ __( 'Enforce Authentication on All Routes', 'rest-api-firewall' ) }
 					/>
+					<FormHelperText>{ __( 'Applies to WordPress core routes only (wp, oembed, batch). Third-party plugin routes (e.g. WooCommerce) are not affected.', 'rest-api-firewall' ) }</FormHelperText>
 				</FormControl>
 
 				<FormControl>
