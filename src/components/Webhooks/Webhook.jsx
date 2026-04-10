@@ -51,13 +51,19 @@ export default function Webhook( { form, setField } ) {
 					</Select>
 				</FormControl>
 			</Stack>
+
+			<Stack
+				direction={ { xs: 'column', xl: 'row' } }
+				spacing={ 2 }
+				alignItems="flex-start"
+				flex={ 1 }
+			>
 				<WebhookAuth
 					setHasSecret={ setHasSecret }
 					hasSecret={ hasSecret }
 					form={ form }
 					setField={ setField }
 				/>
-
 
 				<Divider
 					sx={ { display: { xs: 'none', xl: 'block' } } }
@@ -74,7 +80,6 @@ export default function Webhook( { form, setField } ) {
 					variant="middle"
 					flexItem
 				/>
-
 
 				<WebhookTest hasSecret={ hasSecret } />
 			</Stack>
