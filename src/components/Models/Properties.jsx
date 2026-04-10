@@ -470,7 +470,10 @@ export function PropertyRow( {
 
 	const hasFilters =
 		Array.isArray( settings.filters ) && settings.filters.length > 0;
+
+	const MAX_PROPERTY_DEPTH = 2; // 0-indexed: root(0), sub(1), sub-sub(2) = 3 levels
 	const hasSubProperties =
+		depth < MAX_PROPERTY_DEPTH &&
 		subProperties &&
 		typeof subProperties === 'object' &&
 		! Array.isArray( subProperties ) &&

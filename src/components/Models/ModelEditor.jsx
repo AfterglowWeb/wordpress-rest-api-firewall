@@ -566,6 +566,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 					size="small"
 					fullWidth
 					required
+					inputProps={ { maxLength: 100 } }
 					helperText={ __( 'Internal name for this model.', 'rest-api-firewall' ) }
 				/>
 				<TextField
@@ -575,6 +576,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 					size="small"
 					multiline
 					rows={ 3 }
+					inputProps={ { maxLength: 300 } }
 					helperText={ __( 'Internal note for this model.', 'rest-api-firewall' ) }
 
 				/>

@@ -102,7 +102,8 @@ class AdminPage {
 			'ip_filter_enabled'        => (bool) ( get_option( 'rest_firewall_ip_filter', array() )['enabled'] ?? false ),
 			'global_ip_filter_enabled' => (bool) ( get_option( 'rest_firewall_global_ip_filter', array() )['enabled'] ?? false ),
 			'pro_plugin_installed'     => file_exists( WP_PLUGIN_DIR . '/rest-api-firewall-pro/rest-api-firewall-pro.php' ),
-			'disallow_file_edit'       => defined( 'DISALLOW_FILE_EDIT' ) && DISALLOW_FILE_EDIT,
+			'disallow_file_edit'               => defined( 'DISALLOW_FILE_EDIT' ) && DISALLOW_FILE_EDIT,
+			'wp_application_passwords_available' => function_exists( 'wp_is_application_passwords_available' ) && wp_is_application_passwords_available(),
 		);
 
 		if ( class_exists( '\cmk\RestApiFirewall\Theme\RedirectTemplates' ) ) {

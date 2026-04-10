@@ -150,6 +150,10 @@ class TestPolicy {
 				'result_data'  => $use_auth_for_result
 					? $this->fetch_data_internal( $route, $method )
 					: $this->fetch_data( $route, $method ),
+				'curl_info'    => array(
+					'rest_url'  => $this->build_rest_url( $route ),
+					'auth_type' => $this->get_auth_hint(),
+				),
 			);
 
 			$model = $this->get_model_for_route( $route );
@@ -229,6 +233,29 @@ class TestPolicy {
 
 	protected function build_rest_url( string $route ): string {
 		return rest_url( ltrim( $route, '/' ) );
+	}
+
+	protected function get_auth_hint(): array {
+		$user_id = (int) CoreOptions::read_option( 'firewall_user_id' );
+		if ( ! $user_id ) {
+			return array( 'method' => 'none' );
+		}
+		$user = get_user_by( 'id', $user_id );
+		if ( ! $user ) {
+			return array( 'method' => 'none' );
+		}
+		// Check if WP Application Passwords are available for this user.
+		if ( function_exists( 'wp_is_application_passwords_available_for_user' ) &&
+			wp_is_application_passwords_available_for_user( $user ) ) {
+			return array(
+				'method'   => 'application_password',
+				'login'    => $user->user_login,
+			);
+		}
+		return array(
+			'method' => 'basic',
+			'login'  => $user->user_login,
+		);
 	}
 
 	protected function test_disabled( string $route, string $method, array $policy ): array {

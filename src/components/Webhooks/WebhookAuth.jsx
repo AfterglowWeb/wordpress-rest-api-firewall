@@ -1,5 +1,6 @@
 import { useState, useEffect } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
+import { useLicense } from '../../contexts/LicenseContext';
 
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
@@ -34,6 +35,7 @@ export default function WebhookAuth( {
 	const { adminData } = useAdminData();
 
 	const { __ } = wp.i18n || {};
+	const { hasValidLicense } = useLicense();
 
 	const [ webhookSecret, setWebhookSecret ] = useState( null );
 	const [ customSecret, setCustomSecret ] = useState( '' );
@@ -277,29 +279,34 @@ export default function WebhookAuth( {
 					/>
 
 					<Stack>
-						<Collapse
-							in={
-								! form.application_webhook_custom_secret_enabled
-							}
-							timeout="auto"
-						>
+						{ hasValidLicense ? (
+							<>
+								<Collapse
+									in={ ! form.application_webhook_custom_secret_enabled }
+									timeout="auto"
+								>
+									<WebhookAuthGenerated
+										hasSecret={ hasSecret }
+										webhookSecret={ webhookSecret }
+									/>
+								</Collapse>
+								<Collapse
+									in={ form.application_webhook_custom_secret_enabled }
+									timeout="auto"
+								>
+									<WebhookAuthCustom
+										hasSecret={ hasSecret }
+										customSecret={ customSecret }
+										setCustomSecret={ setCustomSecret }
+									/>
+								</Collapse>
+							</>
+						) : (
 							<WebhookAuthGenerated
 								hasSecret={ hasSecret }
 								webhookSecret={ webhookSecret }
 							/>
-						</Collapse>
-						<Collapse
-							in={
-								form.application_webhook_custom_secret_enabled
-							}
-							timeout="auto"
-						>
-							<WebhookAuthCustom
-								hasSecret={ hasSecret }
-								customSecret={ customSecret }
-								setCustomSecret={ setCustomSecret }
-							/>
-						</Collapse>
+						) }
 					</Stack>
 
 					<Stack
@@ -309,32 +316,27 @@ export default function WebhookAuth( {
 						alignItems="center"
 						flexWrap="wrap"
 					>
-						<FormControlLabel
-							sx={ { flex: 1, flexBasis: '100%', px: 1 } }
-							control={
-								<Checkbox
-									name="application_webhook_custom_secret_enabled"
-									checked={
-										form.application_webhook_custom_secret_enabled
-									}
-									onChange={ setField }
-									size="small"
-								/>
-							}
-							label={ __(
-								'I will use my own secret',
-								'rest-api-firewall'
-							) }
-						/>
+						{ hasValidLicense && (
+							<FormControlLabel
+								sx={ { flex: 1, flexBasis: '100%', px: 1 } }
+								control={
+									<Checkbox
+										name="application_webhook_custom_secret_enabled"
+										checked={ form.application_webhook_custom_secret_enabled }
+										onChange={ setField }
+										size="small"
+									/>
+								}
+								label={ __( 'I will use my own secret', 'rest-api-firewall' ) }
+							/>
+						) }
 
 						<Button
 							variant="outlined"
 							size="small"
 							sx={ { display: 'inline-flex' } }
 							startIcon={ <DeleteOutlineIcon /> }
-							onClick={ () =>
-								handleGeneratedConfirmActions( 'delete' )
-							}
+							onClick={ () => handleGeneratedConfirmActions( 'delete' ) }
 							disabled={ ! hasSecret }
 						>
 							{ __( 'Revoke', 'rest-api-firewall' ) }
@@ -345,31 +347,25 @@ export default function WebhookAuth( {
 							variant="contained"
 							disableElevation
 							startIcon={ <AutorenewIcon /> }
-							onClick={ () =>
-								handleGeneratedConfirmActions( 'regenerate' )
-							}
-							disabled={
-								form.application_webhook_custom_secret_enabled
-							}
+							onClick={ () => handleGeneratedConfirmActions( 'regenerate' ) }
+							disabled={ hasValidLicense && form.application_webhook_custom_secret_enabled }
 						>
-							{ hasSecret &&
-							! form.application_webhook_custom_secret_enabled
+							{ hasSecret && ( ! hasValidLicense || ! form.application_webhook_custom_secret_enabled )
 								? __( 'Regenerate', 'rest-api-firewall' )
 								: __( 'Generate', 'rest-api-firewall' ) }
 						</Button>
 
-						<Button
-							size="small"
-							variant="contained"
-							disableElevation
-							onClick={ saveCustomSecret }
-							disabled={
-								! form.application_webhook_custom_secret_enabled ||
-								hasSecret
-							}
-						>
-							{ __( 'Save Custom Secret', 'rest-api-firewall' ) }
-						</Button>
+						{ hasValidLicense && (
+							<Button
+								size="small"
+								variant="contained"
+								disableElevation
+								onClick={ saveCustomSecret }
+								disabled={ ! form.application_webhook_custom_secret_enabled || hasSecret }
+							>
+								{ __( 'Save Custom Secret', 'rest-api-firewall' ) }
+							</Button>
+						) }
 					</Stack>
 
 					<Stack

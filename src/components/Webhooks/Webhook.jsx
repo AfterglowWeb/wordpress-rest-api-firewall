@@ -12,12 +12,14 @@ import WordpressEvents from './WordpressEvents';
 import WebhookAuth from './WebhookAuth';
 import WebhookTest from './WebhookTest';
 
-const WEBHOOK_TYPES = [
-	{ value: 'general', label: 'General' },
-	{ value: 'notification', label: 'Notification' },
-	{ value: 'automation', label: 'Automation' },
-	{ value: 'data_sync', label: 'Data Sync' },
-	{ value: 'alert', label: 'Alert' },
+const WEBHOOK_FORMATS = [
+	{ value: 'custom', label: 'Custom' },
+	{ value: 'slack', label: 'Slack' },
+	{ value: 'discord', label: 'Discord' },
+	{ value: 'n8n', label: 'n8n' },
+	{ value: 'zapier', label: 'Zapier' },
+	{ value: 'make', label: 'Make (Integromat)' },
+	{ value: 'teams', label: 'Microsoft Teams' },
 ];
 
 export default function Webhook( { form, setField } ) {
@@ -34,14 +36,14 @@ export default function Webhook( { form, setField } ) {
 			>
 				<FormControl size="small" sx={ { minWidth: 180 } }>
 					<InputLabel>
-						{ __( 'Type', 'rest-api-firewall' ) }
+						{ __( 'Service Format', 'rest-api-firewall' ) }
 					</InputLabel>
 					<Select
-						value={ form.type || 'general' }
+						value={ form.type || 'custom' }
 						onChange={ ( e ) => setField( 'type', e.target.value ) }
-						label={ __( 'Type', 'rest-api-firewall' ) }
+						label={ __( 'Service Format', 'rest-api-firewall' ) }
 					>
-						{ WEBHOOK_TYPES.map( ( t ) => (
+						{ WEBHOOK_FORMATS.map( ( t ) => (
 							<MenuItem key={ t.value } value={ t.value }>
 								{ t.label }
 							</MenuItem>
@@ -49,33 +51,6 @@ export default function Webhook( { form, setField } ) {
 					</Select>
 				</FormControl>
 			</Stack>
-
-			<TextField
-				label={ __( 'Body Payload', 'rest-api-firewall' ) }
-				size="small"
-				multiline
-				rows={ 5 }
-				value={ form.body_payload || '' }
-				onChange={ ( e ) => setField( 'body_payload', e.target.value ) }
-				placeholder={
-					'{\n  "event": "{{event_type}}",\n  "data": {{payload}}\n}'
-				}
-				helperText={ __(
-					'Optional JSON body template. Use {{placeholders}} for dynamic values.',
-					'rest-api-firewall'
-				) }
-				sx={ {
-					'& .MuiInputBase-root': { fontFamily: 'monospace', fontSize: '0.85rem' },
-				} }
-			/>
-
-			<Divider />
-
-			<Stack
-				direction={ { xs: 'column', xl: 'row' } }
-				flexWrap={ 'wrap' }
-				gap={ 4 }
-			>
 				<WebhookAuth
 					setHasSecret={ setHasSecret }
 					hasSecret={ hasSecret }
