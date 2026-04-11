@@ -51,6 +51,7 @@ export const CustomTreeItem = forwardRef(
 			<StyledTreeItem
 				{ ...props }
 				ref={ ref }
+				data-route-path={ node?.path || node?.route }
 				slots={ { content: NodeContent } }
 				slotProps={ {
 					content: {

@@ -523,7 +523,11 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 							sx={ { fontFamily: 'monospace' } }
 						/>
 						<Tooltip disableInteractive title={ __( 'View routes', 'rest-api-firewall' ) }>
-							<IconButton size="small" onClick={ () => navigateTo( 'per-route-settings', 'routes' ) } sx={ { opacity: 0.5 } }>
+							<IconButton size="small" onClick={ () => {
+								const pt = ( adminData?.post_types || [] ).find( ( p ) => p.value === objectType );
+								const restPath = pt ? `/wp/v2/${ pt.rest_base || pt.value }` : null;
+								navigateTo( 'per-route-settings', restPath ? `routes|${ restPath }` : 'routes' );
+							} } sx={ { opacity: 0.5 } }>
 								<AccountTreeOutlinedIcon fontSize="small" />
 							</IconButton>
 						</Tooltip>

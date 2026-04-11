@@ -773,7 +773,11 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 						{ selectedType && (
 							<>
 								<Tooltip disableInteractive title={ __( 'View routes', 'rest-api-firewall' ) }>
-									<IconButton size="small" onClick={ () => navigateTo( 'per-route-settings', 'routes' ) } sx={ { opacity: 0.5 } }>
+									<IconButton size="small" onClick={ () => {
+										const pt = publicObjectTypes.find( ( p ) => p.value === selectedType );
+										const restPath = pt ? `/wp/v2/${ pt.rest_base || pt.value }` : null;
+										navigateTo( 'per-route-settings', restPath ? `routes|${ restPath }` : 'routes' );
+									} } sx={ { opacity: 0.5 } }>
 										<AccountTreeOutlinedIcon fontSize="small" />
 									</IconButton>
 								</Tooltip>

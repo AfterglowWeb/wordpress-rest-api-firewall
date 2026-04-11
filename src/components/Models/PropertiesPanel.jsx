@@ -91,7 +91,11 @@ export default function PropertiesPanel( { form, setField } ) {
 						{ selectedType && selectedType !== 'settings_route' && (
 							<Stack direction="row" spacing={ 0.5 }>
 								<Tooltip disableInteractive title={ __( 'View routes', 'rest-api-firewall' ) }>
-									<IconButton size="small" onClick={ () => navigate( 'per-route-settings', 'routes' ) } sx={ { opacity: 0.5 } }>
+									<IconButton size="small" onClick={ () => {
+										const pt = ( adminData?.post_types || [] ).find( ( p ) => p.value === selectedType );
+										const restPath = pt ? `/wp/v2/${ pt.rest_base || pt.value }` : null;
+										navigate( 'per-route-settings', restPath ? `routes|${ restPath }` : 'routes' );
+									} } sx={ { opacity: 0.5 } }>
 										<AccountTreeOutlinedIcon fontSize="small" />
 									</IconButton>
 								</Tooltip>
