@@ -8,14 +8,12 @@ import DownloadJsonButton from '../../shared/DownloadJsonButton';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import Divider from '@mui/material/Divider';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
@@ -87,7 +85,6 @@ function DataPanel( { label, data, bgcolor, downloadFilename } ) {
 export default function TestPolicyPanel( {
 	route,
 	method,
-	hasChildren = false,
 	hasUsers = false,
 	onClose,
 	onNavigate,
@@ -102,9 +99,6 @@ export default function TestPolicyPanel( {
 	const [ results, setResults ] = useState( null );
 	const [ error, setError ] = useState( null );
 	const [ fullView, setFullView ] = useState( false );
-
-	const [ testSubRoutes, setTestSubRoutes ] = useState( false );
-	const [ bypassUsers, setBypassUsers ] = useState( false );
 
 	useEffect( () => {
 		if ( ! route ) return;
@@ -129,8 +123,7 @@ export default function TestPolicyPanel( {
 				nonce,
 				route,
 				method,
-				test_sub_routes: testSubRoutes ? '1' : '0',
-				bypass_users: bypassUsers ? '1' : '0',
+				bypass_users: '1',
 				has_users: hasUsers ? '1' : '0',
 				application_id: selectedApplicationId || '',
 			};
@@ -217,6 +210,17 @@ export default function TestPolicyPanel( {
 		);
 	};
 
+	const buildHeadersSent = ( result ) => {
+		const info = result.curl_info;
+		if ( ! info ) return null;
+		const isProtected = result.policy?.protect;
+		const lines = [ 'Content-Type: application/json' ];
+		if ( isProtected && info.auth_type && info.auth_type.method !== 'none' && info.auth_type.login ) {
+			lines.push( `Authorization: Basic <${ info.auth_type.login }:<password>>` );
+		}
+		return lines.join( '\n' );
+	};
+
 	const buildCurlSnippet = ( result ) => {
 		const info = result.curl_info;
 		if ( ! info || ! info.rest_url ) return null;
@@ -235,7 +239,17 @@ export default function TestPolicyPanel( {
 		}
 
 		if ( m !== 'GET' && m !== 'DELETE' ) {
-			lines.push( "  -d '{}'" );
+			const resultBody = result.result_data?.body;
+			const missingParams = resultBody?.code === 'rest_missing_callback_param'
+				? ( resultBody?.data?.params || [] )
+				: [];
+			if ( missingParams.length > 0 ) {
+				const bodyObj = {};
+				missingParams.forEach( p => { bodyObj[ p ] = `<${ p }>`; } );
+				lines.push( `  -d '${ JSON.stringify( bodyObj ) }'` );
+			} else {
+				lines.push( "  -d '{}'" );
+			}
 		}
 
 		return lines.join( ' \\\n' );
@@ -380,32 +394,46 @@ export default function TestPolicyPanel( {
 
 						{ ( () => {
 							const curlSnippet = buildCurlSnippet( result );
-							if ( ! curlSnippet ) return null;
+							const headersSent = buildHeadersSent( result );
+							if ( ! curlSnippet && ! headersSent ) return null;
+							const preStyle = {
+								p: 1.5,
+								borderRadius: 1,
+								overflowX: 'auto',
+								fontSize: '0.68rem',
+								lineHeight: 1.6,
+								m: 0,
+								whiteSpace: 'pre',
+							};
 							return (
-								<Box sx={ { mt: 1.5 } }>
-									<Stack direction="row" spacing={ 1 } alignItems="center" sx={ { mb: 0.5 } }>
-										<Typography variant="caption" fontWeight={ 600 } sx={ { flex: 1 } }>
-											{ __( 'Replicate with curl', 'rest-api-firewall' ) }
-										</Typography>
-										<CopyButton toCopy={ curlSnippet } />
-									</Stack>
-									<Box
-										component="pre"
-										sx={ {
-											p: 1.5,
-											bgcolor: 'grey.900',
-											color: 'grey.100',
-											borderRadius: 1,
-											overflowX: 'auto',
-											fontSize: '0.68rem',
-											lineHeight: 1.6,
-											m: 0,
-											whiteSpace: 'pre',
-										} }
-									>
-										{ curlSnippet }
-									</Box>
-								</Box>
+								<Stack direction="row" spacing={ 1.5 } sx={ { mt: 1.5 } }>
+									{ headersSent && (
+										<Box sx={ { flex: 1, minWidth: 0 } }>
+											<Stack direction="row" spacing={ 1 } alignItems="center" sx={ { mb: 0.5 } }>
+												<Typography variant="caption" fontWeight={ 600 } sx={ { flex: 1 } }>
+													{ __( 'Headers sent', 'rest-api-firewall' ) }
+												</Typography>
+												<CopyButton toCopy={ headersSent } />
+											</Stack>
+											<Box component="pre" sx={ { ...preStyle, bgcolor: 'grey.100', color: 'grey.800' } }>
+												{ headersSent }
+											</Box>
+										</Box>
+									) }
+									{ curlSnippet && (
+										<Box sx={ { flex: 1, minWidth: 0 } }>
+											<Stack direction="row" spacing={ 1 } alignItems="center" sx={ { mb: 0.5 } }>
+												<Typography variant="caption" fontWeight={ 600 } sx={ { flex: 1 } }>
+													{ __( 'Replicate with curl', 'rest-api-firewall' ) }
+												</Typography>
+												<CopyButton toCopy={ curlSnippet } />
+											</Stack>
+											<Box component="pre" sx={ { ...preStyle, bgcolor: 'grey.900', color: 'grey.100' } }>
+												{ curlSnippet }
+											</Box>
+										</Box>
+									) }
+								</Stack>
 							);
 						} )() }
 					</Box>
@@ -455,40 +483,6 @@ export default function TestPolicyPanel( {
 					<Divider orientation="vertical" flexItem />
 
 					<Stack direction="row" gap={ 2 } alignItems="center">
-						
-						<FormControlLabel
-							disabled={ ! hasChildren }
-							control={
-								<Checkbox
-									checked={ testSubRoutes }
-									onChange={ ( e ) =>
-										setTestSubRoutes( e.target.checked )
-									}
-									size="small"
-								/>
-							}
-							label={ __(
-								'Include sub-routes',
-								'rest-api-firewall'
-							) }
-						/>
-				
-						<FormControlLabel
-							control={
-								<Checkbox
-									disabled={ ! hasUsers }
-									checked={ bypassUsers }
-									onChange={ ( e ) =>
-										setBypassUsers( e.target.checked )
-									}
-									size="small"
-								/>
-							}
-							label={ __(
-								'Bypass users settings',
-								'rest-api-firewall'
-							) }
-						/>
 
 						<Button
 							variant="contained"

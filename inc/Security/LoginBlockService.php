@@ -29,9 +29,9 @@ class LoginBlockService {
 	}
 
 	private function __construct() {
-		add_action( 'wp_ajax_rest_api_firewall_get_login_blocks',    array( $this, 'ajax_get_login_blocks' ) );
+		add_action( 'wp_ajax_rest_api_firewall_get_login_blocks', array( $this, 'ajax_get_login_blocks' ) );
 		add_action( 'wp_ajax_rest_api_firewall_release_login_block', array( $this, 'ajax_release_login_block' ) );
-		add_action( 'rest_api_firewall_inbound_webhook_received',    array( $this, 'on_inbound_webhook' ) );
+		add_action( 'rest_api_firewall_inbound_webhook_received', array( $this, 'on_inbound_webhook' ) );
 	}
 
 	// -------------------------------------------------------------------------
@@ -60,7 +60,12 @@ class LoginBlockService {
 
 		delete_transient( LoginRateLimiter::BLOCK_PREFIX . LoginRateLimiter::ip_hash( $ip ) );
 
-		wp_send_json_success( array( 'message' => 'Block released', 'ip' => $ip ) );
+		wp_send_json_success(
+			array(
+				'message' => 'Block released',
+				'ip'      => $ip,
+			)
+		);
 	}
 
 	// -------------------------------------------------------------------------

@@ -56,12 +56,12 @@ class LoginRateLimiter {
 	/**
 	 * Reject the login attempt early if the requesting IP is currently blocked.
 	 *
-	 * @param \WP_User|\WP_Error|null $user     Result from earlier authenticate callbacks.
-	 * @param string                  $username Submitted username (unused).
-	 * @param string                  $password Submitted password (unused).
+	 * @param \WP_User|\WP_Error|null $user      Result from earlier authenticate callbacks.
+	 * @param string                  $_username Submitted username (unused).
+	 * @param string                  $_password Submitted password (unused).
 	 * @return \WP_User|\WP_Error|null
 	 */
-	public function check_before_auth( $user, string $username, string $password ) {
+	public function check_before_auth( $user, string $_username, string $_password ) {
 		if ( ! $this->is_enabled() ) {
 			return $user;
 		}
@@ -86,10 +86,10 @@ class LoginRateLimiter {
 	 * Promotes to a block transient once the threshold is reached.
 	 * Escalates to the global IP blacklist after N block cycles (if configured).
 	 *
-	 * @param string         $username The username that failed authentication.
-	 * @param \WP_Error|null $error    The WP_Error (WP 5.4+; null on older builds).
+	 * @param string         $_username The username that failed authentication (unused).
+	 * @param \WP_Error|null $_error    The WP_Error (WP 5.4+; null on older builds; unused).
 	 */
-	public function on_login_failed( string $username, $error = null ): void {
+	public function on_login_failed( string $_username, $_error = null ): void {
 		if ( ! $this->is_enabled() ) {
 			return;
 		}
@@ -110,7 +110,7 @@ class LoginRateLimiter {
 		$opts      = $this->get_options();
 		$count_key = self::COUNT_PREFIX . $hash;
 		$count     = (int) get_transient( $count_key );
-		$count++;
+		++$count;
 
 		if ( $count >= $opts['attempts'] ) {
 			// Threshold reached: store the IP as the value (enables block listing in the UI).
@@ -145,15 +145,17 @@ class LoginRateLimiter {
 	}
 
 	/**
+	 * Read and normalise the login rate-limiting options.
+	 *
 	 * @return array{ attempts: int, window: int, blacklist_time: int, promote_after: int }
 	 */
 	private function get_options(): array {
 		$opts = CoreOptions::read_options();
 		return array(
-			'attempts'       => max( 1, (int) ( $opts['login_rate_limit_attempts']       ?? 5 ) ),
-			'window'         => max( 1, (int) ( $opts['login_rate_limit_window']          ?? 300 ) ),
-			'blacklist_time' => max( 1, (int) ( $opts['login_rate_limit_blacklist_time']  ?? 3600 ) ),
-			'promote_after'  => max( 0, (int) ( $opts['login_rate_limit_promote_after']   ?? 0 ) ),
+			'attempts'       => max( 1, (int) ( $opts['login_rate_limit_attempts'] ?? 5 ) ),
+			'window'         => max( 1, (int) ( $opts['login_rate_limit_window'] ?? 300 ) ),
+			'blacklist_time' => max( 1, (int) ( $opts['login_rate_limit_blacklist_time'] ?? 3600 ) ),
+			'promote_after'  => max( 0, (int) ( $opts['login_rate_limit_promote_after'] ?? 0 ) ),
 		);
 	}
 
@@ -179,12 +181,14 @@ class LoginRateLimiter {
 			return;
 		}
 
-		IpEntryRepository::insert( array(
-			'ip'         => $ip,
-			'list_type'  => 'global_blacklist',
-			'entry_type' => 'rate_limit',
-			'expires_at' => gmdate( 'Y-m-d H:i:s', time() + $duration ),
-		) );
+		IpEntryRepository::insert(
+			array(
+				'ip'         => $ip,
+				'list_type'  => 'global_blacklist',
+				'entry_type' => 'rate_limit',
+				'expires_at' => gmdate( 'Y-m-d H:i:s', time() + $duration ),
+			)
+		);
 	}
 
 	/**
@@ -214,9 +218,9 @@ class LoginRateLimiter {
 		}
 
 		[ $network, $prefix ] = explode( '/', $entry, 2 );
-		$prefix  = (int) $prefix;
-		$ip_bin  = @inet_pton( $ip );
-		$net_bin = @inet_pton( $network );
+		$prefix               = (int) $prefix;
+		$ip_bin               = inet_pton( $ip );
+		$net_bin              = inet_pton( $network );
 
 		// Both must be valid and the same address family.
 		if ( false === $ip_bin || false === $net_bin || strlen( $ip_bin ) !== strlen( $net_bin ) ) {
@@ -256,11 +260,11 @@ class LoginRateLimiter {
 	 */
 	private function get_client_ip(): string {
 		$candidates = array(
-			$_SERVER['HTTP_CF_CONNECTING_IP'] ?? '',
-			$_SERVER['HTTP_X_REAL_IP']        ?? '',
+			sanitize_text_field( wp_unslash( $_SERVER['HTTP_CF_CONNECTING_IP'] ?? '' ) ),
+			sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_REAL_IP'] ?? '' ) ),
 			// X-Forwarded-For may contain a comma-separated list; take the first (client) entry.
-			trim( explode( ',', $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '' )[0] ),
-			$_SERVER['REMOTE_ADDR']           ?? '',
+			trim( explode( ',', sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '' ) ) )[0] ),
+			sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ) ),
 		);
 
 		foreach ( $candidates as $ip ) {
