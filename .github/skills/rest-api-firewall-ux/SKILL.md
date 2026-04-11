@@ -83,12 +83,13 @@ How it works:
 | `models-properties` | `Properties.jsx` | `models_properties` | Free tier only |
 | `firewall_auth_rate` | `RestApiSingleUser.jsx` | `firewall_auth_rate` | Both tiers |
 
-**Exception — self-contained free panels (NOT in PANEL_SAVE_GROUP):**
+**Exception — self-contained panels (NOT in PANEL_SAVE_GROUP — AppBar Save hidden for these):**
 
 | Component | Panel key | Save mechanism |
 |---|---|---|
-| `GlobalSecurity.jsx` | `global_security` | Owns `useSaveOptions` instance + inline `<Toolbar>` save button |
+| `GlobalSecurity.jsx` | `global_security` | Owns `useSaveOptions` instance + inline `<Toolbar>` save button; manages its own local form state |
 | `Collections.jsx` | `collections` | Owns `useSaveOptions` instance + inline Save button; scoped per collection type; `skipConfirm: true` |
+| `PublicRateLimitSection.jsx` | child of `global-ip-filtering` | Owns `useSaveOptions` instance + inline Save button; always rendered inside IpFilter panel |
 
 ### Pro Tier — EntryToolbar + useRegisterToolbar + useProActions
 
@@ -138,16 +139,7 @@ To add a new event: add it to the PHP array with `context: ['free', 'pro']` or `
 ## D — Pending Work Items
 
 ### D1 — GlobalSecurity: spurious confirm dialog on navigation
-
-**Problem:** When leaving the global security panel (`global_security`), the confirm dialog fires even if no changes were made.
-
-**Root cause:** `GlobalSecurity.jsx` currently uses local `useState` for `form`/`savedForm`. If these get initialized at different times, `isDirty` may return `true` on first mount.
-
-**Fix required:**
-- Replace local state with a dedicated context or use `AdminDataContext` as the source of truth
-- On mount, read initial values from `adminData.admin_options` and compare against those same values on dirty check
-- Only fire `setDirtyFlag` when user has actually changed a field
-- File: `src/components/GlobalSecurity/GlobalSecurity.jsx`
+✅ **Likely resolved** — GlobalSecurity was refactored to use its own self-contained local form state, initialized from `adminData.admin_options` at mount and compared against a `savedForm` snapshot. Verify in browser that navigating away from the Security panel without making changes does NOT trigger the confirm dialog.
 
 ### D2 — Drawer navigation: application-scoped items live in ApplicationSelector
 
@@ -189,6 +181,42 @@ To add a new event: add it to the PHP array with `context: ['free', 'pro']` or `
 | ProToFreeDialog.jsx: new component created | ✅ Fixed | ProToFreeDialog.jsx |
 | App.jsx: ProToFreeDialog wired with proFallbackOpen state | ✅ Fixed | App.jsx |
 | Navigation: save button gated by `hasValidLicense` (free tier could never save) | ✅ Fixed | Navigation.jsx |
+| useSaveOptions: hardcoded free nonce — would fail against pro AJAX handlers | ✅ Fixed | useSaveOptions.js |
+| Plugin routes: global `enforce_auth` incorrectly applied in UI (PHP already excluded them) | ✅ Fixed | RoutesPolicyNodeContent.jsx |
+| Pro-only Models options (Relative URLs etc.) showing as checked in free tier | ✅ Fixed | GlobalProperties.jsx |
+| Redirect settings UI in Theme panel — moved to Security panel | ✅ Fixed | ThemeSettings.jsx / GlobalSecurity.jsx |
+
+---
+
+## F — Critical Cross-Cutting Rules
+
+### Nonce — always use approved hooks
+Two nonces exist: free (`rest_api_firewall_update_options_nonce`) and pro (`rest_api_firewall_update_pro_options_nonce`).
+- Free `Permissions::ajax_validate_has_firewall_admin_caps()` accepts **both**
+- Pro `Permissions::validate_ajax_crud_rest_api_firewall_pro_options()` accepts **pro nonce only** (`check_ajax_referer` → wp_die on mismatch)
+- All three JS hooks resolve nonce as `proNonce || adminData.nonce` — never bypass them with a raw `fetch`
+- See ARCHITECTURE.md §5 for the full table.
+
+### Plugin routes — bypass rule
+Routes whose first path segment is NOT in `['wp', 'oembed', 'batch', 'wp-site-health']` are plugin routes.
+- `isPluginRoute(node)` helper in `routesPolicyUtils.js`
+- PHP: `PolicyRuntime::is_wordpress_core_route()` (inverse)
+- **Free tier UI**: `authIsGlobal` must be false for plugin routes — global `enforce_auth` does not apply to them
+- **Pro tier**: plugin routes bypass per-application enforcement in `FirewallPro::check()` — they fall through with global defaults
+- Route Settings Drawer stores plugin route settings globally in `rest_firewall_plugin_routes_policy`, not per-application
+- See ARCHITECTURE.md §8 for the full decision record.
+
+### Applications Only Mode
+- Option: `applications_only_mode` (boolean, `global_security` group, free+pro)
+- Free tier: activates template redirect + xmlrpc block when enabled
+- Pro tier: additionally redirects unmatched core REST requests (HTTP redirect, not 404)
+- Plugin routes always fall through — never redirected
+- Redirect destination shared with theme redirect: `theme_redirect_templates_preset_url` / `theme_redirect_templates_free_url`
+- See ARCHITECTURE.md §9.
+
+### Models / Properties — tier gating
+- `rest_models_relative_url_enabled` and `rest_models_relative_attachment_url_enabled` are **pro-only** (context `['pro']`)
+- All pro-only fields in `GlobalProperties` are always displayed as `false` (unchecked) in free tier via `checkedValue` in the `Item` component — stored values from a prior pro activation are ignored in the UI
 
 ---
 
@@ -203,18 +231,31 @@ To add a new event: add it to the PHP array with `context: ['free', 'pro']` or `
 | PHP migration service | `inc/Migration/MigrationService.php` |
 | PHP pro→free fallback | `inc/Migration/ProToFreeFallbackService.php` |
 | PHP bootstrap / JS object | `inc/Core/Bootstrap.php` |
+| Free plugin permissions + nonce validation | `inc/Core/Permissions.php` |
+| Pro plugin permissions + nonce validation | `/rest-api-firewall-pro/inc/Core/Permissions.php` |
 | App-level form state + save wiring | `src/App.jsx` |
 | Settings form hook | `src/hooks/useSettingsForm.js` |
-| Free-tier save hook | `src/hooks/useSaveOptions.js` |
+| Free-tier save hook (nonce-aware) | `src/hooks/useSaveOptions.js` |
 | Pro-tier save/delete hook | `src/hooks/useProActions.js` |
+| Generic AJAX hook | `src/hooks/useAjax.js` |
 | Entry toolbar context | `src/contexts/EntryToolbarContext.jsx` |
+| License context (`hasValidLicense`, `proNonce`) | `src/contexts/LicenseContext.jsx` |
+| Admin data context | `src/contexts/AdminDataContext.jsx` |
+| Application context | `src/contexts/ApplicationContext.jsx` |
 | Routes panel | `src/components/Firewall/Routes/RoutesPanel.jsx` |
 | Global routes options (both tiers) | `src/components/Firewall/Routes/GlobalRoutesPolicy.jsx` |
+| Route tree node UI + auth/disable switches | `src/components/Firewall/Routes/RoutesPolicyNodeContent.jsx` |
+| Route Settings Drawer (users + IPs + origins) | `src/components/Firewall/Routes/RouteSettingsDrawer.jsx` |
+| `isPluginRoute()` + tree utils | `src/components/Firewall/Routes/routesPolicyUtils.js` |
 | Free-tier webhook panel | `src/components/Webhooks/Webhook.jsx` |
 | Pro webhook editor | `src/components/Webhooks/WebhookEditor.jsx` |
 | Webhook auto-trigger events (PHP) | `inc/Webhook/WebhookAutoTrigger.php` |
 | Free-tier collections panel | `src/components/Models/FreeTierCollections.jsx` |
 | Pro collections panel | `src/components/Models/Collections.jsx` |
-| Global security panel | `src/components/GlobalSecurity/GlobalSecurity.jsx` |
-| License context | `src/contexts/LicenseContext.jsx` |
-| Application context | `src/contexts/ApplicationContext.jsx` |
+| Global model output settings (toggles) | `src/components/Models/GlobalProperties.jsx` |
+| Properties panel (tabbed: Global / Per Model) | `src/components/Models/PropertiesPanel.jsx` |
+| Global security panel (redirect + xmlrpc + apps-only mode) | `src/components/GlobalSecurity/GlobalSecurity.jsx` |
+| Theme panel (deploy theme, ACF, content, images) | `src/components/Theme/ThemeSettings.jsx` |
+| All option definitions, groups, defaults | `inc/Core/CoreOptions.php` |
+| Route policy resolution + `is_wordpress_core_route()` | `inc/Policy/PolicyRuntime.php` |
+| Pro application enforcement + plugin route bypass | `/rest-api-firewall-pro/inc/Firewall/FirewallPro.php` |
