@@ -3,11 +3,15 @@ import { useNavigation } from '../../contexts/NavigationContext';
 import { useAdminData } from '../../contexts/AdminDataContext';
 
 import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
+import Tooltip from '@mui/material/Tooltip';
 
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import BusinessIcon from '@mui/icons-material/Business';
+import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
 import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined';
 
@@ -84,6 +88,20 @@ export default function PropertiesPanel( { form, setField } ) {
 						extraItems={ extraItems }
 					/>
 					<Stack p={ 4 } flexGrow={ 1 } overflow="auto" spacing={ 3 }>
+						{ selectedType && selectedType !== 'settings_route' && (
+							<Stack direction="row" spacing={ 0.5 }>
+								<Tooltip disableInteractive title={ __( 'View routes', 'rest-api-firewall' ) }>
+									<IconButton size="small" onClick={ () => navigate( 'per-route-settings', 'routes' ) } sx={ { opacity: 0.5 } }>
+										<AccountTreeOutlinedIcon fontSize="small" />
+									</IconButton>
+								</Tooltip>
+								<Tooltip disableInteractive title={ __( 'View collection', 'rest-api-firewall' ) }>
+									<IconButton size="small" onClick={ () => navigate( 'collections', selectedType ) } sx={ { opacity: 0.5 } }>
+										<ListAltOutlinedIcon fontSize="small" />
+									</IconButton>
+								</Tooltip>
+							</Stack>
+						) }
 						<ModelProperties
 							selectedObjectType={ selectedType }
 							setField={ setField }

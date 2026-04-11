@@ -269,7 +269,18 @@ function AppContent() {
 						<RoutesPanel
 							form={ form }
 							setField={ setField }
-							onNavigate={ ( v ) => navigate( { 5: 'models-properties' }[ v ] ?? String( v ) ) }
+							onNavigate={ ( v ) => {
+								if ( typeof v === 'object' && v !== null ) {
+									// Pro tier: ModelsPanel uses 'models' as tab-1 sub-key.
+									// Free tier: PropertiesPanel uses the post-type slug directly.
+									const subKey = ( v.panel === 'models-properties' && hasValidLicense )
+										? 'models'
+										: ( v.subKey || null );
+									navigate( v.panel, subKey );
+								} else {
+									navigate( { 5: 'models-properties' }[ v ] ?? String( v ) );
+								}
+							} }
 						/>
 					) }
 

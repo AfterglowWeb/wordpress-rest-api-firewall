@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useReducer, useMemo } from '@
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
+import { useNavigation } from '../../contexts/NavigationContext';
 import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
 import useSaveOptions from '../../hooks/useSaveOptions';
 import useProActions from '../../hooks/useProActions';
@@ -25,6 +26,8 @@ import Typography from '@mui/material/Typography';
 import UndoIcon from '@mui/icons-material/Undo';
 import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
+import RuleIcon from '@mui/icons-material/Rule';
 
 import Tooltip from '@mui/material/Tooltip';
 
@@ -140,11 +143,13 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 	const hideUserRoutes = !! adminData?.admin_options?.hide_user_routes;
 	const isPro = hasValidLicense && !! selectedApplicationId;
 
+	const { subKey, navigate: navigateTo } = useNavigation();
+
 	const { save: saveOptions, saving: savingOptions } = useSaveOptions();
 	const { save: saveProAction, saving: savingProOrder } = useProActions();
 	const { openDialog } = useDialog();
 
-	const [ selectedType, setSelectedType ] = useState( 'post' );
+	const [ selectedType, setSelectedType ] = useState( subKey || 'post' );
 	const [ loadingIds, setLoadingIds ] = useState( false );
 	const [ loading, setLoading ] = useState( false );
 	const [ resetting, setResetting ] = useState( false );
@@ -158,6 +163,7 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 	useEffect( () => { itemCacheRef.current = orderState.itemCache; }, [ orderState.itemCache ] );
 	const byTypeRef = useRef( {} );
 	useEffect( () => { byTypeRef.current = orderState.byType; }, [ orderState.byType ] );
+	useEffect( () => { if ( subKey ) setSelectedType( subKey ); }, [ subKey ] );
 
 	const typeState = orderState.byType[ selectedType ] || {
 		masterOrder: [],
@@ -757,24 +763,40 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 
 			{ /* Right form */ }
 			<Stack flex={ 1 } p={ 4 } spacing={ 3 } overflow="auto">
-				<Stack direction="row" alignItems="center" justifyContent="space-between" gap={ 1 }>
+			<Stack direction="row" alignItems="center" justifyContent="space-between" gap={ 1 }>
 					<Typography variant="subtitle1" fontWeight={ 600 }>
 						{ selectedType
 							? sprintf( __( '%s — Per Page & Order', 'rest-api-firewall' ), objectLabel )
 							: __( 'Set Collections Per Page And Order', 'rest-api-firewall' ) }
 					</Typography>
-					<Button
-						size="small"
-						variant="contained"
-						disableElevation
-						disabled={ isPro
-							? ( ( ! hasDragged && ! proSettingsDirty ) || savingProOrder )
-							: ( ( ! hasDragged && ! proSettingsDirty ) || savingOptions )
-						}
-						onClick={ isPro ? handleSavePro : handleSaveFree }
-					>
-						{ ( isPro ? savingProOrder : savingOptions ) ? __( 'Saving…', 'rest-api-firewall' ) : __( 'Save', 'rest-api-firewall' ) }
-					</Button>
+					<Stack direction="row" gap={ 0.5 } alignItems="center">
+						{ selectedType && (
+							<>
+								<Tooltip disableInteractive title={ __( 'View routes', 'rest-api-firewall' ) }>
+									<IconButton size="small" onClick={ () => navigateTo( 'per-route-settings', 'routes' ) } sx={ { opacity: 0.5 } }>
+										<AccountTreeOutlinedIcon fontSize="small" />
+									</IconButton>
+								</Tooltip>
+								<Tooltip disableInteractive title={ __( 'View model properties', 'rest-api-firewall' ) }>
+									<IconButton size="small" onClick={ () => navigateTo( 'models-properties', hasValidLicense ? 'models' : selectedType ) } sx={ { opacity: 0.5 } }>
+										<RuleIcon fontSize="small" />
+									</IconButton>
+								</Tooltip>
+							</>
+						) }
+						<Button
+							size="small"
+							variant="contained"
+							disableElevation
+							disabled={ isPro
+								? ( ( ! hasDragged && ! proSettingsDirty ) || savingProOrder )
+								: ( ( ! hasDragged && ! proSettingsDirty ) || savingOptions )
+							}
+							onClick={ isPro ? handleSavePro : handleSaveFree }
+						>
+							{ ( isPro ? savingProOrder : savingOptions ) ? __( 'Saving…', 'rest-api-firewall' ) : __( 'Save', 'rest-api-firewall' ) }
+						</Button>
+					</Stack>
 				</Stack>
 
 				{ selectedType && (
