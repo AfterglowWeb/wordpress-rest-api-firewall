@@ -704,3 +704,110 @@ Once in `global_blacklist` the IP is visible in the IP Filter panel and can be m
 | Inbound webhook | Login transient blocks | `rest_api_firewall_inbound_webhook_received` with `{ action: "release_login_block", ip: "…" }` |
 | Auto-expire (transients) | Login block transients | TTL = `login_rate_limit_blacklist_time` |
 | Auto-expire (DB) | DB escalated entries | `IpEntryRepository::delete_expired()` on cron |
+
+---
+
+## 14 — Security Layers Overview
+
+The plugin operates in two tiers (free + pro) and enforces security across multiple layers:
+
+```
+Request
+  │
+  ├─ IP Filtering          (free+pro) — IP/CIDR allow/block lists, public rate limiting
+  ├─ Auth Hardening        (free+pro) — brute-force protection, admin login whitelist
+  ├─ Route Policy          (free+pro) — per-route auth enforcement, method restrictions
+  ├─ Application Layer     (pro only) — per-application scoping of all rules above
+  └─ Response              — enforced or passed through
+```
+
+---
+
+## 15 — Rate Limiting Panel Organization
+
+Rate limiting settings are distributed across two panels. This mirrors conventional firewall UIs (Cloudflare, Nginx, etc.) — credential attacks and traffic floods are separate concerns.
+
+| Panel | Rules |
+|-------|-------|
+| **Auth Hardening** | Auth Rate Limiting (failed credentials), Admin Login Whitelist, Blacklist Escalation, Active Auth Blocks |
+| **IP Filtering** | Public Rate Limiting (traffic volume), Global Blacklist, Trusted IPs |
+
+---
+
+## 16 — Auth Method / User Dependency
+
+### Rule
+**Authentication method enforcement only applies when at least one user is configured.**
+
+A public application (no users set) is a valid and supported use case:
+- Free tier: admin uses IP filtering, route blocking, or other options without any REST API user.
+- Pro tier: admin creates an application serving public endpoints with no user restriction.
+
+If `enforce_auth = true` but no users are configured, the result would be a total lockout (every request returns 401 with no way to authenticate). The plugin must detect this and skip auth enforcement silently.
+
+### Free tier check
+`firewall_user_id` (CoreOptions): if `0` or unset → no user configured → auth not enforced regardless of `enforce_auth` flag.
+
+Check point: `PolicyRuntime::resolve_settings()` must gate the `protect = true` override behind `has_configured_users()`. Same guard in `Firewall::wordpress_auth()`.
+
+```php
+// Free tier user check
+private static function has_configured_users(): bool {
+    return (int) CoreOptions::read_option( 'firewall_user_id' ) > 0;
+}
+```
+
+### Pro tier check
+Per-application: query the pro users repository for `application_id`. If `count === 0` → no users → skip auth enforcement for that application.
+
+```php
+// Pro tier user check (application-scoped)
+private static function has_configured_users( string $application_id ): bool {
+    return UsersRepository::count_for_application( $application_id ) > 0;
+}
+```
+
+### Guard locations
+| File | Hook | Guard added |
+|------|------|-------------|
+| `PolicyRuntime::resolve_settings()` | Before forcing `protect = true` for core routes | `has_configured_users()` |
+| `Firewall::wordpress_auth()` | Before calling `authenticate()` | `has_configured_users()` |
+
+### UI signals
+- **Free tier `RestApiSingleUser.jsx`**: Authentication Method section is `disabled` when `firewall_user_id === 0`. Helper text: _"Select a REST API user above to enable this option."_
+- **Pro tier `ApplicationEditorSettings.jsx`**: When `appAllowedAuthMethods` is set but `hasUsers === false`, show `Alert severity="info"`: _"Authentication methods have no effect until at least one user is assigned to this application."_ The checkboxes remain enabled (admin can pre-configure for when users are added).
+
+---
+
+## 17 — Application Scoping (Pro)
+
+All route policy, model, collection, and user rules are scoped to an **Application** entity. Each application has its own:
+- Route policy tree (per-route overrides)
+- Allowed origins, allowed IPs, auth methods
+- Users (with per-route access grants)
+- Models, Collections, Webhooks, Mails, Automations
+
+Auth Hardening and IP Filtering (blacklist) are **global** — shared across all applications. Trusted IPs (pro) is also global.
+
+---
+
+## 18 — Option Storage (CoreOptions)
+
+### Free tier (`wp_options` key `rest_api_firewall_options`)
+
+Key option groups and their PHP keys:
+
+| Group | Key | Type | Description |
+|-------|-----|------|-------------|
+| `login_hardening` | `login_rate_limit_enabled` | bool | Enable auth rate limiting |
+| `login_hardening` | `login_rate_limit_attempts` | int | Max failed attempts before temp block |
+| `login_hardening` | `login_rate_limit_window` | int | Rolling window (seconds) |
+| `login_hardening` | `login_rate_limit_blacklist_time` | int | Temp block duration (seconds) |
+| `login_hardening` | `login_rate_limit_promote_after` | int | Block cycles before permanent blacklist (0 = off) |
+| `login_hardening` | `admin_login_whitelist_enabled` | bool | Restrict admin login to whitelisted IPs |
+| `login_hardening` | `admin_login_whitelist_ips` | array | Allowed IPs/CIDRs for admin login |
+
+For full option definitions see `inc/Core/CoreOptions.php` and the PHP option groups table in §4.
+
+### Pro tier
+Auth Hardening settings are **not per-application** — they remain in CoreOptions (free option row) shared across all applications. Per-application data lives in custom DB tables managed by the pro plugin.
