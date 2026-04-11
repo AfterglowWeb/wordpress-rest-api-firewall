@@ -6,6 +6,7 @@ import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
 import useProActions from '../../hooks/useProActions';
 import useSaveOptions from '../../hooks/useSaveOptions';
 import useRegisterToolbar from '../../hooks/useRegisterToolbar';
+import { APP_BAR_HEIGHT, WP_ADMIN_BAR_HEIGHT_DESKTOP, WP_ADMIN_BAR_HEIGHT_MOBILE } from '../Navigation';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -413,7 +414,26 @@ export default function CollectionEditor( { collectionType, form, setField, sync
 			</Stack>
 
 			{ /* Ordering toolbar: pagination + undo + restore */ }
-			<Stack direction="row" alignItems="center" flexWrap="wrap" gap={ 1 }>
+			<Stack
+				direction="row"
+				alignItems="center"
+				flexWrap="wrap"
+				gap={ 1 }
+				sx={ {
+					position: 'sticky',
+					top: {
+						xs: WP_ADMIN_BAR_HEIGHT_MOBILE + APP_BAR_HEIGHT,
+						md: WP_ADMIN_BAR_HEIGHT_DESKTOP + APP_BAR_HEIGHT,
+					},
+					bgcolor: 'background.paper',
+					zIndex: 1,
+					mx: -4,
+					px: 4,
+					py: 0.5,
+					borderBottom: 1,
+					borderColor: 'divider',
+				} }
+			>
 				{ needsPagination && (
 					<TablePagination
 						component="div"
@@ -466,7 +486,7 @@ export default function CollectionEditor( { collectionType, form, setField, sync
 			</Stack>
 
 			{ /* Drag-drop list */ }
-			<Box sx={ { display: 'flex', flexDirection: 'row', alignItems: 'stretch', gap: 0.75 } }>
+			<Box sx={ { display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 0.75 } }>
 				{ needsPagination && (
 					<PageDropZone
 						direction="prev"

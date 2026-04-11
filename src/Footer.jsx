@@ -1,8 +1,9 @@
 import { useEffect } from '@wordpress/element';
 import { useAdminData } from './contexts/AdminDataContext';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
+import Link from '@mui/material/Link';
+import Typography from '@mui/material/Typography';
 
 export default function Footer() {
 	const { adminData } = useAdminData();
@@ -18,48 +19,50 @@ export default function Footer() {
 	}
 
 	return (
-		<Box
+		<Stack
 			component="footer"
+			flexDirection={ { xs: 'column', sm: 'row' } }
+			gap={ 1 }
+			py={ 1 }
+			px={ 4 }
+			justifyContent={{ xs: 'center', sm: 'flex-end' }}
+			alignItems="center"
 			sx={ {
-				p: 1,
 				height: 40,
 				boxSizing: 'border-box',
 				borderTop: 1,
 				borderColor: 'divider',
 				background: (theme) => theme.palette.background.paper,
-				display: 'flex',
-				gap: 1,
-				justifyContent: 'flex-end',
-				alignItems: 'center',
 			} }
 		>
-			<Button
-				size="small"
-				target="_blank"
-				rel="nofollow noreferer noopener"
-				sx={ { textTransform: 'none' } }
-			>
-				{__('Support', 'rest-api-firewall')}
-			</Button>
-			<Button
-				size="small"
-				target="_blank"
-				rel="nofollow noreferer noopener"
-				sx={ { textTransform: 'none' } }
-			>
-				{__('Credits', 'rest-api-firewall')}
-			</Button>
-			<Tooltip title={ 'Open in a new tab' }>
-				<Button
-				size="small"
-				href="https://creativecommons.org/licenses/by-sa/4.0/"
-				target="_blank"
-				rel="nofollow noreferer noopener"
-				sx={ { textTransform: 'none' } }
-				>
-					{__('GPL-V2 License', 'rest-api-firewall')}
-				</Button>
-			</Tooltip>
-		</Box>
+
+			<Typography component="p" variant="caption" color="text.secondary">
+				<Tooltip title={ 'Open in a new tab' } disableInteractive followCursor>
+					<Link
+					href="https://wal.abc-plugins.com"
+					target="_blank"
+					rel="nofollow noreferrer noopener"
+					underline="always"
+					variant="caption"
+					>
+						{ adminData.plugin_name + ' v' + adminData.plugin_version }
+					</Link>
+				</Tooltip>
+			</Typography>
+			<Typography component="p" variant="caption" color="text.secondary">
+				<Tooltip title={ 'Open in a new tab' } disableInteractive followCursor>
+					<Link
+					href="https://creativecommons.org/licenses/by-sa/4.0/"
+					target="_blank"
+					rel="nofollow noreferrer noopener"
+					underline="always"
+					variant="caption"
+					>
+						{__('GPL-V2 License', 'rest-api-firewall')}
+					</Link>
+				</Tooltip>
+			</Typography>
+			
+		</Stack>
 	);
 }

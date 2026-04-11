@@ -289,7 +289,6 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 				<TestPolicyPanel
 					route={ testRoute?.route || '' }
 					method={ testRoute?.method || 'GET' }
-					hasChildren={ testRoute?.hasChildren || false }
 					hasUsers={ testRoute?.hasUsers || false }
 					onClose={ () => setTestRoute( null ) }
 					onNavigate={ onNavigate }

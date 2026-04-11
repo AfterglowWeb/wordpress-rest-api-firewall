@@ -404,13 +404,32 @@ class CoreOptions {
 				'group'             => 'global_security',
 			),
 
+			// WordPress Mode (pro only).
 			'applications_only_mode'                      => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
-				'group'             => 'global_security',
+				'context'           => array( 'pro' ),
+				'group'             => 'wordpress_mode',
+			),
+
+			'absolute_whitelist'                          => array(
+				'default_value'     => array(),
+				'type'              => 'array',
+				'sanitize_callback' => array( self::class, 'sanitize_ip_array' ),
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'wordpress_mode',
+			),
+
+			'emergency_token_hash'                        => array(
+				'default_value'     => '',
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'rest_expose'       => false,
+				'context'           => array( 'pro' ),
+				'group'             => 'wordpress_mode',
 			),
 
 			'theme_redirect_templates_enabled'            => array(
@@ -571,6 +590,52 @@ class CoreOptions {
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
 				'group'             => 'public_rate_limit',
+			),
+
+			// Login hardening.
+			'login_rate_limit_enabled'                    => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'login_hardening',
+			),
+
+			'login_rate_limit_attempts'                   => array(
+				'default_value'     => 5,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'login_hardening',
+			),
+
+			'login_rate_limit_window'                     => array(
+				'default_value'     => 300,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'login_hardening',
+			),
+
+			'login_rate_limit_blacklist_time'             => array(
+				'default_value'     => 3600,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'login_hardening',
+			),
+
+			'login_rate_limit_promote_after'              => array(
+				'default_value'     => 0,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'login_hardening',
 			),
 
 			'rest_models_enabled'                         => array(
@@ -784,6 +849,42 @@ class CoreOptions {
 		}
 
 		return $js_config;
+	}
+
+	/**
+	 * Sanitize a single IP address or CIDR notation entry for the absolute whitelist.
+	 * Called per-element via array_map() in sanitize_option().
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string Valid IP/CIDR string, or empty string if invalid.
+	 */
+	public static function sanitize_ip_array( $value ): string {
+		$value = trim( (string) $value );
+
+		if ( '' === $value ) {
+			return '';
+		}
+
+		// Plain IP address (IPv4 or IPv6).
+		if ( filter_var( $value, FILTER_VALIDATE_IP ) ) {
+			return $value;
+		}
+
+		// CIDR notation: validate network address and prefix length.
+		if ( strpos( $value, '/' ) !== false ) {
+			[ $ip, $prefix ] = explode( '/', $value, 2 );
+			$prefix          = (int) $prefix;
+
+			if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) && $prefix >= 0 && $prefix <= 32 ) {
+				return $ip . '/' . $prefix;
+			}
+
+			if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) && $prefix >= 0 && $prefix <= 128 ) {
+				return $ip . '/' . $prefix;
+			}
+		}
+
+		return '';
 	}
 
 	public static function is_pro_active(): bool {

@@ -290,6 +290,18 @@ class TestPolicy {
 		$enforce_auth_global = (bool) CoreOptions::read_option( 'enforce_auth' );
 		$is_protected        = (bool) ( $policy['protect'] ?? false );
 
+		// For plugin (non-WP-core) routes, global auth enforcement does not apply.
+		// Only an explicit per-namespace or per-route policy can mark them as protected.
+		if ( ! PolicyRuntime::is_wordpress_core_route( $route ) && $enforce_auth_global && $is_protected ) {
+			if ( ! $this->is_plugin_route_explicitly_protected( $route, $method ) ) {
+				return array(
+					'skip'   => true,
+					'reason' => 'Plugin route: auth not enforced globally (configure per-route to protect)',
+					'pass'   => null,
+				);
+			}
+		}
+
 		if ( ! $enforce_auth_global && ! $is_protected ) {
 			return array(
 				'skip'   => true,
@@ -408,6 +420,23 @@ class TestPolicy {
 			Firewall::end_internal_test();
 			wp_set_current_user( $prev_user_id );
 		}
+	}
+
+	/**
+	 * Re-resolve the route policy with global enforce_auth disabled to determine
+	 * whether an explicit per-namespace or per-route config protects this plugin route.
+	 */
+	private function is_plugin_route_explicitly_protected( string $route, string $method ): bool {
+		$filter = static function ( array $opts ): array {
+			$opts['enforce_auth'] = false;
+			return $opts;
+		};
+		add_filter( 'rest_api_firewall_runtime_options', $filter );
+		PolicyRuntime::clear_cache();
+		$policy = $this->get_policy_for_route( $route, $method );
+		remove_filter( 'rest_api_firewall_runtime_options', $filter );
+		PolicyRuntime::clear_cache();
+		return (bool) ( $policy['protect'] ?? false );
 	}
 
 	private function cleanup_test_app_passwords(): void {

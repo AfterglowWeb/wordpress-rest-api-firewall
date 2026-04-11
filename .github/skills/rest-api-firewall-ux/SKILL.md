@@ -88,6 +88,8 @@ How it works:
 | Component | Panel key | Save mechanism |
 |---|---|---|
 | `GlobalSecurity.jsx` | `global_security` | Owns form state + `useSaveOptions`; exposes `save`/`saving` via `setDirtyFlag({ save, saving })` → AppBar button appears when dirty; unmount effect clears flag |
+| `LoginHardening.jsx` | `login-hardening` | Free+pro; same `setDirtyFlag` AppBar pattern; login rate limit fields; unmount effect clears flag |
+| `WordPressMode.jsx` | `wordpress-mode` | Pro only; same `setDirtyFlag` AppBar pattern; Applications Only + Trusted IPs + Emergency Token; unmount effect clears flag |
 | `Collections.jsx` | `collections` | Owns `useSaveOptions` instance + inline Save button; scoped per collection type; `skipConfirm: true` |
 | `PublicRateLimitSection.jsx` | child of `global-ip-filtering` | Owns `useSaveOptions` instance + inline Save button; always rendered inside IpFilter panel |
 
@@ -206,13 +208,43 @@ Routes whose first path segment is NOT in `['wp', 'oembed', 'batch', 'wp-site-he
 - Route Settings Drawer stores plugin route settings globally in `rest_firewall_plugin_routes_policy`, not per-application
 - See ARCHITECTURE.md §8 for the full decision record.
 
-### Applications Only Mode
-- Option: `applications_only_mode` (boolean, `global_security` group, free+pro)
-- Free tier: activates template redirect + xmlrpc block when enabled
-- Pro tier: additionally redirects unmatched core REST requests (HTTP redirect, not 404)
-- Plugin routes always fall through — never redirected
-- Redirect destination shared with theme redirect: `theme_redirect_templates_preset_url` / `theme_redirect_templates_free_url`
+### WordPress Mode (pro only) — Applications Only + Trusted IPs + Emergency Token
+- Panel key: `wordpress-mode` (pro only); component: `WordPressMode.jsx`
+- `applications_only_mode`: boolean, `wordpress_mode` group, **pro only** (previously `global_security / free+pro` — changed)
+  - Pro: template redirect + xmlrpc block + unmatched core REST → HTTP redirect (not 404)
+  - Plugin routes always fall through — never redirected
+- `absolute_whitelist`: CIDR-aware IP array, `wordpress_mode` group, pro only
+  - Checked at `init` priority 1 before ALL enforcement — bypasses blacklist, rate limit, login rate limit
+  - `manage_options` admin session bypass: logged-in admins always pass regardless of whitelist
+  - `wp-login.php` excluded from enforcement (self-lockout prevention)
+  - UI proposes auto-adding admin's current IP on first activation (via server-side `get_current_client_ip` AJAX)
+- `emergency_token_hash`: SHA-256 of token, `wordpress_mode` group, pro only
+  - Generated via explicit "Generate Emergency Token" button (not automatic)
+  - Reset URL `/?rest_firewall_emergency_reset=<token>` → disables mode + clears whitelist + rotates token
+  - Single-use; wp-cli fallback shown in UI
+- Redirect destination shared: `theme_redirect_templates_preset_url` / `theme_redirect_templates_free_url`
 - See ARCHITECTURE.md §9.
+
+### Login Hardening (free+pro)
+- Panel key: `login-hardening`; component: `LoginHardening.jsx`; navigation drawer link under Security
+- PHP: `LoginRateLimiter` hooks on `wp_login_failed` + `authenticate` filter priority 30
+- Options group `login_hardening` (free+pro): `login_rate_limit_enabled`, `login_rate_limit_attempts`, `login_rate_limit_window`, `login_rate_limit_blacklist_time`
+- Transient key: `rest_firewall_login_<sha256_first8(ip)>`; TTL = window_seconds
+- Exempt: IPs in `absolute_whitelist` only — **all other IPs, including administrators, are subject to login rate limiting.** The `manage_options` bypass applies to Applications Only mode only, not to login attempts.
+- See ARCHITECTURE.md §12.
+
+### Shared IP Entry Table — always use `IpEntryRepository`
+
+The table `{prefix}_rest_api_firewall_ip_entries` is the **only custom DB table shared between free and pro tiers**. It is the single authoritative store for all IP blacklist/whitelist entries — do not use `wp_options` or transients for persistent IP blocks.
+
+- Three `list_type` values: `whitelist` (per-app allow), `blacklist` (per-app block), **`global_blacklist` (global — enforced across all traffic, free + pro)**
+- Two `entry_type` values: `manual` (admin-added via UI), `rate_limit` (auto-promoted by enforcement)
+- `expires_at IS NULL` = permanent; non-NULL = auto-expires — `IpEntryRepository::delete_expired()` handles cleanup
+- **Never bypass `IpEntryRepository`** with raw `wpdb` calls — use `::insert()`, `::delete()`, `::ip_in_list()`, `::get_entries()`, etc.
+- Writing `list_type = 'global_blacklist'` from any enforcement path (login escalation, REST rate limit) applies globally. Always pair with `entry_type = 'rate_limit'` and a finite `expires_at`.
+- Admin manual release: IP Filter panel → delete entry → `delete_ip_entry` AJAX → `IpEntryRepository::delete()`
+- Login transient blocks (not in DB): released via `rest_api_firewall_release_login_block` AJAX or inbound webhook `release_login_block` action
+- See ARCHITECTURE.md §13.
 
 ### Models / Properties — tier gating
 - `rest_models_relative_url_enabled` and `rest_models_relative_attachment_url_enabled` are **pro-only** (context `['pro']`)
@@ -254,8 +286,13 @@ Routes whose first path segment is NOT in `['wp', 'oembed', 'batch', 'wp-site-he
 | Pro collections panel | `src/components/Models/Collections.jsx` |
 | Global model output settings (toggles) | `src/components/Models/GlobalProperties.jsx` |
 | Properties panel (tabbed: Global / Per Model) | `src/components/Models/PropertiesPanel.jsx` |
-| Global security panel (redirect + xmlrpc + apps-only mode) | `src/components/GlobalSecurity/GlobalSecurity.jsx` |
+| Global security panel (redirect + xmlrpc + data exposure + HTTP headers) | `src/components/GlobalSecurity/GlobalSecurity.jsx` |
+| Login hardening panel (login rate limit — free+pro) | `src/components/LoginHardening/LoginHardening.jsx` |
+| WordPress Mode panel (Applications Only + Trusted IPs + Emergency Token — pro only) | `src/components/WordPressMode/WordPressMode.jsx` |
 | Theme panel (deploy theme, ACF, content, images) | `src/components/Theme/ThemeSettings.jsx` |
 | All option definitions, groups, defaults | `inc/Core/CoreOptions.php` |
 | Route policy resolution + `is_wordpress_core_route()` | `inc/Policy/PolicyRuntime.php` |
 | Pro application enforcement + plugin route bypass | `/rest-api-firewall-pro/inc/Firewall/FirewallPro.php` |
+| Login attempt rate limiting + transient blacklist | `inc/Security/LoginRateLimiter.php` |
+| Shared IP entry DB schema + version tracking | `inc/Firewall/IpFilter/IpSchema.php` |
+| IP entry CRUD (insert / delete / list / release / expire) | `inc/Firewall/IpFilter/IpEntryRepository.php` |

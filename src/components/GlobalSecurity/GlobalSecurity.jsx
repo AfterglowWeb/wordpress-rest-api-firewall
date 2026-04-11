@@ -23,7 +23,6 @@ import CopyButton from '../shared/CopyButton';
 
 // Keys tracked in this panel's local form state.
 const SECURITY_FIELDS = [
-	'applications_only_mode',
 	'theme_disable_xmlrpc',
 	'theme_disable_comments',
 	'theme_disable_pingbacks',
@@ -189,15 +188,7 @@ export default function GlobalSecurity() {
 	const setField = useCallback( ( e ) => {
 		const { name, checked, value, type } = e.target;
 		const fieldValue = type === 'checkbox' ? Boolean( checked ) : value;
-		setFormState( ( prev ) => {
-			const next = { ...prev, [ name ]: fieldValue };
-			// Applications Only: auto-enable related protections on activation.
-			if ( name === 'applications_only_mode' && fieldValue ) {
-				next.theme_redirect_templates_enabled = true;
-				next.theme_disable_xmlrpc = true;
-			}
-			return next;
-		} );
+		setFormState( ( prev ) => ( { ...prev, [ name ]: fieldValue } ) );
 	}, [] );
 
 	const { save, saving } = useSaveOptions();
@@ -240,31 +231,6 @@ export default function GlobalSecurity() {
 		<Stack p={ 4 } flexGrow={ 1 } spacing={ 3 }>
 
 			<Stack spacing={ 3 } maxWidth={ 600 }>
-
-				<Stack spacing={ 3 }>
-					<Typography variant="subtitle1" fontWeight={ 600 }>
-						{ __( 'Applications Only Mode', 'rest-api-firewall' ) }
-					</Typography>
-
-					<FormControl>
-						<FormControlLabel
-							control={
-								<Switch
-									size="small"
-									checked={ !! form.applications_only_mode }
-									name="applications_only_mode"
-									onChange={ setField }
-								/>
-							}
-							label={ __( 'WordPress Applications Only', 'rest-api-firewall' ) }
-						/>
-						<FormHelperText>
-							{ __( 'Block all non-REST-API traffic. Enables template redirect and XML-RPC block. In Pro tier, also redirects REST requests that match no application.', 'rest-api-firewall' ) }
-						</FormHelperText>
-					</FormControl>
-				</Stack>
-
-				<Divider />
 
 				<Stack spacing={ 3 }>
 					<Typography variant="subtitle1" fontWeight={ 600 }>
