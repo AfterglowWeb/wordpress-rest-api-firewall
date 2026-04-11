@@ -24,7 +24,8 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
 	const nonce = proNonce || adminData?.nonce;
 	const { __ } = wp.i18n || {};
 	const { subKey, navigate: navCtx } = useNavigation();
-	const currentTab = subKey === 'routes' ? 1 : 0;
+	const currentTab = subKey?.startsWith( 'routes' ) ? 1 : 0;
+	const focusRoute = subKey?.startsWith( 'routes|' ) ? subKey.slice( 'routes|'.length ) : null;
 	const isModuleEnabled = !! adminData?.admin_options?.firewall_routes_policy_enabled;
 	const [ appEntry, setAppEntry ] = useState( null );
 	const [ proSettings, setProSettings ] = useState( {
@@ -170,6 +171,7 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
 						setField={ setField }
 						selectedApplicationId={ selectedApplicationId }
 						onNavigate={ onNavigate }
+						focusRoute={ focusRoute }
 					/>
 				</Stack>
 			) }

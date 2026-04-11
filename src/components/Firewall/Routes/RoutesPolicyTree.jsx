@@ -37,7 +37,18 @@ import { CustomTreeItem } from './RoutesPolicyNodeContent';
 import RouteSettingsDrawer from './RouteSettingsDrawer';
 import TestPolicyPanel from './TestPolicyPanel';
 
-export default function RoutesPolicyTree( { form, setField, selectedApplicationId, onNavigate } ) {
+function collectAncestorIds( nodes, targetPath ) {
+	for ( const node of nodes ) {
+		if ( node.path === targetPath ) return [ node.id ];
+		if ( node.children?.length ) {
+			const sub = collectAncestorIds( node.children, targetPath );
+			if ( sub ) return [ node.id, ...sub ];
+		}
+	}
+	return null;
+}
+
+export default function RoutesPolicyTree( { form, setField, selectedApplicationId, onNavigate, focusRoute } ) {
 	const {
 		enforce_auth,
 		hide_user_routes,
@@ -65,6 +76,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 	const [ saving, setSaving ] = useState( false );
 	const [ confirmSaveOpen, setConfirmSaveOpen ] = useState( false );
 	const [ testRoute, setTestRoute ] = useState( null );
+	const [ pendingFocusRoute, setPendingFocusRoute ] = useState( null );
 	const usersLoadedRef = useRef( false );
 	const treeLoadingRef = useRef( true );
 
@@ -254,6 +266,30 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 		}
 		setIsDirty( true );
 	}, [ nodes ] );
+
+	useEffect( () => {
+		if ( ! focusRoute || ! nodes?.length ) return;
+		const ids = collectAncestorIds( nodes, focusRoute );
+		if ( ! ids?.length ) return;
+		setExpandedItems( ( prev ) => {
+			const s = new Set( prev );
+			ids.forEach( ( id ) => s.add( id ) );
+			return [ ...s ];
+		} );
+		setPendingFocusRoute( focusRoute );
+	}, [ focusRoute, nodes ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
+	useEffect( () => {
+		if ( ! pendingFocusRoute ) return;
+		const route = pendingFocusRoute;
+		const timer = setTimeout( () => {
+			document
+				.querySelector( `[data-route-path="${ route }"]` )
+				?.scrollIntoView( { behavior: 'smooth', block: 'start' } );
+			setPendingFocusRoute( null );
+		}, 150 );
+		return () => clearTimeout( timer );
+	}, [ pendingFocusRoute ] );
 
 	if ( loading || ( ! loading && ! treeData ) ) {
 		return (

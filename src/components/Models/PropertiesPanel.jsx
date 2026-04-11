@@ -3,11 +3,15 @@ import { useNavigation } from '../../contexts/NavigationContext';
 import { useAdminData } from '../../contexts/AdminDataContext';
 
 import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
+import Tooltip from '@mui/material/Tooltip';
 
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import BusinessIcon from '@mui/icons-material/Business';
+import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
 import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined';
 
@@ -20,7 +24,7 @@ export default function PropertiesPanel( { form, setField } ) {
 	const { subKey, navigate } = useNavigation();
 	const { adminData } = useAdminData();
 
-	const allTypes = ( adminData?.post_types || [] ).filter( ( t ) => t.public );
+	const allTypes = adminData?.post_types || [];
 
 	const [ selectedType, setSelectedType ] = useState( subKey || 'post' );
 	const [ tab, setTab ] = useState( 0 );
@@ -82,8 +86,27 @@ export default function PropertiesPanel( { form, setField } ) {
 						selectedType={ selectedType }
 						onSelect={ handleSelect }
 						extraItems={ extraItems }
+						disabledTypes={ adminData?.admin_options?.disabled_post_types || [] }
 					/>
 					<Stack p={ 4 } flexGrow={ 1 } overflow="auto" spacing={ 3 }>
+						{ selectedType && selectedType !== 'settings_route' && (
+							<Stack direction="row" spacing={ 0.5 }>
+								<Tooltip disableInteractive title={ __( 'View routes', 'rest-api-firewall' ) }>
+									<IconButton size="small" onClick={ () => {
+										const pt = ( adminData?.post_types || [] ).find( ( p ) => p.value === selectedType );
+										const restPath = pt ? `/wp/v2/${ pt.rest_base || pt.value }` : null;
+										navigate( 'per-route-settings', restPath ? `routes|${ restPath }` : 'routes' );
+									} } sx={ { opacity: 0.5 } }>
+										<AccountTreeOutlinedIcon fontSize="small" />
+									</IconButton>
+								</Tooltip>
+								<Tooltip disableInteractive title={ __( 'View collection', 'rest-api-firewall' ) }>
+									<IconButton size="small" onClick={ () => navigate( 'collections', selectedType ) } sx={ { opacity: 0.5 } }>
+										<ListAltOutlinedIcon fontSize="small" />
+									</IconButton>
+								</Tooltip>
+							</Stack>
+						) }
 						<ModelProperties
 							selectedObjectType={ selectedType }
 							setField={ setField }

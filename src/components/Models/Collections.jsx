@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useReducer, useMemo } from '@
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
+import { useNavigation } from '../../contexts/NavigationContext';
 import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
 import useSaveOptions from '../../hooks/useSaveOptions';
 import useProActions from '../../hooks/useProActions';
@@ -25,6 +26,8 @@ import Typography from '@mui/material/Typography';
 import UndoIcon from '@mui/icons-material/Undo';
 import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
+import RuleIcon from '@mui/icons-material/Rule';
 
 import Tooltip from '@mui/material/Tooltip';
 
@@ -136,15 +139,22 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 	const { selectedApplicationId, applications } = useApplication();
 	const nonce = proNonce || adminData.nonce;
 	const objectTypes = adminData?.post_types || postTypes || [];
-	const publicObjectTypes = objectTypes.filter( ( obj ) => obj.public );
 	const hideUserRoutes = !! adminData?.admin_options?.hide_user_routes;
 	const isPro = hasValidLicense && !! selectedApplicationId;
+
+	const authorLockedReason = ! hasValidLicense
+		? __( 'Managing custom order for authors requires Pro', 'rest-api-firewall' )
+		: hideUserRoutes
+		? __( 'Hidden: /wp/v2/users/* routes are disabled in Global Routes Policy', 'rest-api-firewall' )
+		: null;
+
+	const { subKey, navigate: navigateTo } = useNavigation();
 
 	const { save: saveOptions, saving: savingOptions } = useSaveOptions();
 	const { save: saveProAction, saving: savingProOrder } = useProActions();
 	const { openDialog } = useDialog();
 
-	const [ selectedType, setSelectedType ] = useState( 'post' );
+	const [ selectedType, setSelectedType ] = useState( subKey || 'post' );
 	const [ loadingIds, setLoadingIds ] = useState( false );
 	const [ loading, setLoading ] = useState( false );
 	const [ resetting, setResetting ] = useState( false );
@@ -158,6 +168,7 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 	useEffect( () => { itemCacheRef.current = orderState.itemCache; }, [ orderState.itemCache ] );
 	const byTypeRef = useRef( {} );
 	useEffect( () => { byTypeRef.current = orderState.byType; }, [ orderState.byType ] );
+	useEffect( () => { if ( subKey ) setSelectedType( subKey ); }, [ subKey ] );
 
 	const typeState = orderState.byType[ selectedType ] || {
 		masterOrder: [],
@@ -561,8 +572,8 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 			);
 		}
 
-		// Build DataGrid rows from publicObjectTypes + form state.
-		const proRows = publicObjectTypes.map( ( obj ) => {
+		// Build DataGrid rows from objectTypes + form state.
+		const proRows = objectTypes.map( ( obj ) => {
 			const isAuthorRestricted = obj.type === 'author' && hideUserRoutes;
 			const typeSettings = ( form?.rest_collection_per_page_settings || {} )[ obj.value ] || {};
 			const typeOrder    = ( form?.rest_collection_orders || {} )[ obj.value ] || [];
@@ -712,9 +723,10 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 		<Stack direction="row" sx={ { height: '100%', flexGrow: 1, overflow: 'hidden' } }>
 
 			<ObjectTypeNav
-				objectTypes={ publicObjectTypes }
+				objectTypes={ objectTypes }
 				selectedType={ selectedType }
 				onSelect={ setSelectedType }
+				disabledTypes={ adminData?.admin_options?.disabled_post_types || [] }
 				renderItemEnd={ ( obj, isSelected ) => (
 					<Chip
 						label={ obj.count ?? 0 }
@@ -757,24 +769,46 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 
 			{ /* Right form */ }
 			<Stack flex={ 1 } p={ 4 } spacing={ 3 } overflow="auto">
-				<Stack direction="row" alignItems="center" justifyContent="space-between" gap={ 1 }>
+			<Stack direction="row" alignItems="center" justifyContent="space-between" gap={ 1 }
+					sx={ { position: 'sticky', top: 0, bgcolor: 'background.paper', zIndex: 2, pb: 1 } }
+				>
 					<Typography variant="subtitle1" fontWeight={ 600 }>
 						{ selectedType
 							? sprintf( __( '%s — Per Page & Order', 'rest-api-firewall' ), objectLabel )
 							: __( 'Set Collections Per Page And Order', 'rest-api-firewall' ) }
 					</Typography>
-					<Button
-						size="small"
-						variant="contained"
-						disableElevation
-						disabled={ isPro
-							? ( ( ! hasDragged && ! proSettingsDirty ) || savingProOrder )
-							: ( ( ! hasDragged && ! proSettingsDirty ) || savingOptions )
-						}
-						onClick={ isPro ? handleSavePro : handleSaveFree }
-					>
-						{ ( isPro ? savingProOrder : savingOptions ) ? __( 'Saving…', 'rest-api-firewall' ) : __( 'Save', 'rest-api-firewall' ) }
-					</Button>
+					<Stack direction="row" gap={ 0.5 } alignItems="center">
+						{ selectedType && (
+							<>
+								<Tooltip disableInteractive title={ __( 'View routes', 'rest-api-firewall' ) }>
+									<IconButton size="small" onClick={ () => {
+										const pt = objectTypes.find( ( p ) => p.value === selectedType );
+										const restPath = pt ? `/wp/v2/${ pt.rest_base || pt.value }` : null;
+										navigateTo( 'per-route-settings', restPath ? `routes|${ restPath }` : 'routes' );
+									} } sx={ { opacity: 0.5 } }>
+										<AccountTreeOutlinedIcon fontSize="small" />
+									</IconButton>
+								</Tooltip>
+								<Tooltip disableInteractive title={ __( 'View model properties', 'rest-api-firewall' ) }>
+									<IconButton size="small" onClick={ () => navigateTo( 'models-properties', hasValidLicense ? 'models' : selectedType ) } sx={ { opacity: 0.5 } }>
+										<RuleIcon fontSize="small" />
+									</IconButton>
+								</Tooltip>
+							</>
+						) }
+						<Button
+							size="small"
+							variant="contained"
+							disableElevation
+							disabled={ isPro
+								? ( ( ! hasDragged && ! proSettingsDirty ) || savingProOrder )
+								: ( ( ! hasDragged && ! proSettingsDirty ) || savingOptions )
+							}
+							onClick={ isPro ? handleSavePro : handleSaveFree }
+						>
+							{ ( isPro ? savingProOrder : savingOptions ) ? __( 'Saving…', 'rest-api-firewall' ) : __( 'Save', 'rest-api-firewall' ) }
+						</Button>
+					</Stack>
 				</Stack>
 
 				{ selectedType && (

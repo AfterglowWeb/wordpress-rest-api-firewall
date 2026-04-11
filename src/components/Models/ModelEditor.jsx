@@ -3,6 +3,7 @@ import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
 import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
+import { useNavigation } from '../../contexts/NavigationContext';
 import useProActions from '../../hooks/useProActions';
 
 import Alert from '@mui/material/Alert';
@@ -10,12 +11,17 @@ import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
+import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 
 import formatDate from '../../utils/formatDate';
 import { PropertyRow } from './Properties';
@@ -113,6 +119,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
 	const { selectedApplicationId, setDirtyFlag } = useApplication();
+	const { navigate: navigateTo } = useNavigation();
 	const nonce = proNonce || adminData.nonce;
 	const { __ } = wp.i18n || {};
 
@@ -515,6 +522,20 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 							color="primary"
 							sx={ { fontFamily: 'monospace' } }
 						/>
+						<Tooltip disableInteractive title={ __( 'View routes', 'rest-api-firewall' ) }>
+							<IconButton size="small" onClick={ () => {
+								const pt = ( adminData?.post_types || [] ).find( ( p ) => p.value === objectType );
+								const restPath = pt ? `/wp/v2/${ pt.rest_base || pt.value }` : null;
+								navigateTo( 'per-route-settings', restPath ? `routes|${ restPath }` : 'routes' );
+							} } sx={ { opacity: 0.5 } }>
+								<AccountTreeOutlinedIcon fontSize="small" />
+							</IconButton>
+						</Tooltip>
+						<Tooltip disableInteractive title={ __( 'View collection', 'rest-api-firewall' ) }>
+							<IconButton size="small" onClick={ () => navigateTo( 'collections', objectType ) } sx={ { opacity: 0.5 } }>
+								<ListAltOutlinedIcon fontSize="small" />
+							</IconButton>
+						</Tooltip>
 					</Stack>
 					{ ! isNew && (
 						testMode ? (

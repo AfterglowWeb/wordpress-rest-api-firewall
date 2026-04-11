@@ -490,6 +490,7 @@ export default function ApplicationEditorPanel( { application, onBack } ) {
 					setMailSmtpFromEmail={ setMailSmtpFromEmail }
 					mailSmtpFromName={ mailSmtpFromName }
 					setMailSmtpFromName={ setMailSmtpFromName }
+					hasUsers={ appUsers.length > 0 }
 				/>
 			) }
 

@@ -6,6 +6,7 @@ import Divider from '@mui/material/Divider';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
 /**
@@ -20,6 +21,8 @@ import Typography from '@mui/material/Typography';
  *                                    second row below the label (e.g. badge chips in Collections).
  * @param {Object[]} extraItems       Optional pinned items appended after a Divider:
  *                                    { value, label, secondary }.
+ * @param {string[]} disabledTypes    Optional list of type values disabled in route policy.
+ * @param {Object}   lockedItems      Optional map of typeValue → tooltip string for non-clickable items.
  */
 export default function ObjectTypeNav( {
 	objectTypes,
@@ -28,10 +31,12 @@ export default function ObjectTypeNav( {
 	renderItemEnd    = null,
 	renderItemBottom = null,
 	extraItems       = [],
+	disabledTypes    = [],
+	lockedItems      = {},
 } ) {
 	const grouped = useMemo( () => {
 		const groups = {};
-		objectTypes.filter( ( obj ) => obj.type !== 'author' ).forEach( ( obj ) => {
+		objectTypes.forEach( ( obj ) => {
 			const src = obj.source || '';
 			if ( ! groups[ src ] ) {
 				groups[ src ] = [];
@@ -50,26 +55,31 @@ export default function ObjectTypeNav( {
 	}, [ objectTypes ] );
 
 	return (
-		<Box sx={ { 
-			width: 220, 
-			flexShrink: 0, 
-			borderRight: 1, 
-			borderColor: 'divider', 
-			py: 4 } }>
-			<List dense disablePadding sx={{position: 'sticky', top: 0, bgcolor: 'background.paper'}}>
+		<Box sx={ {
+			width: 220,
+			flexShrink: 0,
+			borderRight: 1,
+			borderColor: 'divider',
+			overflowY: 'auto',
+			height: '100%',
+		} }>
+			<List dense disablePadding sx={ { py: 4 } }>
 				{ grouped.map( ( { source, items } ) => (
 					<li key={ source }>
 						<ul style={ { padding: 0, margin: 0, listStyle: 'none' } }>
 							{ items.map( ( obj ) => {
-								const isSelected = selectedType === obj.value;
+								const isSelected  = selectedType === obj.value;
+								const isDisabled  = disabledTypes.includes( obj.value );
+								const lockReason  = lockedItems[ obj.value ] ?? null;
 								const itemEnd    = renderItemEnd    ? renderItemEnd( obj, isSelected )    : null;
 								const itemBottom = renderItemBottom ? renderItemBottom( obj, isSelected ) : null;
-								return (
+								const button = (
 									<ListItemButton
 										key={ obj.value }
 										dense
 										selected={ isSelected }
-										onClick={ () => onSelect( obj.value ) }
+										disabled={ !! lockReason }
+										onClick={ lockReason ? undefined : () => onSelect( obj.value ) }
 										sx={ { borderRadius: 1, mx: 0.5, px: 1, py: 0.75 } }
 									>
 										<Stack width="100%" gap={ 0.5 }>
@@ -88,9 +98,21 @@ export default function ObjectTypeNav( {
 												{ itemEnd }
 											</Stack>
 											{ itemBottom }
+											{ isDisabled && (
+												<Chip
+													label="Disabled in routes"
+													size="small"
+													sx={ { height: 14, fontSize: '0.6rem', bgcolor: 'action.disabledBackground', color: 'text.disabled', alignSelf: 'flex-start' } }
+												/>
+											) }
 										</Stack>
 									</ListItemButton>
 								);
+								return lockReason ? (
+									<Tooltip key={ obj.value } disableInteractive title={ lockReason } placement="right">
+										<span>{ button }</span>
+									</Tooltip>
+								) : button;
 							} ) }
 						</ul>
 					</li>

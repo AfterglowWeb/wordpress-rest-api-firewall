@@ -15,6 +15,7 @@ import Typography from '@mui/material/Typography';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import RuleIcon from '@mui/icons-material/Rule';
+import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 
 import SettingsBackupRestoreOutlinedIcon from '@mui/icons-material/SettingsBackupRestoreOutlined';
 
@@ -50,6 +51,7 @@ export const CustomTreeItem = forwardRef(
 			<StyledTreeItem
 				{ ...props }
 				ref={ ref }
+				data-route-path={ node?.path || node?.route }
 				slots={ { content: NodeContent } }
 				slotProps={ {
 					content: {
@@ -355,47 +357,35 @@ export function NodeContent( {
 					</Tooltip>
 				) }
 
-			{ postTypeForRoute && onNavigate && (
-				<Tooltip disableInteractive title={ __( 'View model properties', 'rest-api-firewall' ) }>
-					<IconButton
-						size="small"
-						onClick={ ( e ) => {
-							e.stopPropagation();
-							onNavigate( 5 );
-						} }
-						sx={ { opacity: 0.5 } }
-					>
-						<RuleIcon fontSize="small" />
-					</IconButton>
-				</Tooltip>
-			) }
-			{ postTypeForMethod && onNavigate && (
-				<Tooltip disableInteractive title={ __( 'View model properties', 'rest-api-firewall' ) }>
-					<IconButton
-						size="small"
-						onClick={ ( e ) => {
-							e.stopPropagation();
-							onNavigate( 5 );
-						} }
-						sx={ { opacity: 0.5 } }
-					>
-						<RuleIcon fontSize="small" />
-					</IconButton>
-				</Tooltip>
-			) }
-			{ postTypeForMethod && onNavigate && (
-				<Tooltip disableInteractive title={ __( 'View model properties', 'rest-api-firewall' ) }>
-					<IconButton
-						size="small"
-						onClick={ ( e ) => {
-							e.stopPropagation();
-							onNavigate( 5 );
-						} }
-						sx={ { opacity: 0.5 } }
-					>
-						<RuleIcon fontSize="small" />
-					</IconButton>
-				</Tooltip>
+			{ ( postTypeForRoute || postTypeForMethod ) && onNavigate && (
+				<>
+					<Tooltip disableInteractive title={ __( 'View collection', 'rest-api-firewall' ) }>
+						<IconButton
+							size="small"
+							onClick={ ( e ) => {
+								e.stopPropagation();
+								const pt = postTypeForRoute || postTypeForMethod;
+								onNavigate( { panel: 'collections', subKey: pt.value } );
+							} }
+							sx={ { opacity: 0.5 } }
+						>
+							<ListAltOutlinedIcon fontSize="small" />
+						</IconButton>
+					</Tooltip>
+					<Tooltip disableInteractive title={ __( 'View model properties', 'rest-api-firewall' ) }>
+						<IconButton
+							size="small"
+							onClick={ ( e ) => {
+								e.stopPropagation();
+								const pt = postTypeForRoute || postTypeForMethod;
+								onNavigate( { panel: 'models-properties', subKey: pt.value } );
+							} }
+							sx={ { opacity: 0.5 } }
+						>
+							<RuleIcon fontSize="small" />
+						</IconButton>
+					</Tooltip>
+				</>
 			) }
 			</Stack>
 

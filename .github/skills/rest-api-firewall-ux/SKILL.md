@@ -296,3 +296,161 @@ The table `{prefix}_rest_api_firewall_ip_entries` is the **only custom DB table 
 | Login attempt rate limiting + transient blacklist | `inc/Security/LoginRateLimiter.php` |
 | Shared IP entry DB schema + version tracking | `inc/Firewall/IpFilter/IpSchema.php` |
 | IP entry CRUD (insert / delete / list / release / expire) | `inc/Firewall/IpFilter/IpEntryRepository.php` |
+
+---
+
+## G — User-Facing Feature Reference
+
+> Describes each security panel from the admin's perspective — what settings do, how features behave, and what each tier includes. Companion to sections A–F above (which document internal architecture and patterns).
+
+### Auth Hardening
+
+**Where:** Security → Auth Hardening  
+**Tier:** Free + Pro  
+**Scope:** Global (all applications, not per-application)
+
+#### Auth Rate Limiting
+Protects all authentication endpoints from brute-force attacks:
+- Admin and customer login (`wp-login.php`, `/wp-admin/`)
+- REST API auth via WP Application Passwords
+- REST API Basic Auth
+- JWT authentication
+
+**Settings:**
+- Max Failures: failed attempts before the IP is temporarily blocked
+- Window (seconds): rolling time window for counting failures
+- Block Duration (seconds): how long the temporary block lasts
+
+**Behavior:** When an IP exceeds the failure threshold within the window, it is temporarily blocked from any further authentication attempt. The block applies globally — it is not limited to one login form.
+
+#### Global Blacklist Escalation
+When an IP has been temporarily blocked N times (block cycles), it is promoted to the **permanent Global Blacklist** in IP Filtering. Permanent blocks are visible and releasable from the IP Filter panel.
+
+Set to 0 to disable escalation (temporary blocks only, never permanent).
+
+#### Admin Login Whitelist
+Restricts `/wp-login.php` and `/wp-admin/` access to a specific list of IPs or CIDR ranges. Any IP not in the list is refused before credentials are even checked.
+
+This does NOT affect REST API authentication — REST auth is protected by the rate limiter above.  
+Leave the list empty to allow admin login from any IP.
+
+#### Active Auth Blocks
+Shows IPs currently in a temporary auth block, with remaining duration. Blocks expire automatically. Admins can release a block manually (useful if a legitimate user triggered the limit).
+
+**Note:** Temporary blocks are distinct from the permanent Global Blacklist. After N cycles, the IP graduates from here to the permanent blacklist.
+
+#### Exemptions
+IPs in the Trusted IPs list (pro, WordPress Mode) are always exempt from rate limiting and blacklisting.
+
+---
+
+### IP Filtering
+
+**Where:** Security → IP Filtering  
+**Tier:** Free (global blacklist) + Pro (per-application Trusted IPs, advanced rules)
+
+#### Global Blacklist
+IPs permanently blocked from all requests. Sources:
+- Manual admin entry
+- Auth Hardening escalation (after N failed auth cycles)
+- Pro automation rules
+
+#### Public Rate Limiting
+Limits request frequency from anonymous/public IPs regardless of authentication. Protects against traffic flooding and scraping. Separate from auth-attempt counting.
+
+#### Trusted IPs (Pro)
+IPs that are always allowed through all enforcement, including rate limiting, auth restrictions, and route policies. Typically used for your own office/VPN IPs.
+
+---
+
+### Route Policy
+
+**Where:** Firewall → Per Route Settings  
+**Tier:** Free (global auth enforcement) + Pro (per-application, per-route overrides)
+
+#### Core vs Plugin Routes
+WordPress core routes (`/wp/v2/*`, `/oembed/*`, etc.) follow global auth enforcement settings.  
+Plugin routes (e.g. `/wc/v3/*`, `/contact-form-7/*`) are **not** subject to global auth enforcement in free tier — they must be configured explicitly per-route in pro tier.
+
+#### Route Tree
+Each route can be individually configured:
+- Auth enforcement on/off
+- Allowed HTTP methods
+- Per-user access grants (pro)
+
+---
+
+### Users & Authentication Methods
+
+**Where:** Security → Users (free) / Application → Users tab (pro)  
+**Tier:** Free (one global API user) + Pro (per-application users with per-route grants)
+
+#### Public vs authenticated applications
+An application with **no users configured is fully public** — this is a valid setup. The plugin does not enforce authentication if no user is set:
+- Free tier: admin uses only IP filtering, route visibility, rate limiting, etc.
+- Pro tier: admin creates a dedicated public application for specific routes.
+
+No user configured + `enforce_auth = true` → auth enforcement is **silently skipped** to prevent accidental lockout. The admin sees a warning in the UI.
+
+#### Authentication Method
+Determines how clients prove identity to the REST API:
+- **WordPress Application Password**: standard WP auth (requires WP 5.6+, HTTPS recommended)
+- **JWT**: Bearer token auth with configurable algorithm (RS256, HS256), public key, audience, and issuer
+
+**Free tier:** The Authentication Method selector is disabled until a REST API user is selected. No user = no auth = no method to configure.
+
+**Pro tier:** Auth methods are configured per-application in the Application Editor. If the application has no users assigned, an info notice is shown: _"Authentication methods have no effect until at least one user is assigned."_ The checkboxes remain editable so the admin can pre-configure before adding users.
+
+#### Interdependency rule (backend)
+| Condition | Result |
+|-----------|--------|
+| `enforce_auth = true` + users configured | Auth enforced — unconfigured users get 401 |
+| `enforce_auth = true` + NO users configured | Auth silently skipped — application treated as public |
+| `enforce_auth = false` | No auth check regardless of users |
+
+---
+
+### Collections
+
+**Where:** Data → Collections  
+**Tier:** Free + Pro  
+**Scope:** Pro = per-application; Free = global
+
+Manages per-page limits and ordering for WP object type REST endpoints.  
+Supported types: all post types with `show_in_rest = true` (including non-public private types like menu-items, blocks, font-families, global-styles).
+
+**Author/Users collection:**
+- Free tier: disabled (grayed out) — user endpoint management is a pro feature.
+- Pro tier + `hide_user_routes` ON: disabled.
+- Pro tier + `hide_user_routes` OFF: fully manageable.
+
+**Disabled types badge:** Types disabled in Route Policy global settings show a grey "Disabled in routes" badge in the type navigation. The collection can still be configured; route enforcement is separate.
+
+---
+
+### Models / Properties
+
+**Where:** Data → Properties / Models (pro)  
+**Tier:** Free (Properties) + Pro (Models)
+
+Defines the schema of REST API responses — which fields are exposed, their types, and nested structure (up to depth 3).
+
+In pro tier, multiple models can exist per object type per application, but only one is active at a time per type per application.
+
+---
+
+### WordPress Mode (Pro)
+
+**Where:** Security → WordPress Mode  
+**Tier:** Pro only
+
+Includes:
+- Applications Only: enforces that all REST requests must come from a registered application.
+- Trusted IPs: always-allowed IPs that bypass all enforcement.
+- Emergency Token: a temporary bypass token for lockout recovery.
+
+---
+
+### Auth Hardening (Naming)
+
+The feature was previously called "Login Hardening". It is now called **Auth Hardening** to reflect that it protects all authentication pathways — not just the login form. The underlying logic and settings keys are unchanged; only the UI labels and descriptions are updated.

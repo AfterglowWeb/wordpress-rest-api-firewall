@@ -1,3 +1,4 @@
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Checkbox from '@mui/material/Checkbox';
 import Divider from '@mui/material/Divider';
@@ -57,6 +58,7 @@ export default function ApplicationEditorSettings( {
 	setMailSmtpFromEmail,
 	mailSmtpFromName,
 	setMailSmtpFromName,
+	hasUsers,
 } ) {
 	const { __ } = wp.i18n || {};
 
@@ -129,6 +131,11 @@ export default function ApplicationEditorSettings( {
 					<Typography variant="body2" color="text.secondary">
 						{ __( 'Auth methods available to users of this application. Users can only use methods enabled here.', 'rest-api-firewall' ) }
 					</Typography>
+					{ ! hasUsers && (
+						<Alert severity="info" sx={ { py: 0 } }>
+							{ __( 'Authentication methods have no effect until at least one user is assigned to this application.', 'rest-api-firewall' ) }
+						</Alert>
+					) }
 					<Stack direction="row" flexWrap="wrap" gap={ 1 }>
 						{ AUTH_METHODS.filter( ( m ) => m.value !== 'any' ).map( ( method ) => (
 							<FormControlLabel

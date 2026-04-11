@@ -20,7 +20,6 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ApplicationEditorPanel from './ApplicationEditorPanel';
 import useProActions from '../../hooks/useProActions';
 import ConfirmWithInputDialog from '../shared/ConfirmWithInputDialog';
-import MigrationDialog from '../Migration/MigrationDialog';
 import Alert from '@mui/material/Alert';
 
 export default function Applications() {
@@ -48,7 +47,6 @@ export default function Applications() {
 	} );
 
 	const [ fetchError, setFetchError ] = useState( '' );
-	const [ noAppsDialogOpen, setNoAppsDialogOpen ] = useState( false );
 	const editingApp = subKey === 'new'
 		? { id: null, title: '', enabled: false, policy: false }
 		: subKey ? { id: subKey } : null;
@@ -77,10 +75,11 @@ export default function Applications() {
 					setSelectedApplicationId( '' );
 					navigate( 'applications', null, true );
 				}
-				// Check if this was the last application
+				// Check if this was the last application — if so, just reset state
 				const remainingRows = rows.filter( ( row ) => row.id !== id );
 				if ( remainingRows.length === 0 ) {
-					setNoAppsDialogOpen( true );
+					setSelectedApplicationId( '' );
+					navigate( 'applications', null, true );
 				}
 			},
 			}
@@ -286,13 +285,6 @@ export default function Applications() {
 
 	return (
 		<>
-			<MigrationDialog
-				open={ noAppsDialogOpen }
-				noApplications={ true }
-				onClose={ () => setNoAppsDialogOpen( false ) }
-				onCreateNewApp={ () => navigate( 'applications', 'new' ) }
-				onNavigateToGlobalSettings={ () => navigate( 'firewall_auth_rate', null, true ) }
-			/>
 			<ConfirmWithInputDialog
 				open={ confirmDelete.open }
 				title={ __( 'Delete Application', 'rest-api-firewall' ) }

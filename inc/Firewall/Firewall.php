@@ -224,6 +224,11 @@ class Firewall {
 			return $result;
 		}
 
+		// No users configured — application is intentionally public; skip auth enforcement.
+		if ( ! PolicyRuntime::has_configured_users() ) {
+			return $result;
+		}
+
 		$auth_valid = self::authenticate( CoreOptions::read_options() );
 
 		if ( false === $auth_valid ) {

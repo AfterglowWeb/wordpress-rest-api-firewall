@@ -154,7 +154,6 @@ export default function LoginHardening() {
 			<Stack p={ 4 } flexGrow={ 1 } spacing={ 3 }>
 				<Stack spacing={ 3 } maxWidth={ 600 }>
 
-					{/* ── Rate Limiting Settings ── */}
 					<Stack spacing={ 3 }>
 						<Stack>
 							<Typography variant="subtitle1" fontWeight={ 600 }>
@@ -219,10 +218,7 @@ export default function LoginHardening() {
 						</Stack>
 					</Stack>
 
-					<Divider />
-
-					{/* ── Escalation ── */}
-					<Stack spacing={ 2 }>
+					<Stack spacing={ 3 }>
 						<Stack>
 							<Typography variant="subtitle1" fontWeight={ 600 }>
 								{ __( 'Global Blacklist Escalation', 'rest-api-firewall' ) }
@@ -243,24 +239,22 @@ export default function LoginHardening() {
 							inputProps={ { min: 0 } }
 							sx={ { width: 220 } }
 						/>
+						<Stack>
+							<Typography variant="subtitle2" color="text.secondary">
+								{ __( 'Exemptions', 'rest-api-firewall' ) }
+							</Typography>
+							<Typography variant="body2" color="text.secondary">
+								{ __( 'IPs in the Trusted IPs list are exempt from login rate limiting and blacklisting.', 'rest-api-firewall' ) }
+							</Typography>
+						</Stack>
 					</Stack>
 
-					<Divider />
-
-					{/* ── Exemptions ── */}
-					<Stack spacing={ 1 }>
-						<Typography variant="subtitle2" color="text.secondary">
-							{ __( 'Exemptions', 'rest-api-firewall' ) }
-						</Typography>
-						<Typography variant="body2" color="text.secondary">
-							{ __( 'Only IPs in the Trusted IPs list (WordPress Mode, Pro) are exempt from login rate limiting. All other IPs — including administrators — are subject to the same rules.', 'rest-api-firewall' ) }
-						</Typography>
-					</Stack>
+					
 
 					<Divider />
 
 					{/* ── Active Blocks ── */}
-					<Stack spacing={ 2 }>
+					<Stack spacing={ 3 }>
 						<Stack direction="row" alignItems="center" justifyContent="space-between">
 							<Stack>
 								<Typography variant="subtitle1" fontWeight={ 600 }>
