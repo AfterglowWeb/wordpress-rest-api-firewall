@@ -101,6 +101,7 @@ export default function ObjectTypeNav( {
 						<Divider sx={ { my: 0.5 } } />
 						{ extraItems.map( ( item ) => {
 							const isSelected = selectedType === item.value;
+							const ItemIcon   = item.icon || null;
 							return (
 								<ListItemButton
 									key={ item.value }
@@ -109,15 +110,20 @@ export default function ObjectTypeNav( {
 									onClick={ () => onSelect( item.value ) }
 									sx={ { borderRadius: 1, mx: 0.5, px: 1, py: 0.75 } }
 								>
-									<Stack width="100%" gap={ 0 }>
-										<Typography variant="body2" noWrap fontWeight={ isSelected ? 600 : 400 }>
-											{ item.label }
-										</Typography>
-										{ item.secondary && (
-											<Typography variant="caption" color="text.secondary" sx={ { fontFamily: 'monospace', fontSize: '0.65rem' } }>
-												{ item.secondary }
-											</Typography>
+									<Stack direction="row" alignItems="center" gap={ 0.75 } width="100%">
+										{ ItemIcon && (
+											<ItemIcon fontSize="small" sx={ { opacity: 0.7, flexShrink: 0 } } />
 										) }
+										<Stack flex={ 1 } minWidth={ 0 } gap={ 0 }>
+											<Typography variant="body2" noWrap fontWeight={ isSelected ? 600 : 400 }>
+												{ item.label }
+											</Typography>
+											{ item.secondary && (
+												<Typography variant="caption" color="text.secondary" sx={ { fontFamily: 'monospace', fontSize: '0.65rem' } }>
+													{ item.secondary }
+												</Typography>
+											) }
+										</Stack>
 									</Stack>
 								</ListItemButton>
 							);

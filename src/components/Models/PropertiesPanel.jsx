@@ -6,6 +6,7 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
+import BusinessIcon from '@mui/icons-material/Business';
 
 import GlobalProperties from './GlobalProperties';
 import { ModelProperties } from './Properties';
@@ -22,7 +23,10 @@ export default function PropertiesPanel( { form, setField } ) {
 	const [ tab, setTab ] = useState( 0 );
 
 	useEffect( () => {
-		if ( subKey ) setSelectedType( subKey );
+		if ( subKey ) {
+			setSelectedType( subKey );
+			setTab( 1 );
+		}
 	}, [ subKey ] );
 
 	const handleSelect = ( value ) => {
@@ -35,6 +39,7 @@ export default function PropertiesPanel( { form, setField } ) {
 			value:     'settings_route',
 			label:     __( 'Settings Route', 'rest-api-firewall' ),
 			secondary: 'wp/v2/settings',
+			icon:      BusinessIcon,
 		},
 	];
 
