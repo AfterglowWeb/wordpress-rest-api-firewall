@@ -285,7 +285,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 		const timer = setTimeout( () => {
 			document
 				.querySelector( `[data-route-path="${ route }"]` )
-				?.scrollIntoView( { behavior: 'smooth', block: 'center' } );
+				?.scrollIntoView( { behavior: 'smooth', block: 'start' } );
 			setPendingFocusRoute( null );
 		}, 150 );
 		return () => clearTimeout( timer );

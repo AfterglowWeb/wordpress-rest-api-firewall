@@ -139,9 +139,14 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 	const { selectedApplicationId, applications } = useApplication();
 	const nonce = proNonce || adminData.nonce;
 	const objectTypes = adminData?.post_types || postTypes || [];
-	const publicObjectTypes = objectTypes.filter( ( obj ) => obj.public );
 	const hideUserRoutes = !! adminData?.admin_options?.hide_user_routes;
 	const isPro = hasValidLicense && !! selectedApplicationId;
+
+	const authorLockedReason = ! hasValidLicense
+		? __( 'Managing custom order for authors requires Pro', 'rest-api-firewall' )
+		: hideUserRoutes
+		? __( 'Hidden: /wp/v2/users/* routes are disabled in Global Routes Policy', 'rest-api-firewall' )
+		: null;
 
 	const { subKey, navigate: navigateTo } = useNavigation();
 
@@ -567,8 +572,8 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 			);
 		}
 
-		// Build DataGrid rows from publicObjectTypes + form state.
-		const proRows = publicObjectTypes.map( ( obj ) => {
+		// Build DataGrid rows from objectTypes + form state.
+		const proRows = objectTypes.map( ( obj ) => {
 			const isAuthorRestricted = obj.type === 'author' && hideUserRoutes;
 			const typeSettings = ( form?.rest_collection_per_page_settings || {} )[ obj.value ] || {};
 			const typeOrder    = ( form?.rest_collection_orders || {} )[ obj.value ] || [];
@@ -718,9 +723,10 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 		<Stack direction="row" sx={ { height: '100%', flexGrow: 1, overflow: 'hidden' } }>
 
 			<ObjectTypeNav
-				objectTypes={ publicObjectTypes }
+				objectTypes={ objectTypes }
 				selectedType={ selectedType }
 				onSelect={ setSelectedType }
+				disabledTypes={ adminData?.admin_options?.disabled_post_types || [] }
 				renderItemEnd={ ( obj, isSelected ) => (
 					<Chip
 						label={ obj.count ?? 0 }
@@ -763,7 +769,9 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 
 			{ /* Right form */ }
 			<Stack flex={ 1 } p={ 4 } spacing={ 3 } overflow="auto">
-			<Stack direction="row" alignItems="center" justifyContent="space-between" gap={ 1 }>
+			<Stack direction="row" alignItems="center" justifyContent="space-between" gap={ 1 }
+					sx={ { position: 'sticky', top: 0, bgcolor: 'background.paper', zIndex: 2, pb: 1 } }
+				>
 					<Typography variant="subtitle1" fontWeight={ 600 }>
 						{ selectedType
 							? sprintf( __( '%s — Per Page & Order', 'rest-api-firewall' ), objectLabel )
@@ -774,7 +782,7 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 							<>
 								<Tooltip disableInteractive title={ __( 'View routes', 'rest-api-firewall' ) }>
 									<IconButton size="small" onClick={ () => {
-										const pt = publicObjectTypes.find( ( p ) => p.value === selectedType );
+										const pt = objectTypes.find( ( p ) => p.value === selectedType );
 										const restPath = pt ? `/wp/v2/${ pt.rest_base || pt.value }` : null;
 										navigateTo( 'per-route-settings', restPath ? `routes|${ restPath }` : 'routes' );
 									} } sx={ { opacity: 0.5 } }>

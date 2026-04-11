@@ -171,7 +171,7 @@ class PolicyRuntime {
 
 		$resolved = array(
 			'disabled'        => false,
-			'protect'         => $global_enforce_auth,
+			'protect'         => $global_enforce_auth && self::has_configured_users(),
 			'rate_limit'      => $global_enforce_rate ? $global_rate_limit : false,
 			'rate_limit_time' => $global_enforce_rate ? $global_rate_limit_time : false,
 			'tags'            => array(),
@@ -183,7 +183,7 @@ class PolicyRuntime {
 
 		$final = self::merge_settings( $resolved, $route_settings );
 
-		if ( $global_enforce_auth && $is_core_route ) {
+		if ( $global_enforce_auth && $is_core_route && self::has_configured_users() ) {
 			$final['protect'] = true;
 		}
 
@@ -210,6 +210,31 @@ class PolicyRuntime {
 		$segments  = explode( '/', ltrim( $route, '/' ) );
 		$namespace = $segments[0] ?? '';
 		return in_array( $namespace, array( 'wp', 'oembed', 'batch', 'wp-site-health', 'wp-abilities', 'wp-block-editor' ), true );
+	}
+
+	/**
+	 * Returns true if at least one API user is configured for this site/application.
+	 *
+	 * In free tier: checks the global `firewall_user_id` CoreOption.
+	 * In pro tier: the pro plugin hooks `rest_api_firewall_has_configured_users` to
+	 * perform a per-application user count instead.
+	 *
+	 * When no users are configured, auth enforcement is silently skipped so that a
+	 * deliberately public application is never locked out by a global `enforce_auth`
+	 * flag that was set before any users were added.
+	 *
+	 * @return bool
+	 */
+	public static function has_configured_users(): bool {
+		$has = (int) CoreOptions::read_option( 'firewall_user_id' ) > 0;
+
+		/**
+		 * Override the user-existence check.
+		 * The pro plugin uses this filter to switch to a per-application query.
+		 *
+		 * @param bool $has Whether at least one user is configured (free-tier default).
+		 */
+		return (bool) apply_filters( 'rest_api_firewall_has_configured_users', $has );
 	}
 
 	private static function merge_settings( array $base, array $override ): array {

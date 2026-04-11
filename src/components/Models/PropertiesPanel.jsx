@@ -24,7 +24,7 @@ export default function PropertiesPanel( { form, setField } ) {
 	const { subKey, navigate } = useNavigation();
 	const { adminData } = useAdminData();
 
-	const allTypes = ( adminData?.post_types || [] ).filter( ( t ) => t.public );
+	const allTypes = adminData?.post_types || [];
 
 	const [ selectedType, setSelectedType ] = useState( subKey || 'post' );
 	const [ tab, setTab ] = useState( 0 );
@@ -86,6 +86,7 @@ export default function PropertiesPanel( { form, setField } ) {
 						selectedType={ selectedType }
 						onSelect={ handleSelect }
 						extraItems={ extraItems }
+						disabledTypes={ adminData?.admin_options?.disabled_post_types || [] }
 					/>
 					<Stack p={ 4 } flexGrow={ 1 } overflow="auto" spacing={ 3 }>
 						{ selectedType && selectedType !== 'settings_route' && (

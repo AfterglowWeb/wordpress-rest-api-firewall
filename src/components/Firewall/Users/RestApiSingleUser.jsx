@@ -95,6 +95,8 @@ export default function RestApiSingleUser( { form, setField } ) {
 		setField( 'firewall_jwt_' + key, value );
 	};
 
+	const hasUser = !! form.firewall_user_id;
+
 	return (
 
 		<Stack spacing={ 3 } p={ 4 } sx={ { maxWidth: 800 } }>
@@ -204,8 +206,13 @@ export default function RestApiSingleUser( { form, setField } ) {
 					<Typography variant="caption" color="text.secondary">
 						{ __( 'Choose how clients authenticate to the REST API.', 'rest-api-firewall' ) }
 					</Typography>
+					{ ! hasUser && (
+						<Typography variant="caption" color="text.disabled">
+							{ __( 'Select a REST API user above to activate this option.', 'rest-api-firewall' ) }
+						</Typography>
+					) }
 				</Stack>
-				<FormControl size="small" sx={ { maxWidth: 280 } }>
+				<FormControl size="small" sx={ { maxWidth: 280 } } disabled={ ! hasUser }>
 					<InputLabel>
 						{ __( 'Authentication Method', 'rest-api-firewall' ) }
 					</InputLabel>
@@ -223,7 +230,7 @@ export default function RestApiSingleUser( { form, setField } ) {
 						</MenuItem>
 					</Select>
 				</FormControl>
-				{ form.firewall_auth_method === 'jwt' && (
+				{ hasUser && form.firewall_auth_method === 'jwt' && (
 					<JwtConfig config={ jwtConfig } onChange={ handleJwtConfigChange } />
 				) }
 			</Stack>

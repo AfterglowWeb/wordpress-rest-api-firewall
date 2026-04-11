@@ -15,7 +15,6 @@ import Stack from '@mui/material/Stack';
 import ConfirmDialog from './components/ConfirmDialog';
 import EntryToolbar from './components/shared/EntryToolbar';
 import MigrationDialog from './components/Migration/MigrationDialog';
-import ProToFreeDialog from './components/Migration/ProToFreeDialog';
 import Navigation, {
 	APP_BAR_HEIGHT,
 	APP_FOOTER_HEIGHT,
@@ -82,10 +81,6 @@ function AppContent() {
 		schemaUpdateNeeded || migrationNeeded
 	);
 	const [ migrationDone, setMigrationDone ] = useState( false );
-
-	const [ proFallbackOpen, setProFallbackOpen ] = useState(
-		!! window.restApiFirewallPro?.shouldPromptFallback
-	);
 
 	const { form, setField, setSlider, syncSavedField, pickGroup, isGroupDirty } = useSettingsForm( {
 		adminData,
@@ -374,17 +369,6 @@ function AppContent() {
 					navigate( 'applications', 'new', true );
 				} }
 			/>
-
-			{ proFallbackOpen && (
-				<ProToFreeDialog
-					open={ proFallbackOpen }
-					onClose={ () => setProFallbackOpen( false ) }
-					onExported={ () => {
-						setProFallbackOpen( false );
-						window.location.reload();
-					} }
-				/>
-			) }
 		</>
 	);
 }
