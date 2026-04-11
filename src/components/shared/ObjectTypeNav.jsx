@@ -101,7 +101,7 @@ export default function ObjectTypeNav( {
 						<Divider sx={ { my: 0.5 } } />
 						{ extraItems.map( ( item ) => {
 							const isSelected = selectedType === item.value;
-							const ItemIcon   = item.icon || null;
+							const ItemIcon   = item.icon;
 							return (
 								<ListItemButton
 									key={ item.value }

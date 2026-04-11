@@ -43,7 +43,6 @@ import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import ShieldIcon from '@mui/icons-material/Shield';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import PendingOutlinedIcon from '@mui/icons-material/PendingOutlined';
-import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 import BusinessIcon from '@mui/icons-material/Business';
 
 import { useNavigation } from '../contexts/NavigationContext';
@@ -204,7 +203,7 @@ export default function Navigation( {
 			breadcrumbPrefix: 'Global Settings',
 			icon: BusinessIcon,
 			pl: 5,
-			hidden: hasValidLicense, // free tier only — sub-item under Properties
+			hidden: hasValidLicense, // free tier only
 			action: () => navigate( 'models-properties', 'settings_route' ),
 		},
 		{
@@ -277,7 +276,7 @@ export default function Navigation( {
 	];
 
 	const activeMenuItem =
-		menuItems.filter( ( m ) => ! m.hidden ).find( ( m ) => m.key === panel )
+		menuItems.find( ( m ) => ! m.hidden && m.key === panel )
 		|| menuItems.find( ( m ) => m.key === panel )
 		|| null;
 
