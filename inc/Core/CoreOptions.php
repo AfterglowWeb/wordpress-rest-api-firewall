@@ -404,6 +404,15 @@ class CoreOptions {
 				'group'             => 'global_security',
 			),
 
+			'applications_only_mode'                      => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'global_security',
+			),
+
 			'theme_redirect_templates_enabled'            => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
@@ -579,7 +588,7 @@ class CoreOptions {
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
+				'context'           => array( 'pro' ),
 				'group'             => 'models_properties',
 			),
 
@@ -588,7 +597,7 @@ class CoreOptions {
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'rest_expose'       => false,
-				'context'           => array( 'free', 'pro' ),
+				'context'           => array( 'pro' ),
 				'group'             => 'models_properties',
 			),
 

@@ -6,9 +6,13 @@ import Button from '@mui/material/Button';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormHelperText from '@mui/material/FormHelperText';
+import InputLabel from '@mui/material/InputLabel';
 import LinearProgress from '@mui/material/LinearProgress';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
+import TextField from '@mui/material/TextField';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
@@ -21,6 +25,7 @@ import CopyButton from '../shared/CopyButton';
 
 // Keys tracked in this panel's local form state.
 const SECURITY_FIELDS = [
+	'applications_only_mode',
 	'theme_disable_xmlrpc',
 	'theme_disable_comments',
 	'theme_disable_pingbacks',
@@ -31,10 +36,24 @@ const SECURITY_FIELDS = [
 	'theme_secure_http_headers',
 	'theme_compression_http_headers',
 	'theme_wp_http_headers',
+	'theme_redirect_templates_enabled',
+	'theme_redirect_templates_preset_url',
+	'theme_redirect_templates_free_url_enabled',
+	'theme_redirect_templates_free_url',
 ];
 
+const STRING_FIELDS = new Set( [
+	'theme_redirect_templates_preset_url',
+	'theme_redirect_templates_free_url',
+] );
+
 function pickSecurityFields( source ) {
-	return Object.fromEntries( SECURITY_FIELDS.map( ( k ) => [ k, !! source?.[ k ] ] ) );
+	return Object.fromEntries(
+		SECURITY_FIELDS.map( ( k ) => [
+			k,
+			STRING_FIELDS.has( k ) ? ( source?.[ k ] || '' ) : !! source?.[ k ],
+		] )
+	);
 }
 
 function FileActionSwitch( {
@@ -174,8 +193,17 @@ export default function GlobalSecurity() {
 	}, [ isDirty, setDirtyFlag ] );
 
 	const setField = useCallback( ( e ) => {
-		const { name, checked } = e.target;
-		setFormState( ( prev ) => ( { ...prev, [ name ]: Boolean( checked ) } ) );
+		const { name, checked, value, type } = e.target;
+		const fieldValue = type === 'checkbox' ? Boolean( checked ) : value;
+		setFormState( ( prev ) => {
+			const next = { ...prev, [ name ]: fieldValue };
+			// Applications Only: auto-enable related protections on activation.
+			if ( name === 'applications_only_mode' && fieldValue ) {
+				next.theme_redirect_templates_enabled = true;
+				next.theme_disable_xmlrpc = true;
+			}
+			return next;
+		} );
 	}, [] );
 
 	const { save, saving } = useSaveOptions();
@@ -221,6 +249,118 @@ export default function GlobalSecurity() {
 		<Stack p={ 4 } flexGrow={ 1 } spacing={ 3 }>
 
 			<Stack spacing={ 3 } maxWidth={ 600 }>
+
+				<Stack spacing={ 3 }>
+					<Typography variant="subtitle1" fontWeight={ 600 }>
+						{ __( 'Applications Only Mode', 'rest-api-firewall' ) }
+					</Typography>
+
+					<FormControl>
+						<FormControlLabel
+							control={
+								<Switch
+									size="small"
+									checked={ !! form.applications_only_mode }
+									name="applications_only_mode"
+									onChange={ setField }
+								/>
+							}
+							label={ __( 'WordPress Applications Only', 'rest-api-firewall' ) }
+						/>
+						<FormHelperText>
+							{ __( 'Block all non-REST-API traffic. Enables template redirect and XML-RPC block. In Pro tier, also redirects REST requests that match no application.', 'rest-api-firewall' ) }
+						</FormHelperText>
+					</FormControl>
+				</Stack>
+
+				<Divider />
+
+				<Stack spacing={ 3 }>
+					<Typography variant="subtitle1" fontWeight={ 600 }>
+						{ __( 'Redirect', 'rest-api-firewall' ) }
+					</Typography>
+
+					<FormControl>
+						<FormControlLabel
+							control={
+								<Switch
+									size="small"
+									checked={ !! form.theme_redirect_templates_enabled }
+									name="theme_redirect_templates_enabled"
+									onChange={ setField }
+								/>
+							}
+							label={ __( 'Enable Redirect', 'rest-api-firewall' ) }
+						/>
+					</FormControl>
+
+					<FormControl
+						sx={ { maxWidth: 300 } }
+						disabled={
+							! form.theme_redirect_templates_enabled ||
+							form.theme_redirect_templates_free_url_enabled
+						}
+					>
+						<InputLabel id="security-redirect-preset-url-label">
+							{ __( 'WordPress Pages', 'rest-api-firewall' ) }
+						</InputLabel>
+						<Select
+							labelId="security-redirect-preset-url-label"
+							name="theme_redirect_templates_preset_url"
+							value={ form.theme_redirect_templates_preset_url || 0 }
+							label={ __( 'WordPress Pages', 'rest-api-firewall' ) }
+							onChange={ setField }
+						>
+							<MenuItem value={ 0 }>
+								<em>{ __( 'Select a Page', 'rest-api-firewall' ) }</em>
+							</MenuItem>
+							{ ( adminData?.redirect_preset_url_options || [] ).map( ( opt ) =>
+								opt.value && opt.label ? (
+									<MenuItem key={ opt.value } value={ opt.value }>
+										{ opt.label }
+									</MenuItem>
+								) : null
+							) }
+						</Select>
+						<FormHelperText>
+							{ __( 'Redirect to front page, blog page, login page, or a custom URL.', 'rest-api-firewall' ) }
+						</FormHelperText>
+					</FormControl>
+
+					<FormControl disabled={ ! form.theme_redirect_templates_enabled }>
+						<FormControlLabel
+							control={
+								<Switch
+									size="small"
+									checked={ !! form.theme_redirect_templates_free_url_enabled }
+									name="theme_redirect_templates_free_url_enabled"
+									onChange={ setField }
+								/>
+							}
+							label={ __( 'Custom URL', 'rest-api-firewall' ) }
+						/>
+						<FormHelperText>
+							{ __( 'Redirect to a custom URL instead of a WordPress page.', 'rest-api-firewall' ) }
+						</FormHelperText>
+					</FormControl>
+
+					<TextField
+						label={ __( 'Custom URL', 'rest-api-firewall' ) }
+						type="url"
+						size="small"
+						helperText={ __( 'Full URL with protocol and domain (https://www.example.com)', 'rest-api-firewall' ) }
+						name="theme_redirect_templates_free_url"
+						value={ form.theme_redirect_templates_free_url }
+						onChange={ setField }
+						disabled={
+							! form.theme_redirect_templates_enabled ||
+							! form.theme_redirect_templates_free_url_enabled
+						}
+						fullWidth
+					/>
+				</Stack>
+
+				<Divider />
 
 				<Stack spacing={ 3 }>
 					<Typography variant="subtitle1" fontWeight={ 600 }>

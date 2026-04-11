@@ -50,8 +50,13 @@ export default function ObjectTypeNav( {
 	}, [ objectTypes ] );
 
 	return (
-		<Box sx={ { width: 220, flexShrink: 0, borderRight: 1, borderColor: 'divider', overflowY: 'auto', py: 1 } }>
-			<List dense disablePadding>
+		<Box sx={ { 
+			width: 220, 
+			flexShrink: 0, 
+			borderRight: 1, 
+			borderColor: 'divider', 
+			py: 4 } }>
+			<List dense disablePadding sx={{position: 'sticky', top: 0, bgcolor: 'background.paper'}}>
 				{ grouped.map( ( { source, items } ) => (
 					<li key={ source }>
 						<ul style={ { padding: 0, margin: 0, listStyle: 'none' } }>

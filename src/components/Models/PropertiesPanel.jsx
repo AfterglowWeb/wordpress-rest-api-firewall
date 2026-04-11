@@ -3,8 +3,9 @@ import { useNavigation } from '../../contexts/NavigationContext';
 import { useAdminData } from '../../contexts/AdminDataContext';
 
 import Box from '@mui/material/Box';
-import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
 
 import GlobalProperties from './GlobalProperties';
 import { ModelProperties } from './Properties';
@@ -18,6 +19,7 @@ export default function PropertiesPanel( { form, setField } ) {
 	const allTypes = ( adminData?.post_types || [] ).filter( ( t ) => t.public );
 
 	const [ selectedType, setSelectedType ] = useState( subKey || 'post' );
+	const [ tab, setTab ] = useState( 0 );
 
 	useEffect( () => {
 		if ( subKey ) setSelectedType( subKey );
@@ -37,22 +39,37 @@ export default function PropertiesPanel( { form, setField } ) {
 	];
 
 	return (
-		<Box display="flex" flexGrow={ 1 } overflow="hidden">
-			<ObjectTypeNav
-				objectTypes={ allTypes }
-				selectedType={ selectedType }
-				onSelect={ handleSelect }
-				extraItems={ extraItems }
-			/>
-			<Stack p={ 4 } flexGrow={ 1 } overflow="auto" spacing={ 3 }>
-				<GlobalProperties form={ form } setField={ setField } />
-				<Divider />
-				<ModelProperties
-					selectedObjectType={ selectedType }
-					setField={ setField }
-					globalForm={ form }
-				/>
-			</Stack>
-		</Box>
+		<Stack flexGrow={ 1 } overflow="hidden">
+			<Box sx={ { borderBottom: 1, borderColor: 'divider', px: 2 } }>
+				<Tabs value={ tab } onChange={ ( _, v ) => setTab( v ) }>
+					<Tab label={ __( 'Global Settings', 'rest-api-firewall' ) } />
+					<Tab label={ __( 'Per Model Settings', 'rest-api-firewall' ) } />
+				</Tabs>
+			</Box>
+
+			{ tab === 0 && (
+				<Box p={ 4 } overflow="auto">
+					<GlobalProperties form={ form } setField={ setField } />
+				</Box>
+			) }
+
+			{ tab === 1 && (
+				<Box display="flex" flexGrow={ 1 } overflow="hidden" alignItems="stretch">
+					<ObjectTypeNav
+						objectTypes={ allTypes }
+						selectedType={ selectedType }
+						onSelect={ handleSelect }
+						extraItems={ extraItems }
+					/>
+					<Stack p={ 4 } flexGrow={ 1 } overflow="auto" spacing={ 3 }>
+						<ModelProperties
+							selectedObjectType={ selectedType }
+							setField={ setField }
+							globalForm={ form }
+						/>
+					</Stack>
+				</Box>
+			) }
+		</Stack>
 	);
 }

@@ -2,6 +2,17 @@ export function isNodeCustom( settings ) {
 	return !! settings?.custom;
 }
 
+const CORE_NAMESPACES = new Set( [ 'wp', 'oembed', 'batch', 'wp-site-health' ] );
+
+/**
+ * Returns true when the node belongs to a plugin REST namespace (not a WP core namespace).
+ * Plugin route settings are global (shared across all applications).
+ */
+export function isPluginRoute( node ) {
+	const first = ( node?.path || '' ).replace( /^\//, '' ).split( '/' )[ 0 ];
+	return !! first && ! CORE_NAMESPACES.has( first );
+}
+
 export function countCustomDescendants( node ) {
 	let count = 0;
 	for ( const child of node.children || [] ) {

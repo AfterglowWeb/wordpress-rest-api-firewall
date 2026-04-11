@@ -43,6 +43,7 @@ import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import ShieldIcon from '@mui/icons-material/Shield';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import PendingOutlinedIcon from '@mui/icons-material/PendingOutlined';
+import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 
 import { useNavigation } from '../contexts/NavigationContext';
 import { useEntryToolbarContext } from '../contexts/EntryToolbarContext';
@@ -274,11 +275,12 @@ export default function Navigation( {
 							xs: WP_ADMIN_BAR_HEIGHT_MOBILE,
 							md: WP_ADMIN_BAR_HEIGHT_DESKTOP,
 						},
-						left: {
+						/*left: {
 							xs: 0,
 							md: WP_MENU_WIDTH_MD,
 							lg: WP_MENU_WIDTH_LG,
-						},
+						},*/
+						position: 'sticky',
 						height: {
 							xs: `calc(100vh - ${
 								WP_ADMIN_BAR_HEIGHT_MOBILE
