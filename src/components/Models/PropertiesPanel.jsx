@@ -6,7 +6,10 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
+
 import BusinessIcon from '@mui/icons-material/Business';
+import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
+import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined';
 
 import BusinessIcon from '@mui/icons-material/Business';
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
