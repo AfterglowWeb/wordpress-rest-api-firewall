@@ -71,13 +71,15 @@ class Utils {
 			static function ( object $post_type ): array {
 				if ( function_exists( 'icl_object_id' ) ) {
 					// WPML is active: count only posts in the current admin language.
-					$q     = new \WP_Query( array(
-						'post_type'      => $post_type->name,
-						'post_status'    => array( 'publish', 'inherit' ),
-						'posts_per_page' => 1,
-						'no_found_rows'  => false,
-						'fields'         => 'ids',
-					) );
+					$q     = new \WP_Query(
+						array(
+							'post_type'      => $post_type->name,
+							'post_status'    => array( 'publish', 'inherit' ),
+							'posts_per_page' => 1,
+							'no_found_rows'  => false,
+							'fields'         => 'ids',
+						)
+					);
 					$count = (int) $q->found_posts;
 				} else {
 					$counts = wp_count_posts( $post_type->name );
@@ -128,7 +130,12 @@ class Utils {
 					}
 					$count = wp_count_terms( $count_args );
 				} else {
-					$count = wp_count_terms( array( 'taxonomy' => $taxonomy->name, 'hide_empty' => false ) );
+					$count = wp_count_terms(
+						array(
+							'taxonomy'   => $taxonomy->name,
+							'hide_empty' => false,
+						)
+					);
 				}
 				return array(
 					'value'    => sanitize_key( $taxonomy->name ),

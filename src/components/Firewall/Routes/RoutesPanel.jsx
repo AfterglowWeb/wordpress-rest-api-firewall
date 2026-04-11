@@ -123,12 +123,12 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
 	} : form;
 
 	return (
-		<Stack p={4} flexGrow={ 1 } spacing={ 3 }>
+		<Stack py={4} flexGrow={ 1 } spacing={ 3 }>
 			<Tabs
             value={ currentTab }
             onChange={ ( e, v ) => navCtx( 'per-route-settings', v === 1 ? 'routes' : 'global' ) }
             sx={ {
-                mb: 2,
+                px: 4,
                 borderBottom: 1,
                 borderColor: 'divider',
             } }
@@ -146,7 +146,7 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
 			</Tabs>
 
 			{ currentTab === 0 && (
-				<Stack spacing={ 3 }>
+				<Stack p={4} spacing={ 3 }>
 					{hasValidLicense && <Alert severity="info" sx={ { maxWidth: 640 } }>
 						{ __( 'These settings apply globally to all routes. They can be overridden on a per-route basis in the "Per Route Settings" tab.', 'rest-api-firewall' ) }
 					</Alert>}

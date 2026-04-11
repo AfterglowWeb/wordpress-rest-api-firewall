@@ -34,7 +34,7 @@ import {
 	countAllCustomNodes,
 } from './routesPolicyUtils';
 import { CustomTreeItem } from './RoutesPolicyNodeContent';
-import RoutesPolicyUsersPopover from './RoutesPolicyUsersPopover';
+import RouteSettingsDrawer from './RouteSettingsDrawer';
 import TestPolicyPanel from './TestPolicyPanel';
 
 export default function RoutesPolicyTree( { form, setField, selectedApplicationId, onNavigate } ) {
@@ -58,9 +58,9 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 
 	const [ usersData, setUsersData ] = useState( null );
 	const [ usersLoading, setUsersLoading ] = useState( false );
-	const [ popoverAnchor, setPopoverAnchor ] = useState( null );
-	const [ popoverRouteIds, setPopoverRouteIds ] = useState( [] );
-	const [ popoverIsBulk, setPopoverIsBulk ] = useState( false );
+	const [ drawerNodeId, setDrawerNodeId ] = useState( null );
+	const [ drawerIsBulk, setDrawerIsBulk ] = useState( false );
+	const [ drawerRouteIds, setDrawerRouteIds ] = useState( [] );
 	const [ isDirty, setIsDirty ] = useState( false );
 	const [ saving, setSaving ] = useState( false );
 	const [ confirmSaveOpen, setConfirmSaveOpen ] = useState( false );
@@ -168,27 +168,27 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 		}
 	}, [ adminData, nonce, selectedApplicationId ] );
 
-	const handleOpenUsersPopover = useCallback(
-		( nodeId, anchorEl ) => {
+	const handleOpenDrawer = useCallback(
+		( nodeId ) => {
 			loadUsers();
-			setPopoverAnchor( anchorEl );
 			const node = getNodeById( nodeId );
 			if ( node?.isMethod ) {
-				setPopoverRouteIds( [ nodeId ] );
-				setPopoverIsBulk( false );
+				setDrawerRouteIds( [ nodeId ] );
+				setDrawerIsBulk( false );
 			} else {
-				setPopoverRouteIds( getAllDescendantMethodIds( node ) );
-				setPopoverIsBulk( true );
+				setDrawerRouteIds( getAllDescendantMethodIds( node ) );
+				setDrawerIsBulk( true );
 			}
+			setDrawerNodeId( nodeId );
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[ loadUsers, nodes ]
 	);
 
-	const handleCloseUsersPopover = () => {
-		setPopoverAnchor( null );
-		setPopoverRouteIds( [] );
-		setPopoverIsBulk( false );
+	const handleCloseDrawer = () => {
+		setDrawerNodeId( null );
+		setDrawerRouteIds( [] );
+		setDrawerIsBulk( false );
 	};
 
 	const handleUserAccessChange = ( userId, routeIds, grant ) => {
@@ -350,8 +350,8 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 							toggleNodeSetting: handleToggle,
 							overrideNodeSetting: handleOverrideNode,
 							getNodeById,
-							openUsersPopover: hasValidLicense
-								? handleOpenUsersPopover
+							openSettingsDrawer: hasValidLicense
+								? handleOpenDrawer
 								: null,
 							toggleNodeCustom: handleToggleCustom,
 							enforce_auth,
@@ -372,16 +372,16 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 					onExpandedItemsChange={ ( _e, ids ) => setExpandedItems( ids ) }
 				/>
 
-				<RoutesPolicyUsersPopover
-					open={ Boolean( popoverAnchor ) }
-					anchorEl={ popoverAnchor }
-					onClose={ handleCloseUsersPopover }
-					usersData={ usersData }
-					usersLoading={ usersLoading }
-					routeIds={ popoverRouteIds }
-					isBulk={ popoverIsBulk }
-					onUserAccessChange={ handleUserAccessChange }
-				/>
+				<RouteSettingsDrawer
+						open={ Boolean( drawerNodeId ) }
+						node={ drawerNodeId ? getNodeById( drawerNodeId ) : null }
+						usersData={ usersData }
+						usersLoading={ usersLoading }
+						routeIds={ drawerRouteIds }
+						isBulk={ drawerIsBulk }
+						onUserAccessChange={ handleUserAccessChange }
+						onClose={ handleCloseDrawer }
+					/>
 
 				<Dialog
 					open={ confirmSaveOpen }

@@ -248,8 +248,8 @@ class TestPolicy {
 		if ( function_exists( 'wp_is_application_passwords_available_for_user' ) &&
 			wp_is_application_passwords_available_for_user( $user ) ) {
 			return array(
-				'method'   => 'application_password',
-				'login'    => $user->user_login,
+				'method' => 'application_password',
+				'login'  => $user->user_login,
 			);
 		}
 		return array(
@@ -385,12 +385,15 @@ class TestPolicy {
 		$user_id = (int) CoreOptions::read_option( 'firewall_user_id' );
 
 		if ( ! $user_id ) {
-			return array( 'status' => null, 'body' => null );
+			return array(
+				'status' => null,
+				'body'   => null,
+			);
 		}
 
 		$prev_user_id = get_current_user_id();
 		wp_set_current_user( $user_id );
-		Firewall::begin_internal_test( $user_id, $this->current_test_application_id ?: null );
+		Firewall::begin_internal_test( $user_id, $this->current_test_application_id ? $this->current_test_application_id : null );
 
 		try {
 			$request  = new WP_REST_Request( $method, $route );

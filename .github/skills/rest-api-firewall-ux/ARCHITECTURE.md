@@ -179,7 +179,47 @@ flowchart LR
 
 ---
 
-## 5 — Rate Limiting Two-Tier Model
+## 5 — Nonce & Permissions Architecture
+
+Two separate nonce action strings exist — one per plugin. They are generated, localized, and validated independently.
+
+### Nonce generation (PHP)
+
+| Nonce action | Generated in | Localized global | Tier |
+|---|---|---|---|
+| `rest_api_firewall_update_options_nonce` | `AdminPage.php` | `window.restApiFirewallAdminData.nonce` | Free |
+| `rest_api_firewall_update_pro_options_nonce` | Pro `Bootstrap.php` | `window.restApiFirewallPro.nonce` | Pro |
+
+`window.restApiFirewallPro` is only defined when the pro plugin is active and licensed. In free tier it is `undefined`.
+
+### Nonce resolution (JS)
+
+`LicenseContext.jsx` reads `window.restApiFirewallPro?.nonce` at mount and exports it as `proNonce`.
+
+All AJAX hooks resolve the nonce the same way:
+
+```js
+const nonce = proNonce || adminData.nonce;   // proNonce = null in free tier
+```
+
+This applies to `useAjax`, `useProActions`, and `useSaveOptions` (fixed — previously `useSaveOptions` hardcoded the free nonce, which would silently fail against any pro-only AJAX handler).
+
+### Handler validation (PHP)
+
+| PHP method | Plugin | Accepts | Capability required |
+|---|---|---|---|
+| `Permissions::ajax_validate_has_firewall_admin_caps()` | Free | **Both** nonces (tries free first, then pro if active) | `rest_api_firewall_edit_options` |
+| `Permissions::validate_ajax_crud_rest_api_firewall_pro_options()` | Pro | **Pro nonce only** (`check_ajax_referer` — wp_die on failure) | `rest_api_firewall_edit_pro_options` |
+
+**Key rule:** Free handlers are forgiving (accept either nonce). Pro handlers are strict. Therefore any call that may reach a pro AJAX action must send the pro nonce — use `proNonce || adminData.nonce`, never hardcode `adminData.nonce` alone.
+
+### Regression trap
+
+If a component sends `adminData.nonce` directly (bypassing the resolution pattern) and the corresponding AJAX action is registered in the pro plugin, the call will hit `wp_die()` silently in pro tier. Always use the three approved hooks (`useAjax`, `useProActions`, `useSaveOptions`) rather than raw `fetch`.
+
+---
+
+## 6 — Rate Limiting Two-Tier Model
 
 Rate limiting is split into two independent tiers, both enforced inside `Firewall::rate_limit()` (hooked at `rest_pre_dispatch`):
 
@@ -204,7 +244,7 @@ Public and authenticated rate limits are **completely independent**. Changing th
 
 ---
 
-## 6 — HTTP Methods 3-Tier Cascade
+## 7 — HTTP Methods 3-Tier Cascade
 
 ### Why no public/authenticated split (unlike rate limiting)
 
@@ -226,7 +266,146 @@ Rate limiting splits into two independent pools (public/authenticated) because t
 
 ---
 
-## 7 — Regression Checklists
+## 8 — Plugin Routes: Cross-Application Policy
+
+### Background: what currently happens
+
+When Pro applications are configured, `FirewallPro::check()` (priority 1 on `rest_pre_dispatch`) performs credential/IP-based application resolution. If no application matches and at least one enabled application exists, the request is rejected with a JSON `WP_Error 404`. The route namespace is never consulted — plugin routes (`wc/v3`, `acf/v3`, any custom namespace) are blocked exactly like core routes.
+
+`PolicyRuntime::is_wordpress_core_route()` exists in the free plugin but only affects global `enforce_auth` auto-pinning; it has no effect on the Pro application gate.
+
+### Problem
+
+Plugin REST routes belong to the _installation_, not to any single application. Every application shares the same WooCommerce/ACF/custom-plugin routes. Enforcing per-application IP/origin/user rules on them creates friction (a legitimate WC API call blocked because it doesn't carry app credentials) and configuration duplication.
+
+### Decision: Plugin routes bypass per-application enforcement
+
+**Plugin route definition:** first path segment NOT in `['wp', 'oembed', 'batch', 'wp-site-health']` (inverse of `PolicyRuntime::is_wordpress_core_route()`).
+
+When `ApplicationResolver::resolve()` returns no match (`FirewallPro::check()` no-match branch):
+- **Core route** → `WP_Error 404` (unchanged)
+- **Plugin route** → skip application enforcement; fall through with global defaults + any per-route policy
+
+Plugin routes still pass through:
+- Global IP blacklist (`rest_authentication_errors` — pre-application, unchanged)
+- Free-plugin `PolicyRuntime` per-route `disabled` / `protect` / rate-limit settings
+- Any per-route access rules configured in the Route Settings Drawer (see below)
+
+### Decision: Route Settings Drawer (replaces Users popover)
+
+A slide-in **Route Settings Drawer** opens when the admin clicks the new "Access settings" button on any route or method node (replacing the old "Set users" text button; gear icon retains its existing custom-mode role).
+
+Three sections:
+
+| Section | Source component |
+|---|---|
+| Authenticated Users | Logic from `RoutesPolicyUsersPopover`; moved into drawer |
+| Allowed IPs | `AllowedIps` (existing component, now usable per-route) |
+| Allowed Origins | `AllowedOrigins` (existing component, now usable per-route) |
+
+For **plugin route nodes**, the drawer header shows a persistent `Alert`:  
+> "These settings apply to all applications on this installation."
+
+### Decision: Plugin route settings are global (synced across applications)
+
+Plugin route settings (IPs, origins, users) are stored in a dedicated wp_options key `rest_firewall_plugin_routes_policy`, not inside any per-application policy.
+
+Route UUIDs remain stable (`md5(route + '|' + method)`) so settings survive application changes. When the tree loads for any application, plugin-namespace nodes merge in the global plugin policy.
+
+Saving from the drawer: if `isPluginRoute(node)` → write to `rest_firewall_plugin_routes_policy`; otherwise write to the per-application policy (existing behaviour).
+
+### Decision: Warning dialog on first plugin route edit
+
+First time the drawer is modified for a plugin route, a one-time confirmation dialog appears:
+
+> **"This change applies across all applications"**  
+> Plugin route settings are shared across all your applications.  
+> [Don't show again] [Cancel] [I understand]
+
+"Don't show again" sets `localStorage['raf_plugin_route_warning_dismissed']`. The `disable` toggle on a plugin route triggers the same warning.
+
+### Route type summary
+
+| Route type | Application enforcement | Route Settings Drawer | Storage |
+|---|---|---|---|
+| Core (`wp/v2`, `oembed`, `batch`, `wp-site-health`) | Full per-application (IP, origin, users) | ✅ | Per-application `firewall_policy` |
+| Plugin (`wc/v3`, `acf/*`, custom) | **Bypassed** | ✅ | Global `rest_firewall_plugin_routes_policy` |
+
+### Key JS helper
+
+`isPluginRoute(node)` in `routesPolicyUtils.js`:
+```js
+const CORE_NAMESPACES = new Set(['wp', 'oembed', 'batch', 'wp-site-health']);
+export function isPluginRoute(node) {
+    const first = (node.path || '').replace(/^\//, '').split('/')[0];
+    return !!first && !CORE_NAMESPACES.has(first);
+}
+```
+
+---
+
+## 9 — WordPress Applications Only Mode
+
+### Problem
+
+An admin running WordPress as a headless API backend must configure these settings independently today:
+- Template redirect → Theme panel (requires theme deployment)
+- XML-RPC block → Security panel
+- Non-matching REST request handling → not implemented at all (currently always JSON 404)
+- Rate limiting → REST-only (not frontend/xmlrpc traffic)
+
+There is no cohesive "API-only mode."
+
+### Decision: Single "Applications Only" toggle in the Security panel
+
+A new **Applications Only** toggle (group `global_security`, key `applications_only_mode`, boolean `false`) appears in `GlobalSecurity.jsx`. When enabled:
+
+1. `theme_redirect_templates_enabled = true` — redirect WordPress templates to configured destination
+2. `theme_disable_xmlrpc = true` — block XML-RPC endpoint
+3. `applications_only_mode = true` — (Pro) unmatched core REST requests → HTTP redirect, not 404
+
+Free tier: steps 1 + 2 activate (template redirect + xmlrpc block already work without a license).  
+Pro tier: step 3 additionally makes `FirewallPro.php` redirect unmatched core REST requests.
+
+### Decision: Redirect settings move from Theme panel to Security panel
+
+`theme_redirect_templates_*` options remain in `CoreOptions` (backwards-compatible) but the UI section **"Redirect"** moves from `ThemeSettings.jsx` into `GlobalSecurity.jsx`. The Applications Only toggle sits above the redirect destination fields.
+
+Theme panel retains: Deploy Theme, ACF sync, Content (Gutenberg / p-tags / emoji), Images.  
+Security panel gains: Redirect section + Applications Only toggle.
+
+### Decision: Shared redirect destination
+
+Template redirect and non-matching REST redirect read the same destination fields (`theme_redirect_templates_preset_url` / `theme_redirect_templates_free_url`). No new option fields required.
+
+### Decision: Non-matching REST request behaviour
+
+| `applications_only_mode` | Route type | Outcome |
+|---|---|---|
+| `false` | Any | JSON `WP_Error 404` (unchanged) |
+| `true` (Pro) | Core route, no app match | `wp_redirect()` to configured destination → `exit` |
+| `true` (Pro) | Plugin route, no app match | Falls through per §8 (never redirected) |
+
+Implementation: inside `FirewallPro::check()` no-match branch, after `find_all_enabled()` confirms apps exist — check `applications_only_mode` + `is_wordpress_core_route()` + read redirect URL → `wp_redirect() + exit`. Plugin routes skip to return from the entire function.
+
+### Decision: Rate limiting scope stays REST-only
+
+Expanding rate limiting to all WordPress traffic (firing on `init`) requires significant PHP refactoring and may affect frontend visitors. Deferred. Document as a future expansion point.
+
+### New CoreOptions entry
+
+```php
+'applications_only_mode' => [
+    'default_value'     => false,
+    'sanitize_callback' => 'rest_sanitize_boolean',
+    'group'             => 'global_security',
+    'context'           => [ 'free', 'pro' ],
+],
+```
+
+---
+
+## 10 — Regression Checklists
 
 Run the relevant checklist after any change. Check each item before calling done.
 
@@ -306,7 +485,7 @@ Run the relevant checklist after any change. Check each item before calling done
 
 ---
 
-## 8 — Key File Reference
+## 11 — Key File Reference
 
 | File | Role |
 |---|---|
@@ -322,3 +501,8 @@ Run the relevant checklist after any change. Check each item before calling done
 | `inc/Core/CoreOptions.php` | All option definitions, groups, defaults, sanitizers |
 | `inc/Webhook/WebhookAutoTrigger.php` | Event catalogue, free/pro context, hook registration |
 | `inc/Core/Bootstrap.php` | PHP entry point, JS object assembly |
+| `inc/Policy/PolicyRuntime.php` | Route policy resolution, `is_wordpress_core_route()` classifier |
+| `/rest-api-firewall-pro/inc/Firewall/FirewallPro.php` | Pro application enforcement, no-match branch, plugin route bypass |
+| `/rest-api-firewall-pro/inc/Application/ApplicationResolver.php` | Credential/IP-based application resolution |
+| `src/components/Firewall/Routes/RouteSettingsDrawer.jsx` | Per-route access settings (users + IPs + origins); plugin route warning |
+| `src/components/Firewall/Routes/routesPolicyUtils.js` | `isPluginRoute()` helper, tree normalisation |

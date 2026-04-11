@@ -43,6 +43,7 @@ import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import ShieldIcon from '@mui/icons-material/Shield';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import PendingOutlinedIcon from '@mui/icons-material/PendingOutlined';
+import BusinessIcon from '@mui/icons-material/Business';
 
 import { useNavigation } from '../contexts/NavigationContext';
 import { useEntryToolbarContext } from '../contexts/EntryToolbarContext';
@@ -73,7 +74,7 @@ export default function Navigation( {
 	const { adminData, updateAdminData } = useAdminData();
 	const { applications } = useApplication();
 	const { save } = useProActions();
-	const { panel, navigateGuarded } = useNavigation();
+	const { panel, navigate, navigateGuarded } = useNavigation();
 	const { toolbarConfig } = useEntryToolbarContext();
 	const { __ } = wp.i18n || {};
 	const theme = useTheme();
@@ -160,7 +161,7 @@ export default function Navigation( {
 		{ key: 'per-route-settings', label: __( 'Routes',       'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', icon: AccountTreeOutlinedIcon,  hidden: true },
 		{ key: 'user-rate-limiting', label: __( 'Users',        'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', icon: SmartToyOutlinedIcon,    hidden: true },
 		{ key: 'collections',        label: __( 'Collections',  'rest-api-firewall' ), breadcrumbPrefix: 'Output',   icon: ApiIcon,                  hidden: true },
-		{ key: 'models-properties',  label: __( 'Properties',   'rest-api-firewall' ), breadcrumbPrefix: 'Output',   icon: RuleOutlinedIcon,         hidden: hasValidLicense },
+		{ key: 'models-properties',  label: __( 'Properties',   'rest-api-firewall' ), breadcrumbPrefix: 'Output',   icon: RuleOutlinedIcon,         hidden: true },
 		{ key: 'automations',        label: __( 'Automations',  'rest-api-firewall' ), breadcrumbPrefix: 'Integrations',      icon: AutoFixHighOutlinedIcon,  hidden: true },
 		{ key: 'webhook',            label: hasValidLicense ? __( 'Webhooks', 'rest-api-firewall' ): __( 'Webhook', 'rest-api-firewall' ), breadcrumbPrefix: 'Integrations',      icon: WebhookIcon,              hidden: true },
 		{ key: 'emails',             label: __( 'Emails',       'rest-api-firewall' ), breadcrumbPrefix: 'Integrations',      icon: EmailOutlined,            hidden: true },
@@ -183,13 +184,6 @@ export default function Navigation( {
 			hidden: hasValidLicense, // free tier only
 		},
 		{
-			key: 'webhook',
-			label: __( 'Webhook', 'rest-api-firewall' ),
-			breadcrumbPrefix: 'Global Settings',
-			icon: WebhookIcon,
-			hidden: hasValidLicense, // free tier only
-		},
-		{
 			key: 'collections',
 			label: __( 'Collections', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Global Settings',
@@ -197,10 +191,34 @@ export default function Navigation( {
 			hidden: hasValidLicense, // free tier only
 		},
 		{
+			key: 'models-properties',
+			label: __( 'Properties', 'rest-api-firewall' ),
+			breadcrumbPrefix: 'Global Settings',
+			icon: RuleOutlinedIcon,
+			hidden: hasValidLicense, // free tier only
+		},
+		{
+			key: 'settings-route-nav',
+			label: __( 'Settings Route', 'rest-api-firewall' ),
+			breadcrumbPrefix: 'Global Settings',
+			icon: BusinessIcon,
+			pl: 5,
+			hidden: hasValidLicense, // free tier only
+			action: () => navigate( 'models-properties', 'settings_route' ),
+		},
+		{
+			key: 'webhook',
+			label: __( 'Webhook', 'rest-api-firewall' ),
+			breadcrumbPrefix: 'Global Settings',
+			icon: WebhookIcon,
+			hidden: hasValidLicense, // free tier only
+		},
+		{
 			key: 'wp-settings',
 			label: __( 'Settings Route', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Global Settings',
-			icon: SettingsOutlinedIcon,
+			icon: BusinessIcon,
+			hidden: ! hasValidLicense, // pro tier only
 		},
 		
 		{
@@ -258,7 +276,9 @@ export default function Navigation( {
 	];
 
 	const activeMenuItem =
-		menuItems.find( ( m ) => m.key === panel ) || null;
+		menuItems.find( ( m ) => ! m.hidden && m.key === panel )
+		|| menuItems.find( ( m ) => m.key === panel )
+		|| null;
 
 	return (
 		<>
@@ -274,11 +294,12 @@ export default function Navigation( {
 							xs: WP_ADMIN_BAR_HEIGHT_MOBILE,
 							md: WP_ADMIN_BAR_HEIGHT_DESKTOP,
 						},
-						left: {
+						/*left: {
 							xs: 0,
 							md: WP_MENU_WIDTH_MD,
 							lg: WP_MENU_WIDTH_LG,
-						},
+						},*/
+						position: 'sticky',
 						height: {
 							xs: `calc(100vh - ${
 								WP_ADMIN_BAR_HEIGHT_MOBILE

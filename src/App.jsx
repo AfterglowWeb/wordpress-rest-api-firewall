@@ -216,7 +216,7 @@ function AppContent() {
 				sx={ {
 					flexGrow: 1,
 					minWidth: 0,
-					pl: { xs: 0, md: DRAWER_WIDTH + 'px' },
+					//pl: { xs: 0, md: DRAWER_WIDTH + 'px' },
 					pt: editorOpen ? 0 : APP_BAR_HEIGHT + 'px',
 					minHeight: {
 						xs: editorOpen

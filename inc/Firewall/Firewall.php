@@ -31,7 +31,7 @@ class Firewall {
 
 	public static function begin_internal_test( int $user_id, ?string $application_id = null ): void {
 		self::$internal_test_user_id        = $user_id;
-		self::$internal_test_application_id = $application_id ?: null;
+		self::$internal_test_application_id = $application_id ? $application_id : null;
 	}
 
 	public static function end_internal_test(): void {
@@ -270,10 +270,10 @@ class Firewall {
 			}
 
 			$key                 = 'rest_firewall_pub_rl_' . md5( $client_ip . $request->get_route() );
-			$rate_limit          = (int) ( $firewall_options['public_rate_limit']                ?? 100 );
-			$time_limit          = (int) ( $firewall_options['public_rate_limit_time']           ?? 60 );
-			$release_time        = (int) ( $firewall_options['public_rate_limit_release']        ?? 300 );
-			$blacklist_threshold = (int) ( $firewall_options['public_rate_limit_blacklist']      ?? 10 );
+			$rate_limit          = (int) ( $firewall_options['public_rate_limit'] ?? 100 );
+			$time_limit          = (int) ( $firewall_options['public_rate_limit_time'] ?? 60 );
+			$release_time        = (int) ( $firewall_options['public_rate_limit_release'] ?? 300 );
+			$blacklist_threshold = (int) ( $firewall_options['public_rate_limit_blacklist'] ?? 10 );
 			$blacklist_time      = (int) ( $firewall_options['public_rate_limit_blacklist_time'] ?? 3600 );
 		} else {
 			// Authenticated traffic: use firewall_auth_rate group.

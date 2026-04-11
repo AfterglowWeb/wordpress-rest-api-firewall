@@ -459,14 +459,14 @@ class WebhookService {
 
 		wp_send_json_success(
 			array(
-				'type'              => $is_remote_error ? 'error' : 'success',
-				'payload'           => $payload,
-				'response_code'     => $response_code,
-				'response_body'     => $response_body,
-				'response_headers'  => $response_headers ? (array) $response_headers : array(),
-				'headers_sent'      => $headers_sent,
-				'duration'          => $duration,
-				'endpoint'          => $endpoint,
+				'type'             => $is_remote_error ? 'error' : 'success',
+				'payload'          => $payload,
+				'response_code'    => $response_code,
+				'response_body'    => $response_body,
+				'response_headers' => $response_headers ? (array) $response_headers : array(),
+				'headers_sent'     => $headers_sent,
+				'duration'         => $duration,
+				'endpoint'         => $endpoint,
 			)
 		);
 	}
