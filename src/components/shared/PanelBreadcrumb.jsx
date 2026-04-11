@@ -60,7 +60,7 @@ export default function PanelBreadcrumb( {
                 ) : (
                     <Typography
                         sx={ {
-                            color: 'text.primary',
+                            color: 'text.secondary',
                             fontSize: '12px',
                             display: 'block',
                             lineHeight: 'normal',

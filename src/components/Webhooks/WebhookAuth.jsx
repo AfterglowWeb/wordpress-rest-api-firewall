@@ -241,202 +241,196 @@ export default function WebhookAuth( {
 	return (
 		<>
 			<Stack spacing={ 3 } flex={ 1 } width={ '100%' } maxWidth={ 500 }>
-				<Typography
-					variant="subtitle1"
-					fontWeight={ 600 }
-					sx={ { mb: 2 } }
+				<TextField
+					label={ __( 'Application URL', 'rest-api-firewall' ) }
+					name="application_host"
+					helperText={ __(
+						'Full application URL with protocol and port (e.g., https://example.local:5001).',
+						'rest-api-firewall'
+					) }
+					value={ form.application_host }
+					onChange={ setField }
+					size={ 'small' }
+					fullWidth
+				/>
+
+				<TextField
+					label={ __(
+						'Application Webhook Endpoint',
+						'rest-api-firewall'
+					) }
+					name="application_webhook_endpoint"
+					helperText={ __(
+						'The application endpoint used to trigger a webhook.',
+						'rest-api-firewall'
+					) }
+					value={ form.application_webhook_endpoint }
+					onChange={ setField }
+					size={ 'small' }
+					fullWidth
+				/>
+
+				<Stack>
+					{ hasValidLicense ? (
+						<>
+							<Collapse
+								in={ ! form.application_webhook_custom_secret_enabled }
+								timeout="auto"
+							>
+								<WebhookAuthGenerated
+									hasSecret={ hasSecret }
+									webhookSecret={ webhookSecret }
+								/>
+							</Collapse>
+							<Collapse
+								in={ form.application_webhook_custom_secret_enabled }
+								timeout="auto"
+							>
+								<WebhookAuthCustom
+									hasSecret={ hasSecret }
+									customSecret={ customSecret }
+									setCustomSecret={ setCustomSecret }
+								/>
+							</Collapse>
+						</>
+					) : (
+						<WebhookAuthGenerated
+							hasSecret={ hasSecret }
+							webhookSecret={ webhookSecret }
+						/>
+					) }
+				</Stack>
+
+				<Stack
+					direction="row"
+					gap={ 2 }
+					sx={ { mt: '16px!important' } }
+					alignItems="center"
+					flexWrap="wrap"
 				>
-					{ __( 'Webhook access', 'rest-api-firewall' ) }
-				</Typography>
-				<Stack spacing={ 4 }>
-					<TextField
-						label={ __( 'Application URL', 'rest-api-firewall' ) }
-						name="application_host"
-						helperText={ __(
-							'Full application URL with protocol and port (e.g., https://example.local:5001).',
-							'rest-api-firewall'
-						) }
-						value={ form.application_host }
-						onChange={ setField }
-						size={ 'small' }
-						fullWidth
-					/>
+					{ hasValidLicense && (
+						<FormControlLabel
+							sx={ { flex: 1, flexBasis: '100%', px: 1 } }
+							control={
+								<Checkbox
+									name="application_webhook_custom_secret_enabled"
+									checked={ form.application_webhook_custom_secret_enabled }
+									onChange={ setField }
+									size="small"
+								/>
+							}
+							label={ __( 'I will use my own secret', 'rest-api-firewall' ) }
+						/>
+					) }
 
-					<TextField
-						label={ __(
-							'Application Webhook Endpoint',
-							'rest-api-firewall'
-						) }
-						name="application_webhook_endpoint"
-						helperText={ __(
-							'The application endpoint used to trigger a webhook.',
-							'rest-api-firewall'
-						) }
-						value={ form.application_webhook_endpoint }
-						onChange={ setField }
-						size={ 'small' }
-						fullWidth
-					/>
-
-					<Stack>
-						{ hasValidLicense ? (
-							<>
-								<Collapse
-									in={ ! form.application_webhook_custom_secret_enabled }
-									timeout="auto"
-								>
-									<WebhookAuthGenerated
-										hasSecret={ hasSecret }
-										webhookSecret={ webhookSecret }
-									/>
-								</Collapse>
-								<Collapse
-									in={ form.application_webhook_custom_secret_enabled }
-									timeout="auto"
-								>
-									<WebhookAuthCustom
-										hasSecret={ hasSecret }
-										customSecret={ customSecret }
-										setCustomSecret={ setCustomSecret }
-									/>
-								</Collapse>
-							</>
-						) : (
-							<WebhookAuthGenerated
-								hasSecret={ hasSecret }
-								webhookSecret={ webhookSecret }
-							/>
-						) }
-					</Stack>
-
-					<Stack
-						direction="row"
-						gap={ 2 }
-						sx={ { mt: '16px!important' } }
-						alignItems="center"
-						flexWrap="wrap"
+					<Button
+						variant="outlined"
+						size="small"
+						sx={ { display: 'inline-flex' } }
+						startIcon={ <DeleteOutlineIcon /> }
+						onClick={ () => handleGeneratedConfirmActions( 'delete' ) }
+						disabled={ ! hasSecret }
 					>
-						{ hasValidLicense && (
-							<FormControlLabel
-								sx={ { flex: 1, flexBasis: '100%', px: 1 } }
-								control={
-									<Checkbox
-										name="application_webhook_custom_secret_enabled"
-										checked={ form.application_webhook_custom_secret_enabled }
-										onChange={ setField }
-										size="small"
-									/>
-								}
-								label={ __( 'I will use my own secret', 'rest-api-firewall' ) }
-							/>
-						) }
+						{ __( 'Revoke', 'rest-api-firewall' ) }
+					</Button>
 
-						<Button
-							variant="outlined"
-							size="small"
-							sx={ { display: 'inline-flex' } }
-							startIcon={ <DeleteOutlineIcon /> }
-							onClick={ () => handleGeneratedConfirmActions( 'delete' ) }
-							disabled={ ! hasSecret }
-						>
-							{ __( 'Revoke', 'rest-api-firewall' ) }
-						</Button>
+					<Button
+						size="small"
+						variant="contained"
+						disableElevation
+						startIcon={ <AutorenewIcon /> }
+						onClick={ () => handleGeneratedConfirmActions( 'regenerate' ) }
+						disabled={ hasValidLicense && form.application_webhook_custom_secret_enabled }
+					>
+						{ hasSecret && ( ! hasValidLicense || ! form.application_webhook_custom_secret_enabled )
+							? __( 'Regenerate', 'rest-api-firewall' )
+							: __( 'Generate', 'rest-api-firewall' ) }
+					</Button>
 
+					{ hasValidLicense && (
 						<Button
 							size="small"
 							variant="contained"
 							disableElevation
-							startIcon={ <AutorenewIcon /> }
-							onClick={ () => handleGeneratedConfirmActions( 'regenerate' ) }
-							disabled={ hasValidLicense && form.application_webhook_custom_secret_enabled }
+							onClick={ saveCustomSecret }
+							disabled={ ! form.application_webhook_custom_secret_enabled || hasSecret }
 						>
-							{ hasSecret && ( ! hasValidLicense || ! form.application_webhook_custom_secret_enabled )
-								? __( 'Regenerate', 'rest-api-firewall' )
-								: __( 'Generate', 'rest-api-firewall' ) }
+							{ __( 'Save Custom Secret', 'rest-api-firewall' ) }
 						</Button>
+					) }
+				</Stack>
 
-						{ hasValidLicense && (
-							<Button
-								size="small"
-								variant="contained"
-								disableElevation
-								onClick={ saveCustomSecret }
-								disabled={ ! form.application_webhook_custom_secret_enabled || hasSecret }
-							>
-								{ __( 'Save Custom Secret', 'rest-api-firewall' ) }
-							</Button>
-						) }
-					</Stack>
-
-					<Stack
-						direction="row"
-						spacing={ 1 }
-						alignItems="center"
-						justifyContent="flex-start"
-						onClick={ () =>
-							setShowSecretGuide( ! showSecretGuide )
-						}
-						sx={ { px: 1, cursor: 'pointer', userSelect: 'none' } }
+				<Stack
+					direction="row"
+					spacing={ 1 }
+					alignItems="center"
+					justifyContent="flex-start"
+					onClick={ () =>
+						setShowSecretGuide( ! showSecretGuide )
+					}
+					sx={ { px: 1, cursor: 'pointer', userSelect: 'none' } }
+				>
+					<Typography
+						variant="body1"
+						color="primary"
+						sx={ { flex: 1 } }
 					>
-						<Typography
-							variant="body1"
-							color="primary"
-							sx={ { flex: 1 } }
-						>
+						{ __(
+							'How to validate the secret in my application?',
+							'rest-api-firewall'
+						) }
+					</Typography>
+					<ExpandMoreIcon />
+				</Stack>
+				
+				<Collapse in={ showSecretGuide } timeout="auto">
+					<Stack
+						spacing={ 1.5 }
+						sx={ {
+							p: 2,
+							bgcolor: 'grey.50',
+							borderRadius: 1,
+						} }
+					>
+						<Typography variant="body2">
 							{ __(
-								'How to validate the secret in my application?',
+								'The secret is used to sign webhook requests using HMAC-SHA256. Your application must validate the',
+								'rest-api-firewall'
+							) }{ ' ' }
+							<code>X-Webhook-Signature</code>{ ' ' }
+							{ __(
+								'header by computing:',
 								'rest-api-firewall'
 							) }
 						</Typography>
-						<ExpandMoreIcon />
-					</Stack>
-					<Collapse in={ showSecretGuide } timeout="auto">
-						<Stack
-							spacing={ 1.5 }
+						<Box
+							component="pre"
 							sx={ {
-								p: 2,
-								bgcolor: 'grey.50',
+								p: 1.5,
+								bgcolor: '#f5f5f5',
 								borderRadius: 1,
+								border: '1px solid #e0e0e0',
+								fontSize: '0.85rem',
+								overflow: 'auto',
+								fontFamily: 'monospace',
 							} }
 						>
-							<Typography variant="body2">
-								{ __(
-									'The secret is used to sign webhook requests using HMAC-SHA256. Your application must validate the',
-									'rest-api-firewall'
-								) }{ ' ' }
-								<code>X-Webhook-Signature</code>{ ' ' }
-								{ __(
-									'header by computing:',
-									'rest-api-firewall'
-								) }
-							</Typography>
-							<Box
-								component="pre"
-								sx={ {
-									p: 1.5,
-									bgcolor: '#f5f5f5',
-									borderRadius: 1,
-									border: '1px solid #e0e0e0',
-									fontSize: '0.85rem',
-									overflow: 'auto',
-									fontFamily: 'monospace',
-								} }
-							>
-								{
-									'hash_hmac("sha256", payload + timestamp, secret)'
-								}
-							</Box>
-							<Typography variant="body2">
-								{ __(
-									'The timestamp is sent in the',
-									'rest-api-firewall'
-								) }{ ' ' }
-								<code>X-Webhook-Timestamp</code>{ ' ' }
-								{ __( 'header.', 'rest-api-firewall' ) }
-							</Typography>
-						</Stack>
-					</Collapse>
-				</Stack>
+							{
+								'hash_hmac("sha256", payload + timestamp, secret)'
+							}
+						</Box>
+						<Typography variant="body2">
+							{ __(
+								'The timestamp is sent in the',
+								'rest-api-firewall'
+							) }{ ' ' }
+							<code>X-Webhook-Timestamp</code>{ ' ' }
+							{ __( 'header.', 'rest-api-firewall' ) }
+						</Typography>
+					</Stack>
+					
+				</Collapse>
+
 			</Stack>
 
 			<Dialog

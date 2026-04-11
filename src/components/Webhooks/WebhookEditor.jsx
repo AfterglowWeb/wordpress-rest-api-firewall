@@ -26,6 +26,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import WebhookIcon from '@mui/icons-material/Webhook';
 
 import WebhookEditorSecretManager from './WebhookEditorSecretManager';
+import ScheduleConfig from '../shared/ScheduleConfig';
 import LoadingMessage from '../LoadingMessage';
 
 const HTTP_METHODS = [ 'POST', 'PUT', 'PATCH', 'DELETE' ];
@@ -685,6 +686,17 @@ export default function WebhookEditor( { webhook, onBack } ) {
 				) }
 
 			</Stack>
+
+			{ ! isNew && (
+				<Stack p={ { xs: 2, sm: 4 } } spacing={ 3 } sx={ { maxWidth: 760, borderTop: '1px solid', borderTopColor: 'divider' } }>
+					<ScheduleConfig
+						itemId={ webhook.id }
+						itemType="webhook"
+						nonce={ nonce }
+						adminData={ adminData }
+					/>
+				</Stack>
+			) }
 		</Stack>
 	);
 }

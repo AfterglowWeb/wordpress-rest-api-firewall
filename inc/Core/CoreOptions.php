@@ -136,6 +136,15 @@ class CoreOptions {
 				'group'             => 'firewall_auth_rate',
 			),
 
+			'rate_limit_enabled'                          => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'firewall_auth_rate',
+			),
+
 			// Firewall - Routes & Policies.
 			'firewall_routes_policy_enabled'              => array(
 				'default_value'     => false,
@@ -281,6 +290,24 @@ class CoreOptions {
 				'default_value'     => array(),
 				'type'              => 'array',
 				'sanitize_callback' => 'sanitize_key',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'webhook',
+			),
+
+			'application_webhook_type'                    => array(
+				'default_value'     => 'custom',
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_key',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'webhook',
+			),
+
+			'application_host'                            => array(
+				'default_value'     => '',
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
 				'rest_expose'       => false,
 				'context'           => array( 'free', 'pro' ),
 				'group'             => 'webhook',
@@ -487,6 +514,56 @@ class CoreOptions {
 				'group'             => 'user_rate_limit',
 			),
 
+			// Public (anonymous) rate limiting.
+			'public_rate_limit_enabled'                   => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'public_rate_limit',
+			),
+			'public_rate_limit'                           => array(
+				'default_value'     => 100,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'public_rate_limit',
+			),
+			'public_rate_limit_time'                      => array(
+				'default_value'     => 60,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'public_rate_limit',
+			),
+			'public_rate_limit_release'                   => array(
+				'default_value'     => 300,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'public_rate_limit',
+			),
+			'public_rate_limit_blacklist'                 => array(
+				'default_value'     => 10,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'public_rate_limit',
+			),
+			'public_rate_limit_blacklist_time'            => array(
+				'default_value'     => 3600,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'public_rate_limit',
+			),
+
 			'rest_models_enabled'                         => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
@@ -631,6 +708,16 @@ class CoreOptions {
 				'rest_expose'       => false,
 				'context'           => array( 'pro' ),
 				'group'             => 'settings_route',
+			),
+
+			// WP Settings route configuration.
+			'settings_route_acf_options_enabled'          => array(
+				'default_value'     => false,
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'rest_expose'       => false,
+				'context'           => array( 'free', 'pro' ),
+				'group'             => 'wp_settings',
 			),
 
 			'rest_collections_enabled'                    => array(

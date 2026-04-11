@@ -30,9 +30,9 @@ export default function WordpressEvents( { form, setField } ) {
 		} );
 
 	return (
-		<Stack spacing={ 2 } flex={ 1 } width={ '100%' } maxWidth={ 500 }>
+		<Stack width={ '100%' } maxWidth={ 500 }>
 			<MultipleSelect
-				label={ __( 'Auto-trigger Events', 'rest-api-firewall' ) }
+				label={ __( 'Trigger Events', 'rest-api-firewall' ) }
 				helperText={ __(
 					'Select WordPress events that will automatically trigger the webhook.',
 					'rest-api-firewall'

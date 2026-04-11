@@ -35,14 +35,6 @@ export default function RestApiSingleUser( { form, setField } ) {
 
 	const [ saving, setSaving ] = useState( false );
 	const [ settingsLoaded, setSettingsLoaded ] = useState( false );
-	const [ rateLimitFields, setRateLimitFields ] = useState( {
-		rateLimitRequests:       form.rate_limit || 30,
-		rateLimitWindow:         form.rate_limit_time || 60,
-		rateLimitReleaseSeconds: form.rate_limit_release || 300,
-		rateLimitBlacklistAfter: form.rate_limit_blacklist_after || 0,
-		rateLimitBlacklistWindow: form.rate_limit_blacklist_window || 3600,
-		rateLimitEnabled:        form.rate_limit_enabled || false,
-	} );
 
 	const adminUrl = adminData?.ajaxurl?.split( 'admin-ajax.php' )[ 0 ] || '';
 	const usersPageUrl = `${ adminUrl }users.php`;
@@ -69,15 +61,6 @@ export default function RestApiSingleUser( { form, setField } ) {
 			.then( ( result ) => {
 				if ( result?.success && result?.data ) {
 					setAllowedIps( result.data.allowed_ips || [] );
-
-					setRateLimitFields( {
-						rateLimitRequests:       result.data.rate_limit || 30,
-						rateLimitWindow:         result.data.rate_limit_time || 60,
-						rateLimitReleaseSeconds: result.data.rate_limit_release || 300,
-						rateLimitBlacklistAfter: result.data.rate_limit_blacklist_after || 0,
-						rateLimitBlacklistWindow: result.data.rate_limit_blacklist_window || 3600,
-						rateLimitEnabled:        result.data.rate_limit_enabled || false,
-					} );
 				}
 				setSettingsLoaded( true );
 			} )
@@ -252,15 +235,15 @@ export default function RestApiSingleUser( { form, setField } ) {
 			<Stack direction="row" alignItems="flex-start" justifyContent="space-between">
 					<Box>
 						<Typography variant="subtitle1" fontWeight={ 600 }>
-							{ __( 'Rate Limit', 'rest-api-firewall' ) }
+							{ __( 'Authenticated User Rate Limiting', 'rest-api-firewall' ) }
 						</Typography>
 					</Box>
 					<FormControlLabel
 						control={
 							<Switch
 								size="small"
-								checked={ rateLimitFields.rateLimitEnabled }
-								onChange={ ( e ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitEnabled: e.target.checked } ) ) }
+								checked={ form.rate_limit_enabled || false }
+								onChange={ ( e ) => setField( 'rate_limit_enabled', e.target.checked ) }
 							/>
 						}
 						label={ __( 'Enable', 'rest-api-firewall' ) }
@@ -270,25 +253,23 @@ export default function RestApiSingleUser( { form, setField } ) {
 
 				<RateLimitFields
 					values={ {
-						max_requests:    rateLimitFields.rateLimitRequests,
-						window_seconds:  rateLimitFields.rateLimitWindow,
-						release_seconds: rateLimitFields.rateLimitReleaseSeconds,
-						blacklist_after: rateLimitFields.rateLimitBlacklistAfter,
-						blacklist_window: rateLimitFields.rateLimitBlacklistWindow,
-						enabled:         rateLimitFields.rateLimitEnabled,
+						max_requests:    form.rate_limit             || 30,
+						window_seconds:  form.rate_limit_time        || 60,
+						release_seconds: form.rate_limit_release     || 300,
+						blacklist_after:  form.rate_limit_blacklist      || 0,
+						blacklist_window: form.rate_limit_blacklist_time || 3600,
+						enabled:          form.rate_limit_enabled || false,
 					} }
 					onChange={ ( key, val ) => {
-						const setters = {
-							max_requests:    ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitRequests: v } ) ),
-							window_seconds:  ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitWindow: v } ) ),
-							release_seconds: ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitReleaseSeconds: v } ) ),
-							blacklist_after: ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitBlacklistAfter: v } ) ),
-							blacklist_window: ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitBlacklistWindow: v } ) ),
-							enabled:         ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitEnabled: v } ) ),
+						const map = {
+							max_requests:    'rate_limit',
+							window_seconds:  'rate_limit_time',
+							release_seconds: 'rate_limit_release',
+							blacklist_after:  'rate_limit_blacklist',
+							blacklist_window: 'rate_limit_blacklist_time',
+							enabled:          'rate_limit_enabled',
 						};
-						if ( setters[ key ] ) {
-							setters[ key ]?.( val );
-						}
+						if ( map[ key ] ) setField( map[ key ], val );
 					} }
 				/>
 

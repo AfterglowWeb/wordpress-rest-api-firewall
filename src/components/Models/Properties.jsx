@@ -757,7 +757,7 @@ export function PropertyRow( {
 	);
 }
 
-function ModelProperties( { selectedObjectType, setField, globalForm } ) {
+export function ModelProperties( { selectedObjectType, setField, globalForm } ) {
 	const { __ } = wp.i18n || {};
 	const { hasValidLicense } = useLicense();
 	const { adminData } = useAdminData();

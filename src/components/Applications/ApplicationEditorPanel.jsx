@@ -84,6 +84,17 @@ export default function ApplicationEditorPanel( { application, onBack } ) {
 	const [ rateLimitBlacklistWindow, setRateLimitBlacklistWindow ] = useState( 3600 );
 	const [ rateLimitEnabled, setRateLimitEnabled ] = useState( true );
 
+	// ── SMTP Settings ─────────────────────────────────────────────────────────
+	const [ mailSmtpEnabled, setMailSmtpEnabled ] = useState( false );
+	const [ mailSmtpHost, setMailSmtpHost ] = useState( '' );
+	const [ mailSmtpPort, setMailSmtpPort ] = useState( '587' );
+	const [ mailSmtpEncryption, setMailSmtpEncryption ] = useState( 'tls' );
+	const [ mailSmtpAuth, setMailSmtpAuth ] = useState( false );
+	const [ mailSmtpUsername, setMailSmtpUsername ] = useState( '' );
+	const [ mailSmtpPassword, setMailSmtpPassword ] = useState( '' );
+	const [ mailSmtpFromEmail, setMailSmtpFromEmail ] = useState( '' );
+	const [ mailSmtpFromName, setMailSmtpFromName ] = useState( '' );
+
 	const [ appUsers, setAppUsers ] = useState( [] );
 	const [ routesCustomCount, setRoutesCustomCount ] = useState( null );
 
@@ -108,9 +119,18 @@ export default function ApplicationEditorPanel( { application, onBack } ) {
 			String( rateLimitReleaseSeconds ) !== s.rateLimitReleaseSeconds ||
 			String( rateLimitBlacklistAfter ) !== s.rateLimitBlacklistAfter ||
 			String( rateLimitBlacklistWindow ) !== s.rateLimitBlacklistWindow ||
-			rateLimitEnabled !== s.rateLimitEnabled
+			rateLimitEnabled !== s.rateLimitEnabled ||
+			mailSmtpEnabled !== s.mailSmtpEnabled ||
+			mailSmtpHost !== s.mailSmtpHost ||
+			mailSmtpPort !== s.mailSmtpPort ||
+			mailSmtpEncryption !== s.mailSmtpEncryption ||
+			mailSmtpAuth !== s.mailSmtpAuth ||
+			mailSmtpUsername !== s.mailSmtpUsername ||
+			mailSmtpPassword !== s.mailSmtpPassword ||
+			mailSmtpFromEmail !== s.mailSmtpFromEmail ||
+			mailSmtpFromName !== s.mailSmtpFromName
 		);
-	}, [ isNew, savedSnapshot, title, enabled, description, appAllowedIps, allowedOrigins, appAllowedAuthMethods, appDefaultHttpMethods, rateLimitRequests, rateLimitWindow, rateLimitReleaseSeconds, rateLimitBlacklistAfter, rateLimitBlacklistWindow, rateLimitEnabled ] );
+	}, [ isNew, savedSnapshot, title, enabled, description, appAllowedIps, allowedOrigins, appAllowedAuthMethods, appDefaultHttpMethods, rateLimitRequests, rateLimitWindow, rateLimitReleaseSeconds, rateLimitBlacklistAfter, rateLimitBlacklistWindow, rateLimitEnabled, mailSmtpEnabled, mailSmtpHost, mailSmtpPort, mailSmtpEncryption, mailSmtpAuth, mailSmtpUsername, mailSmtpPassword, mailSmtpFromEmail, mailSmtpFromName ] );
 
 	useEffect( () => {
 		setDirtyFlag(
@@ -156,6 +176,15 @@ export default function ApplicationEditorPanel( { application, onBack } ) {
 				setRateLimitBlacklistAfter( s.rate_limit?.blacklist_after ?? 5 );
 				setRateLimitBlacklistWindow( s.rate_limit?.blacklist_window ?? 3600 );
 				setRateLimitEnabled( s.rate_limit?.enabled !== false );
+				setMailSmtpEnabled( s.mail_smtp_enabled ?? false );
+				setMailSmtpHost( s.mail_smtp_host || '' );
+				setMailSmtpPort( s.mail_smtp_port || '587' );
+				setMailSmtpEncryption( s.mail_smtp_encryption || 'tls' );
+				setMailSmtpAuth( s.mail_smtp_auth ?? false );
+				setMailSmtpUsername( s.mail_smtp_username || '' );
+				setMailSmtpPassword( s.mail_smtp_password || '' );
+				setMailSmtpFromEmail( s.mail_smtp_from_email || '' );
+				setMailSmtpFromName( s.mail_smtp_from_name || '' );
 				setSavedSnapshot( {
 					title:                    e.title || '',
 					enabled:                  e.enabled ?? true,
@@ -170,6 +199,15 @@ export default function ApplicationEditorPanel( { application, onBack } ) {
 					rateLimitBlacklistAfter:  String( s.rate_limit?.blacklist_after ?? 5 ),
 					rateLimitBlacklistWindow: String( s.rate_limit?.blacklist_window ?? 3600 ),
 					rateLimitEnabled:         s.rate_limit?.enabled !== false,
+					mailSmtpEnabled:          s.mail_smtp_enabled ?? false,
+					mailSmtpHost:             s.mail_smtp_host || '',
+					mailSmtpPort:             s.mail_smtp_port || '587',
+					mailSmtpEncryption:       s.mail_smtp_encryption || 'tls',
+					mailSmtpAuth:             s.mail_smtp_auth ?? false,
+					mailSmtpUsername:         s.mail_smtp_username || '',
+					mailSmtpPassword:         s.mail_smtp_password || '',
+					mailSmtpFromEmail:        s.mail_smtp_from_email || '',
+					mailSmtpFromName:         s.mail_smtp_from_name || '',
 				} );
 			}
 		} catch ( err ) {
@@ -270,11 +308,22 @@ export default function ApplicationEditorPanel( { application, onBack } ) {
 			blacklist_after: Number( rateLimitBlacklistAfter ) || 0,
 			blacklist_window: Number( rateLimitBlacklistWindow ) || 0,
 		},
+		mail_smtp_enabled:     mailSmtpEnabled,
+		mail_smtp_host:        mailSmtpHost,
+		mail_smtp_port:        mailSmtpPort,
+		mail_smtp_encryption:  mailSmtpEncryption,
+		mail_smtp_auth:        mailSmtpAuth,
+		mail_smtp_username:    mailSmtpUsername,
+		mail_smtp_password:    mailSmtpPassword,
+		mail_smtp_from_email:  mailSmtpFromEmail,
+		mail_smtp_from_name:   mailSmtpFromName,
 	} ), [
 		serverSettings, appAllowedIps, allowedOrigins,
 		appAllowedAuthMethods, appDefaultHttpMethods,
 		rateLimitRequests, rateLimitWindow, rateLimitReleaseSeconds,
 		rateLimitBlacklistAfter, rateLimitBlacklistWindow, rateLimitEnabled,
+		mailSmtpEnabled, mailSmtpHost, mailSmtpPort, mailSmtpEncryption,
+		mailSmtpAuth, mailSmtpUsername, mailSmtpPassword, mailSmtpFromEmail, mailSmtpFromName,
 	] );
 
 	const handleSave = () => {
@@ -310,6 +359,15 @@ export default function ApplicationEditorPanel( { application, onBack } ) {
 							rateLimitBlacklistAfter:  String( rateLimitBlacklistAfter ),
 							rateLimitBlacklistWindow: String( rateLimitBlacklistWindow ),
 							rateLimitEnabled,
+							mailSmtpEnabled,
+							mailSmtpHost,
+							mailSmtpPort,
+							mailSmtpEncryption,
+							mailSmtpAuth,
+							mailSmtpUsername,
+							mailSmtpPassword,
+							mailSmtpFromEmail,
+							mailSmtpFromName,
 						} );
 					},
 			}
@@ -414,6 +472,24 @@ export default function ApplicationEditorPanel( { application, onBack } ) {
 					setRateLimitBlacklistWindow={ setRateLimitBlacklistWindow }
 					rateLimitEnabled={ rateLimitEnabled }
 					setRateLimitEnabled={ setRateLimitEnabled }
+					mailSmtpEnabled={ mailSmtpEnabled }
+					setMailSmtpEnabled={ setMailSmtpEnabled }
+					mailSmtpHost={ mailSmtpHost }
+					setMailSmtpHost={ setMailSmtpHost }
+					mailSmtpPort={ mailSmtpPort }
+					setMailSmtpPort={ setMailSmtpPort }
+					mailSmtpEncryption={ mailSmtpEncryption }
+					setMailSmtpEncryption={ setMailSmtpEncryption }
+					mailSmtpAuth={ mailSmtpAuth }
+					setMailSmtpAuth={ setMailSmtpAuth }
+					mailSmtpUsername={ mailSmtpUsername }
+					setMailSmtpUsername={ setMailSmtpUsername }
+					mailSmtpPassword={ mailSmtpPassword }
+					setMailSmtpPassword={ setMailSmtpPassword }
+					mailSmtpFromEmail={ mailSmtpFromEmail }
+					setMailSmtpFromEmail={ setMailSmtpFromEmail }
+					mailSmtpFromName={ mailSmtpFromName }
+					setMailSmtpFromName={ setMailSmtpFromName }
 				/>
 			) }
 
