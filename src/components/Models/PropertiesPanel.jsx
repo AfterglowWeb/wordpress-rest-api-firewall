@@ -11,6 +11,10 @@ import BusinessIcon from '@mui/icons-material/Business';
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
 import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined';
 
+import BusinessIcon from '@mui/icons-material/Business';
+import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
+import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined';
+
 import GlobalProperties from './GlobalProperties';
 import { ModelProperties } from './Properties';
 import ObjectTypeNav from '../shared/ObjectTypeNav';

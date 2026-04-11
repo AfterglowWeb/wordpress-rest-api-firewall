@@ -2,7 +2,7 @@ export function isNodeCustom( settings ) {
 	return !! settings?.custom;
 }
 
-const CORE_NAMESPACES = new Set( [ 'wp', 'oembed', 'batch', 'wp-site-health' ] );
+const CORE_NAMESPACES = new Set( [ 'wp', 'oembed', 'batch', 'wp-site-health', 'wp-abilities', 'wp-block-editor' ] );
 
 /**
  * Returns true when the node belongs to a plugin REST namespace (not a WP core namespace).

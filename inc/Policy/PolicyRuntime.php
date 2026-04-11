@@ -203,13 +203,13 @@ class PolicyRuntime {
 
 	/**
 	 * Returns true when $route belongs to the WordPress core REST API namespaces
-	 * (wp, oembed, batch, wp-site-health). Non-core routes (e.g. WooCommerce /wc/v3,
+	 * (wp, oembed, batch, wp-site-health, wp-abilities, wp-block-editor). Non-core routes (e.g. WooCommerce /wc/v3,
 	 * plugin routes) are excluded from global auth enforcement.
 	 */
 	public static function is_wordpress_core_route( string $route ): bool {
 		$segments  = explode( '/', ltrim( $route, '/' ) );
 		$namespace = $segments[0] ?? '';
-		return in_array( $namespace, array( 'wp', 'oembed', 'batch', 'wp-site-health' ), true );
+		return in_array( $namespace, array( 'wp', 'oembed', 'batch', 'wp-site-health', 'wp-abilities', 'wp-block-editor' ), true );
 	}
 
 	private static function merge_settings( array $base, array $override ): array {

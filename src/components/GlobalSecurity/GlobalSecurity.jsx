@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect, useMemo } from '@wordpress/element';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormHelperText from '@mui/material/FormHelperText';
@@ -13,7 +12,6 @@ import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
-import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 
@@ -188,10 +186,6 @@ export default function GlobalSecurity() {
 		[ form, savedForm ]
 	);
 
-	useEffect( () => {
-		setDirtyFlag( { has: isDirty } );
-	}, [ isDirty, setDirtyFlag ] );
-
 	const setField = useCallback( ( e ) => {
 		const { name, checked, value, type } = e.target;
 		const fieldValue = type === 'checkbox' ? Boolean( checked ) : value;
@@ -212,13 +206,21 @@ export default function GlobalSecurity() {
 		save(
 			Object.fromEntries( SECURITY_FIELDS.map( ( k ) => [ k, form[ k ] ] ) ),
 			{
-				skipConfirm: true,
+				confirmTitle: __( 'Save Security Settings', 'rest-api-firewall' ),
+				confirmMessage: __( 'Save global security settings?', 'rest-api-firewall' ),
 				successTitle: __( 'Global Security Saved', 'rest-api-firewall' ),
 				successMessage: __( 'Global security settings saved successfully.', 'rest-api-firewall' ),
 				onSuccess: () => setSavedForm( { ...form } ),
 			}
 		);
 	}, [ save, form, __ ] );
+
+	useEffect( () => {
+		setDirtyFlag( { has: isDirty, save: handleSave, saving } );
+	}, [ isDirty, handleSave, saving, setDirtyFlag ] );
+
+	// Clear dirty state when panel unmounts.
+	useEffect( () => () => setDirtyFlag( { has: false } ), [ setDirtyFlag ] );
 
 	const [ fileStatus, setFileStatus ] = useState( null );
 
@@ -235,17 +237,6 @@ export default function GlobalSecurity() {
 
 	return (
 		<Stack flexGrow={ 1 } overflow="auto">
-			<Toolbar variant="dense" disableGutters sx={ { px: 2, borderBottom: 1, borderColor: 'divider', gap: 1 } }>
-				<Box flexGrow={ 1 } />
-				<Button
-					size="small"
-					variant="contained"
-					disabled={ ! isDirty || saving }
-					onClick={ handleSave }
-				>
-					{ __( 'Save', 'rest-api-firewall' ) }
-				</Button>
-			</Toolbar>
 		<Stack p={ 4 } flexGrow={ 1 } spacing={ 3 }>
 
 			<Stack spacing={ 3 } maxWidth={ 600 }>

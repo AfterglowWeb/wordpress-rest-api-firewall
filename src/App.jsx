@@ -182,6 +182,7 @@ function AppContent() {
 	const activeSaveGroup = PANEL_SAVE_GROUP[ panel ] ?? null;
 	const showSaveButton = activeSaveGroup !== null;
 	const activeFormDirty = activeSaveGroup ? isGroupDirty( activeSaveGroup ) : false;
+	const hasContextSave = !! dirtyFlag.save;
 
 	const handleSave = () => {
 		save( pickGroup( activeSaveGroup ), SAVE_CONFIG[ activeSaveGroup ] );
@@ -206,10 +207,10 @@ function AppContent() {
 					migrationDone={ migrationDone }
 					schemaUpdateNeeded={ schemaUpdateNeeded }
 					onOpenMigration={ () => setMigrationOpen( true ) }
-					showSaveButton={ showSaveButton }
-					onSave={ handleSave }
-					saving={ saving }
-					formDirty={ activeFormDirty }
+					showSaveButton={ showSaveButton || hasContextSave }
+					onSave={ hasContextSave ? dirtyFlag.save : handleSave }
+					saving={ hasContextSave ? !! dirtyFlag.saving : saving }
+					formDirty={ hasContextSave ? dirtyFlag.has : activeFormDirty }
 				/>
 
 				<Stack

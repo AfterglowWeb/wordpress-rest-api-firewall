@@ -140,6 +140,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 	);
 
 	const loadUsers = useCallback( async () => {
+		if ( ! hasValidLicense ) return;
 		if ( usersLoadedRef.current ) {
 			return;
 		}
@@ -166,7 +167,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 		} finally {
 			setUsersLoading( false );
 		}
-	}, [ adminData, nonce, selectedApplicationId ] );
+	}, [ hasValidLicense, adminData, nonce, selectedApplicationId ] );
 
 	const handleOpenDrawer = useCallback(
 		( nodeId ) => {
