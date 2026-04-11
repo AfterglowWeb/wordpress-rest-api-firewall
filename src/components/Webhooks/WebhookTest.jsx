@@ -7,7 +7,6 @@ import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
 import FormControl from '@mui/material/FormControl';
-import FormHelperText from '@mui/material/FormHelperText';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import InputLabel from '@mui/material/InputLabel';
@@ -62,16 +61,18 @@ export default function WebhookTest( { hasSecret } ) {
 	};
 
 	return (
-		<Stack spacing={ 2 } flex={ 1 } width={ '100%' } maxWidth={ 500 }>
-			<Typography variant="subtitle1" fontWeight={ 600 } sx={ { mb: 2 } }>
-				{ __( 'Test Webhook', 'rest-api-firewall' ) }
-			</Typography>
-			<FormHelperText sx={ { mb: 2 } }>
-				{ __(
-					'Send a test webhook request to verify your configuration.',
-					'rest-api-firewall'
-				) }
-			</FormHelperText>
+		<Stack width={ '100%' } maxWidth={ 500 }>
+			<Stack sx={ { mb: 2 } }>
+				<Typography variant="subtitle1" fontWeight={ 600 }>
+					{ __( 'Test Webhook', 'rest-api-firewall' ) }
+				</Typography>
+				<Typography variant="body2" color="textSecondary"	>
+					{ __(
+						'Send a test webhook request to verify your configuration.',
+						'rest-api-firewall'
+					) }
+				</Typography>
+			</Stack>
 
 			<Stack
 				direction={ { xs: 'column', sm: 'row' } }
@@ -123,7 +124,7 @@ export default function WebhookTest( { hasSecret } ) {
 				</Button>
 			</Stack>
 
-			{ testResult ? (
+			{ testResult && (
 				<Card variant="outlined" sx={ { mt: 2 } }>
 					<CardContent>
 						<Stack
@@ -386,20 +387,8 @@ export default function WebhookTest( { hasSecret } ) {
 						) }
 					</CardContent>
 				</Card>
-			) : (
-				<Card
-					variant="outlined"
-					height={ 300 }
-					sx={ { mt: 2, maxWidth: '100%' } }
-				/>
 			) }
 
-			<Alert severity="info" sx={ { maxWidth: '100%' } }>
-				{ __(
-					'You can edit the webhook payload by using the filter: "rest_api_firewall_webhook_payload"',
-					'rest-api-firewall'
-				) }
-			</Alert>
 		</Stack>
 	);
 }

@@ -30,7 +30,7 @@ import RoutesPanel from './components/Firewall/Routes/RoutesPanel';
 import IpFilter from './components/IpFilter/IpFilter';
 import RestApiSingleUser from './components/Firewall/Users/RestApiSingleUser';
 
-import Properties from './components/Models/Properties';
+import PropertiesPanel from './components/Models/PropertiesPanel';
 import Collections from './components/Models/Collections';
 import ModelsPanel from './components/Models/ModelsPanel';
 
@@ -52,6 +52,12 @@ import License from './components/License/License';
 
 import Users from './components/Firewall/Users/Users';
 import GlobalSecurity from './components/GlobalSecurity/GlobalSecurity';
+
+function WpSettingsRedirect() {
+	const { navigate } = useNavigation();
+	useEffect( () => { navigate( 'models-properties', 'settings_route' ); }, [] ); // eslint-disable-line react-hooks/exhaustive-deps
+	return null;
+}
 
 function AppContent() {
 	const { adminData } = useAdminData();
@@ -161,15 +167,14 @@ function AppContent() {
 		'firewall_auth_rate':  'firewall_auth_rate',
 		'user-rate-limiting': 'firewall_auth_rate',
 		'per-route-settings': 'firewall_routes_policy',
-		'collections':        'collections',
 		'models-properties':  'models_properties',
 		'webhook':            'webhook',
 		'theme':              'theme',
+		// collections omitted: component owns its own per-type save (like GlobalSecurity)
 	};
 	if ( hasValidLicense ) {
 		delete PANEL_SAVE_GROUP[ 'user-rate-limiting' ];
 		delete PANEL_SAVE_GROUP[ 'per-route-settings' ];
-		delete PANEL_SAVE_GROUP[ 'collections' ];
 		delete PANEL_SAVE_GROUP[ 'models-properties' ];
 		delete PANEL_SAVE_GROUP[ 'webhook' ];
 	}
@@ -280,12 +285,10 @@ function AppContent() {
 						( hasValidLicense ? (
 							<ModelsPanel />
 						) : (
-							<Properties
-								form={ form }
-								setField={ setField }
-								postTypes={ postTypes }
-							/>
+							<PropertiesPanel form={ form } setField={ setField } />
 					) ) }
+
+					{ panel === 'wp-settings' && <WpSettingsRedirect /> }
 
 					{ panel === 'webhook' &&
 						( hasValidLicense ? (

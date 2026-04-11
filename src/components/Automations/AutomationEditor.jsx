@@ -27,6 +27,7 @@ import CallSplitIcon from '@mui/icons-material/CallSplit';
 import WebhookIcon from '@mui/icons-material/Webhook';
 
 import JsonSchemaBuilder from '../shared/JsonSchemaBuilder';
+import ScheduleConfig from '../shared/ScheduleConfig';
 import useProActions from '../../hooks/useProActions';
 import formatDate from '../../utils/formatDate';
 import useRegisterToolbar from '../../hooks/useRegisterToolbar';
@@ -652,6 +653,16 @@ export default function AutomationEditor( { automation, onBack } ) {
 						) }
 					/>
 				</Paper>
+
+				{ /* 8. Schedule */ }
+				{ ! isNew && (
+					<ScheduleConfig
+						itemId={ automation.id }
+						itemType="automation"
+						nonce={ nonce }
+						adminData={ adminData }
+					/>
+				) }
 			</Stack>
 		</Stack>
 	);

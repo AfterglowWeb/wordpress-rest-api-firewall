@@ -160,9 +160,9 @@ export default function Navigation( {
 		{ key: 'per-route-settings', label: __( 'Routes',       'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', icon: AccountTreeOutlinedIcon,  hidden: true },
 		{ key: 'user-rate-limiting', label: __( 'Users',        'rest-api-firewall' ), breadcrumbPrefix: 'Firewall', icon: SmartToyOutlinedIcon,    hidden: true },
 		{ key: 'collections',        label: __( 'Collections',  'rest-api-firewall' ), breadcrumbPrefix: 'Output',   icon: ApiIcon,                  hidden: true },
-		{ key: 'models-properties',  label: __( 'Properties',   'rest-api-firewall' ), breadcrumbPrefix: 'Output',   icon: RuleOutlinedIcon,         hidden: true },
+		{ key: 'models-properties',  label: __( 'Properties',   'rest-api-firewall' ), breadcrumbPrefix: 'Output',   icon: RuleOutlinedIcon,         hidden: hasValidLicense },
 		{ key: 'automations',        label: __( 'Automations',  'rest-api-firewall' ), breadcrumbPrefix: 'Integrations',      icon: AutoFixHighOutlinedIcon,  hidden: true },
-		{ key: 'webhook',            label: __( 'Webhooks',     'rest-api-firewall' ), breadcrumbPrefix: 'Integrations',      icon: WebhookIcon,              hidden: true },
+		{ key: 'webhook',            label: hasValidLicense ? __( 'Webhooks', 'rest-api-firewall' ): __( 'Webhook', 'rest-api-firewall' ), breadcrumbPrefix: 'Integrations',      icon: WebhookIcon,              hidden: true },
 		{ key: 'emails',             label: __( 'Emails',       'rest-api-firewall' ), breadcrumbPrefix: 'Integrations',      icon: EmailOutlined,            hidden: true },
 
 		{ type: 'section', label: '' },
@@ -195,6 +195,12 @@ export default function Navigation( {
 			breadcrumbPrefix: 'Global Settings',
 			icon: ApiIcon,
 			hidden: hasValidLicense, // free tier only
+		},
+		{
+			key: 'wp-settings',
+			label: __( 'Settings Route', 'rest-api-firewall' ),
+			breadcrumbPrefix: 'Global Settings',
+			icon: SettingsOutlinedIcon,
 		},
 		
 		{
@@ -514,7 +520,7 @@ export default function Navigation( {
 								buttonText="Doc."
 							/>
 
-							{ showSaveButton && hasValidLicense && (
+							{ showSaveButton && (
 								<Box>
 									<Button
 										variant="contained"

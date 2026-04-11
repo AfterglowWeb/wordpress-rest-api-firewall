@@ -1,12 +1,11 @@
 import { useState } from '@wordpress/element';
 
-import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
+import FormHelperText from '@mui/material/FormHelperText';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
 
 import WordpressEvents from './WordpressEvents';
 import WebhookAuth from './WebhookAuth';
@@ -27,62 +26,41 @@ export default function Webhook( { form, setField } ) {
 	const [ hasSecret, setHasSecret ] = useState( null );
 
 	return (
-		<Stack maxWidth="xl" p={4} flexGrow={ 1 } spacing={ 3 }>
-			<Stack
-				direction={ { xs: 'column', sm: 'row' } }
-				spacing={ 2 }
-				flexWrap="wrap"
-				alignItems="flex-start"
-			>
-				<FormControl size="small" sx={ { minWidth: 180 } }>
-					<InputLabel>
-						{ __( 'Service Format', 'rest-api-firewall' ) }
-					</InputLabel>
-					<Select
-						value={ form.type || 'custom' }
-						onChange={ ( e ) => setField( 'type', e.target.value ) }
-						label={ __( 'Service Format', 'rest-api-firewall' ) }
-					>
-						{ WEBHOOK_FORMATS.map( ( t ) => (
-							<MenuItem key={ t.value } value={ t.value }>
-								{ t.label }
-							</MenuItem>
-						) ) }
-					</Select>
-				</FormControl>
-			</Stack>
-
-			<Stack
-				direction={ { xs: 'column', xl: 'row' } }
-				spacing={ 2 }
-				alignItems="flex-start"
-				flex={ 1 }
-			>
-				<WebhookAuth
-					setHasSecret={ setHasSecret }
-					hasSecret={ hasSecret }
-					form={ form }
-					setField={ setField }
-				/>
-
-				<Divider
-					sx={ { display: { xs: 'none', xl: 'block' } } }
-					orientation="vertical"
-					variant="middle"
-					flexItem
-				/>
-
-				<WordpressEvents form={ form } setField={ setField } />
-
-				<Divider
-					sx={ { display: { xs: 'block', xl: 'none' } } }
-					orientation="horizontal"
-					variant="middle"
-					flexItem
-				/>
-
+		<Stack maxWidth="xl" flexDirection={ { xs: 'column', lg: 'row' } } gap={ 4 } p={ 4 } flexGrow={ 1 }>
+				<Stack spacing={ 3 }>
+					<WordpressEvents form={ form } setField={ setField } />
+					<FormControl size="small" sx={ { minWidth: 180, maxWidth: 500 } }>
+						<InputLabel>
+							{ __( 'Service Format', 'rest-api-firewall' ) }
+						</InputLabel>
+						<Select
+							value={ form.application_webhook_type || 'custom' }
+							onChange={ ( e ) => setField( 'application_webhook_type', e.target.value ) }
+							label={ __( 'Service Format', 'rest-api-firewall' ) }
+						>
+							{ WEBHOOK_FORMATS.map( ( t ) => (
+								<MenuItem key={ t.value } value={ t.value }>
+									{ t.label }
+								</MenuItem>
+							) ) }
+						</Select>
+		
+						<FormHelperText>
+							{ __(
+								'Choose a predefined format for popular services, or select Custom to use your own structure.',
+								'rest-api-firewall'
+							) }
+						</FormHelperText>
+								
+					</FormControl>
+					<WebhookAuth
+						setHasSecret={ setHasSecret }
+						hasSecret={ hasSecret }
+						form={ form }
+						setField={ setField }
+					/>
+				</Stack>
 				<WebhookTest hasSecret={ hasSecret } />
-			</Stack>
 		</Stack>
 	);
 }

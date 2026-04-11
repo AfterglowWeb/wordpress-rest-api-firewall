@@ -15,6 +15,7 @@ import VpnLockOutlinedIcon from '@mui/icons-material/VpnLockOutlined';
 
 import IpDataGrid from './IpDataGrid';
 import CountryBlockList from './CountryBlockList';
+import PublicRateLimitSection from './PublicRateLimitSection';
 
 export default function IpFilter( { scope = 'app' } ) {
 	const { __ } = wp.i18n || {};
@@ -44,56 +45,8 @@ export default function IpFilter( { scope = 'app' } ) {
 				</Alert>
 			) }
 
-			{ isGlobal ? (
-				<Alert
-					severity="info"
-					icon={ <VpnLockOutlinedIcon /> }
-					sx={ { bgcolor: 'grey.100', color: 'text.primary', '& .MuiAlert-icon': { color: 'text.secondary' } } }
-				>
-					<AlertTitle sx={ { fontWeight: 600 } }>
-						{ __( 'Global IP Filtering', 'rest-api-firewall' ) }
-					</AlertTitle>
-					{ __( 'These rules apply to all applications before any request reaches application logic. Use this list for shared threats: known bots, scrapers, and unwanted geographies.', 'rest-api-firewall' ) }
-					{ selectedApplication && (
-						<>
-							{ ' ' }
-							{ __( 'To add blocks specific to', 'rest-api-firewall' ) }{ ' ' }
-							<Link
-								component="button"
-								underline="always"
-								sx={ { verticalAlign: 'baseline', fontSize: 'inherit', color: 'inherit' } }
-								onClick={ () => navigate( 'ip-filtering' ) }
-							>
-								{ appLabel }
-							</Link>
-							{ ', ' }
-							{ __( 'use the per-application IP Filtering panel.', 'rest-api-firewall' ) }
-						</>
-					) }
-				</Alert>
-			) : (
-				<Alert
-					severity="info"
-					icon={ <VpnLockOutlinedIcon /> }
-					sx={ { bgcolor: 'grey.100', color: 'text.primary', '& .MuiAlert-icon': { color: 'text.secondary' } } }
-				>
-					<AlertTitle sx={ { fontWeight: 600 } }>
-						{ __( 'Additional blocks for this application', 'rest-api-firewall' ) }
-					</AlertTitle>
-					{ __( 'These rules layer on top of the', 'rest-api-firewall' ) }{ ' ' }
-					<Link
-						component="button"
-						underline="always"
-						sx={ { verticalAlign: 'baseline', fontSize: 'inherit', color: 'inherit' } }
-						onClick={ () => navigate( 'global-ip-filtering' ) }
-					>
-						{ __( 'Global IP Filtering', 'rest-api-firewall' ) }
-					</Link>
-					{ '. ' }
-					{ __( 'An IP blocked globally never reaches this application. Use this list for rules specific to', 'rest-api-firewall' ) }{ ' ' }
-					{ appLabel }{ '.' }
-				</Alert>
-			) }
+
+			{ isGlobal && <PublicRateLimitSection /> }
 
 			<Tabs
 				value={ currentTab }
@@ -107,7 +60,7 @@ export default function IpFilter( { scope = 'app' } ) {
 				<Tab
 					icon={ <TableViewIcon /> }
 					iconPosition="start"
-					label={ __( 'Block IPs', 'rest-api-firewall' ) }
+					label={ __( 'Blocked IPs', 'rest-api-firewall' ) }
 				/>
 				<Tab
 					icon={ <PublicIcon /> }

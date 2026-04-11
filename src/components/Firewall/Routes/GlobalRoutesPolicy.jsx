@@ -46,21 +46,6 @@ export default function GlobalRoutesPolicy( { form, setField, proSettings, onPro
 					<FormHelperText>{ __( 'Applies to WordPress core routes only (wp, oembed, batch). Third-party plugin routes (e.g. WooCommerce) are not affected.', 'rest-api-firewall' ) }</FormHelperText>
 				</FormControl>
 
-				<FormControl>
-					<FormControlLabel
-						disabled={ ! isModuleEnabled }
-						control={
-							<Switch
-								checked={ hasValidLicense ? !! proSettings.enforce_rate_limit : !! form.enforce_rate_limit }
-								name="enforce_rate_limit"
-								size="small"
-								onChange={ hasValidLicense ? onProChange : setField }
-							/>
-						}
-						label={ __( 'Enforce Rate Limiting on All Routes', 'rest-api-firewall' ) }
-					/>
-				</FormControl>
-
 
 			</Stack>
 	
@@ -164,7 +149,7 @@ export default function GlobalRoutesPolicy( { form, setField, proSettings, onPro
 							</Typography>
 							<Typography variant="body2" color="text.secondary">
 								{ __(
-								'Disables an HTTP method globally across all routes.',
+								'Blocks an HTTP method for all traffic to this application — anonymous and authenticated alike.',
 									'rest-api-firewall'
 								) }
 	

@@ -26,15 +26,13 @@ import UndoIcon from '@mui/icons-material/Undo';
 import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 
-import List from '@mui/material/List';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListSubheader from '@mui/material/ListSubheader';
 import Tooltip from '@mui/material/Tooltip';
 
 import { DataGrid } from '@mui/x-data-grid';
 
 import { PostOrderList, PageDropZone } from './SortCollectionsUtils';
 import CollectionEditor from './CollectionEditor';
+import ObjectTypeNav from '../shared/ObjectTypeNav';
 
 const initTypeEntry = ( ids ) => ( {
 	masterOrder: ids,
@@ -710,107 +708,52 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 
 	// ── Free tier: grouped left nav + right form ────────────────────────────────
 
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	const groupedTypes = useMemo( () => {
-		const groups = {};
-		publicObjectTypes.filter( ( obj ) => obj.type !== 'author' ).forEach( ( obj ) => {
-			const src = obj.source || '';
-			if ( ! groups[ src ] ) {
-				groups[ src ] = [];
-			}
-			groups[ src ].push( obj );
-		} );
-		return Object.entries( groups )
-			.sort( ( [ a ], [ b ] ) => {
-				if ( a === 'WordPress' ) { return -1; }
-				if ( b === 'WordPress' ) { return 1; }
-				if ( a === '' ) { return 1; }
-				if ( b === '' ) { return -1; }
-				return a.localeCompare( b );
-			} )
-			.map( ( [ source, items ] ) => ( { source, items } ) );
-	}, [ publicObjectTypes ] ); // eslint-disable-line react-hooks/exhaustive-deps
-
 	return (
 		<Stack direction="row" sx={ { height: '100%', flexGrow: 1, overflow: 'hidden' } }>
 
-			{ /* Left nav */ }
-			<Box sx={ { width: 220, flexShrink: 0, borderRight: 1, borderColor: 'divider', overflowY: 'auto', py: 1 } }>
-				<List dense disablePadding>
-					{ groupedTypes.map( ( { source, items } ) => (
-						<li key={ source }>
-							<ul style={ { padding: 0, margin: 0, listStyle: 'none' } }>
-								{ source && (
-									<ListSubheader sx={ { lineHeight: '28px', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 700 } }>
-										{ source }
-									</ListSubheader>
-								) }
-								{ items.map( ( obj ) => {
-									const typeSettings    = ( form?.rest_collection_per_page_settings || {} )[ obj.value ] || {};
-									const typeOrder       = ( form?.rest_collection_orders || {} )[ obj.value ] || [];
-									const hasPerPage      = !! typeSettings.enabled;
-									const hasOrder        = Array.isArray( typeOrder ) && typeOrder.length > 0;
-									const hasEnforceOrder = !! typeSettings.enforce_order;
-									const isSelected      = selectedType === obj.value;
-									return (
-										<ListItemButton
-											key={ obj.value }
-											dense
-											selected={ isSelected }
-											onClick={ () => setSelectedType( obj.value ) }
-											sx={ { borderRadius: 1, mx: 0.5, px: 1, py: 0.75 } }
-										>
-											<Stack width="100%" gap={ 0.5 }>
-												<Stack direction="row" alignItems="center" justifyContent="space-between" gap={ 0.5 }>
-													<Stack direction="row" alignItems="center" gap={ 0.75 } flex={ 1 } minWidth={ 0 }>
-														<Typography variant="body2" noWrap fontWeight={ isSelected ? 600 : 400 }>
-															{ obj.label }
-														</Typography>
-														<Chip
-															label={ obj.value }
-															size="small"
-															variant="outlined"
-															sx={ { fontFamily: 'monospace', fontSize: '0.6rem', height: 16, flexShrink: 0 } }
-														/>
-													</Stack>
-													<Chip
-														label={ obj.count ?? 0 }
-														size="small"
-														color={ isSelected ? 'primary' : 'default' }
-														sx={ { fontWeight: 700, fontSize: '0.7rem', height: 18, minWidth: 28, flexShrink: 0 } }
-													/>
-												</Stack>
-												{ ( hasPerPage || hasOrder || hasEnforceOrder ) && (
-													<Stack direction="row" flexWrap="wrap" gap={ 0.5 }>
-														{ hasPerPage && (
-															<Chip size="small" color={ isSelected ? 'primary' : 'default' } variant="outlined"
-																label={ sprintf( __( '%d/pg', 'rest-api-firewall' ), typeSettings.items_per_page || 25 ) }
-																sx={ { fontSize: '0.6rem', height: 14 } }
-															/>
-														) }
-														{ hasOrder && (
-															<Chip size="small" color={ isSelected ? 'primary' : 'default' } variant="outlined"
-																label={ __( 'ordered', 'rest-api-firewall' ) }
-																sx={ { fontSize: '0.6rem', height: 14 } }
-															/>
-														) }
-														{ hasEnforceOrder && (
-															<Chip size="small" color={ isSelected ? 'primary' : 'default' } variant="outlined"
-																label={ __( 'enforced', 'rest-api-firewall' ) }
-																sx={ { fontSize: '0.6rem', height: 14 } }
-															/>
-														) }
-													</Stack>
-												) }
-											</Stack>
-										</ListItemButton>
-									);
-								} ) }
-							</ul>
-						</li>
-					) ) }
-				</List>
-			</Box>
+			<ObjectTypeNav
+				objectTypes={ publicObjectTypes }
+				selectedType={ selectedType }
+				onSelect={ setSelectedType }
+				renderItemEnd={ ( obj, isSelected ) => (
+					<Chip
+						label={ obj.count ?? 0 }
+						size="small"
+						color={ isSelected ? 'primary' : 'default' }
+						sx={ { fontWeight: 700, fontSize: '0.7rem', height: 18, minWidth: 28, flexShrink: 0 } }
+					/>
+				) }
+				renderItemBottom={ ( obj, isSelected ) => {
+					const typeSettings    = ( form?.rest_collection_per_page_settings || {} )[ obj.value ] || {};
+					const typeOrder       = ( form?.rest_collection_orders || {} )[ obj.value ] || [];
+					const hasPerPage      = !! typeSettings.enabled;
+					const hasOrder        = Array.isArray( typeOrder ) && typeOrder.length > 0;
+					const hasEnforceOrder = !! typeSettings.enforce_order;
+					if ( ! hasPerPage && ! hasOrder && ! hasEnforceOrder ) return null;
+					return (
+						<Stack direction="row" flexWrap="wrap" gap={ 0.5 }>
+							{ hasPerPage && (
+								<Chip size="small" color={ isSelected ? 'primary' : 'default' } variant="outlined"
+									label={ sprintf( __( '%d/pg', 'rest-api-firewall' ), typeSettings.items_per_page || 25 ) }
+									sx={ { fontSize: '0.6rem', height: 14 } }
+								/>
+							) }
+							{ hasOrder && (
+								<Chip size="small" color={ isSelected ? 'primary' : 'default' } variant="outlined"
+									label={ __( 'ordered', 'rest-api-firewall' ) }
+									sx={ { fontSize: '0.6rem', height: 14 } }
+								/>
+							) }
+							{ hasEnforceOrder && (
+								<Chip size="small" color={ isSelected ? 'primary' : 'default' } variant="outlined"
+									label={ __( 'enforced', 'rest-api-firewall' ) }
+									sx={ { fontSize: '0.6rem', height: 14 } }
+								/>
+							) }
+						</Stack>
+					);
+				} }
+			/>
 
 			{ /* Right form */ }
 			<Stack flex={ 1 } p={ 4 } spacing={ 3 } overflow="auto">

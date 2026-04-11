@@ -258,14 +258,32 @@ class Firewall {
 			);
 		}
 
-		$key              = 'rest_firewall_rl_' . md5( $client_id . $request->get_route() );
 		$firewall_options = CoreOptions::read_options();
 
-		$rate_limit          = false !== $rate_limit ? (int) $rate_limit : (int) $firewall_options['rate_limit'];
-		$time_limit          = false !== $time_limit ? (int) $time_limit : (int) $firewall_options['rate_limit_time'];
-		$release_time        = (int) $firewall_options['rate_limit_release'];
-		$blacklist_threshold = (int) $firewall_options['rate_limit_blacklist'];
-		$blacklist_time      = (int) $firewall_options['rate_limit_blacklist_time'];
+		$user             = wp_get_current_user();
+		$is_authenticated = $user instanceof \WP_User && $user->exists();
+
+		if ( ! $is_authenticated ) {
+			// Anonymous traffic: use public rate limit group.
+			if ( empty( $firewall_options['public_rate_limit_enabled'] ) ) {
+				return true;
+			}
+
+			$key                 = 'rest_firewall_pub_rl_' . md5( $client_ip . $request->get_route() );
+			$rate_limit          = (int) ( $firewall_options['public_rate_limit']                ?? 100 );
+			$time_limit          = (int) ( $firewall_options['public_rate_limit_time']           ?? 60 );
+			$release_time        = (int) ( $firewall_options['public_rate_limit_release']        ?? 300 );
+			$blacklist_threshold = (int) ( $firewall_options['public_rate_limit_blacklist']      ?? 10 );
+			$blacklist_time      = (int) ( $firewall_options['public_rate_limit_blacklist_time'] ?? 3600 );
+		} else {
+			// Authenticated traffic: use firewall_auth_rate group.
+			$key                 = 'rest_firewall_rl_' . md5( $client_id . $request->get_route() );
+			$rate_limit          = false !== $rate_limit ? (int) $rate_limit : (int) $firewall_options['rate_limit'];
+			$time_limit          = false !== $time_limit ? (int) $time_limit : (int) $firewall_options['rate_limit_time'];
+			$release_time        = (int) $firewall_options['rate_limit_release'];
+			$blacklist_threshold = (int) $firewall_options['rate_limit_blacklist'];
+			$blacklist_time      = (int) $firewall_options['rate_limit_blacklist_time'];
+		}
 
 		if ( RateLimit::is_blocked( $client_id ) ) {
 			return new WP_Error(
