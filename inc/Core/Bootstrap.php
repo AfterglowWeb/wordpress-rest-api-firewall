@@ -18,6 +18,8 @@ use cmk\RestApiFirewall\GlobalSecurity\DisableEmbeds;
 use cmk\RestApiFirewall\GlobalSecurity\DisableRss;
 use cmk\RestApiFirewall\GlobalSecurity\FilePermissions;
 use cmk\RestApiFirewall\GlobalSecurity\HttpHeaders;
+use cmk\RestApiFirewall\Security\LoginRateLimiter;
+use cmk\RestApiFirewall\Security\LoginBlockService;
 use cmk\RestApiFirewall\Policy\PolicyRepository;
 use cmk\RestApiFirewall\Policy\TestPolicy;
 use cmk\RestApiFirewall\Webhook\WebhookService;
@@ -57,6 +59,8 @@ final class Bootstrap {
 		DisableComments::get_instance();
 		HttpHeaders::get_instance();
 		FilePermissions::get_instance();
+		LoginRateLimiter::get_instance();
+		LoginBlockService::get_instance();
 
 		CollectionOrderController::get_instance();
 

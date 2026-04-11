@@ -2,7 +2,6 @@ import { useLicense } from '../../contexts/LicenseContext';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { useApplication } from '../../contexts/ApplicationContext';
 import Alert from '@mui/material/Alert';
-import AlertTitle from '@mui/material/AlertTitle';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
@@ -11,7 +10,6 @@ import Tabs from '@mui/material/Tabs';
 import PublicIcon from '@mui/icons-material/Public';
 import TableViewIcon from '@mui/icons-material/TableView';
 import LockOutlineIcon from '@mui/icons-material/LockOutline';
-import VpnLockOutlinedIcon from '@mui/icons-material/VpnLockOutlined';
 
 import IpDataGrid from './IpDataGrid';
 import CountryBlockList from './CountryBlockList';
@@ -26,10 +24,6 @@ export default function IpFilter( { scope = 'app' } ) {
 	const panelKey   = isGlobal ? 'global-ip-filtering' : 'ip-filtering';
 	const currentTab = subKey === 'countries' ? 1 : 0;
 	const { hasValidLicense } = useLicense();
-
-	const appLabel = selectedApplication?.title
-		? selectedApplication.title
-		: __( 'current application', 'rest-api-firewall' );
 
 	return (
 		<Stack p={ 4 } flexGrow={ 1 } spacing={ 3 }>

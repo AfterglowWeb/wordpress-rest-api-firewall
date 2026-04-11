@@ -52,6 +52,8 @@ import License from './components/License/License';
 
 import Users from './components/Firewall/Users/Users';
 import GlobalSecurity from './components/GlobalSecurity/GlobalSecurity';
+import LoginHardening from './components/LoginHardening/LoginHardening';
+import WordPressMode from './components/WordPressMode/WordPressMode';
 
 function WpSettingsRedirect() {
 	const { navigate } = useNavigation();
@@ -307,6 +309,10 @@ function AppContent() {
 					{ panel === 'global_security' && (
 						<GlobalSecurity />
 					) }
+
+					{ panel === 'login-hardening' && <LoginHardening /> }
+
+					{ panel === 'wordpress-mode' && <WordPressMode /> }
 
 					{ panel === 'theme' && (
 						<ThemeSettings

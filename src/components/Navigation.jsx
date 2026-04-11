@@ -25,6 +25,8 @@ import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
+import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import SecurityOutlined from '@mui/icons-material/SecurityOutlined';
 import PaletteOutlined from '@mui/icons-material/PaletteOutlined';
 import EmailOutlined from '@mui/icons-material/EmailOutlined';
@@ -243,6 +245,19 @@ export default function Navigation( {
 			icon: SecurityOutlined,
 		},
 		{
+			key: 'login-hardening',
+			label: __( 'Login Hardening', 'rest-api-firewall' ),
+			breadcrumbPrefix: 'Modules',
+			icon: LockOutlinedIcon,
+		},
+		{
+			key: 'wordpress-mode',
+			label: __( 'WordPress Mode', 'rest-api-firewall' ),
+			breadcrumbPrefix: 'Modules',
+			icon: AdminPanelSettingsOutlinedIcon,
+			disabled: ! hasValidLicense,
+		},
+		{
 			key: 'theme',
 			label: __( 'Theme', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Modules',
@@ -453,20 +468,18 @@ export default function Navigation( {
 				<AppBar
 					elevation={ 0 }
 					sx={ {
-						'&.MuiAppBar-positionFixed': {
+						'&.MuiAppBar-root': {
+							left: {
+								md: WP_MENU_WIDTH_MD + DRAWER_WIDTH,
+								lg: WP_MENU_WIDTH_LG + DRAWER_WIDTH,
+							},
 							top: {
 								xs: WP_ADMIN_BAR_HEIGHT_MOBILE,
 								md: WP_ADMIN_BAR_HEIGHT_DESKTOP,
 							},
-							left: {
-								xs: 0,
-								md: DRAWER_WIDTH + WP_MENU_WIDTH_MD,
-								lg: DRAWER_WIDTH + WP_MENU_WIDTH_LG,
-							},
 							width: {
-								xs: '100%',
-								md: `calc(100% - ${ DRAWER_WIDTH + WP_MENU_WIDTH_MD }px)`,
-								lg: `calc(100% - ${ DRAWER_WIDTH + WP_MENU_WIDTH_LG }px)`,
+								md: `calc(100% - ${DRAWER_WIDTH + WP_MENU_WIDTH_MD}px)`,
+								lg: `calc(100% - ${DRAWER_WIDTH + WP_MENU_WIDTH_LG}px)`,
 							},
 						},
 					} }

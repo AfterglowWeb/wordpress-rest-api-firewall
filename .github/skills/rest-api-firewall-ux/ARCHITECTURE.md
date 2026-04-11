@@ -24,6 +24,8 @@ Every panel key, which tier sees it, which component renders, and which save rou
 | `logs` | — (pro only) | `Logs` | — | — |
 | `applications` | — (pro only) | `Applications` | — | — |
 | `global_security` | `GlobalSecurity` | `GlobalSecurity` | AppBar (via `dirtyFlag.save`) | `global_security` |
+| `login-hardening` | `LoginHardening` | `LoginHardening` | AppBar (via `dirtyFlag.save`) | `login_hardening` |
+| `wordpress-mode` | — (pro only) | `WordPressMode` | AppBar (via `dirtyFlag.save`) | `wordpress_mode` |
 | `theme` | `ThemeSettings` | `ThemeSettings` | AppBar (both) | `theme` |
 | `license` | `License` | `License` | — | — |
 | `configuration` | `ConfigurationPanel` | `ConfigurationPanel` | — | — |
@@ -39,6 +41,8 @@ Every panel key, which tier sees it, which component renders, and which save rou
 | Component | Panel key | Save mechanism |
 |---|---|---|
 | `GlobalSecurity.jsx` | `global_security` | Owns form state + `useSaveOptions`; exposes `save`/`saving` via `setDirtyFlag` → AppBar button appears when dirty; cleanup effect clears flag on unmount |
+| `LoginHardening.jsx` | `login-hardening` | Free+pro; owns form state + `useSaveOptions`; exposes `save`/`saving` via `setDirtyFlag` → AppBar button; cleanup effect clears flag on unmount |
+| `WordPressMode.jsx` | `wordpress-mode` | Pro only; owns form state + `useSaveOptions`; exposes `save`/`saving` via `setDirtyFlag` → AppBar button; cleanup effect clears flag on unmount |
 | `Collections.jsx` | `collections` | Save is scoped per collection type; inline Save button, `useSaveOptions` with `skipConfirm: true` |
 | `PublicRateLimitSection.jsx` | `global-ip-filtering` (child) | Owns `useSaveOptions` + inline Save button; always rendered inside global IpFilter panel |
 
@@ -151,6 +155,8 @@ flowchart LR
 | `collections` | 3 | `rest_collection_orders`, `rest_collection_per_page_settings` |
 | `models_properties` | 15 | `rest_models_enabled`, `rest_models_embed_*` |
 | `global_security` | 10 | `theme_disable_xmlrpc`, `theme_secure_http_headers` |
+| `login_hardening` | 4 | `login_rate_limit_enabled`, `login_rate_limit_attempts`, `login_rate_limit_window`, `login_rate_limit_blacklist_time` |
+| `wordpress_mode` | 3 | `applications_only_mode`, `absolute_whitelist`, `emergency_token_hash` |
 | `public_rate_limit` | 6 | `public_rate_limit_enabled`, `public_rate_limit`, `public_rate_limit_time`, `public_rate_limit_release`, `public_rate_limit_blacklist`, `public_rate_limit_blacklist_time` |
 | `wp_settings` | 1 | `settings_route_acf_options_enabled` |
 
@@ -344,41 +350,35 @@ export function isPluginRoute(node) {
 
 ---
 
-## 9 — WordPress Applications Only Mode
+## 9 — WordPress Mode (pro only)
 
 ### Problem
 
-An admin running WordPress as a headless API backend must configure these settings independently today:
-- Template redirect → Theme panel (requires theme deployment)
-- XML-RPC block → Security panel
-- Non-matching REST request handling → not implemented at all (currently always JSON 404)
-- Rate limiting → REST-only (not frontend/xmlrpc traffic)
+An admin running WordPress as a headless API backend needs: template redirect, XML-RPC block, IP-based access control across all WordPress traffic, and lockout recovery — all unified in one place. Previously `applications_only_mode` was a single toggle in the Security panel (free+pro). It is now a dedicated **pro-only** panel with three sub-features.
 
-There is no cohesive "API-only mode."
+### Decision: Dedicated "WordPress Mode" panel (pro only)
 
-### Decision: Single "Applications Only" toggle in the Security panel
+New panel key `wordpress-mode`, component `WordPressMode.jsx`. Pro tier only. Contains three features:
+1. **Applications Only** toggle — `applications_only_mode`
+2. **Trusted IPs** — `absolute_whitelist` (CIDR-aware)
+3. **Emergency Reset Token** — `emergency_token_hash`
 
-A new **Applications Only** toggle (group `global_security`, key `applications_only_mode`, boolean `false`) appears in `GlobalSecurity.jsx`. When enabled:
+`applications_only_mode` moves from `global_security` group (free+pro) to `wordpress_mode` group (pro only).
 
+---
+
+### 9.1 — Applications Only Toggle
+
+When `applications_only_mode = true` (Pro):
 1. `theme_redirect_templates_enabled = true` — redirect WordPress templates to configured destination
 2. `theme_disable_xmlrpc = true` — block XML-RPC endpoint
-3. `applications_only_mode = true` — (Pro) unmatched core REST requests → HTTP redirect, not 404
+3. Unmatched core REST requests → `wp_redirect()` to configured destination → `exit` (not a JSON 404)
 
-Free tier: steps 1 + 2 activate (template redirect + xmlrpc block already work without a license).  
-Pro tier: step 3 additionally makes `FirewallPro.php` redirect unmatched core REST requests.
+Plugin routes always fall through unaffected (see §8).
 
-### Decision: Redirect settings move from Theme panel to Security panel
+Redirect destination shared with theme redirect: `theme_redirect_templates_preset_url` / `theme_redirect_templates_free_url` (no new fields).
 
-`theme_redirect_templates_*` options remain in `CoreOptions` (backwards-compatible) but the UI section **"Redirect"** moves from `ThemeSettings.jsx` into `GlobalSecurity.jsx`. The Applications Only toggle sits above the redirect destination fields.
-
-Theme panel retains: Deploy Theme, ACF sync, Content (Gutenberg / p-tags / emoji), Images.  
-Security panel gains: Redirect section + Applications Only toggle.
-
-### Decision: Shared redirect destination
-
-Template redirect and non-matching REST redirect read the same destination fields (`theme_redirect_templates_preset_url` / `theme_redirect_templates_free_url`). No new option fields required.
-
-### Decision: Non-matching REST request behaviour
+**Non-matching REST request behaviour:**
 
 | `applications_only_mode` | Route type | Outcome |
 |---|---|---|
@@ -386,20 +386,74 @@ Template redirect and non-matching REST redirect read the same destination field
 | `true` (Pro) | Core route, no app match | `wp_redirect()` to configured destination → `exit` |
 | `true` (Pro) | Plugin route, no app match | Falls through per §8 (never redirected) |
 
-Implementation: inside `FirewallPro::check()` no-match branch, after `find_all_enabled()` confirms apps exist — check `applications_only_mode` + `is_wordpress_core_route()` + read redirect URL → `wp_redirect() + exit`. Plugin routes skip to return from the entire function.
+Implementation: `FirewallPro::check()` no-match branch → check `applications_only_mode` + `is_wordpress_core_route()` + redirect URL → `wp_redirect() + exit`.
 
-### Decision: Rate limiting scope stays REST-only
+---
 
-Expanding rate limiting to all WordPress traffic (firing on `init`) requires significant PHP refactoring and may affect frontend visitors. Deferred. Document as a future expansion point.
+### 9.2 — IP Enforcement Architecture
 
-### New CoreOptions entry
+Two independent enforcement layers:
+
+| Layer | Hook | Active when | Scope |
+|---|---|---|---|
+| **REST API** (existing) | `rest_authentication_errors` | Always | REST API requests only |
+| **WordPress** (new) | `init` priority 1 | `applications_only_mode = true` | ALL WordPress traffic |
+
+**Evaluation order at `init` priority 1 (Applications Only active):**
+1. Emergency reset token present in request → execute reset, bypass everything
+2. IP in `absolute_whitelist` → bypass everything (blacklist, rate limit, login rate limit)
+3. Current user has `manage_options` cap → bypass (admin session always passes)
+4. Apply global IP blacklist to ALL traffic (not REST-only)
+5. Fall through to normal WordPress routing
+
+`wp-login.php` is explicitly **excluded** from Applications Only enforcement — always accessible regardless of mode (prevents complete self-lockout if whitelist is empty).
+
+---
+
+### 9.3 — Absolute Whitelist (Trusted IPs)
+
+- Option key: `absolute_whitelist` (array of IP/CIDR strings)
+- Group: `wordpress_mode` (pro only)
+- Supports IPv4, IPv6, CIDR notation (e.g. `10.0.0.0/24`, `2001:db8::/32`)
+- Checked at `init` priority 1 **before any enforcement**
+- IPs in this list are exempt from: Applications Only enforcement, global IP blacklist, public rate limit (REST), and login rate limiting (§12)
+- **Admin bypass on activation:** when the user enables Applications Only mode, the UI proposes auto-adding their current IP via server-side AJAX action `get_current_client_ip` (not `window.location` — must be server-detected for correct proxy behaviour). User can accept or skip.
+- **No fixed IP:** CIDR notation allows whitelisting a network range. Fallback: rely on `manage_options` session bypass.
+
+---
+
+### 9.4 — Emergency Reset Token
+
+- Option key: `emergency_token_hash` (SHA-256 of token, stored in `wp_options`)
+- AJAX action `generate_emergency_token`: generates a 64-char random token server-side, stores its SHA-256 hash, returns the token once
+- Token displayed once (modal + copy button), never retrievable again from the UI
+- Reset URL: `/?rest_firewall_emergency_reset=<token>` — intercepted at `init` priority 1 **before any enforcement check** (step 1 above)
+- Action on use: `applications_only_mode → false`, `absolute_whitelist → []`, rotates token hash (single-use)
+- UI: explicit "Generate Emergency Token" button (not automatic on activation); warns to store URL securely
+- Fallback displayed in UI: `wp option patch update rest_api_firewall_options applications_only_mode false`
+
+---
+
+### New CoreOptions entries
 
 ```php
 'applications_only_mode' => [
     'default_value'     => false,
     'sanitize_callback' => 'rest_sanitize_boolean',
-    'group'             => 'global_security',
-    'context'           => [ 'free', 'pro' ],
+    'group'             => 'wordpress_mode',
+    'context'           => [ 'pro' ],
+],
+'absolute_whitelist' => [
+    'default_value'     => [],
+    'sanitize_callback' => [ 'CoreOptions', 'sanitize_ip_array' ],
+    'group'             => 'wordpress_mode',
+    'context'           => [ 'pro' ],
+],
+'emergency_token_hash' => [
+    'default_value'     => '',
+    'sanitize_callback' => 'sanitize_text_field',
+    'group'             => 'wordpress_mode',
+    'context'           => [ 'pro' ],
 ],
 ```
 
@@ -498,11 +552,155 @@ Run the relevant checklist after any change. Check each item before calling done
 | `src/contexts/EntryToolbarContext.jsx` | EntryToolbar state |
 | `src/contexts/LicenseContext.jsx` | `hasValidLicense`, `proNonce` |
 | `src/contexts/AdminDataContext.jsx` | `adminData`, `updateAdminData` |
+| `src/components/GlobalSecurity/GlobalSecurity.jsx` | Global security panel (redirect + data exposure + HTTP headers) |
+| `src/components/LoginHardening/LoginHardening.jsx` | Login rate limiting panel (free+pro) |
+| `src/components/WordPressMode/WordPressMode.jsx` | WordPress Mode panel (pro only — Applications Only, Trusted IPs, Emergency Token) |
 | `inc/Core/CoreOptions.php` | All option definitions, groups, defaults, sanitizers |
 | `inc/Webhook/WebhookAutoTrigger.php` | Event catalogue, free/pro context, hook registration |
 | `inc/Core/Bootstrap.php` | PHP entry point, JS object assembly |
 | `inc/Policy/PolicyRuntime.php` | Route policy resolution, `is_wordpress_core_route()` classifier |
 | `/rest-api-firewall-pro/inc/Firewall/FirewallPro.php` | Pro application enforcement, no-match branch, plugin route bypass |
 | `/rest-api-firewall-pro/inc/Application/ApplicationResolver.php` | Credential/IP-based application resolution |
+| `inc/Security/LoginRateLimiter.php` | Login attempt rate limiting + transient blacklist (hooks: `wp_login_failed`, `authenticate`) |
+| `inc/Firewall/IpFilter/IpSchema.php` | Shared IP entry table DDL + schema version migration (free + pro) |
+| `inc/Firewall/IpFilter/IpEntryRepository.php` | All IP entry CRUD: insert, delete, ip_in_list (CIDR), get_entries, expiry, cleanup |
 | `src/components/Firewall/Routes/RouteSettingsDrawer.jsx` | Per-route access settings (users + IPs + origins); plugin route warning |
 | `src/components/Firewall/Routes/routesPolicyUtils.js` | `isPluginRoute()` helper, tree normalisation |
+
+---
+
+## 12 — Login Hardening (free+pro)
+
+### Panel
+
+Panel key `login-hardening`. Free+pro. Navigation: drawer link under Security (same pattern as Settings Route under Firewall, Properties under Models). Component: `LoginHardening.jsx`.
+
+### PHP Component: `LoginRateLimiter`
+
+| Hook | When | Action |
+|---|---|---|
+| `wp_login_failed` | After each failed login attempt | Increment transient counter for the requesting IP |
+| `authenticate` filter priority 30 | Before credentials are verified | If counter > threshold → return `WP_Error('too_many_attempts', ...)` |
+
+Transient key: `rest_firewall_login_<sha256_first8(ip)>`. TTL = `login_rate_limit_window` seconds (sliding window reset on each failed attempt within the window).
+
+### Exemptions
+
+- IPs in `absolute_whitelist` (§9.3) are always exempt — these bypass at `init` priority 1 before `authenticate` fires
+- **No admin bypass for login rate limiting:** `manage_options` capability does NOT exempt from login rate limiting — all IPs are treated equally. The `manage_options` session bypass (§9.2 step 3) applies to Applications Only mode enforcement only.
+
+### Options (group `login_hardening`, free+pro)
+
+| PHP key | Type | Default | Description |
+|---|---|---|---|
+| `login_rate_limit_enabled` | boolean | `false` | Master toggle |
+| `login_rate_limit_attempts` | int | `5` | Max failed attempts before block |
+| `login_rate_limit_window` | int (seconds) | `300` | Sliding window duration |
+| `login_rate_limit_blacklist_time` | int (seconds) | `3600` | Block duration after threshold exceeded |
+
+### New CoreOptions entries
+
+```php
+'login_rate_limit_enabled' => [
+    'default_value'     => false,
+    'sanitize_callback' => 'rest_sanitize_boolean',
+    'group'             => 'login_hardening',
+    'context'           => [ 'free', 'pro' ],
+],
+'login_rate_limit_attempts' => [
+    'default_value'     => 5,
+    'sanitize_callback' => 'absint',
+    'group'             => 'login_hardening',
+    'context'           => [ 'free', 'pro' ],
+],
+'login_rate_limit_window' => [
+    'default_value'     => 300,
+    'sanitize_callback' => 'absint',
+    'group'             => 'login_hardening',
+    'context'           => [ 'free', 'pro' ],
+],
+'login_rate_limit_blacklist_time' => [
+    'default_value'     => 3600,
+    'sanitize_callback' => 'absint',
+    'group'             => 'login_hardening',
+    'context'           => [ 'free', 'pro' ],
+],
+```
+
+### Deferred
+
+- Email notification to admin when an IP is blocked
+- CAPTCHA integration after N failed attempts (before hard block)
+- REST API login endpoint (`/wp-json/jwt-auth/v1/token`) rate limited under same config
+
+---
+
+## 13 — Shared IP Entry Table (free + pro)
+
+### The only DB table shared across both tiers
+
+`IpSchema.php` creates a single custom table used by both the free and pro plugins:
+
+```
+{prefix}_rest_api_firewall_ip_entries
+```
+
+This table is the authoritative store for all IP blacklisting and whitelisting. It is **not** `wp_options`. Changes are immediately visible to both plugins.
+
+### Schema
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | BIGINT UNSIGNED AUTO_INCREMENT | Primary key |
+| `ip` | VARCHAR(45) | IPv4, IPv6, or CIDR notation |
+| `list_type` | ENUM | `whitelist` / `blacklist` / `global_blacklist` |
+| `entry_type` | ENUM | `manual` (admin-added) or `rate_limit` (auto-promoted by enforcement) |
+| `agent` | VARCHAR(255) NULL | User-agent at time of block |
+| `country_code` | CHAR(2) NULL | GeoIP-derived |
+| `blocked_at` | DATETIME | When the block was created |
+| `expires_at` | DATETIME NULL | NULL = permanent; non-NULL = auto-expires |
+| `created_at` / `updated_at` | DATETIME | Timestamps |
+
+UNIQUE KEY on `(ip, list_type)` — the same IP can appear once per list type.
+
+### `list_type` semantics
+
+| Value | Scope | Used by |
+|---|---|---|
+| `whitelist` | Per-application IP allowlist | App-level IP allow (pro) |
+| `blacklist` | Per-application IP blocklist | Per-app rate limit auto-promotion |
+| `global_blacklist` | ALL traffic — free + pro | Public rate limit; login rate limit escalation (§12) |
+
+**Key rule:** Anything written to `global_blacklist` is enforced globally across both tiers. Use `entry_type = 'rate_limit'` + a finite `expires_at` when writing from enforcement code so the block is clearly auto-generated and will self-clear.
+
+### PHP classes
+
+| Class | File | Role |
+|---|---|---|
+| `IpSchema` | `inc/Firewall/IpFilter/IpSchema.php` | Table DDL + schema version migration; called from `Bootstrap::__construct()` |
+| `IpEntryRepository` | `inc/Firewall/IpFilter/IpEntryRepository.php` | All CRUD: `insert()`, `delete()`, `ip_in_list()` (with CIDR), `get_entries()`, `update_expiry_for_ids()`, `delete_expired()` |
+
+### Login rate limit escalation path
+
+When `login_rate_limit_promote_after > 0` and an IP has been block-cycled N times, `LoginRateLimiter` promotes it:
+
+```php
+IpEntryRepository::insert( [
+    'ip'         => $ip,
+    'list_type'  => 'global_blacklist',
+    'entry_type' => 'rate_limit',
+    'expires_at' => gmdate( 'Y-m-d H:i:s', time() + $promote_duration ),
+] );
+```
+
+Once in `global_blacklist` the IP is visible in the IP Filter panel and can be manually released.
+
+### Release mechanisms
+
+| Method | Target | How |
+|---|---|---|
+| Admin panel | DB `global_blacklist` entries | IP Filter panel → delete entry → `delete_ip_entry` AJAX → `IpEntryRepository::delete()` |
+| AJAX direct | Login transient blocks | `rest_api_firewall_release_login_block` action (new) — deletes `rest_firewall_login_blocked_*` transient |
+| Inbound webhook | Login transient blocks | `rest_api_firewall_inbound_webhook_received` with `{ action: "release_login_block", ip: "…" }` |
+| Auto-expire (transients) | Login block transients | TTL = `login_rate_limit_blacklist_time` |
+| Auto-expire (DB) | DB escalated entries | `IpEntryRepository::delete_expired()` on cron |
