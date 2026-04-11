@@ -64,7 +64,7 @@ This skill tracks in-flight UX architecture decisions, known issues, and planned
 ### RULES (never violate)
 - **Never gate the Navigation AppBar save button with `hasValidLicense`** — that was a bug that made all free-tier saves invisible. The condition must be `showSaveButton` only.
 - Free-tier panels that use `App.jsx` form state (`useSettingsForm`) MUST NOT render their own inline save button — the AppBar button is their save UI.
-- Self-contained panels that manage their own form state (e.g. `GlobalSecurity`) MAY have an inline save Toolbar.
+- Self-contained panels that manage their own form state (e.g. `GlobalSecurity`) expose their save handler via `setDirtyFlag({ save, saving })` — the AppBar button appears when dirty. They do NOT render an inline `<Toolbar>` save button.
 
 ### Free Tier — App.jsx form state + Navigation AppBar button
 
@@ -83,11 +83,11 @@ How it works:
 | `models-properties` | `Properties.jsx` | `models_properties` | Free tier only |
 | `firewall_auth_rate` | `RestApiSingleUser.jsx` | `firewall_auth_rate` | Both tiers |
 
-**Exception — self-contained panels (NOT in PANEL_SAVE_GROUP — AppBar Save hidden for these):**
+**Exception — self-contained panels (NOT in PANEL_SAVE_GROUP):**
 
 | Component | Panel key | Save mechanism |
 |---|---|---|
-| `GlobalSecurity.jsx` | `global_security` | Owns `useSaveOptions` instance + inline `<Toolbar>` save button; manages its own local form state |
+| `GlobalSecurity.jsx` | `global_security` | Owns form state + `useSaveOptions`; exposes `save`/`saving` via `setDirtyFlag({ save, saving })` → AppBar button appears when dirty; unmount effect clears flag |
 | `Collections.jsx` | `collections` | Owns `useSaveOptions` instance + inline Save button; scoped per collection type; `skipConfirm: true` |
 | `PublicRateLimitSection.jsx` | child of `global-ip-filtering` | Owns `useSaveOptions` instance + inline Save button; always rendered inside IpFilter panel |
 
@@ -198,7 +198,7 @@ Two nonces exist: free (`rest_api_firewall_update_options_nonce`) and pro (`rest
 - See ARCHITECTURE.md §5 for the full table.
 
 ### Plugin routes — bypass rule
-Routes whose first path segment is NOT in `['wp', 'oembed', 'batch', 'wp-site-health']` are plugin routes.
+Routes whose first path segment is NOT in `['wp', 'oembed', 'batch', 'wp-site-health', 'wp-abilities', 'wp-block-editor']` are plugin routes.
 - `isPluginRoute(node)` helper in `routesPolicyUtils.js`
 - PHP: `PolicyRuntime::is_wordpress_core_route()` (inverse)
 - **Free tier UI**: `authIsGlobal` must be false for plugin routes — global `enforce_auth` does not apply to them

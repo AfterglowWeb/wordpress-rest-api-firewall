@@ -55,7 +55,7 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
 	};
 
 	const loadAppSettings = useCallback( async () => {
-		if ( ! selectedApplicationId ) return;
+		if ( ! hasValidLicense || ! selectedApplicationId ) return;
 		try {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
@@ -146,7 +146,7 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
 			</Tabs>
 
 			{ currentTab === 0 && (
-				<Stack p={4} spacing={ 3 }>
+				<Stack px={4} spacing={ 3 }>
 					{hasValidLicense && <Alert severity="info" sx={ { maxWidth: 640 } }>
 						{ __( 'These settings apply globally to all routes. They can be overridden on a per-route basis in the "Per Route Settings" tab.', 'rest-api-firewall' ) }
 					</Alert>}
@@ -164,7 +164,7 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
 			) }
 
 			{ currentTab === 1 && (
-				<Stack sx={ { flexGrow: 1 } }>
+				<Stack  px={4} sx={ { flexGrow: 1 } }>
 					<RoutesPolicyTree
 						form={ effectiveForm }
 						setField={ setField }

@@ -23,22 +23,22 @@ Every panel key, which tier sees it, which component renders, and which save rou
 | `automations` | — (pro only) | `Automations` → `AutomationEditor` | — / EntryToolbar | — |
 | `logs` | — (pro only) | `Logs` | — | — |
 | `applications` | — (pro only) | `Applications` | — | — |
-| `global_security` | `GlobalSecurity` | `GlobalSecurity` | Inline Toolbar (self-contained) | `global_security` |
+| `global_security` | `GlobalSecurity` | `GlobalSecurity` | AppBar (via `dirtyFlag.save`) | `global_security` |
 | `theme` | `ThemeSettings` | `ThemeSettings` | AppBar (both) | `theme` |
 | `license` | `License` | `License` | — | — |
 | `configuration` | `ConfigurationPanel` | `ConfigurationPanel` | — | — |
 
 **Save routine key:**
 - **AppBar** = `showSaveButton` in `PANEL_SAVE_GROUP` (App.jsx) → Navigation AppBar button → `useSaveOptions`
+- **AppBar (via `dirtyFlag.save`)** = component exposes its own `save` + `saving` via `setDirtyFlag({ save, saving })` → `App.jsx` detects `dirtyFlag.save` and surfaces the AppBar button — component is NOT in `PANEL_SAVE_GROUP`
 - **EntryToolbar** = `useRegisterToolbar` in editor → EntryToolbar replaces AppBar → `useProActions`
-- **Inline Toolbar** = component owns its own `<Toolbar>` + `useSaveOptions` (only GlobalSecurity)
 - **Inline per-type** = component owns its own inline Save button scoped to the selected type, NOT in `PANEL_SAVE_GROUP` (only Collections)
 
-**Self-contained panels (NOT in `PANEL_SAVE_GROUP` — AppBar Save button hidden for these):**
+**Self-contained panels (NOT in `PANEL_SAVE_GROUP`):**
 
-| Component | Panel key | Reason |
+| Component | Panel key | Save mechanism |
 |---|---|---|
-| `GlobalSecurity.jsx` | `global_security` | Owns `useSaveOptions` + inline `<Toolbar>` save button |
+| `GlobalSecurity.jsx` | `global_security` | Owns form state + `useSaveOptions`; exposes `save`/`saving` via `setDirtyFlag` → AppBar button appears when dirty; cleanup effect clears flag on unmount |
 | `Collections.jsx` | `collections` | Save is scoped per collection type; inline Save button, `useSaveOptions` with `skipConfirm: true` |
 | `PublicRateLimitSection.jsx` | `global-ip-filtering` (child) | Owns `useSaveOptions` + inline Save button; always rendered inside global IpFilter panel |
 
@@ -280,7 +280,7 @@ Plugin REST routes belong to the _installation_, not to any single application. 
 
 ### Decision: Plugin routes bypass per-application enforcement
 
-**Plugin route definition:** first path segment NOT in `['wp', 'oembed', 'batch', 'wp-site-health']` (inverse of `PolicyRuntime::is_wordpress_core_route()`).
+**Plugin route definition:** first path segment NOT in `['wp', 'oembed', 'batch', 'wp-site-health', 'wp-abilities', 'wp-block-editor']` (inverse of `PolicyRuntime::is_wordpress_core_route()`).
 
 When `ApplicationResolver::resolve()` returns no match (`FirewallPro::check()` no-match branch):
 - **Core route** → `WP_Error 404` (unchanged)
@@ -328,14 +328,14 @@ First time the drawer is modified for a plugin route, a one-time confirmation di
 
 | Route type | Application enforcement | Route Settings Drawer | Storage |
 |---|---|---|---|
-| Core (`wp/v2`, `oembed`, `batch`, `wp-site-health`) | Full per-application (IP, origin, users) | ✅ | Per-application `firewall_policy` |
+| Core (`wp/v2`, `oembed`, `batch`, `wp-site-health`, `wp-abilities`, `wp-block-editor`) | Full per-application (IP, origin, users) | ✅ | Per-application `firewall_policy` |
 | Plugin (`wc/v3`, `acf/*`, custom) | **Bypassed** | ✅ | Global `rest_firewall_plugin_routes_policy` |
 
 ### Key JS helper
 
 `isPluginRoute(node)` in `routesPolicyUtils.js`:
 ```js
-const CORE_NAMESPACES = new Set(['wp', 'oembed', 'batch', 'wp-site-health']);
+const CORE_NAMESPACES = new Set(['wp', 'oembed', 'batch', 'wp-site-health', 'wp-abilities', 'wp-block-editor']);
 export function isPluginRoute(node) {
     const first = (node.path || '').replace(/^\//, '').split('/')[0];
     return !!first && !CORE_NAMESPACES.has(first);
