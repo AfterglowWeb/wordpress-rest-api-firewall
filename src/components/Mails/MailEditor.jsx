@@ -311,6 +311,7 @@ export default function MailEditor( { mail, onBack } ) {
 					size="small"
 					fullWidth
 					required
+					inputProps={ { maxLength: 100 } }
 					helperText={ __(
 						'Internal name for this mail template',
 						'rest-api-firewall'
@@ -328,6 +329,7 @@ export default function MailEditor( { mail, onBack } ) {
 					fullWidth
 					multiline
 					rows={ 2 }
+					inputProps={ { maxLength: 300 } }
 					sx={{ maxWidth: 600 }}
 				/>
 
@@ -404,6 +406,7 @@ export default function MailEditor( { mail, onBack } ) {
 					onChange={ ( e ) => { setSubject( e.target.value ); setDirty( true ); } }
 					size="small"
 					fullWidth
+					inputProps={ { maxLength: 150 } }
 					placeholder={ __(
 						'Firewall alert: {{event.type}}',
 						'rest-api-firewall'

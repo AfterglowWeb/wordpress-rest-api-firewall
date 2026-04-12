@@ -20,6 +20,7 @@ export default function GlobalProperties( { form, setField } ) {
 
 	const Item = ( { name, label, tip, disabled = false, indent = false, pro = false } ) => {
 		const isDisabled = ( pro && ! hasValidLicense ) || disabled === true;
+		const checkedValue = ( pro && ! hasValidLicense ) ? false : !! form[ name ];
 
 		return (
 		<Tooltip title={ tip || '' } disableInteractive followCursor>
@@ -28,7 +29,7 @@ export default function GlobalProperties( { form, setField } ) {
 				control={
 					<Switch
 						size="small"
-						checked={ !! form[ name ] }
+						checked={ checkedValue }
 						name={ name }
 						onChange={ setField }
 					/>
@@ -64,9 +65,12 @@ export default function GlobalProperties( { form, setField } ) {
 					<Item
 						name="rest_models_relative_url_enabled"
 						label={ __( 'Relative URLs', 'rest-api-firewall' ) }
-						tip={ __( 'Remove the host from post and term URLs.', 'rest-api-firewall' ) }
+						tip={ __( 'Remove the host from post and term URLs. Require License', 'rest-api-firewall' ) }
+						pro
 					/>
 					<Item
+						disabled={ ! form.rest_models_relative_url_enabled }
+						indent
 						name="rest_models_relative_attachment_url_enabled"
 						label={ __( 'Relative Attachment URLs', 'rest-api-firewall' ) }
 						tip={ __( 'Remove the host and upload path from attachment URLs. Require License', 'rest-api-firewall' ) }

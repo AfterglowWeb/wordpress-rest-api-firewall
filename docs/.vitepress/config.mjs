@@ -16,13 +16,17 @@ export default defineConfig({
       {
         text: 'Docs',
         items: [
+          { text: 'Getting Started', link: '/getting-started' },
           { text: 'Applications', link: '/applications/applications' },
-          { text: 'Auth & Rate Limit', link: '/users/users' },
+          { text: 'Auth & Rate Limiting', link: '/users/users' },
+          { text: 'Auth Hardening', link: '/login-hardening/login-hardening' },
+          { text: 'WordPress Mode', link: '/wordpress-mode/wordpress-mode' },
+          { text: 'Migration & Fallback', link: '/migration/migration' },
           { text: 'Properties & Models', link: '/models/models' },
           { text: 'Settings Route', link: '/settings/settings' },
           { text: 'Routes & Exposure', link: '/routes/routes' },
           { text: 'Global IP Filtering', link: '/global-ip-filtering/global-ip-filtering' },
-          { text: 'IP Filtering (per-app)', link: '/ipsfilter/ipsfilter' },
+          { text: 'IP Filtering (per-application)', link: '/ipsfilter/ipsfilter' },
           { text: 'Collections', link: '/collections/collections' },
           { text: 'Automations', link: '/automations/automations' },
           { text: 'Webhooks', link: '/webhooks/webhooks' },
@@ -40,12 +44,14 @@ export default defineConfig({
         text: 'Introduction',
         items: [
           { text: 'What is Application Layer?', link: '/presentation' },
+          { text: 'Getting Started', link: '/getting-started' },
         ],
       },
       {
         text: 'Free',
         items: [
           { text: 'Auth & Rate Limiting', link: '/users/users' },
+          { text: 'Auth Hardening', link: '/login-hardening/login-hardening' },
           { text: 'Properties & Models', link: '/models/models' },
           { text: 'Routes & Exposure Control', link: '/routes/routes' },
           { text: 'Global IP Filtering', link: '/global-ip-filtering/global-ip-filtering' },
@@ -57,8 +63,10 @@ export default defineConfig({
         text: 'Pro',
         items: [
           { text: 'Applications', link: '/applications/applications' },
+          { text: 'WordPress Mode', link: '/wordpress-mode/wordpress-mode' },
+          { text: 'Migration & Fallback', link: '/migration/migration' },
           { text: 'Auth & Rate Limiting', link: '/users/users' },
-          { text: 'IP Filtering (per-app)', link: '/ipsfilter/ipsfilter' },
+          { text: 'IP Filtering (per-application)', link: '/ipsfilter/ipsfilter' },
           { text: 'Routes Policy (per-route)', link: '/routes/routes' },
           { text: 'Settings Route', link: '/settings/settings' },
           { text: 'Collections', link: '/collections/collections' },

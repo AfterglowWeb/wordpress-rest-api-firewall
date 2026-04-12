@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useAdminData } from '../../../contexts/AdminDataContext';
+import { useLicense } from '../../../contexts/LicenseContext';
 
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
@@ -16,8 +17,8 @@ import Checkbox from '@mui/material/Checkbox';
 
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
-import AllowedIps from '../IpFilter/AllowedIps';
-import AllowedOrigins from '../IpFilter/AllowedOrigins';
+import AllowedIps from '../../IpFilter/AllowedIps';
+
 import { JwtConfig } from './AuthManager';
 
 import { RateLimitFields } from './RateLimit';
@@ -26,21 +27,14 @@ import Tooltip from '@mui/material/Tooltip';
 export default function RestApiSingleUser( { form, setField } ) {
 	const { __, sprintf } = wp.i18n || {};
 	const { adminData } = useAdminData();
+	const { hasValidLicense } = useLicense();
 	const nonce = adminData?.nonce;
 
 	const [ restApiUser, setRestApiUser ] = useState( [] );
 	const [ allowedIps, setAllowedIps ] = useState( [] );
-	const [ allowedOrigins, setAllowedOrigins ] = useState( [] );
+
 	const [ saving, setSaving ] = useState( false );
 	const [ settingsLoaded, setSettingsLoaded ] = useState( false );
-	const [ rateLimitFields, setRateLimitFields ] = useState( {
-		rateLimitRequests:       form.rate_limit || 30,
-		rateLimitWindow:         form.rate_limit_time || 60,
-		rateLimitReleaseSeconds: form.rate_limit_release || 300,
-		rateLimitBlacklistAfter: form.rate_limit_blacklist_after || 0,
-		rateLimitBlacklistWindow: form.rate_limit_blacklist_window || 3600,
-		rateLimitEnabled:        form.rate_limit_enabled || false,
-	} );
 
 	const adminUrl = adminData?.ajaxurl?.split( 'admin-ajax.php' )[ 0 ] || '';
 	const usersPageUrl = `${ adminUrl }users.php`;
@@ -67,15 +61,6 @@ export default function RestApiSingleUser( { form, setField } ) {
 			.then( ( result ) => {
 				if ( result?.success && result?.data ) {
 					setAllowedIps( result.data.allowed_ips || [] );
-					setAllowedOrigins( result.data.allowed_origins || [] );
-					setRateLimitFields( {
-						rateLimitRequests:       result.data.rate_limit || 30,
-						rateLimitWindow:         result.data.rate_limit_time || 60,
-						rateLimitReleaseSeconds: result.data.rate_limit_release || 300,
-						rateLimitBlacklistAfter: result.data.rate_limit_blacklist_after || 0,
-						rateLimitBlacklistWindow: result.data.rate_limit_blacklist_window || 3600,
-						rateLimitEnabled:        result.data.rate_limit_enabled || false,
-					} );
 				}
 				setSettingsLoaded( true );
 			} )
@@ -109,6 +94,8 @@ export default function RestApiSingleUser( { form, setField } ) {
 	const handleJwtConfigChange = ( key, value ) => {
 		setField( 'firewall_jwt_' + key, value );
 	};
+
+	const hasUser = !! form.firewall_user_id;
 
 	return (
 
@@ -219,8 +206,13 @@ export default function RestApiSingleUser( { form, setField } ) {
 					<Typography variant="caption" color="text.secondary">
 						{ __( 'Choose how clients authenticate to the REST API.', 'rest-api-firewall' ) }
 					</Typography>
+					{ ! hasUser && (
+						<Typography variant="caption" color="text.disabled">
+							{ __( 'Select a REST API user above to activate this option.', 'rest-api-firewall' ) }
+						</Typography>
+					) }
 				</Stack>
-				<FormControl size="small" sx={ { maxWidth: 280 } }>
+				<FormControl size="small" sx={ { maxWidth: 280 } } disabled={ ! hasUser }>
 					<InputLabel>
 						{ __( 'Authentication Method', 'rest-api-firewall' ) }
 					</InputLabel>
@@ -238,13 +230,61 @@ export default function RestApiSingleUser( { form, setField } ) {
 						</MenuItem>
 					</Select>
 				</FormControl>
-				{ form.firewall_auth_method === 'jwt' && (
+				{ hasUser && form.firewall_auth_method === 'jwt' && (
 					<JwtConfig config={ jwtConfig } onChange={ handleJwtConfigChange } />
 				) }
+			</Stack>
+
+			<Divider />
+
+		<Stack spacing={ 3 }>
+
+			<Stack direction="row" alignItems="flex-start" justifyContent="space-between">
+					<Box>
+						<Typography variant="subtitle1" fontWeight={ 600 }>
+							{ __( 'Authenticated User Rate Limiting', 'rest-api-firewall' ) }
+						</Typography>
+					</Box>
+					<FormControlLabel
+						control={
+							<Switch
+								size="small"
+								checked={ form.rate_limit_enabled || false }
+								onChange={ ( e ) => setField( 'rate_limit_enabled', e.target.checked ) }
+							/>
+						}
+						label={ __( 'Enable', 'rest-api-firewall' ) }
+						sx={ { m: 0 } }
+					/>
+				</Stack>
+
+				<RateLimitFields
+					values={ {
+						max_requests:    form.rate_limit             || 30,
+						window_seconds:  form.rate_limit_time        || 60,
+						release_seconds: form.rate_limit_release     || 300,
+						blacklist_after:  form.rate_limit_blacklist      || 0,
+						blacklist_window: form.rate_limit_blacklist_time || 3600,
+						enabled:          form.rate_limit_enabled || false,
+					} }
+					onChange={ ( key, val ) => {
+						const map = {
+							max_requests:    'rate_limit',
+							window_seconds:  'rate_limit_time',
+							release_seconds: 'rate_limit_release',
+							blacklist_after:  'rate_limit_blacklist',
+							blacklist_window: 'rate_limit_blacklist_time',
+							enabled:          'rate_limit_enabled',
+						};
+						if ( map[ key ] ) setField( map[ key ], val );
+					} }
+				/>
+
 			</Stack>
 	
 			<Divider />
 
+		{ hasValidLicense ? (
 			<Stack spacing={ 3 } sx={ { maxWidth: 760 } }>
 				
 				<Stack spacing={ 0 }>
@@ -264,112 +304,61 @@ export default function RestApiSingleUser( { form, setField } ) {
 					saving={ saving }
 				/>
 
-				<Divider />	
-			
-				<Stack spacing={ 0 }>
+				
+			</Stack>
+		) : (
+			<Stack
+				spacing={ 2 }
+				sx={ {
+					p: 3,
+					border: '1px dashed',
+					borderColor: 'divider',
+					borderRadius: 1,
+					bgcolor: 'action.hover',
+					maxWidth: 760,
+				} }
+			>
+				<Stack direction="row" alignItems="center" spacing={ 1 }>
 					<Typography variant="subtitle1" fontWeight={ 600 }>
-						{ __( 'Allowed Origins', 'rest-api-firewall' ) }
+						{ __( 'IP & Origin Filtering', 'rest-api-firewall' ) }
 					</Typography>
-					<Typography variant="caption" color="text.secondary">
-						{ __( 'Only authorized requests from these origins will be accepted.', 'rest-api-firewall' ) }
-					</Typography>
-				</Stack>
-
-				<AllowedOrigins
-					inline
-					value={ allowedOrigins || [] }
-					onChange={ setAllowedOrigins }
-					onSave={ () => saveSetting( 'allowed_origins', allowedOrigins ) }
-					saving={ saving }
-				/>
-			
-			</Stack>
-
-			<Divider />
-
-			<Tooltip title={ __( 'License required.', 'rest-api-firewall' ) } followCursor disableInteractive>
-			<Stack spacing={ 3 } sx={{ userSelect: 'none' }}>
-				<Stack spacing={ 0 }>
-					<Typography variant="subtitle1" fontWeight={ 600 } color="text.disabled">
-						{ __( 'Allowed HTTP Methods', 'rest-api-firewall' ) }
-					</Typography>
-					<Typography variant="caption" color="text.disabled">
-						{ __( 'Which HTTP verbs this user is allowed to use against the REST API.', 'rest-api-firewall.' ) }
+					<Typography variant="caption" color="primary.main" sx={ { fontWeight: 600 } }>
+						{ __( '— Pro Feature', 'rest-api-firewall' ) }
 					</Typography>
 				</Stack>
-				<Stack direction="row" flexWrap="wrap" gap={ 1 }>
-				{ ['GET','POST','PUT','PATCH','DELETE'].map( ( method ) => (
-					<FormControlLabel
-						key={ method }
-						disabled
-						label={
-							method
-						}
-						control={
-							<Checkbox
-								size="small"
-								disabled
-							/>
-						}
-						sx={ {
-							m: 0,
-							px: 1.5,
-							userSelect: 'none',
-						} }
-					/>
-				) ) }
-				</Stack>
-			</Stack>
-			</Tooltip>
-
-			<Divider />
-
-			<Stack spacing={ 3 }>
-
-				<Stack direction="row" alignItems="flex-start" justifyContent="space-between">
-					<Box>
-						<Typography variant="subtitle1" fontWeight={ 600 }>
-							{ __( 'Rate Limit', 'rest-api-firewall' ) }
+				<Typography variant="body2" color="text.secondary">
+					{ __( 'Control REST API access by whitelisting specific IP addresses and origins. Available in the Pro tier with per-application configuration.', 'rest-api-firewall' ) }
+				</Typography>
+				<Stack spacing={ 0.75 }>
+					<Stack direction="row" spacing={ 1 } alignItems="flex-start">
+						<Typography variant="body2" color="text.disabled" sx={ { flexShrink: 0, mt: '1px' } }>
+							›
 						</Typography>
-					</Box>
-					<FormControlLabel
-						control={
-							<Switch
-								size="small"
-								checked={ rateLimitFields.rateLimitEnabled }
-								onChange={ ( e ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitEnabled: e.target.checked } ) ) }
-							/>
-						}
-						label={ __( 'Enable', 'rest-api-firewall' ) }
-						sx={ { m: 0 } }
-					/>
+						<Typography variant="body2" color="text.secondary">
+							{ __( 'Whitelist IP addresses with full CIDR support', 'rest-api-firewall' ) }
+						</Typography>
+					</Stack>
+					<Stack direction="row" spacing={ 1 } alignItems="flex-start">
+						<Typography variant="body2" color="text.disabled" sx={ { flexShrink: 0, mt: '1px' } }>
+							›
+						</Typography>
+						<Typography variant="body2" color="text.secondary">
+							{ __( 'Control CORS with allowed origins configuration', 'rest-api-firewall' ) }
+						</Typography>
+					</Stack>
+					<Stack direction="row" spacing={ 1 } alignItems="flex-start">
+						<Typography variant="body2" color="text.disabled" sx={ { flexShrink: 0, mt: '1px' } }>
+							›
+						</Typography>
+						<Typography variant="body2" color="text.secondary">
+							{ __( 'Per-application isolation for multi-tenant setups', 'rest-api-firewall' ) }
+						</Typography>
+					</Stack>
 				</Stack>
-
-				<RateLimitFields
-					values={ {
-						max_requests:    rateLimitFields.rateLimitRequests,
-						window_seconds:  rateLimitFields.rateLimitWindow,
-						release_seconds: rateLimitFields.rateLimitReleaseSeconds,
-						blacklist_after: rateLimitFields.rateLimitBlacklistAfter,
-						blacklist_window: rateLimitFields.rateLimitBlacklistWindow,
-						enabled:         rateLimitFields.rateLimitEnabled,
-					} }
-					onChange={ ( key, val ) => {
-						const setters = {
-							max_requests:    ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitRequests: v } ) ),
-							window_seconds:  ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitWindow: v } ) ),
-							release_seconds: ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitReleaseSeconds: v } ) ),
-							blacklist_after: ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitBlacklistAfter: v } ) ),
-							blacklist_window: ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitBlacklistWindow: v } ) ),
-							enabled:         ( v ) => setRateLimitFields( ( prev ) => ( { ...prev, rateLimitEnabled: v } ) ),
-						};
-						if ( setters[ key ] ) {
-							setters[ key ]?.( val );
-						}
-					} }
-				/>
-
 			</Stack>
+		) }
+
+		
 		</Stack>
 	);
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from '@wordpress/element';
+import { useAdminData } from '../../../contexts/AdminDataContext';
 
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
@@ -214,6 +215,8 @@ export default function AuthManager( {
 	allowedAuthMethods = [],
 } ) {
 	const { __ } = wp.i18n || {};
+	const { adminData } = useAdminData();
+	const wpAppPasswordsAvailable = adminData?.wp_application_passwords_available !== false;
 
 	const noEnforcement = allowedAuthMethods.length === 0;
 	const singleEnforcement = allowedAuthMethods.length === 1;
@@ -262,7 +265,7 @@ export default function AuthManager( {
 					renderValue={ renderValue }
 				>
 					{ visibleMethods.map( ( opt ) => (
-						<MenuItem key={ opt.value } value={ opt.value } disabled={ !! opt.comingSoon }>
+						<MenuItem key={ opt.value } value={ opt.value } disabled={ !! opt.comingSoon || ( opt.value === 'wp_auth' && ! wpAppPasswordsAvailable ) }>
 							<Stack direction="row" alignItems="center" gap={ 1 }>
 								{ opt.label }
 								{ opt.comingSoon && (
@@ -282,7 +285,12 @@ export default function AuthManager( {
 			{ authMethod === 'oauth' && (
 				<OAuthConfig config={ authConfig } onChange={ updateConfig } />
 			) }
-			{ authMethod === 'wp_auth' && <WpAuthInfo /> }
+			{ authMethod === 'wp_auth' && ! wpAppPasswordsAvailable && (
+			<Alert severity="warning" sx={ { maxWidth: 560 } }>
+				{ __( 'WordPress Application Passwords are not available on this site. Check that your site uses HTTPS and that Application Passwords are not disabled by a filter.', 'rest-api-firewall' ) }
+			</Alert>
+		) }
+		{ authMethod === 'wp_auth' && <WpAuthInfo /> }
 		</Stack>
 	);
 }

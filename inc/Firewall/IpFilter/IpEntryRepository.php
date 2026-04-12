@@ -2,8 +2,6 @@
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Firewall\IpBlackList;
-
 class IpEntryRepository {
 
 	protected static function table(): string {
@@ -188,7 +186,7 @@ class IpEntryRepository {
 		$cidrs = $wpdb->get_col( $wpdb->prepare( $sql, $list_type, '%/%' ) );
 
 		foreach ( $cidrs as $cidr ) {
-			if ( IpBlackList::ip_in_cidr( $ip, $cidr ) ) {
+			if ( CidrMatcher::matches( $ip, $cidr ) ) {
 				return true;
 			}
 		}
@@ -313,7 +311,7 @@ class IpEntryRepository {
 				GROUP BY country_code, country_name
 				ORDER BY count DESC';
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 		$results = $wpdb->get_results( $wpdb->prepare( $sql, $list_type ), ARRAY_A );
 		return is_array( $results ) ? $results : array();
 	}

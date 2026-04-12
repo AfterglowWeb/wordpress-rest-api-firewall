@@ -22,6 +22,8 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
@@ -29,9 +31,12 @@ import Typography from '@mui/material/Typography';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import TableChartIcon from '@mui/icons-material/TableChart';
 
 import formatDate from '../../utils/formatDate';
 import useProActions from '../../hooks/useProActions';
+import LogsGraphView from './LogsGraphView';
 
 const LEVEL_COLORS = {
 	info: 'info',
@@ -123,6 +128,7 @@ export default function Logs() {
 	const [ loading, setLoading ] = useState( true );
 	const [ total, setTotal ] = useState( 0 );
 	const [ fetchError, setFetchError ] = useState( '' );
+	const [ viewMode, setViewMode ] = useState( 'table' ); // 'table' or 'graph'
 
 	const [ paginationModel, setPaginationModel ] = useState( {
 		page: 0,
@@ -301,28 +307,57 @@ export default function Logs() {
 	);
 
 	return (
-		<Stack spacing={ 2 } sx={ { height: '100%', p: 4 } }>
-			<Toolbar
-				variant="dense"
-				sx={ {
-					gap: 1,
-					flexWrap: 'wrap',
-					minHeight: 56,
-					px: 0,
-					alignItems: 'center',
-				} }
-				disableGutters
-			>
-				{ applications && applications.length > 0 && (
-					<FormControl size="small" sx={ { minWidth: 160 } }>
+		<Stack spacing={ 2 } sx={ { height: '100%' } }>
+			{/* Toolbar + Tabs */}
+			<Stack spacing={ 1 } sx={ { px: 4, pt: 4 } }>
+				<Toolbar
+					variant="dense"
+					sx={ {
+						gap: 1,
+						flexWrap: 'wrap',
+						minHeight: 56,
+						px: 0,
+						alignItems: 'center',
+					} }
+					disableGutters
+				>
+					{ applications && applications.length > 0 && (
+						<FormControl size="small" sx={ { minWidth: 160 } }>
+							<InputLabel>
+								{ __( 'Application', 'rest-api-firewall' ) }
+							</InputLabel>
+							<Select
+								value={ filterApp }
+								label={ __( 'Application', 'rest-api-firewall' ) }
+								onChange={ ( e ) => {
+									setFilterApp( e.target.value );
+									setPaginationModel( ( p ) => ( {
+										...p,
+										page: 0,
+									} ) );
+								} }
+							>
+								<MenuItem value="">
+									{ __( 'All', 'rest-api-firewall' ) }
+								</MenuItem>
+								{ applications.map( ( app ) => (
+									<MenuItem key={ app.id } value={ app.id }>
+										{ app.title }
+									</MenuItem>
+								) ) }
+							</Select>
+						</FormControl>
+					) }
+
+					<FormControl size="small" sx={ { minWidth: 130 } }>
 						<InputLabel>
-							{ __( 'Application', 'rest-api-firewall' ) }
+							{ __( 'Type', 'rest-api-firewall' ) }
 						</InputLabel>
 						<Select
-							value={ filterApp }
-							label={ __( 'Application', 'rest-api-firewall' ) }
+							value={ filterType }
+							label={ __( 'Type', 'rest-api-firewall' ) }
 							onChange={ ( e ) => {
-								setFilterApp( e.target.value );
+								setFilterType( e.target.value );
 								setPaginationModel( ( p ) => ( {
 									...p,
 									page: 0,
@@ -332,71 +367,44 @@ export default function Logs() {
 							<MenuItem value="">
 								{ __( 'All', 'rest-api-firewall' ) }
 							</MenuItem>
-							{ applications.map( ( app ) => (
-								<MenuItem key={ app.id } value={ app.id }>
-									{ app.title }
-								</MenuItem>
-							) ) }
+							<MenuItem value="firewall">
+								{ __( 'Firewall', 'rest-api-firewall' ) }
+							</MenuItem>
+							<MenuItem value="webhook">
+								{ __( 'Webhook', 'rest-api-firewall' ) }
+							</MenuItem>
+							<MenuItem value="automation">
+								{ __( 'Automation', 'rest-api-firewall' ) }
+							</MenuItem>
 						</Select>
 					</FormControl>
-				) }
 
-				<FormControl size="small" sx={ { minWidth: 130 } }>
-					<InputLabel>
-						{ __( 'Type', 'rest-api-firewall' ) }
-					</InputLabel>
-					<Select
-						value={ filterType }
-						label={ __( 'Type', 'rest-api-firewall' ) }
-						onChange={ ( e ) => {
-							setFilterType( e.target.value );
-							setPaginationModel( ( p ) => ( {
-								...p,
-								page: 0,
-							} ) );
-						} }
-					>
-						<MenuItem value="">
-							{ __( 'All', 'rest-api-firewall' ) }
-						</MenuItem>
-						<MenuItem value="firewall">
-							{ __( 'Firewall', 'rest-api-firewall' ) }
-						</MenuItem>
-						<MenuItem value="webhook">
-							{ __( 'Webhook', 'rest-api-firewall' ) }
-						</MenuItem>
-						<MenuItem value="automation">
-							{ __( 'Automation', 'rest-api-firewall' ) }
-						</MenuItem>
-					</Select>
-				</FormControl>
-
-				<FormControl size="small" sx={ { minWidth: 120 } }>
-					<InputLabel>
-						{ __( 'Level', 'rest-api-firewall' ) }
-					</InputLabel>
-					<Select
-						value={ filterLevel }
-						label={ __( 'Level', 'rest-api-firewall' ) }
-						onChange={ ( e ) => {
-							setFilterLevel( e.target.value );
-							setPaginationModel( ( p ) => ( {
-								...p,
-								page: 0,
-							} ) );
-						} }
-					>
-						<MenuItem value="">
-							{ __( 'All', 'rest-api-firewall' ) }
-						</MenuItem>
-						<MenuItem value="info">
-							{ __( 'Info', 'rest-api-firewall' ) }
-						</MenuItem>
-						<MenuItem value="warning">
-							{ __( 'Warning', 'rest-api-firewall' ) }
-						</MenuItem>
-						<MenuItem value="error">
-							{ __( 'Error', 'rest-api-firewall' ) }
+					<FormControl size="small" sx={ { minWidth: 120 } }>
+						<InputLabel>
+							{ __( 'Level', 'rest-api-firewall' ) }
+						</InputLabel>
+						<Select
+							value={ filterLevel }
+							label={ __( 'Level', 'rest-api-firewall' ) }
+							onChange={ ( e ) => {
+								setFilterLevel( e.target.value );
+								setPaginationModel( ( p ) => ( {
+									...p,
+									page: 0,
+								} ) );
+							} }
+						>
+							<MenuItem value="">
+								{ __( 'All', 'rest-api-firewall' ) }
+							</MenuItem>
+							<MenuItem value="info">
+								{ __( 'Info', 'rest-api-firewall' ) }
+							</MenuItem>
+							<MenuItem value="warning">
+								{ __( 'Warning', 'rest-api-firewall' ) }
+							</MenuItem>
+							<MenuItem value="error">
+								{ __( 'Error', 'rest-api-firewall' ) }
 						</MenuItem>
 					</Select>
 				</FormControl>
@@ -430,34 +438,63 @@ export default function Logs() {
 				>
 					{ __( 'Clear Logs', 'rest-api-firewall' ) }
 				</Button>
-			</Toolbar>
+				//)}
+				</Toolbar>
+
+				{/* View Mode Tabs */}
+				<Tabs
+					value={ viewMode }
+					onChange={ ( e, newValue ) => setViewMode( newValue ) }
+					sx={ { px: 0 } }
+				>
+					<Tab
+						icon={ <TableChartIcon /> }
+						iconPosition="start"
+						label={ __( 'Table', 'rest-api-firewall' ) }
+						value="table"
+					/>
+					<Tab
+						icon={ <BarChartIcon /> }
+						iconPosition="start"
+						label={ __( 'Graph', 'rest-api-firewall' ) }
+						value="graph"
+					/>
+				</Tabs>
+			</Stack>
 
 			{ fetchError && (
-				<Alert severity="error" sx={ { mb: 1 } }>
+				<Alert severity="error" sx={ { mx: 4 } }>
 					{ fetchError }
 				</Alert>
 			) }
 
-			<Box sx={ { flex: 1, minHeight: 0 } }>
-				<DataGrid
-					rows={ rows }
-					columns={ columns }
-					loading={ loading }
-					rowCount={ total }
-					pageSizeOptions={ [ 25, 50, 100 ] }
-					paginationModel={ paginationModel }
-					onPaginationModelChange={ setPaginationModel }
-					paginationMode="server"
-					showToolbar={ true }
-					getRowHeight={ () => 'auto' }
-					sx={ {
-						'& .MuiDataGrid-cell': {
-							alignItems: 'flex-start',
-							py: 0.5,
-						},
-					} }
-				/>
-			</Box>
+			{/* Content Area */}
+			{ viewMode === 'table' ? (
+				<Box sx={ { flex: 1, minHeight: 0, px: 4, pb: 4 } }>
+					<DataGrid
+						rows={ rows }
+						columns={ columns }
+						loading={ loading }
+						rowCount={ total }
+						pageSizeOptions={ [ 25, 50, 100 ] }
+						paginationModel={ paginationModel }
+						onPaginationModelChange={ setPaginationModel }
+						paginationMode="server"
+						showToolbar={ true }
+						getRowHeight={ () => 'auto' }
+						sx={ {
+							'& .MuiDataGrid-cell': {
+								alignItems: 'flex-start',
+								py: 0.5,
+							},
+						} }
+					/>
+				</Box>
+			) : (
+				<Box sx={ { flex: 1, minHeight: 0, overflowY: 'auto' } }>
+					<LogsGraphView rows={ rows } />
+				</Box>
+			) }
 		</Stack>
 	);
 }

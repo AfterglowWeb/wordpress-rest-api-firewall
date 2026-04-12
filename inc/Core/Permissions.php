@@ -6,11 +6,6 @@ use WP_User;
 
 class Permissions {
 
-	/**
-	 * The nonce action issued by the pro plugin's admin page.
-	 * Hardcoded to prevent any third-party filter from injecting an
-	 * arbitrary nonce action and bypassing the admin capability check.
-	 */
 	const PRO_NONCE_ACTION = 'rest_api_firewall_update_pro_options_nonce';
 
 	public static function ajax_validate_has_firewall_admin_caps(): bool {

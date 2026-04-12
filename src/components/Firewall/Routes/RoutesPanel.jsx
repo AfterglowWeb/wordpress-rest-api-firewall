@@ -11,7 +11,6 @@ import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
-import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
 
 import GlobalRoutesPolicy from './GlobalRoutesPolicy';
@@ -25,7 +24,8 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
 	const nonce = proNonce || adminData?.nonce;
 	const { __ } = wp.i18n || {};
 	const { subKey, navigate: navCtx } = useNavigation();
-	const currentTab = subKey === 'routes' ? 1 : 0;
+	const currentTab = subKey?.startsWith( 'routes' ) ? 1 : 0;
+	const focusRoute = subKey?.startsWith( 'routes|' ) ? subKey.slice( 'routes|'.length ) : null;
 	const isModuleEnabled = !! adminData?.admin_options?.firewall_routes_policy_enabled;
 	const [ appEntry, setAppEntry ] = useState( null );
 	const [ proSettings, setProSettings ] = useState( {
@@ -56,7 +56,7 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
 	};
 
 	const loadAppSettings = useCallback( async () => {
-		if ( ! selectedApplicationId ) return;
+		if ( ! hasValidLicense || ! selectedApplicationId ) return;
 		try {
 			const response = await fetch( adminData.ajaxurl, {
 				method: 'POST',
@@ -112,11 +112,6 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
 		loadAppSettings();
 	}, [ loadAppSettings ] );
 
-	/**
-	 * Effective global values for the route tree.
-	 * In pro mode these come from per-application proSettings; in free mode from wp_options form.
-	 * Rate-limit thresholds (rate_limit, rate_limit_time) are always global (wp_options).
-	 */
 	const effectiveForm = hasValidLicense ? {
 		...form,
 		enforce_auth:        proSettings.enforce_auth,
@@ -129,12 +124,12 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
 	} : form;
 
 	return (
-		<Stack p={4} flexGrow={ 1 } spacing={ 3 }>
+		<Stack py={4} flexGrow={ 1 } spacing={ 3 }>
 			<Tabs
             value={ currentTab }
             onChange={ ( e, v ) => navCtx( 'per-route-settings', v === 1 ? 'routes' : 'global' ) }
             sx={ {
-                mb: 2,
+                px: 4,
                 borderBottom: 1,
                 borderColor: 'divider',
             } }
@@ -147,15 +142,15 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
 				<Tab
 					icon={ <AccountTreeOutlinedIcon /> }
 					iconPosition="start"
-					label={ hasValidLicense ? __( 'Per Route Settings', 'rest-api-firewall' ) : __( 'Explore Routes', 'rest-api-firewall' ) }
+					label={ __( 'Per Route Settings', 'rest-api-firewall' ) }
 				/>
 			</Tabs>
 
 			{ currentTab === 0 && (
-				<Stack spacing={ 3 }>
-					<Alert severity="info" sx={ { maxWidth: 640 } }>
+				<Stack px={4} spacing={ 3 }>
+					{hasValidLicense && <Alert severity="info" sx={ { maxWidth: 640 } }>
 						{ __( 'These settings apply globally to all routes. They can be overridden on a per-route basis in the "Per Route Settings" tab.', 'rest-api-firewall' ) }
-					</Alert>
+					</Alert>}
 					<GlobalRoutesPolicy
 						form={ form }
 						setField={ setField }
@@ -170,12 +165,13 @@ export default function RoutesPanel( { form, setField, onNavigate } ) {
 			) }
 
 			{ currentTab === 1 && (
-				<Stack sx={ { flexGrow: 1 } }>
+				<Stack  px={4} sx={ { flexGrow: 1 } }>
 					<RoutesPolicyTree
 						form={ effectiveForm }
 						setField={ setField }
 						selectedApplicationId={ selectedApplicationId }
 						onNavigate={ onNavigate }
+						focusRoute={ focusRoute }
 					/>
 				</Stack>
 			) }

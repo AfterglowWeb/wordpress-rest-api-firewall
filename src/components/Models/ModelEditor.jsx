@@ -3,35 +3,42 @@ import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useApplication } from '../../contexts/ApplicationContext';
 import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
+import { useNavigation } from '../../contexts/NavigationContext';
 import useProActions from '../../hooks/useProActions';
 
 import Alert from '@mui/material/Alert';
-import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
+import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 
 import formatDate from '../../utils/formatDate';
 import { PropertyRow } from './Properties';
 import JsonSchemaBuilder from '../shared/JsonSchemaBuilder';
 import useRegisterToolbar from '../../hooks/useRegisterToolbar';
 import LoadingMessage from '../LoadingMessage';
+import DataPanel from '../shared/DataPanel';
 import FormControl from '@mui/material/FormControl';
 
 function mergeFilterSettings( schemaSettings, storedSettings ) {
 	if ( ! storedSettings ) return schemaSettings || {};
 	const schemaFilters = schemaSettings?.filters || [];
+	const storedFilters = Array.isArray( storedSettings.filters ) ? storedSettings.filters : [];
 	return {
 		...storedSettings,
 		filters: schemaFilters.map( ( sf ) => {
-			const s = ( storedSettings.filters || [] ).find( ( f ) => f.key === sf.key );
+			const s = storedFilters.find( ( f ) => f.key === sf.key );
 			return s !== undefined ? { ...sf, value: s.value } : sf;
 		} ),
 	};
@@ -112,6 +119,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 	const { adminData } = useAdminData();
 	const { proNonce } = useLicense();
 	const { selectedApplicationId, setDirtyFlag } = useApplication();
+	const { navigate: navigateTo } = useNavigation();
 	const nonce = proNonce || adminData.nonce;
 	const { __ } = wp.i18n || {};
 
@@ -514,6 +522,20 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 							color="primary"
 							sx={ { fontFamily: 'monospace' } }
 						/>
+						<Tooltip disableInteractive title={ __( 'View routes', 'rest-api-firewall' ) }>
+							<IconButton size="small" onClick={ () => {
+								const pt = ( adminData?.post_types || [] ).find( ( p ) => p.value === objectType );
+								const restPath = pt ? `/wp/v2/${ pt.rest_base || pt.value }` : null;
+								navigateTo( 'per-route-settings', restPath ? `routes|${ restPath }` : 'routes' );
+							} } sx={ { opacity: 0.5 } }>
+								<AccountTreeOutlinedIcon fontSize="small" />
+							</IconButton>
+						</Tooltip>
+						<Tooltip disableInteractive title={ __( 'View collection', 'rest-api-firewall' ) }>
+							<IconButton size="small" onClick={ () => navigateTo( 'collections', objectType ) } sx={ { opacity: 0.5 } }>
+								<ListAltOutlinedIcon fontSize="small" />
+							</IconButton>
+						</Tooltip>
 					</Stack>
 					{ ! isNew && (
 						testMode ? (
@@ -565,6 +587,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 					size="small"
 					fullWidth
 					required
+					inputProps={ { maxLength: 100 } }
 					helperText={ __( 'Internal name for this model.', 'rest-api-firewall' ) }
 				/>
 				<TextField
@@ -574,6 +597,7 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 					size="small"
 					multiline
 					rows={ 3 }
+					inputProps={ { maxLength: 300 } }
 					helperText={ __( 'Internal note for this model.', 'rest-api-firewall' ) }
 
 				/>
@@ -647,24 +671,22 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 							) }
 							{ testStatus === 'done' && testResult && (
 								<Stack direction={ { xs: 'column', md: 'row' } } spacing={ 2 } alignItems="flex-start">
-									<Stack flex={ 1 } spacing={ 1 } sx={ { minWidth: 0 } }>
-										<Typography variant="subtitle2" fontWeight={ 600 } color="text.secondary">{ __( 'Raw', 'rest-api-firewall' ) }</Typography>
-										<Box
-											component="pre"
-											sx={ { p: 2, bgcolor: 'grey.50', borderRadius: 1, overflowX: 'auto', fontSize: '0.72rem', lineHeight: 1.5, m: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' } }
-										>
-											{ JSON.stringify( testResult.raw, null, 2 ) }
-										</Box>
-									</Stack>
-									<Stack flex={ 1 } spacing={ 1 } sx={ { minWidth: 0 } }>
-										<Typography variant="subtitle2" fontWeight={ 600 } color="primary.main">{ __( 'Transformed', 'rest-api-firewall' ) }</Typography>
-										<Box
-											component="pre"
-											sx={ { p: 2, bgcolor: 'primary.50', borderRadius: 1, overflowX: 'auto', fontSize: '0.72rem', lineHeight: 1.5, m: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' } }
-										>
-											{ JSON.stringify( testResult.transformed, null, 2 ) }
-										</Box>
-									</Stack>
+									<DataPanel
+										label={ __( 'Raw', 'rest-api-firewall' ) }
+										data={ testResult.raw }
+										labelColor="text.secondary"
+										bgcolor="grey.50"
+									/>
+									<DataPanel
+										label={ __( 'Transformed', 'rest-api-firewall' ) }
+										data={ testResult.transformed }
+										labelColor="primary.main"
+										bgcolor={ ( theme ) =>
+											theme.palette.mode === 'dark'
+												? 'rgba(99, 132, 255, 0.08)'
+												: 'rgba(25, 118, 210, 0.04)'
+										}
+									/>
 								</Stack>
 							) }
 						</Stack>
@@ -739,8 +761,13 @@ export default function ModelEditor( { model, globalForm = null, onBack } ) {
 													subPath.push( parts[ i + 1 ] );
 													i += 2;
 												}
-												const setting = parts[ i ];
-												const key = parts[ i + 1 ];
+												// Handle settings.filters.{filterKey} → re-route to the 'filters' branch.
+												let setting = parts[ i ];
+												let key = parts[ i + 1 ];
+												if ( setting === 'settings' && key === 'filters' && parts[ i + 2 ] !== undefined ) {
+													setting = 'filters';
+													key     = parts[ i + 2 ];
+												}
 
 												setProperties( ( prev ) => {
 													const next = { ...prev };

@@ -1,0 +1,486 @@
+---
+name: rest-api-firewall-ux
+description: "Planning and architecture notes for the REST API Firewall plugin UI. Use when working on drawer navigation, tier/license gating, migration dialogs, ApplicationSelector, GlobalSecurity, free-vs-pro tier UX decisions, save routines, or any panel UI. See also ARCHITECTURE.md in this directory for the full panel registry, data-flow diagrams, and regression checklists."
+---
+
+# REST API Firewall – UI Architecture Reference
+
+This skill tracks in-flight UX architecture decisions, known issues, and planned work for the plugin React app.
+
+## Build Notes
+- **JavaScript builds** always use `yarn build` (never `npm`). This is the project standard.
+  - Run from: `/Users/cedric/Local Sites/botoxs/app/public/wp-content/plugins/rest-api-firewall/`
+  - Command: `yarn build`
+
+## Architecture Mapping Workflow
+
+Static architecture checks and graph generation are now part of the baseline workflow before feature integration and major refactors.
+
+### JS dependency map (frontend)
+
+- Config: `.dependency-cruiser.cjs`
+- Source output (Mermaid): `.github/graphs/js-modules.mmd`
+- Rendered output (SVG): `.github/graphs/js-modules.svg`
+
+Commands:
+- `yarn graph` → regenerates `.github/graphs/js-modules.mmd`
+- `yarn graph:svg` → regenerates `.github/graphs/js-modules.svg`
+- `yarn graph:lint` → enforces dependency-cruiser rules (cycles/layer guards)
+
+### PHP layer map (backend)
+
+- Config: `deptrac.yaml`
+- Source output (dot): `.github/graphs/php-dependencies.dot`
+- Rendered output (SVG): `.github/graphs/php-dependencies.svg`
+
+Commands:
+- `composer graph:php` → strict layer analysis (must stay green)
+- `composer graph:php:dot` → regenerates `.github/graphs/php-dependencies.dot`
+
+### Current standard (do not relax)
+
+- Keep Deptrac **strict** and treat any new violation as refactor backlog.
+- Use architecture graphs for planning before adding new modules or changing tier boundaries.
+
+---
+
+## A — Migration State Machine
+
+### States
+
+| State | Condition |
+|---|---|
+| **Free** | Pro plugin inactive OR not installed |
+| **Pro (no license)** | Pro plugin active, license invalid/expired |
+| **Pro (license, no apps)** | Pro active + valid license, `applications` table empty |
+| **Pro (license, apps exist)** | Pro active + valid license + ≥1 application |
+
+### Required Behaviors
+
+**1. Pro deactivated while apps exist OR license expired while apps exist:**
+- PHP `ProToFreeFallbackService::should_prompt()` returns `true`
+- Bootstrap.php injects `restApiFirewallPro.shouldPromptFallback = true`
+- `ProToFreeDialog.jsx` opens automatically in `App.jsx`
+- User selects one app to export to free-tier wp_options; others are preserved but inaccessible
+- "Dismiss for now" hides dialog for 7 days via transient
+
+**2. Pro active + delete all applications:**
+- After last application deleted: clear `selectedApplicationId` from ApplicationContext
+- Navigate back to applications list (no dangling React navigation state)
+- ApplicationSelector auto-expands (shows New Application button)
+- No migration dialog should appear (user chose to delete, not downgrade)
+
+**3. Migration dialog (free → pro) must NOT show when:**
+- Pro plugin is active
+- No applications exist yet
+- But user has NOT previously had free-tier data (`migrationNeeded === false`)
+- Guard: `restApiFirewallPro.migrationNeeded && !isMigrated`
+
+**4. Migration (free → pro) SHOULD fire when:**
+- User activates pro for the first time
+- Free-tier data exists: `firewall_user_id`, `enforce_auth`, `enforce_rate_limit`, or `firewall_policy.routes/nodes`
+- PHP: `MigrationService::is_migration_needed()` returns `true`
+- Migration sets flag `rest_api_firewall_pro_migrated` to prevent re-firing
+- Imported application: `enabled = false` by default (user activates manually)
+  - Exception: dialog checkbox "Activate immediately" → `enabled = true`
+- HTTP methods: all allowed (not set in free tier; pro default is all methods enabled)
+- Whitelisted IPs/domains: empty (free tier only has IP blacklisting)
+- JWT auth + WordPress auth migrated; no per-route overrides set initially
+
+---
+
+## B — Save Routine Patterns
+
+### RULES (never violate)
+- **Never gate the Navigation AppBar save button with `hasValidLicense`** — that was a bug that made all free-tier saves invisible. The condition must be `showSaveButton` only.
+- Free-tier panels that use `App.jsx` form state (`useSettingsForm`) MUST NOT render their own inline save button — the AppBar button is their save UI.
+- Self-contained panels that manage their own form state (e.g. `GlobalSecurity`) expose their save handler via `setDirtyFlag({ save, saving })` — the AppBar button appears when dirty. They do NOT render an inline `<Toolbar>` save button.
+
+### Free Tier — App.jsx form state + Navigation AppBar button
+
+How it works:
+1. `useSettingsForm` in `App.jsx` owns all settings form state via `form` / `setField`
+2. `PANEL_SAVE_GROUP` maps each panel key to a save group name
+3. `isGroupDirty(group)` drives the AppBar Save button's disabled state (`formDirty`)
+4. On click → `handleSave()` → `useSaveOptions.save()` → confirm dialog (from `SAVE_CONFIG[group].confirmMessage`) → AJAX `rest_api_firewall_update_options`
+5. Pro panels are removed from `PANEL_SAVE_GROUP` when `hasValidLicense` is true (they use their own save)
+
+| Panel key | Component | Save group | Notes |
+|---|---|---|---|
+| `webhook` | `Webhook.jsx` | `webhook` | Confirm dialog: "Save webhook settings?" |
+| `theme` | `ThemeSettings.jsx` | `theme` | Confirm dialog: "Save theme settings?" |
+| `per-route-settings` | `RoutesPanel.jsx` | `firewall_routes_policy` | Free tier only |
+| `models-properties` | `Properties.jsx` | `models_properties` | Free tier only |
+| `firewall_auth_rate` | `RestApiSingleUser.jsx` | `firewall_auth_rate` | Both tiers |
+
+**Exception — self-contained panels (NOT in PANEL_SAVE_GROUP):**
+
+| Component | Panel key | Save mechanism |
+|---|---|---|
+| `GlobalSecurity.jsx` | `global_security` | Owns form state + `useSaveOptions`; exposes `save`/`saving` via `setDirtyFlag({ save, saving })` → AppBar button appears when dirty; unmount effect clears flag |
+| `LoginHardening.jsx` | `login-hardening` | Free+pro; same `setDirtyFlag` AppBar pattern; login rate limit fields; unmount effect clears flag |
+| `WordPressMode.jsx` | `wordpress-mode` | Pro only; same `setDirtyFlag` AppBar pattern; Applications Only + Trusted IPs + Emergency Token; unmount effect clears flag |
+| `Collections.jsx` | `collections` | Owns `useSaveOptions` instance + inline Save button; scoped per collection type; `skipConfirm: true` |
+| `PublicRateLimitSection.jsx` | child of `global-ip-filtering` | Owns `useSaveOptions` instance + inline Save button; always rendered inside IpFilter panel |
+
+### Pro Tier — EntryToolbar + useRegisterToolbar + useProActions
+
+How it works:
+1. Entry editor components (e.g. `WebhookEditor`, `MailEditor`, `AutomationEditor`) call `useRegisterToolbar()` to push config into `EntryToolbarContext`
+2. `EntryToolbar.jsx` replaces the Navigation AppBar while an editor is open
+3. Save button enabled state is controlled by `canSave` prop passed to `updateToolbar()`
+4. On save: `useProActions.save()` → optional confirm dialog → AJAX → `onSuccess` callback
+5. Dirty state is tracked locally in the editor via `useMemo` snapshot comparison
+6. Delete: `useProActions.remove()` → confirm dialog → navigate back
+
+| Component | Toolbar registered via | Save hook |
+|---|---|---|
+| `WebhookEditor.jsx` | `useRegisterToolbar` | `useProActions.save` |
+| `MailEditor.jsx` | `useRegisterToolbar` | `useProActions.save` |
+| `AutomationEditor.jsx` | `useRegisterToolbar` | `useProActions.save` |
+
+---
+
+## C — Free-Tier Webhook Events
+
+Source: `inc/Webhook/WebhookAutoTrigger.php` → `get_available_events()`  
+Frontend filter: `WordpressEvents.jsx` filters by `context` array matching `'free'` or `'pro'`
+
+**Free-tier events (context includes `'free'`):**
+
+| Event key | Label | Group |
+|---|---|---|
+| `save_post` | Post saved | posts |
+| `before_delete_post` | Post deleted | posts |
+| `trashed_post` | Post trashed | posts |
+| `untrashed_post` | Post restored | posts |
+| `add_attachment` | Attachment added | attachments |
+| `edit_attachment` | Attachment edited | attachments |
+| `delete_attachment` | Attachment deleted | attachments |
+| `created_term` | Term created | terms |
+| `edited_term` | Term edited | terms |
+| `delete_term` | Term deleted | terms |
+| `wp_login` | User logged in | users |
+
+**Pro-only events:** `user_register`, `profile_update`, `delete_user`, `inbound_webhook` (virtual)
+
+To add a new event: add it to the PHP array with `context: ['free', 'pro']` or `['pro']`. The frontend picks it up automatically.
+
+---
+
+## D — Pending Work Items
+
+### D1 — GlobalSecurity: spurious confirm dialog on navigation
+✅ **Likely resolved** — GlobalSecurity was refactored to use its own self-contained local form state, initialized from `adminData.admin_options` at mount and compared against a `savedForm` snapshot. Verify in browser that navigating away from the Security panel without making changes does NOT trigger the confirm dialog.
+
+### D2 — Drawer navigation: application-scoped items live in ApplicationSelector
+
+**Architecture (implemented):**
+- All per-application module items (Routes, Users, Collections, Properties, Automations, Webhooks, Emails) are rendered INSIDE `ApplicationSelector.jsx` as nested items
+- In **free tier**: collapsed by default; all modules shown disabled under "No application" + tooltip "Upgrade to Pro"
+- In **pro tier (no app)**: expanded by default; modules under "No application" disabled + tooltip "Create an application first"; "All Applications" + "New Application" links shown above
+- In **pro tier (app selected)**: modules enabled under the active app button
+
+**Breadcrumbs in `Navigation.jsx`:**
+- Because duplicate panel keys exist (metadata-only hidden items for pro + visible free-tier items), the breadcrumb lookup uses:
+  ```js
+  menuItems.filter(m => !m.hidden).find(m => m.key === panel)
+    || menuItems.find(m => m.key === panel)
+  ```
+- Free-tier accessible items have `breadcrumbPrefix: 'Global Settings'`
+- Pro metadata items (hidden) have `breadcrumbPrefix: 'REST API Firewall'` (for per-app context)
+
+**Free-tier accessible panels (visible after Auth & Rate Limiting):**
+- `per-route-settings` → RoutesPanel (free tier: GlobalRoutesPolicy only, no per-route tree tab)
+  - Enabled: enforce_auth, enforce_rate_limit, hide_user_routes
+  - Disabled (visible): oembed routes, batch routes, HTTP methods, object types
+- `webhook` → Webhook.jsx (single outbound webhook, saved as wp_options)
+  - Fields: endpoint, auto-trigger events, service format, auth secret
+- `collections` → FreeTierCollections.jsx (global per-page + drag-drop sorting)
+  - Free: per-page settings enabled; sorting options disabled (pro required)
+
+---
+
+## E — Previously Fixed Issues (reference)
+
+| Item | Status | File(s) |
+|---|---|---|
+| ApplicationSelector `</Collapse>` in wrong position | ✅ Fixed | ApplicationSelector.jsx |
+| MigrationDialog: removed `noApplications` dead scenario | ✅ Fixed | MigrationDialog.jsx |
+| MigrationService: `is_migration_needed()` checks `firewall_policy` | ✅ Fixed | MigrationService.php |
+| Bootstrap.php: `shouldPromptFallback` exposed to JS | ✅ Fixed | Bootstrap.php |
+| ProToFreeFallbackService: exports first webhook to free tier | ✅ Fixed | ProToFreeFallbackService.php |
+| ProToFreeDialog.jsx: new component created | ✅ Fixed | ProToFreeDialog.jsx |
+| App.jsx: ProToFreeDialog wired with proFallbackOpen state | ✅ Fixed | App.jsx |
+| Navigation: save button gated by `hasValidLicense` (free tier could never save) | ✅ Fixed | Navigation.jsx |
+| useSaveOptions: hardcoded free nonce — would fail against pro AJAX handlers | ✅ Fixed | useSaveOptions.js |
+| Plugin routes: global `enforce_auth` incorrectly applied in UI (PHP already excluded them) | ✅ Fixed | RoutesPolicyNodeContent.jsx |
+| Pro-only Models options (Relative URLs etc.) showing as checked in free tier | ✅ Fixed | GlobalProperties.jsx |
+| Redirect settings UI in Theme panel — moved to Security panel | ✅ Fixed | ThemeSettings.jsx / GlobalSecurity.jsx |
+
+---
+
+## F — Critical Cross-Cutting Rules
+
+### Nonce — always use approved hooks
+Two nonces exist: free (`rest_api_firewall_update_options_nonce`) and pro (`rest_api_firewall_update_pro_options_nonce`).
+- Free `Permissions::ajax_validate_has_firewall_admin_caps()` accepts **both**
+- Pro `Permissions::validate_ajax_crud_rest_api_firewall_pro_options()` accepts **pro nonce only** (`check_ajax_referer` → wp_die on mismatch)
+- All three JS hooks resolve nonce as `proNonce || adminData.nonce` — never bypass them with a raw `fetch`
+- See ARCHITECTURE.md §5 for the full table.
+
+### Plugin routes — bypass rule
+Routes whose first path segment is NOT in `['wp', 'oembed', 'batch', 'wp-site-health', 'wp-abilities', 'wp-block-editor']` are plugin routes.
+- `isPluginRoute(node)` helper in `routesPolicyUtils.js`
+- PHP: `PolicyRuntime::is_wordpress_core_route()` (inverse)
+- **Free tier UI**: `authIsGlobal` must be false for plugin routes — global `enforce_auth` does not apply to them
+- **Pro tier**: plugin routes bypass per-application enforcement in `FirewallPro::check()` — they fall through with global defaults
+- Route Settings Drawer stores plugin route settings globally in `rest_firewall_plugin_routes_policy`, not per-application
+- See ARCHITECTURE.md §8 for the full decision record.
+
+### WordPress Mode (pro only) — Applications Only + Trusted IPs + Emergency Token
+- Panel key: `wordpress-mode` (pro only); component: `WordPressMode.jsx`
+- `applications_only_mode`: boolean, `wordpress_mode` group, **pro only** (previously `global_security / free+pro` — changed)
+  - Pro: template redirect + xmlrpc block + unmatched core REST → HTTP redirect (not 404)
+  - Plugin routes always fall through — never redirected
+- `absolute_whitelist`: CIDR-aware IP array, `wordpress_mode` group, pro only
+  - Checked at `init` priority 1 before ALL enforcement — bypasses blacklist, rate limit, login rate limit
+  - `manage_options` admin session bypass: logged-in admins always pass regardless of whitelist
+  - `wp-login.php` excluded from enforcement (self-lockout prevention)
+  - UI proposes auto-adding admin's current IP on first activation (via server-side `get_current_client_ip` AJAX)
+- `emergency_token_hash`: SHA-256 of token, `wordpress_mode` group, pro only
+  - Generated via explicit "Generate Emergency Token" button (not automatic)
+  - Reset URL `/?rest_firewall_emergency_reset=<token>` → disables mode + clears whitelist + rotates token
+  - Single-use; wp-cli fallback shown in UI
+- Redirect destination shared: `theme_redirect_templates_preset_url` / `theme_redirect_templates_free_url`
+- See ARCHITECTURE.md §9.
+
+### Auth Hardening (free+pro)
+- Panel key: `login-hardening`; component: `LoginHardening.jsx`; navigation drawer link under Security
+- PHP: `LoginRateLimiter` hooks on `wp_login_failed` + `authenticate` filter priority 30
+- Options group `login_hardening` (free+pro): `login_rate_limit_enabled`, `login_rate_limit_attempts`, `login_rate_limit_window`, `login_rate_limit_blacklist_time`
+- Transient key: `rest_firewall_login_<sha256_first8(ip)>`; TTL = window_seconds
+- Exempt: IPs in `absolute_whitelist` only — **all other IPs, including administrators, are subject to login rate limiting.** The `manage_options` bypass applies to Applications Only mode only, not to login attempts.
+- See ARCHITECTURE.md §12.
+
+### Shared IP Entry Table — always use `IpEntryRepository`
+
+The table `{prefix}_rest_api_firewall_ip_entries` is the **only custom DB table shared between free and pro tiers**. It is the single authoritative store for all IP blacklist/whitelist entries — do not use `wp_options` or transients for persistent IP blocks.
+
+- Three `list_type` values: `whitelist` (per-app allow), `blacklist` (per-app block), **`global_blacklist` (global — enforced across all traffic, free + pro)**
+- Two `entry_type` values: `manual` (admin-added via UI), `rate_limit` (auto-promoted by enforcement)
+- `expires_at IS NULL` = permanent; non-NULL = auto-expires — `IpEntryRepository::delete_expired()` handles cleanup
+- **Never bypass `IpEntryRepository`** with raw `wpdb` calls — use `::insert()`, `::delete()`, `::ip_in_list()`, `::get_entries()`, etc.
+- Writing `list_type = 'global_blacklist'` from any enforcement path (login escalation, REST rate limit) applies globally. Always pair with `entry_type = 'rate_limit'` and a finite `expires_at`.
+- Admin manual release: IP Filter panel → delete entry → `delete_ip_entry` AJAX → `IpEntryRepository::delete()`
+- Login transient blocks (not in DB): released via `rest_api_firewall_release_login_block` AJAX or inbound webhook `release_login_block` action
+- See ARCHITECTURE.md §13.
+
+### Models / Properties — tier gating
+- `rest_models_relative_url_enabled` and `rest_models_relative_attachment_url_enabled` are **pro-only** (context `['pro']`)
+- All pro-only fields in `GlobalProperties` are always displayed as `false` (unchecked) in free tier via `checkedValue` in the `Item` component — stored values from a prior pro activation are ignored in the UI
+
+---
+
+## File Map
+
+| Concern | File |
+|---|---|
+| Drawer + main menu | `src/components/Navigation.jsx` |
+| App/module selector | `src/components/ApplicationSelector.jsx` |
+| Free→Pro migration dialog | `src/components/Migration/MigrationDialog.jsx` |
+| Pro→Free downgrade dialog | `src/components/Migration/ProToFreeDialog.jsx` |
+| PHP migration service | `inc/Migration/MigrationService.php` |
+| PHP pro→free fallback | `inc/Migration/ProToFreeFallbackService.php` |
+| PHP bootstrap / JS object | `inc/Core/Bootstrap.php` |
+| Free plugin permissions + nonce validation | `inc/Core/Permissions.php` |
+| Pro plugin permissions + nonce validation | `/rest-api-firewall-pro/inc/Core/Permissions.php` |
+| App-level form state + save wiring | `src/App.jsx` |
+| Settings form hook | `src/hooks/useSettingsForm.js` |
+| Free-tier save hook (nonce-aware) | `src/hooks/useSaveOptions.js` |
+| Pro-tier save/delete hook | `src/hooks/useProActions.js` |
+| Generic AJAX hook | `src/hooks/useAjax.js` |
+| Entry toolbar context | `src/contexts/EntryToolbarContext.jsx` |
+| License context (`hasValidLicense`, `proNonce`) | `src/contexts/LicenseContext.jsx` |
+| Admin data context | `src/contexts/AdminDataContext.jsx` |
+| Application context | `src/contexts/ApplicationContext.jsx` |
+| Routes panel | `src/components/Firewall/Routes/RoutesPanel.jsx` |
+| Global routes options (both tiers) | `src/components/Firewall/Routes/GlobalRoutesPolicy.jsx` |
+| Route tree node UI + auth/disable switches | `src/components/Firewall/Routes/RoutesPolicyNodeContent.jsx` |
+| Route Settings Drawer (users + IPs + origins) | `src/components/Firewall/Routes/RouteSettingsDrawer.jsx` |
+| `isPluginRoute()` + tree utils | `src/components/Firewall/Routes/routesPolicyUtils.js` |
+| Free-tier webhook panel | `src/components/Webhooks/Webhook.jsx` |
+| Pro webhook editor | `src/components/Webhooks/WebhookEditor.jsx` |
+| Webhook auto-trigger events (PHP) | `inc/Webhook/WebhookAutoTrigger.php` |
+| Free-tier collections panel | `src/components/Models/FreeTierCollections.jsx` |
+| Pro collections panel | `src/components/Models/Collections.jsx` |
+| Global model output settings (toggles) | `src/components/Models/GlobalProperties.jsx` |
+| Properties panel (tabbed: Global / Per Model) | `src/components/Models/PropertiesPanel.jsx` |
+| Global security panel (redirect + xmlrpc + data exposure + HTTP headers) | `src/components/GlobalSecurity/GlobalSecurity.jsx` |
+| Auth hardening panel (auth rate limit — free+pro) | `src/components/LoginHardening/LoginHardening.jsx` |
+| WordPress Mode panel (Applications Only + Trusted IPs + Emergency Token — pro only) | `src/components/WordPressMode/WordPressMode.jsx` |
+| Theme panel (deploy theme, ACF, content, images) | `src/components/Theme/ThemeSettings.jsx` |
+| All option definitions, groups, defaults | `inc/Core/CoreOptions.php` |
+| Route policy resolution + `is_wordpress_core_route()` | `inc/Policy/PolicyRuntime.php` |
+| Pro application enforcement + plugin route bypass | `/rest-api-firewall-pro/inc/Firewall/FirewallPro.php` |
+| Login attempt rate limiting + transient blacklist | `inc/Security/LoginRateLimiter.php` |
+| Shared IP entry DB schema + version tracking | `inc/Firewall/IpFilter/IpSchema.php` |
+| IP entry CRUD (insert / delete / list / release / expire) | `inc/Firewall/IpFilter/IpEntryRepository.php` |
+
+---
+
+## G — User-Facing Feature Reference
+
+> Describes each security panel from the admin's perspective — what settings do, how features behave, and what each tier includes. Companion to sections A–F above (which document internal architecture and patterns).
+
+### Auth Hardening
+
+**Where:** Security → Auth Hardening  
+**Tier:** Free + Pro  
+**Scope:** Global (all applications, not per-application)
+
+#### Auth Rate Limiting
+Protects all authentication endpoints from brute-force attacks:
+- Admin and customer login (`wp-login.php`, `/wp-admin/`)
+- REST API auth via WP Application Passwords
+- REST API Basic Auth
+- JWT authentication
+
+**Settings:**
+- Max Failures: failed attempts before the IP is temporarily blocked
+- Window (seconds): rolling time window for counting failures
+- Block Duration (seconds): how long the temporary block lasts
+
+**Behavior:** When an IP exceeds the failure threshold within the window, it is temporarily blocked from any further authentication attempt. The block applies globally — it is not limited to one login form.
+
+#### Global Blacklist Escalation
+When an IP has been temporarily blocked N times (block cycles), it is promoted to the **permanent Global Blacklist** in IP Filtering. Permanent blocks are visible and releasable from the IP Filter panel.
+
+Set to 0 to disable escalation (temporary blocks only, never permanent).
+
+#### Admin Login Whitelist
+Restricts `/wp-login.php` and `/wp-admin/` access to a specific list of IPs or CIDR ranges. Any IP not in the list is refused before credentials are even checked.
+
+This does NOT affect REST API authentication — REST auth is protected by the rate limiter above.  
+Leave the list empty to allow admin login from any IP.
+
+#### Active Auth Blocks
+Shows IPs currently in a temporary auth block, with remaining duration. Blocks expire automatically. Admins can release a block manually (useful if a legitimate user triggered the limit).
+
+**Note:** Temporary blocks are distinct from the permanent Global Blacklist. After N cycles, the IP graduates from here to the permanent blacklist.
+
+#### Exemptions
+IPs in the Trusted IPs list (pro, WordPress Mode) are always exempt from rate limiting and blacklisting.
+
+---
+
+### IP Filtering
+
+**Where:** Security → IP Filtering  
+**Tier:** Free (global blacklist) + Pro (per-application Trusted IPs, advanced rules)
+
+#### Global Blacklist
+IPs permanently blocked from all requests. Sources:
+- Manual admin entry
+- Auth Hardening escalation (after N failed auth cycles)
+- Pro automation rules
+
+#### Public Rate Limiting
+Limits request frequency from anonymous/public IPs regardless of authentication. Protects against traffic flooding and scraping. Separate from auth-attempt counting.
+
+#### Trusted IPs (Pro)
+IPs that are always allowed through all enforcement, including rate limiting, auth restrictions, and route policies. Typically used for your own office/VPN IPs.
+
+---
+
+### Route Policy
+
+**Where:** Firewall → Per Route Settings  
+**Tier:** Free (global auth enforcement) + Pro (per-application, per-route overrides)
+
+#### Core vs Plugin Routes
+WordPress core routes (`/wp/v2/*`, `/oembed/*`, etc.) follow global auth enforcement settings.  
+Plugin routes (e.g. `/wc/v3/*`, `/contact-form-7/*`) are **not** subject to global auth enforcement in free tier — they must be configured explicitly per-route in pro tier.
+
+#### Route Tree
+Each route can be individually configured:
+- Auth enforcement on/off
+- Allowed HTTP methods
+- Per-user access grants (pro)
+
+---
+
+### Users & Authentication Methods
+
+**Where:** Security → Users (free) / Application → Users tab (pro)  
+**Tier:** Free (one global API user) + Pro (per-application users with per-route grants)
+
+#### Public vs authenticated applications
+An application with **no users configured is fully public** — this is a valid setup. The plugin does not enforce authentication if no user is set:
+- Free tier: admin uses only IP filtering, route visibility, rate limiting, etc.
+- Pro tier: admin creates a dedicated public application for specific routes.
+
+No user configured + `enforce_auth = true` → auth enforcement is **silently skipped** to prevent accidental lockout. The admin sees a warning in the UI.
+
+#### Authentication Method
+Determines how clients prove identity to the REST API:
+- **WordPress Application Password**: standard WP auth (requires WP 5.6+, HTTPS recommended)
+- **JWT**: Bearer token auth with configurable algorithm (RS256, HS256), public key, audience, and issuer
+
+**Free tier:** The Authentication Method selector is disabled until a REST API user is selected. No user = no auth = no method to configure.
+
+**Pro tier:** Auth methods are configured per-application in the Application Editor. If the application has no users assigned, an info notice is shown: _"Authentication methods have no effect until at least one user is assigned."_ The checkboxes remain editable so the admin can pre-configure before adding users.
+
+#### Interdependency rule (backend)
+| Condition | Result |
+|-----------|--------|
+| `enforce_auth = true` + users configured | Auth enforced — unconfigured users get 401 |
+| `enforce_auth = true` + NO users configured | Auth silently skipped — application treated as public |
+| `enforce_auth = false` | No auth check regardless of users |
+
+---
+
+### Collections
+
+**Where:** Data → Collections  
+**Tier:** Free + Pro  
+**Scope:** Pro = per-application; Free = global
+
+Manages per-page limits and ordering for WP object type REST endpoints.  
+Supported types: all post types with `show_in_rest = true` (including non-public private types like menu-items, blocks, font-families, global-styles).
+
+**Author/Users collection:**
+- Free tier: disabled (grayed out) — user endpoint management is a pro feature.
+- Pro tier + `hide_user_routes` ON: disabled.
+- Pro tier + `hide_user_routes` OFF: fully manageable.
+
+**Disabled types badge:** Types disabled in Route Policy global settings show a grey "Disabled in routes" badge in the type navigation. The collection can still be configured; route enforcement is separate.
+
+---
+
+### Models / Properties
+
+**Where:** Data → Properties / Models (pro)  
+**Tier:** Free (Properties) + Pro (Models)
+
+Defines the schema of REST API responses — which fields are exposed, their types, and nested structure (up to depth 3).
+
+In pro tier, multiple models can exist per object type per application, but only one is active at a time per type per application.
+
+---
+
+### WordPress Mode (Pro)
+
+**Where:** Security → WordPress Mode  
+**Tier:** Pro only
+
+Includes:
+- Applications Only: enforces that all REST requests must come from a registered application.
+- Trusted IPs: always-allowed IPs that bypass all enforcement.
+- Emergency Token: a temporary bypass token for lockout recovery.
+
+---
+
+### Auth Hardening (Naming)
+
+The feature was previously called "Login Hardening". It is now called **Auth Hardening** to reflect that it protects all authentication pathways — not just the login form. The underlying logic and settings keys are unchanged; only the UI labels and descriptions are updated.

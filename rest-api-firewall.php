@@ -7,7 +7,7 @@
  * @author  Cédric Moris Kelly
  *
  * @wordpress-plugin
- * Plugin Name:       Application Layer
+ * Plugin Name:       WP Application Layer
  * Version:           0.1.0-alpha.8
  * Description:       Secure REST API endpoints through authentication, rate limiting and much more. Set application Webhook with authentication to trigger external front-end application routines.
  * Tags:              firewall, rest, api, application, webhook
@@ -113,4 +113,14 @@ add_filter(
 	}
 );
 
-add_action( 'plugins_loaded', array( Core\Bootstrap::class, 'init' ), 10 );
+add_action(
+	'plugins_loaded',
+	function (): void {
+		Core\Bootstrap::init();
+
+		if ( is_admin() ) {
+			Admin\AdminBootstrap::init();
+		}
+	},
+	10
+);

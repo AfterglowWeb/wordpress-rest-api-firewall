@@ -195,8 +195,9 @@ class ModelsPropertiesRepository {
 			if ( is_wp_error( $response ) || 200 !== $response->get_status() ) {
 				continue;
 			}
-			$raw  = rest_get_server()->response_to_data( $response, true );
-			$data = json_decode( wp_json_encode( $raw ), true ) ?: array();
+			$raw     = rest_get_server()->response_to_data( $response, true );
+			$decoded = json_decode( wp_json_encode( $raw ), true );
+			$data    = null !== $decoded ? $decoded : array();
 			if ( ! is_array( $data ) ) {
 				continue;
 			}
@@ -246,7 +247,7 @@ class ModelsPropertiesRepository {
 				return self::get_attachment_sample_data( $rest_base );
 			}
 
-			$posts     = get_posts(
+			$posts = get_posts(
 				array(
 					'post_type'      => $object_type,
 					'posts_per_page' => 1,
@@ -272,8 +273,9 @@ class ModelsPropertiesRepository {
 			return array();
 		}
 
-		$raw = rest_get_server()->response_to_data( $response, true );
-		return json_decode( wp_json_encode( $raw ), true ) ?: array();
+		$raw     = rest_get_server()->response_to_data( $response, true );
+		$decoded = json_decode( wp_json_encode( $raw ), true );
+		return null !== $decoded ? $decoded : array();
 	}
 
 	private static function settings_route_properties(): array {
@@ -661,8 +663,8 @@ class ModelsPropertiesRepository {
 		return array(
 			array(
 				'key'        => 'embed',
-				'tooltip'    => 'Resolve Object',
-				'label'      => 'Resolve',
+				'tooltip'    => esc_html__( 'Resolve Object', 'rest-api-firewall' ),
+				'label'      => esc_html__( 'Resolve Object', 'rest-api-firewall' ),
 				'properties' => array_merge(
 					array(
 						'featured_media',
@@ -673,14 +675,14 @@ class ModelsPropertiesRepository {
 			),
 			array(
 				'key'        => 'rendered',
-				'tooltip'    => 'Flatten Rendered',
-				'label'      => 'Flatten',
+				'tooltip'    => esc_html__( 'Flatten Rendered', 'rest-api-firewall' ),
+				'label'      => esc_html__( 'Flatten Rendered', 'rest-api-firewall' ),
 				'properties' => array(),
 			),
 			array(
 				'key'        => 'date_format',
-				'tooltip'    => 'Date Format',
-				'label'      => 'Format',
+				'tooltip'    => esc_html__( 'Date Format', 'rest-api-firewall' ),
+				'label'      => esc_html__( 'DateFormat', 'rest-api-firewall' ),
 				'properties' => array(
 					'date',
 					'date_gmt',
@@ -690,10 +692,32 @@ class ModelsPropertiesRepository {
 				),
 			),
 			array(
+				'key'        => 'relative_url',
+				'tooltip'    => esc_html__( 'Relative URL', 'rest-api-firewall' ),
+				'label'      => esc_html__( 'Relative URL', 'rest-api-firewall' ),
+				'properties' => array(
+					'file',
+					'link',
+					'source_url',
+					'guid',
+				),
+			),
+			array(
+				'key'        => 'remove_uploads_path',
+				'tooltip'    => esc_html__( 'Remove Uploads Path', 'rest-api-firewall' ),
+				'label'      => esc_html__( 'Remove Uploads Path', 'rest-api-firewall' ),
+				'properties' => array(
+					'file',
+					'source_url',
+					'guid',
+					'link',
+				),
+			),
+			array(
 				'key'        => 'search_replace',
 				'type'       => 'search_replace',
-				'tooltip'    => 'Search & Replace',
-				'label'      => 'S&R',
+				'tooltip'    => esc_html__( 'Search & Replace', 'rest-api-firewall' ),
+				'label'      => esc_html__( 'Search & Replace', 'rest-api-firewall' ),
 				'properties' => array(
 					'title',
 					'content',
@@ -703,6 +727,7 @@ class ModelsPropertiesRepository {
 					'source_url',
 					'description',
 					'name',
+					'slug',
 				),
 			),
 		);
@@ -809,9 +834,18 @@ class ModelsPropertiesRepository {
 	}
 
 	private static function build_media_details_fallback_props(): array {
-		$empty_settings = array( 'disable' => false, 'filters' => array() );
-		$string_prop    = array( 'type' => 'string',  'settings' => $empty_settings );
-		$integer_prop   = array( 'type' => 'integer', 'settings' => $empty_settings );
+		$empty_settings = array(
+			'disable' => false,
+			'filters' => array(),
+		);
+		$string_prop    = array(
+			'type'     => 'string',
+			'settings' => $empty_settings,
+		);
+		$integer_prop   = array(
+			'type'     => 'integer',
+			'settings' => $empty_settings,
+		);
 
 		$size_properties = array(
 			'file'       => $string_prop,
@@ -842,7 +876,10 @@ class ModelsPropertiesRepository {
 				'settings'   => $empty_settings,
 				'properties' => $sizes_props,
 			),
-			'image_meta' => array( 'type' => 'object', 'settings' => $empty_settings ),
+			'image_meta' => array(
+				'type'     => 'object',
+				'settings' => $empty_settings,
+			),
 		);
 	}
 }

@@ -2,11 +2,11 @@
 
 # Routes & Exposure Control
 
-The Routes panel gives you visibility and control over every REST API endpoint WordPress exposes. The free tier enforces auth on WordPress core routes and applies rate limiting globally across all routes. Pro adds a per-route policy tree covering all routes — including third-party plugin routes — so you can target endpoints precisely: allow a plugin's licence-check route, block its data-collection endpoint, or restrict a write route to a specific user.
+The Routes panel gives you visibility and control over every REST API endpoint WordPress exposes. Free tier gives strong global controls. Pro adds route-level access settings with user, IP, and origin constraints.
 
 ---
 
-## Global Options
+## Set Global Defaults
 
 Global settings apply to every route and can be overridden per-route in Pro.
 
@@ -16,7 +16,7 @@ Global settings apply to every route and can be overridden per-route in Pro.
 </figure>
 
 <details>
-<summary>Auth. &amp; Rate Limiting</summary>
+<summary>Auth &amp; Rate Limiting Defaults</summary>
 
 <p><strong>Enforce Authentication on All Routes</strong> — requires a valid authenticated request on WordPress core REST endpoints. Unauthenticated requests are rejected with <code>401</code> before reaching WordPress. Third-party plugin routes are left open in the free tier, as exempting individual plugin sub-routes to avoid breakage requires the per-route control available in Pro.</p>
 <p><strong>Enforce Rate Limiting on All Routes</strong> — applies the global rate-limiting quota (configured in the Auth &amp; Rate Limiting panel) to every route, including third-party plugin routes.</p>
@@ -68,7 +68,7 @@ Global settings apply to every route and can be overridden per-route in Pro.
 
 ---
 
-## Per Route Settings <span style="display:inline-block;padding:1px 6px;border-radius:3px;background:#1565c0;color:#fff;font-size:10px;font-weight:600">PRO</span>
+## Fine-Tune Per-Route Settings <span style="display:inline-block;padding:1px 6px;border-radius:3px;background:#1565c0;color:#fff;font-size:10px;font-weight:600">PRO</span>
 
 The per-route tree lists every registered REST route and lets you apply settings at any level — a top-level namespace, a route path, or an individual HTTP method. Child nodes inherit from their parent unless explicitly overridden.
 
@@ -87,7 +87,7 @@ The per-route tree lists every registered REST route and lets you apply settings
 </details>
 
 <details>
-<summary>Per-Route Overrides</summary>
+<summary>Apply Per-Route Overrides</summary>
 
 <p>Click the settings icon on any node to activate a custom override for that route. Once activated, three toggles appear:</p>
 <ul>
@@ -100,10 +100,28 @@ The per-route tree lists every registered REST route and lets you apply settings
 </details>
 
 <details>
-<summary>User Restriction</summary>
+<summary>Use the Access Settings Drawer</summary>
 
-<p>On any HTTP method node, <strong>Set users</strong> restricts access to a specific list of registered plugin users. When users are set, only requests authenticated as one of those users are allowed through on that method.</p>
-<p>This is useful for write-only endpoints that should be accessible to a single service account (e.g. only a designated user may <code>POST</code> to <code>/wp/v2/posts</code>).</p>
+<p>Per-route access is managed in a drawer opened from the route/method node. It replaces the old per-node user popover pattern.</p>
+<p>The drawer groups access controls into three areas:</p>
+<ul>
+  <li><strong>Authenticated Users</strong> — restrict a route or method to selected app users.</li>
+  <li><strong>Allowed IPs</strong> — route-level IP narrowing.</li>
+  <li><strong>Allowed Origins</strong> — route-level origin narrowing.</li>
+</ul>
+<p>Use this for high-risk write routes (for example, allow <code>POST</code> only to one service user from one known origin).</p>
+
+</details>
+
+<details>
+<summary>Core Routes vs Plugin Routes</summary>
+
+<p>The route tree includes both WordPress core namespaces and plugin namespaces.</p>
+<ul>
+  <li><strong>Core routes</strong> follow full per-application enforcement behavior.</li>
+  <li><strong>Plugin routes</strong> can be managed globally through route policy to avoid duplicate configuration across applications.</li>
+</ul>
+<p>When editing plugin routes in the drawer, the UI warns that settings apply across applications.</p>
 
 </details>
 
@@ -128,11 +146,11 @@ No. The plugin only applies to unauthenticated or non-admin REST requests. Authe
 
 **Will disabling a route break other plugins that use the REST API?**
 
-Disabling individual routes is a Pro feature. In the free tier, only `/wp/v2/users/*` can be disabled globally — all other routes remain accessible. In Pro, route disabling is configured per-application and targets specific paths, so you can safely disable a route for one application without affecting others. Many third-party plugins expose REST routes for licence validation, update checks, or data collection; the Pro route tree lets you audit and control each of those routes individually.
+Disabling individual routes is a Pro feature. In the free tier, only `/wp/v2/users/*` can be disabled globally — all other routes remain accessible. In Pro, route disabling is configured per-application and targets specific paths, so you can safely disable a route for one application without affecting others. Many third-party plugins expose REST routes for license validation, update checks, or data collection; the Pro route tree lets you audit and control each of those routes individually.
 
 **What happens to requests that do not match any application in Pro?**
 
-Once applications are enabled, any request that does not match a registered application is blocked.
+Core routes are blocked (or redirected if applications only mode is enabled). Plugin routes can still be evaluated by route policy.
 
 **Can I restrict a route to authenticated requests only without affecting the response schema?**
 

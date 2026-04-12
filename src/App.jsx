@@ -23,18 +23,19 @@ import Navigation, {
 	WP_ADMIN_BAR_HEIGHT_MOBILE,
 } from './components/Navigation';
 
-import ConfigurationPanel from './components/ConfigurationDialog';
+import ConfigurationPanel from './components/Configuration/ConfigurationDialog';
 
 import RoutesPanel from './components/Firewall/Routes/RoutesPanel';
-import IpFilter from './components/Firewall/IpFilter/IpFilter';
+import IpFilter from './components/IpFilter/IpFilter';
 import RestApiSingleUser from './components/Firewall/Users/RestApiSingleUser';
 
-import Properties from './components/Models/Properties';
+import PropertiesPanel from './components/Models/PropertiesPanel';
 import Collections from './components/Models/Collections';
 import ModelsPanel from './components/Models/ModelsPanel';
 
 import Webhook from './components/Webhooks/Webhook';
 import Webhooks from './components/Webhooks/Webhooks';
+
 
 import MailsPanel from './components/Mails/MailsPanel';
 
@@ -50,6 +51,14 @@ import License from './components/License/License';
 
 import Users from './components/Firewall/Users/Users';
 import GlobalSecurity from './components/GlobalSecurity/GlobalSecurity';
+import LoginHardening from './components/LoginHardening/LoginHardening';
+import WordPressMode from './components/WordPressMode/WordPressMode';
+
+function WpSettingsRedirect() {
+	const { navigate } = useNavigation();
+	useEffect( () => { navigate( 'models-properties', 'settings_route' ); }, [] ); // eslint-disable-line react-hooks/exhaustive-deps
+	return null;
+}
 
 function AppContent() {
 	const { adminData } = useAdminData();
@@ -64,7 +73,8 @@ function AppContent() {
 	const [ postTypes, setPostTypes ] = useState( [] );
 	const [ themeStatus, setThemeStatus ] = useState( null );
 
-	const migrationNeeded = !! window.restApiFirewallPro?.migrationNeeded;
+	const isMigrated = !! window.restApiFirewallPro?.isMigrated;
+	const migrationNeeded = !! window.restApiFirewallPro?.migrationNeeded && ! isMigrated;
 	const schemaUpdateNeeded = !! window.restApiFirewallPro?.schemaUpdateNeeded;
 
 	const [ migrationOpen, setMigrationOpen ] = useState(
@@ -148,32 +158,20 @@ function AppContent() {
 			),
 			confirmMessage: __( 'Save theme settings?', 'rest-api-firewall' ),
 		},
-		global_security: {
-			successTitle: __( 'Global Security Saved', 'rest-api-firewall' ),
-			successMessage: __(
-				'Global security settings saved successfully.',
-				'rest-api-firewall'
-			),
-			confirmMessage: __(
-				'Save global security settings?',
-				'rest-api-firewall'
-			),
-		},
 	};
 
 	const PANEL_SAVE_GROUP = {
+		'firewall_auth_rate':  'firewall_auth_rate',
 		'user-rate-limiting': 'firewall_auth_rate',
 		'per-route-settings': 'firewall_routes_policy',
-		'collections':        'collections',
 		'models-properties':  'models_properties',
 		'webhook':            'webhook',
 		'theme':              'theme',
-		'global_security':    'global_security',
+		// collections omitted: component owns its own per-type save (like GlobalSecurity)
 	};
 	if ( hasValidLicense ) {
 		delete PANEL_SAVE_GROUP[ 'user-rate-limiting' ];
 		delete PANEL_SAVE_GROUP[ 'per-route-settings' ];
-		delete PANEL_SAVE_GROUP[ 'collections' ];
 		delete PANEL_SAVE_GROUP[ 'models-properties' ];
 		delete PANEL_SAVE_GROUP[ 'webhook' ];
 	}
@@ -181,6 +179,7 @@ function AppContent() {
 	const activeSaveGroup = PANEL_SAVE_GROUP[ panel ] ?? null;
 	const showSaveButton = activeSaveGroup !== null;
 	const activeFormDirty = activeSaveGroup ? isGroupDirty( activeSaveGroup ) : false;
+	const hasContextSave = !! dirtyFlag.save;
 
 	const handleSave = () => {
 		save( pickGroup( activeSaveGroup ), SAVE_CONFIG[ activeSaveGroup ] );
@@ -205,17 +204,17 @@ function AppContent() {
 					migrationDone={ migrationDone }
 					schemaUpdateNeeded={ schemaUpdateNeeded }
 					onOpenMigration={ () => setMigrationOpen( true ) }
-					showSaveButton={ showSaveButton }
-					onSave={ handleSave }
-					saving={ saving }
-					formDirty={ activeFormDirty }
+					showSaveButton={ showSaveButton || hasContextSave }
+					onSave={ hasContextSave ? dirtyFlag.save : handleSave }
+					saving={ hasContextSave ? !! dirtyFlag.saving : saving }
+					formDirty={ hasContextSave ? dirtyFlag.has : activeFormDirty }
 				/>
 
 				<Stack
 				sx={ {
 					flexGrow: 1,
 					minWidth: 0,
-					pl: { xs: 0, md: DRAWER_WIDTH + 'px' },
+					//pl: { xs: 0, md: DRAWER_WIDTH + 'px' },
 					pt: editorOpen ? 0 : APP_BAR_HEIGHT + 'px',
 					minHeight: {
 						xs: editorOpen
@@ -240,7 +239,14 @@ function AppContent() {
 					{ editorOpen && <EntryToolbar { ...toolbarConfig } /> }
 
 					{ hasValidLicense && panel === 'applications' && <Applications /> }
-
+					
+					{ panel === 'firewall_auth_rate' && (
+						<RestApiSingleUser
+							form={ form }
+							setField={ setField }
+						/>
+					) }
+					
 					{ panel === 'user-rate-limiting' && (
 						<>
 							{ hasValidLicense ? (
@@ -258,7 +264,18 @@ function AppContent() {
 						<RoutesPanel
 							form={ form }
 							setField={ setField }
-							onNavigate={ ( v ) => navigate( { 5: 'models-properties' }[ v ] ?? String( v ) ) }
+							onNavigate={ ( v ) => {
+								if ( typeof v === 'object' && v !== null ) {
+									// Pro tier: ModelsPanel uses 'models' as tab-1 sub-key.
+									// Free tier: PropertiesPanel uses the post-type slug directly.
+									const subKey = ( v.panel === 'models-properties' && hasValidLicense )
+										? 'models'
+										: ( v.subKey || null );
+									navigate( v.panel, subKey );
+								} else {
+									navigate( { 5: 'models-properties' }[ v ] ?? String( v ) );
+								}
+							} }
 						/>
 					) }
 
@@ -277,12 +294,10 @@ function AppContent() {
 						( hasValidLicense ? (
 							<ModelsPanel />
 						) : (
-							<Properties
-								form={ form }
-								setField={ setField }
-								postTypes={ postTypes }
-							/>
+							<PropertiesPanel form={ form } setField={ setField } />
 					) ) }
+
+					{ panel === 'wp-settings' && <WpSettingsRedirect /> }
 
 					{ panel === 'webhook' &&
 						( hasValidLicense ? (
@@ -298,8 +313,12 @@ function AppContent() {
 					{ panel === 'automations' && hasValidLicense && <Automations /> }
 
 					{ panel === 'global_security' && (
-						<GlobalSecurity form={ form } setField={ setField } />
+						<GlobalSecurity />
 					) }
+
+					{ panel === 'login-hardening' && <LoginHardening /> }
+
+					{ panel === 'wordpress-mode' && <WordPressMode /> }
 
 					{ panel === 'theme' && (
 						<ThemeSettings
@@ -340,6 +359,14 @@ function AppContent() {
 					setMigrationDone( true );
 					setMigrationOpen( false );
 					window.location.reload();
+				} }
+				onNavigateToGlobalSettings={ () => {
+					setMigrationOpen( false );
+					navigate( 'firewall_auth_rate', null, true );
+				} }
+				onCreateNewApp={ () => {
+					setMigrationOpen( false );
+					navigate( 'applications', 'new', true );
 				} }
 			/>
 		</>

@@ -1,5 +1,4 @@
 import { useTheme } from '@mui/material/styles';
-import { useAdminData } from '../../contexts/AdminDataContext';
 
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -9,11 +8,6 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Slider from '@mui/material/Slider';
 import Divider from '@mui/material/Divider';
-
-import TextField from '@mui/material/TextField';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
 
 import DeployTheme from './DeployTheme';
 
@@ -26,10 +20,7 @@ export default function ThemeSettings( {
 } ) {
 	const { __ } = wp.i18n || {};
 	const theme = useTheme();
-	const { adminData } = useAdminData();
 	const disabled = ! themeStatus?.active;
-	const redirectPresetUrlOptions =
-		adminData?.redirect_preset_url_options || [];
 
 	const valueLabelFormat = ( value ) =>
 		value >= 1024 ? `${ value / 1024 } MB` : `${ value } KB`;
@@ -41,120 +32,6 @@ export default function ThemeSettings( {
 					status={ themeStatus }
 					setStatus={ setThemeStatus }
 				/>
-
-				<Stack spacing={ 3 }>
-					<Typography
-						variant="subtitle1"
-						fontWeight={ 600 }
-						sx={ { mb: 2 } }
-					>
-						{ __( 'Redirect Templates', 'rest-api-firewall' ) }
-					</Typography>
-
-					<FormControl disabled={ disabled }>
-						<FormControlLabel
-							control={
-								<Switch
-									size="small"
-									checked={
-										!! form.theme_redirect_templates_enabled
-									}
-									name="theme_redirect_templates_enabled"
-									onChange={ setField }
-									disabled={ disabled }
-								/>
-							}
-							label={ __(
-								'Enable Redirect Templates',
-								'rest-api-firewall'
-							) }
-						/>
-						
-					</FormControl>
-
-					<FormControl sx={{ maxWidth: 300 }} disabled={ disabled ||
-								! form.theme_redirect_templates_enabled ||
-								form.theme_redirect_templates_free_url_enabled }>
-						<InputLabel id="redirect-templates-preset-url-label">
-							{ __( 'WordPress Pages', 'rest-api-firewall' ) }
-						</InputLabel>
-						<Select
-							labelId="redirect-templates-preset-url-label"
-							id="theme_redirect_templates_preset_url"
-							name="theme_redirect_templates_preset_url"
-							value={ form.theme_redirect_templates_preset_url }
-							label={ __( 'Redirect Page', 'rest-api-firewall' ) }
-							onChange={ setField }
-						>
-							<MenuItem value={ 0 }>
-								<em>
-									{ __(
-										'Select a Page',
-										'rest-api-firewall'
-									) }
-								</em>
-							</MenuItem>
-							{ redirectPresetUrlOptions &&
-								redirectPresetUrlOptions.length > 0 &&
-								redirectPresetUrlOptions.map( ( presetUrl ) =>
-									presetUrl.value && presetUrl.label ? (
-										<MenuItem
-											key={ presetUrl.value }
-											value={ presetUrl.value }
-										>
-											{ presetUrl.label }
-										</MenuItem>
-									) : null
-								) }
-						</Select>
-						<FormHelperText>
-							{ __(
-								'Redirect theme templates to front page, blog page, login page or a custom URL',
-								'rest-api-firewall'
-							) }
-						</FormHelperText>
-					</FormControl>
-
-					<FormControl disabled={ ! form.theme_redirect_templates_enabled }>
-						<FormControlLabel
-							control={
-								<Switch
-									size="small"
-									checked={
-										!! form.theme_redirect_templates_free_url_enabled
-									}
-									name="theme_redirect_templates_free_url_enabled"
-									onChange={ setField }
-								/>
-							}
-							label={ __( 'Custom URL', 'rest-api-firewall' ) }
-						/>
-						<FormHelperText>
-							{ __(
-								'Redirect theme templates to a custom url',
-								'rest-api-firewall'
-							) }
-						</FormHelperText>
-					</FormControl>
-
-					<TextField
-						label={ __( 'Custom URL', 'rest-api-firewall' ) }
-						type="url"
-						size="small"
-						helperText={ __(
-							'Full url with protocol and domain (https://www.example.com)',
-							'rest-api-firewall'
-						) }
-						name="theme_redirect_templates_free_url"
-						value={ form.theme_redirect_templates_free_url }
-						onChange={ setField }
-						disabled={
-							! form.theme_redirect_templates_enabled ||
-							! form.theme_redirect_templates_free_url_enabled
-						}
-						fullWidth
-					/>
-				</Stack>
 
 				<Stack spacing={ 3 }>
 					<Typography
