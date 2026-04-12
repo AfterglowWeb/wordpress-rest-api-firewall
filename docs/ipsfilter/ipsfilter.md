@@ -52,4 +52,8 @@ Yes. Both IPv4 and IPv6 are supported via CIDR notation.
 
 **What happens to blocked IPs when an application is deleted?**
 
-IP entries scoped to a deleted application are removed alongside it. Global entries are unaffected.
+Application-scoped entries are detached from that application and no longer enforced there. Global entries are unaffected.
+
+**Can I keep one strict global policy and still allow variation per app?**
+
+Yes. Keep broad controls in [Global IP Filtering](/global-ip-filtering/global-ip-filtering) and add stricter, app-specific rules here.

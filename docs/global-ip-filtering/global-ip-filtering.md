@@ -27,7 +27,7 @@ Incoming REST request
         … rest of pipeline
 ```
 
-The global check fires on the `rest_authentication_errors` hook at priority 10, before any application-resolution filter runs. Admin-authenticated requests bypass the check entirely.
+Admin-authenticated requests are exempt from this layer for operational safety.
 
 ---
 
@@ -61,6 +61,10 @@ Block all requests originating from one or more countries using GeoIP data. Coun
 ### Retention Time
 
 Set a global retention period. Entries without a specific expiry inherit this value and are automatically removed when it elapses.
+
+### Trusted IPs Interaction
+
+If you use pro [WordPress Mode](/wordpress-mode/wordpress-mode), trusted IPs are treated as an explicit bypass list for high-lockdown scenarios.
 
 ---
 
@@ -99,6 +103,10 @@ Yes. Manual IPv4 blocking is available in the free tier. CIDR ranges, country bl
 **Where do auto-blacklisted IPs from rate limiting go?**
 
 Rate-limit auto-blacklisting writes to the global list.
+
+**Should I use only global or only per-application filtering?**
+
+Use both: global for shared threats, per-application for client-specific restrictions.
 
 **What HTTP status does a blocked request receive?**
 

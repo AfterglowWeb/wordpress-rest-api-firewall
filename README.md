@@ -18,12 +18,13 @@ Designed for **headless WordPress** architectures, **multi-application** setups,
 
 | Feature | Description |
 |---|---|
-| **Authentication** | WordPress Application Password (hardened to a single authorised user) and JWT. OAuth requires Pro |
-| **Rate Limiting** | Global request quotas with configurable time windows |
-| **IP Filtering** | Automatic and manual IP blacklisting. The plugin detects repeated violations and adds offenders automatically. IPv4 only — no CIDR, no country blocking. Read-only GeoIP stats available |
-| **Routes** | Enforce auth and rate limiting globally. Disable the default `/users` routes to prevent user enumeration |
+| **Authentication** | WordPress Application Password (hardened to a single authorised user) and JWT |
+| **Rate Limiting** | Request quotas for authenticated traffic and public traffic with independent settings |
+| **Auth Hardening** | Login protection controls (attempt limits, block window, escalation) |
+| **IP Filtering** | Global blocklist with manual and automatic blocking, plus read-only GeoIP visibility |
+| **Routes** | Enforce auth and rate limiting globally. Disable default user routes to reduce enumeration exposure |
 | **Properties & Models** | Apply sitewide response transforms: resolve attachments, terms & authors, flatten rendered fields, remove domain from URLs. Rules apply globally across all routes — individual property control requires Pro |
-| **WordPress Security** | Disable XML-RPC, comments, RSS. Secure files, enforce security headers |
+| **WordPress Security** | Harden key WordPress surfaces: XML-RPC, comments, pingbacks, feeds, file protections, security headers |
 | **Webhook** | Single outbound webhook with event triggers |
 | **Hooks API** | Every option exposes a WordPress filter for customisation |
 
@@ -33,8 +34,9 @@ Designed for **headless WordPress** architectures, **multi-application** setups,
 |---|---|
 | **Applications** | Isolate all settings per client — auth, routes, data, webhooks |
 | **IP Filtering** | Both whitelist and blacklist modes. Whitelist restricts access to allowed origins only. Blacklist with configurable retention. CIDR range support. Block or allow by country (GeoIP) |
+| **WordPress Mode** | Applications-only mode, trusted IPs, and emergency reset token for headless lockout recovery |
 | **Collections** | Enforce per-page limits and drag-and-drop sort order |
-| **Routes Policy** | Per-route method control, user assignment, rate limiting and redirections |
+| **Routes Policy** | Per-route method control, user assignment, rate limiting, redirections, and access settings drawer |
 | **Properties & Models** | Disable, rename or remap any individual property. Remove empty properties. Build fully custom JSON schemas |
 | **Automations** | Event-driven workflows with conditions and chained actions |
 | **Multiple Webhooks** | Unlimited outbound webhooks, scoped per application |
@@ -48,6 +50,7 @@ Designed for **headless WordPress** architectures, **multi-application** setups,
 |---|:---:|:---:|
 | REST API route explorer | ✅ | ✅ |
 | Authentication & Rate Limiting | ✅ | ✅ |
+| Auth Hardening (login protection) | ✅ | ✅ |
 | Properties & Models (sitewide transforms) | ✅ | ✅ |
 | Routes: global method / post-type / taxonomy disable | ✅ | ✅ |
 | WordPress Security Hardening | ✅ | ✅ |
@@ -56,6 +59,7 @@ Designed for **headless WordPress** architectures, **multi-application** setups,
 | Multiple Applications | — | ✅ |
 | IP Filtering (blacklist) | ✅ | ✅ |
 | IP Filtering whitelist + CIDR + country blocking | — | ✅ |
+| WordPress Mode (applications-only, trusted IPs, emergency reset) | — | ✅ |
 | Collections & Sort Order | — | ✅ |
 | Properties & Models (per-property control + custom schemas) | — | ✅ |
 | Settings Route schema editor (ACF options, menus) | — | ✅ |
@@ -137,15 +141,15 @@ composer build
 Install the JavaScript dependencies and build:
 
 ```bash
-npm install
-npm run build
-```
-
-or
-
-```bash
 yarn
 yarn build
+```
+
+Optional architecture checks (recommended before major merges):
+
+```bash
+yarn graph:lint
+composer graph:php
 ```
 
 ### 3. Activate the plugin through the WordPress admin

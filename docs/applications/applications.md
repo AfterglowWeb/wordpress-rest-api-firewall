@@ -2,7 +2,7 @@
 
 # Applications
 
-An Application is the central orchestration unit of the Pro layer. Every feature module — auth, rate limiting, IP filtering, route policy, properties, collections, automations, webhooks, and emails — is configured independently per application. This lets you serve different clients from the same WordPress installation with completely isolated API surfaces: different auth methods, different data views, different rate limits, different allowed origins.
+An Application is the core unit of the Pro experience. Each application has its own API policy, users, modules, and output behavior. This lets you serve multiple clients from one WordPress install without mixing rules across clients.
 
 You can create as many applications as you need. Each one is independent.
 
@@ -17,7 +17,10 @@ The list view is the entry point for managing all your applications.
 - **Delete** an application permanently. A confirmation dialog requires you to type the application name before deletion proceeds.
 - **Open** any application to access its editor and module configuration.
 
-Once at least one application exists and is enabled, any incoming REST request that does not match a registered application is blocked.
+When at least one application is enabled, unmatched requests are handled by route type:
+
+- **Core WordPress routes** can be blocked or redirected depending on your mode.
+- **Plugin routes** can still be governed by route policy without being hard-bound to a single application.
 
 <figure>
   <img src="/wordpress-application-layer-applications.webp" alt="Applications" />
@@ -30,11 +33,19 @@ Once at least one application exists and is enabled, any incoming REST request t
 
 Each application has its own editor with two areas:
 
-### Identity
+### Settings Tab
 
 - **Title** — display name used throughout the admin.
 - **Description** — optional notes for your own reference.
 - **Enabled** — activate or deactivate the application without deleting it.
+
+### Modules Tab
+
+The Modules tab gives a compact overview and per-module toggle entry points.
+
+- Use it to confirm which modules are active for the current application.
+- Jump directly to module-specific screens.
+- Keep noisy modules disabled on applications that do not need them.
 
 <figure>
   <img src="/wordpress-application-layer-application-settings.webp" alt="Application Settings" />
@@ -55,6 +66,7 @@ Each module can be toggled on or off at the application level. A module must als
 | **Automations** | Event-driven workflows with conditions and actions | [→ Automations](/automations/automations) |
 | **Webhooks** | Outbound webhook entries with event triggers | [→ Webhooks](/webhooks/webhooks) |
 | **Emails** | Transactional email templates with SMTP | [→ Emails](/mails/mails) |
+| **WordPress Mode** | Applications-only mode, trusted IPs, emergency token | [→ WordPress Mode](/wordpress-mode/wordpress-mode) |
 
 <figure>
   <img src="/wordpress-application-layer-application-modules.webp" alt="Application Modules" />
@@ -81,6 +93,25 @@ See the dedicated [IP Filtering](/ipsfilter/ipsfilter) page for full documentati
 
 ---
 
+## Applications Only Mode
+
+If enabled in [WordPress Mode](/wordpress-mode/wordpress-mode), the installation behaves as application-first:
+
+- Unmatched **core** REST requests are redirected according to your configured destination.
+- Unmatched **plugin** REST routes keep flowing through route-level controls.
+
+Use this mode when WordPress is strictly an API backend and you want non-application traffic redirected away.
+
+---
+
+## Application Lifecycle Notes
+
+- Disabling an application preserves all settings and entries.
+- Deleting an application removes app ownership but can preserve related records for later reassignment workflows.
+- License expiry or pro deactivation can be handled with a guided fallback export flow. See [Migration & Fallback](/migration/migration).
+
+---
+
 ## FAQ
 
 **Can multiple applications share the same origin?**
@@ -89,7 +120,7 @@ Yes. The firewall resolves the application through a combination of identificati
 
 **What happens when no application matches a request?**
 
-Once applications are enabled, any request that does not match a registered application is blocked.
+For core routes, unmatched requests are blocked (or redirected in applications-only mode). Plugin routes can still be handled via route policy.
 
 **Can I test an application's policy before enabling it?**
 

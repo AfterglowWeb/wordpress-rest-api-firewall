@@ -38,7 +38,7 @@ features:
   - icon: 🛡️
     title: WordPress Security Hardening
     details: Disable XML-RPC, comments, pingbacks, RSS feeds, and the theme editor. Secure file permissions, protect the uploads directory, and enforce HTTP security headers — all in one place.
-    link: /global-security
+    link: /global-security/global-security
     linkText: Learn more
 
   - icon: 📦
