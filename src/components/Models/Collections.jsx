@@ -574,7 +574,7 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 
 		// Build DataGrid rows from objectTypes + form state.
 		const proRows = objectTypes.map( ( obj ) => {
-			const isAuthorRestricted = obj.type === 'author' && hideUserRoutes;
+			const isAuthorRestricted = obj.type === 'author' && ( ! hasValidLicense || hideUserRoutes );
 			const typeSettings = ( form?.rest_collection_per_page_settings || {} )[ obj.value ] || {};
 			const typeOrder    = ( form?.rest_collection_orders || {} )[ obj.value ] || [];
 			return {
@@ -588,7 +588,7 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 				enforce_per_page: !! typeSettings.enabled,
 				has_custom_order: Array.isArray( typeOrder ) && typeOrder.length > 0,
 				disabled:        isAuthorRestricted,
-				disabled_reason: isAuthorRestricted ? __( 'Hidden because /wp/v2/users/* routes are disabled in global options', 'rest-api-firewall' ) : null,
+				disabled_reason: isAuthorRestricted ? authorLockedReason : null,
 				_obj:            obj,
 			};
 		} );
@@ -727,6 +727,7 @@ export default function Collections( { form, setField, syncSavedField, postTypes
 				selectedType={ selectedType }
 				onSelect={ setSelectedType }
 				disabledTypes={ adminData?.admin_options?.disabled_post_types || [] }
+				lockedItems={ authorLockedReason ? { author: authorLockedReason } : {} }
 				renderItemEnd={ ( obj, isSelected ) => (
 					<Chip
 						label={ obj.count ?? 0 }

@@ -246,7 +246,7 @@ export default function Navigation( {
 		},
 		{
 			key: 'login-hardening',
-			label: __( 'Login Hardening', 'rest-api-firewall' ),
+			label: __( 'Auth Hardening', 'rest-api-firewall' ),
 			breadcrumbPrefix: 'Modules',
 			icon: LockOutlinedIcon,
 		},

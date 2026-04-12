@@ -113,4 +113,14 @@ add_filter(
 	}
 );
 
-add_action( 'plugins_loaded', array( Core\Bootstrap::class, 'init' ), 10 );
+add_action(
+	'plugins_loaded',
+	function (): void {
+		Core\Bootstrap::init();
+
+		if ( is_admin() ) {
+			Admin\AdminBootstrap::init();
+		}
+	},
+	10
+);

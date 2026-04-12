@@ -4,7 +4,6 @@ defined( 'ABSPATH' ) || exit;
 
 use cmk\RestApiFirewall\Core\CoreOptions;
 use cmk\RestApiFirewall\Core\Permissions;
-use cmk\RestApiFirewall\Routes\RoutesRepository;
 
 class PolicyRepository {
 
