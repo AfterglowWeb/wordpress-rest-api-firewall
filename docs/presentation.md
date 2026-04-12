@@ -1,8 +1,8 @@
 # What is WordPress Application Layer?
 
-WordPress Application Layer sits between the WordPress REST API and your client applications.
+WordPress Application Layer sits between WordPress and your client applications.
 
-It lets you control what data is exposed, who can access it, how it is shaped, and at what rate, without touching WordPress core or your theme.
+It lets you control what data is exposed, who can access it, how it is shaped, and at what rate, while also hardening key WordPress surfaces such as login and IP access.
 
 Beyond REST API responses, it can also **drive your front-end through webhooks**. WordPress events (post publish, user register, WooCommerce order, custom CRON...) can push data to your application in real time using the same schema as the REST API.
 
@@ -12,13 +12,13 @@ It is designed for:
 - **Headless WordPress** architectures (Next.js, Nuxt, SvelteKit, React, Vue, mobile apps)
 - **Multi-application** setups where multiple clients share one WordPress back-end
 - **Event-driven** architectures fed by webhooks instead of, or alongside, pull-based REST calls
-- Any site that needs **security hardening** at the REST API layer
+- Any site that needs **security hardening across both REST API and WordPress surfaces**
 
 ---
 
 ## Understand the Architecture
 
-The plugin operates exclusively within REST API contexts. Admin-authenticated requests are forwarded untouched, so it never interferes with the WordPress admin or other plugins.
+The plugin centers on REST API policy and response control, and also includes WordPress-wide protections such as global IP filtering and login hardening. Admin-authenticated requests are forwarded untouched where relevant, so normal WordPress administration workflows remain intact.
 
 **REST API request pipeline:**
 

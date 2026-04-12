@@ -4,15 +4,15 @@
 
 📖 **[Documentation](https://wal.abc-plugins.com)**
 
-WordPress Application Layer sits between the WordPress REST API and your client applications.
+WordPress Application Layer sits between WordPress and your client applications.
 
-It lets you control what data is exposed, who can access it, how it is shaped, and at what rate, without touching WordPress core or your theme.
+It lets you control what data is exposed, who can access it, how it is shaped, and at what rate, while also hardening key WordPress surfaces such as login and IP access.
 
 Beyond REST API responses, it can also **drive your front-end through webhooks**. WordPress events (post publish, user register, WooCommerce order, custom CRON...) can push data to your application in real time using the same schema as the REST API.
 
 You can combine both approaches, or rely on webhooks only.
 
-Designed for **headless WordPress** architectures, **multi-application** setups, **event-driven** delivery, and sites that need **REST API security hardening**.
+Designed for **headless WordPress** architectures, **multi-application** setups, **event-driven** delivery, and sites that need **security hardening across both REST API and WordPress surfaces**.
 
 > **Alpha version**
 > This plugin is under active development. Most documented features are implemented and functional — some are still being finalized. Architectural changes may still occur.
@@ -60,8 +60,8 @@ Designed for **headless WordPress** architectures, **multi-application** setups,
 | WordPress Security Hardening | ✅ | ✅ |
 | Webhook (single, post lifecycle events) | ✅ | ✅ |
 | Hooks & Filters API | ✅ | ✅ |
-| Multiple Applications | — | ✅ |
 | IP Filtering (blacklist) | ✅ | ✅ |
+| Multiple Applications | — | ✅ |
 | IP Filtering whitelist + CIDR + country blocking | — | ✅ |
 | WordPress Mode (applications only, trusted IPs, emergency reset) | — | ✅ |
 | Collections & Sort Order | — | ✅ |
@@ -75,7 +75,7 @@ Designed for **headless WordPress** architectures, **multi-application** setups,
 
 ## See How It Works
 
-WordPress Application Layer operates exclusively within REST API contexts. Admin-authenticated requests are forwarded untouched, so it never interferes with the WordPress admin or other plugins.
+WordPress Application Layer centers on REST API policy and response control, and also includes WordPress-wide protections such as global IP filtering and login hardening. Admin-authenticated requests are forwarded untouched where relevant, so normal WordPress administration workflows remain intact.
 
 **REST API request pipeline:**
 
