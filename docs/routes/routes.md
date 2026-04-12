@@ -146,11 +146,11 @@ No. The plugin only applies to unauthenticated or non-admin REST requests. Authe
 
 **Will disabling a route break other plugins that use the REST API?**
 
-Disabling individual routes is a Pro feature. In the free tier, only `/wp/v2/users/*` can be disabled globally — all other routes remain accessible. In Pro, route disabling is configured per-application and targets specific paths, so you can safely disable a route for one application without affecting others. Many third-party plugins expose REST routes for licence validation, update checks, or data collection; the Pro route tree lets you audit and control each of those routes individually.
+Disabling individual routes is a Pro feature. In the free tier, only `/wp/v2/users/*` can be disabled globally — all other routes remain accessible. In Pro, route disabling is configured per-application and targets specific paths, so you can safely disable a route for one application without affecting others. Many third-party plugins expose REST routes for license validation, update checks, or data collection; the Pro route tree lets you audit and control each of those routes individually.
 
 **What happens to requests that do not match any application in Pro?**
 
-Core routes are blocked (or redirected if applications-only mode is enabled). Plugin routes can still be evaluated by route policy.
+Core routes are blocked (or redirected if applications only mode is enabled). Plugin routes can still be evaluated by route policy.
 
 **Can I restrict a route to authenticated requests only without affecting the response schema?**
 

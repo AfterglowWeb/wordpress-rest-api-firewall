@@ -2,7 +2,7 @@
 
 # WordPress Mode
 
-WordPress Mode is a Pro panel for headless-first deployments. It combines lock-down controls and recovery tooling in one place.
+WordPress Mode is a Pro panel for headless-first deployments. It combines lockdown controls and recovery tooling in one place.
 
 ---
 
@@ -28,7 +28,7 @@ Use cases:
 
 ### Emergency Reset Token
 
-Generate a one-time recovery token before enabling strict lock-down. If you lock yourself out, the token provides a controlled reset path.
+Generate a one-time recovery token before enabling strict lockdown. If you lock yourself out, the token provides a controlled reset path.
 
 Best practice:
 
@@ -43,7 +43,7 @@ Best practice:
 1. Configure redirect destination in [Theme](/theme/theme).
 2. Add trusted IPs for maintainers.
 3. Generate emergency reset token and store it.
-4. Enable applications-only mode.
+4. Enable applications only mode.
 5. Validate public, app, and admin flows.
 
 ---

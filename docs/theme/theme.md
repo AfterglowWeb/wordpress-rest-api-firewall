@@ -43,4 +43,4 @@ Use template redirects when your public experience is served by another front-en
 1. Enable template redirects.
 2. Set destination to your front-end URL policy.
 3. Enable XML-RPC disable in [Global Security](/global-security/global-security).
-4. Configure [WordPress Mode](/wordpress-mode/wordpress-mode) for pro applications-only operation.
+4. Configure [WordPress Mode](/wordpress-mode/wordpress-mode) for Pro applications only operation.

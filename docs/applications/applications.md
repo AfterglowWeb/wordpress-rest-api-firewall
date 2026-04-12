@@ -58,7 +58,7 @@ Each module can be toggled on or off at the application level. A module must als
 
 | Module | Description | Doc |
 |---|---|---|
-| **Auth & Rate Limiting** | Auth methods, allowed origins & IPs, HTTP methods, users and per-user overrides | [→ Auth & Rate Limit](/users/users) |
+| **Auth & Rate Limiting** | Auth methods, allowed origins & IPs, HTTP methods, users and per-user overrides | [→ Auth & Rate Limiting](/users/users) |
 | **IP Filtering** | Additional application-scoped blocks: CIDR ranges, country blocking, retention time | [→ IP Filtering](/ipsfilter/ipsfilter) |
 | **Routes Policy** | Per-route auth, rate limit, disable, user restriction | [→ Routes](/routes/routes) |
 | **Properties & Models** | Response transforms, per-property control, custom schemas | [→ Properties & Models](/models/models) |
@@ -120,7 +120,7 @@ Yes. The firewall resolves the application through a combination of identificati
 
 **What happens when no application matches a request?**
 
-For core routes, unmatched requests are blocked (or redirected in applications-only mode). Plugin routes can still be handled via route policy.
+For core routes, unmatched requests are blocked (or redirected in applications only mode). Plugin routes can still be handled via route policy.
 
 **Can I test an application's policy before enabling it?**
 

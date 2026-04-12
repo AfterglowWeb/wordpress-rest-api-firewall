@@ -18,7 +18,7 @@ Designed for **headless WordPress** architectures, **multi-application** setups,
 
 | Feature | Description |
 |---|---|
-| **Authentication** | WordPress Application Password (hardened to a single authorised user) and JWT |
+| **Authentication** | WordPress Application Password (hardened to a single authorized user) and JWT |
 | **Rate Limiting** | Request quotas for authenticated traffic and public traffic with independent settings |
 | **Auth Hardening** | Login protection controls (attempt limits, block window, escalation) |
 | **IP Filtering** | Global blocklist with manual and automatic blocking, plus read-only GeoIP visibility |
@@ -59,7 +59,7 @@ Designed for **headless WordPress** architectures, **multi-application** setups,
 | Multiple Applications | — | ✅ |
 | IP Filtering (blacklist) | ✅ | ✅ |
 | IP Filtering whitelist + CIDR + country blocking | — | ✅ |
-| WordPress Mode (applications-only, trusted IPs, emergency reset) | — | ✅ |
+| WordPress Mode (applications only, trusted IPs, emergency reset) | — | ✅ |
 | Collections & Sort Order | — | ✅ |
 | Properties & Models (per-property control + custom schemas) | — | ✅ |
 | Settings Route schema editor (ACF options, menus) | — | ✅ |
@@ -156,7 +156,7 @@ composer graph:php
 
 ### 4. Optional: install the headless theme bundled with the plugin
 
-Navigate to the **Wordpress Application Layer** admin page, open the `Theme Options` tab, and click **Deploy**.
+Navigate to the **WordPress Application Layer** admin page, open the `Theme Options` tab, and click **Deploy**.
 
 ## Roadmap
 

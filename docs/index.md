@@ -19,7 +19,7 @@ hero:
 features:
   - icon: 🔐
     title: Authentication & Rate Limiting
-    details: Authenticate clients with WordPress Application Password (hardened to a single authorised user) or JWT. Set per-user request quotas with configurable time windows. Auto-blacklist IPs that exceed thresholds — no third-party service required.
+    details: Authenticate clients with WordPress Application Password (hardened to a single authorized user) or JWT. Set per-user request quotas with configurable time windows. Auto-blacklist IPs that exceed thresholds — no third-party service required.
     link: /users/users
     linkText: Learn more
 

@@ -44,4 +44,4 @@ Global Security centralizes WordPress hardening toggles used by headless and API
 
 - For login attack mitigation, see [Auth Hardening](/login-hardening/login-hardening).
 - For API ingress restrictions, see [Global IP Filtering](/global-ip-filtering/global-ip-filtering).
-- For pro-only headless lockout controls, see [WordPress Mode](/wordpress-mode/wordpress-mode).
+- For Pro-only headless lockout controls, see [WordPress Mode](/wordpress-mode/wordpress-mode).
