@@ -1,6 +1,7 @@
 import { useState, useEffect } from '@wordpress/element';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { useAdminData } from '../../contexts/AdminDataContext';
+import { useLicense } from '../../contexts/LicenseContext';
 
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
@@ -23,6 +24,13 @@ export default function PropertiesPanel( { form, setField } ) {
 	const { __ } = wp.i18n || {};
 	const { subKey, navigate } = useNavigation();
 	const { adminData } = useAdminData();
+	const { hasValidLicense } = useLicense();
+	const hideUserRoutes    = !! adminData?.admin_options?.hide_user_routes;
+	const authorLockedReason = ! hasValidLicense
+		? __( 'Managing custom order for authors requires Pro', 'rest-api-firewall' )
+		: hideUserRoutes
+		? __( 'Hidden: /wp/v2/users/* routes are disabled in Global Routes Policy', 'rest-api-firewall' )
+		: null;
 
 	const allTypes = adminData?.post_types || [];
 
@@ -87,6 +95,7 @@ export default function PropertiesPanel( { form, setField } ) {
 						onSelect={ handleSelect }
 						extraItems={ extraItems }
 						disabledTypes={ adminData?.admin_options?.disabled_post_types || [] }
+						lockedItems={ authorLockedReason ? { author: authorLockedReason } : {} }
 					/>
 					<Stack p={ 4 } flexGrow={ 1 } overflow="auto" spacing={ 3 }>
 						{ selectedType && selectedType !== 'settings_route' && (

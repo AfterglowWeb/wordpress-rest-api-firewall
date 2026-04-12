@@ -12,6 +12,36 @@ This skill tracks in-flight UX architecture decisions, known issues, and planned
   - Run from: `/Users/cedric/Local Sites/botoxs/app/public/wp-content/plugins/rest-api-firewall/`
   - Command: `yarn build`
 
+## Architecture Mapping Workflow
+
+Static architecture checks and graph generation are now part of the baseline workflow before feature integration and major refactors.
+
+### JS dependency map (frontend)
+
+- Config: `.dependency-cruiser.cjs`
+- Source output (Mermaid): `.github/graphs/js-modules.mmd`
+- Rendered output (SVG): `.github/graphs/js-modules.svg`
+
+Commands:
+- `yarn graph` → regenerates `.github/graphs/js-modules.mmd`
+- `yarn graph:svg` → regenerates `.github/graphs/js-modules.svg`
+- `yarn graph:lint` → enforces dependency-cruiser rules (cycles/layer guards)
+
+### PHP layer map (backend)
+
+- Config: `deptrac.yaml`
+- Source output (dot): `.github/graphs/php-dependencies.dot`
+- Rendered output (SVG): `.github/graphs/php-dependencies.svg`
+
+Commands:
+- `composer graph:php` → strict layer analysis (must stay green)
+- `composer graph:php:dot` → regenerates `.github/graphs/php-dependencies.dot`
+
+### Current standard (do not relax)
+
+- Keep Deptrac **strict** and treat any new violation as refactor backlog.
+- Use architecture graphs for planning before adding new modules or changing tier boundaries.
+
 ---
 
 ## A — Migration State Machine
@@ -225,7 +255,7 @@ Routes whose first path segment is NOT in `['wp', 'oembed', 'batch', 'wp-site-he
 - Redirect destination shared: `theme_redirect_templates_preset_url` / `theme_redirect_templates_free_url`
 - See ARCHITECTURE.md §9.
 
-### Login Hardening (free+pro)
+### Auth Hardening (free+pro)
 - Panel key: `login-hardening`; component: `LoginHardening.jsx`; navigation drawer link under Security
 - PHP: `LoginRateLimiter` hooks on `wp_login_failed` + `authenticate` filter priority 30
 - Options group `login_hardening` (free+pro): `login_rate_limit_enabled`, `login_rate_limit_attempts`, `login_rate_limit_window`, `login_rate_limit_blacklist_time`
@@ -287,7 +317,7 @@ The table `{prefix}_rest_api_firewall_ip_entries` is the **only custom DB table 
 | Global model output settings (toggles) | `src/components/Models/GlobalProperties.jsx` |
 | Properties panel (tabbed: Global / Per Model) | `src/components/Models/PropertiesPanel.jsx` |
 | Global security panel (redirect + xmlrpc + data exposure + HTTP headers) | `src/components/GlobalSecurity/GlobalSecurity.jsx` |
-| Login hardening panel (login rate limit — free+pro) | `src/components/LoginHardening/LoginHardening.jsx` |
+| Auth hardening panel (auth rate limit — free+pro) | `src/components/LoginHardening/LoginHardening.jsx` |
 | WordPress Mode panel (Applications Only + Trusted IPs + Emergency Token — pro only) | `src/components/WordPressMode/WordPressMode.jsx` |
 | Theme panel (deploy theme, ACF, content, images) | `src/components/Theme/ThemeSettings.jsx` |
 | All option definitions, groups, defaults | `inc/Core/CoreOptions.php` |

@@ -85,10 +85,10 @@ export default function LoginHardening() {
 				login_rate_limit_promote_after:  Number( form.login_rate_limit_promote_after )  || 0,
 			},
 			{
-				confirmTitle:   __( 'Save Login Hardening', 'rest-api-firewall' ),
-				confirmMessage: __( 'Save login hardening settings?', 'rest-api-firewall' ),
-				successTitle:   __( 'Login Hardening Saved', 'rest-api-firewall' ),
-				successMessage: __( 'Login hardening settings saved successfully.', 'rest-api-firewall' ),
+				confirmTitle:   __( 'Save Auth Hardening', 'rest-api-firewall' ),
+				confirmMessage: __( 'Save auth hardening settings?', 'rest-api-firewall' ),
+				successTitle:   __( 'Auth Hardening Saved', 'rest-api-firewall' ),
+				successMessage: __( 'Auth hardening settings saved successfully.', 'rest-api-firewall' ),
 				onSuccess: () => setSavedForm( { ...form } ),
 			}
 		);
@@ -157,10 +157,10 @@ export default function LoginHardening() {
 					<Stack spacing={ 3 }>
 						<Stack>
 							<Typography variant="subtitle1" fontWeight={ 600 }>
-								{ __( 'Login Rate Limiting', 'rest-api-firewall' ) }
+								{ __( 'Auth Rate Limiting', 'rest-api-firewall' ) }
 							</Typography>
 							<Typography variant="body2" color="text.secondary">
-								{ __( 'Block brute-force login attempts by IP. After too many failures the IP is temporarily blocked from the login endpoint.', 'rest-api-firewall' ) }
+								{ __( 'Block brute-force authentication attempts by IP. After too many failures the IP is temporarily blocked from authentication endpoints.', 'rest-api-firewall' ) }
 							</Typography>
 						</Stack>
 
@@ -244,7 +244,7 @@ export default function LoginHardening() {
 								{ __( 'Exemptions', 'rest-api-firewall' ) }
 							</Typography>
 							<Typography variant="body2" color="text.secondary">
-								{ __( 'IPs in the Trusted IPs list are exempt from login rate limiting and blacklisting.', 'rest-api-firewall' ) }
+								{ __( 'IPs in the Trusted IPs list are exempt from auth rate limiting and blacklisting.', 'rest-api-firewall' ) }
 							</Typography>
 						</Stack>
 					</Stack>
@@ -261,7 +261,7 @@ export default function LoginHardening() {
 									{ __( 'Active Blocks', 'rest-api-firewall' ) }
 								</Typography>
 								<Typography variant="body2" color="text.secondary">
-									{ __( 'IPs currently blocked from logging in. Blocks expire automatically.', 'rest-api-firewall' ) }
+									{ __( 'IPs currently blocked from authentication. Blocks expire automatically.', 'rest-api-firewall' ) }
 								</Typography>
 							</Stack>
 							<IconButton

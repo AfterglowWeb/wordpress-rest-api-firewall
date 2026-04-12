@@ -5,6 +5,33 @@
 
 ---
 
+## 0 — Static Architecture Mapping (Strict)
+
+Architecture mapping is now codified with static analysis for both PHP and JS.
+
+### PHP layer analysis (Deptrac)
+
+- Config file: `deptrac.yaml`
+- Run strict analysis: `composer graph:php`
+- Export graph source: `composer graph:php:dot`
+- Graph artifact: `.github/graphs/php-dependencies.dot`
+- Rendered artifact: `.github/graphs/php-dependencies.svg`
+
+Rule: keep strict rules and treat violations as immediate refactor backlog. Do not relax rules to make checks pass.
+
+### JS module dependency map
+
+- Config file: `.dependency-cruiser.cjs`
+- Generate Mermaid graph: `yarn graph`
+- Generate SVG graph: `yarn graph:svg`
+- Lint dependencies: `yarn graph:lint`
+- Graph artifact: `.github/graphs/js-modules.mmd`
+- Rendered artifact: `.github/graphs/js-modules.svg`
+
+Use `.github/graphs/js-modules.mmd` as the source of truth for frontend module dependency mapping in architecture reviews.
+
+---
+
 ## 1 — Panel Registry
 
 Every panel key, which tier sees it, which component renders, and which save routine it uses.
@@ -569,7 +596,7 @@ Run the relevant checklist after any change. Check each item before calling done
 
 ---
 
-## 12 — Login Hardening (free+pro)
+## 12 — Auth Hardening (free+pro)
 
 ### Panel
 

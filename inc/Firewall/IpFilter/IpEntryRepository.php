@@ -2,8 +2,6 @@
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Firewall\IpBlackList;
-
 class IpEntryRepository {
 
 	protected static function table(): string {
@@ -188,7 +186,7 @@ class IpEntryRepository {
 		$cidrs = $wpdb->get_col( $wpdb->prepare( $sql, $list_type, '%/%' ) );
 
 		foreach ( $cidrs as $cidr ) {
-			if ( IpBlackList::ip_in_cidr( $ip, $cidr ) ) {
+			if ( CidrMatcher::matches( $ip, $cidr ) ) {
 				return true;
 			}
 		}

@@ -592,7 +592,7 @@ class CoreOptions {
 				'group'             => 'public_rate_limit',
 			),
 
-			// Login hardening.
+			// Auth hardening.
 			'login_rate_limit_enabled'                    => array(
 				'default_value'     => false,
 				'type'              => 'boolean',
