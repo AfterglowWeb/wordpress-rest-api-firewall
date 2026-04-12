@@ -37,21 +37,21 @@ class WebhookAutoTrigger {
 				'label'         => __( 'Post deleted', 'rest-api-firewall' ),
 				'description'   => __( 'Triggered before a post is permanently deleted', 'rest-api-firewall' ),
 				'group'         => 'posts',
-				'context'       => array( 'pro' ),
+				'context'       => array( 'free', 'pro' ),
 				'accepted_args' => 2, // post_id, post.
 			),
 			'trashed_post'       => array(
 				'label'         => __( 'Post trashed', 'rest-api-firewall' ),
 				'description'   => __( 'Triggered when a post is moved to trash', 'rest-api-firewall' ),
 				'group'         => 'posts',
-				'context'       => array( 'pro' ),
+				'context'       => array( 'free', 'pro' ),
 				'accepted_args' => 2, // post_id, previous_status.
 			),
 			'untrashed_post'     => array(
 				'label'         => __( 'Post restored', 'rest-api-firewall' ),
 				'description'   => __( 'Triggered when a post is restored from trash', 'rest-api-firewall' ),
 				'group'         => 'posts',
-				'context'       => array( 'pro' ),
+				'context'       => array( 'free', 'pro' ),
 				'accepted_args' => 2, // post_id, previous_status.
 			),
 
@@ -66,14 +66,14 @@ class WebhookAutoTrigger {
 				'label'         => __( 'Attachment edited', 'rest-api-firewall' ),
 				'description'   => __( 'Triggered when an attachment is modified', 'rest-api-firewall' ),
 				'group'         => 'attachments',
-				'context'       => array( 'pro' ),
+				'context'       => array( 'free', 'pro' ),
 				'accepted_args' => 1, // post_id.
 			),
 			'delete_attachment'  => array(
 				'label'         => __( 'Attachment deleted', 'rest-api-firewall' ),
 				'description'   => __( 'Triggered when an attachment is deleted', 'rest-api-firewall' ),
 				'group'         => 'attachments',
-				'context'       => array( 'pro' ),
+				'context'       => array( 'free', 'pro' ),
 				'accepted_args' => 1, // post_id.
 			),
 
@@ -88,14 +88,14 @@ class WebhookAutoTrigger {
 				'label'         => __( 'Term edited', 'rest-api-firewall' ),
 				'description'   => __( 'Triggered when a term is modified', 'rest-api-firewall' ),
 				'group'         => 'terms',
-				'context'       => array( 'pro' ),
+				'context'       => array( 'free', 'pro' ),
 				'accepted_args' => 3, // term_id, tt_id, taxonomy.
 			),
 			'delete_term'        => array(
 				'label'         => __( 'Term deleted', 'rest-api-firewall' ),
 				'description'   => __( 'Triggered when a term is deleted', 'rest-api-firewall' ),
 				'group'         => 'terms',
-				'context'       => array( 'pro' ),
+				'context'       => array( 'free', 'pro' ),
 				'accepted_args' => 5, // term_id, tt_id, taxonomy, deleted_term, object_ids.
 			),
 
@@ -110,7 +110,7 @@ class WebhookAutoTrigger {
 				'label'         => __( 'User logged in', 'rest-api-firewall' ),
 				'description'   => __( 'Triggered after a successful login', 'rest-api-firewall' ),
 				'group'         => 'users',
-				'context'       => array( 'pro' ),
+				'context'       => array( 'free', 'pro' ),
 				'accepted_args' => 2, // user_login, WP_User.
 			),
 			'profile_update'     => array(

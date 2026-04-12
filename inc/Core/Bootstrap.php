@@ -2,23 +2,21 @@
 
 defined( 'ABSPATH' ) || exit;
 
-use cmk\RestApiFirewall\Core\DeployTheme;
 use cmk\RestApiFirewall\Core\CoreOptions;
-use cmk\RestApiFirewall\Core\CoreOptionsService;
-use cmk\RestApiFirewall\Admin\AdminPage;
-use cmk\RestApiFirewall\Admin\Documentation;
 use cmk\RestApiFirewall\Routes\Routes;
 use cmk\RestApiFirewall\Firewall\GlobalIpBlackList;
 use cmk\RestApiFirewall\Firewall\IpBlackList;
 use cmk\RestApiFirewall\Firewall\IpFilter\IpSchema;
+use cmk\RestApiFirewall\Firewall\RestRequestBootstrap;
 use cmk\RestApiFirewall\GlobalSecurity\DisableBase;
 use cmk\RestApiFirewall\GlobalSecurity\DisableComments;
 use cmk\RestApiFirewall\GlobalSecurity\DisableEmbeds;
 use cmk\RestApiFirewall\GlobalSecurity\DisableRss;
 use cmk\RestApiFirewall\GlobalSecurity\FilePermissions;
 use cmk\RestApiFirewall\GlobalSecurity\HttpHeaders;
+use cmk\RestApiFirewall\Security\LoginRateLimiter;
+use cmk\RestApiFirewall\Security\LoginBlockService;
 use cmk\RestApiFirewall\Policy\PolicyRepository;
-use cmk\RestApiFirewall\Policy\TestPolicy;
 use cmk\RestApiFirewall\Webhook\WebhookService;
 use cmk\RestApiFirewall\Webhook\WebhookAutoTrigger;
 use cmk\RestApiFirewall\Webhook\InboundWebhookReceiver;
@@ -44,6 +42,7 @@ final class Bootstrap {
 		IpBlackList::get_instance();
 		GlobalIpBlackList::get_instance();
 		Routes::register();
+		RestRequestBootstrap::register();
 		PolicyRepository::get_instance();
 		WebhookService::get_instance();
 		WebhookAutoTrigger::get_instance();
@@ -55,16 +54,10 @@ final class Bootstrap {
 		DisableComments::get_instance();
 		HttpHeaders::get_instance();
 		FilePermissions::get_instance();
+		LoginRateLimiter::get_instance();
+		LoginBlockService::get_instance();
 
 		CollectionOrderController::get_instance();
-
-		if ( is_admin() ) {
-			CoreOptionsService::get_instance();
-			AdminPage::get_instance();
-			Documentation::get_instance();
-			TestPolicy::get_instance();
-			DeployTheme::get_instance();
-		}
 	}
 
 	public static function activate(): void {

@@ -27,7 +27,7 @@ export default function Users() {
 	const nonce = proNonce || adminData.nonce;
 	const { __ } = wp.i18n || {};
 
-	const { selectedApplicationId } = useApplication();
+	const { selectedApplicationId, applications } = useApplication();
 	const { subKey, navigate } = useNavigation();
 	const { save, remove } = useProActions();
 

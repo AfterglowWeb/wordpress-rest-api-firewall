@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
 import { useNavigation } from '../../contexts/NavigationContext';
+import { useApplication } from '../../contexts/ApplicationContext';
 
 import { DataGrid } from '@mui/x-data-grid';
 
@@ -14,11 +15,12 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 import ApplicationEditorPanel from './ApplicationEditorPanel';
 import useProActions from '../../hooks/useProActions';
-import ConfirmWithInputDialog from '../ConfirmWithInputDialog';
+import ConfirmWithInputDialog from '../shared/ConfirmWithInputDialog';
+import Alert from '@mui/material/Alert';
 
 export default function Applications() {
 	const { adminData } = useAdminData();
@@ -26,6 +28,7 @@ export default function Applications() {
 	const nonce = proNonce || adminData.nonce;
 	const { __ } = wp.i18n || {};
 	const { subKey, navigate } = useNavigation();
+	const { selectedApplicationId, setSelectedApplicationId } = useApplication();
 
 	const { remove } = useProActions();
 
@@ -65,34 +68,29 @@ export default function Applications() {
 				successMessage: title
 					? `"${ title }" ${ __( 'has been permanently deleted.', 'rest-api-firewall' ) }`
 					: __( 'Application has been permanently deleted.', 'rest-api-firewall' ),
-			onSuccess: () => setRows( ( prev ) => prev.filter( ( row ) => row.id !== id ) ),
+			onSuccess: () => {
+				setRows( ( prev ) => prev.filter( ( row ) => row.id !== id ) );
+				// If deleted application is currently selected, clear selection and navigate to list
+				if ( id === selectedApplicationId ) {
+					setSelectedApplicationId( '' );
+					navigate( 'applications', null, true );
+				}
+				// Check if this was the last application — if so, just reset state
+				const remainingRows = rows.filter( ( row ) => row.id !== id );
+				if ( remainingRows.length === 0 ) {
+					setSelectedApplicationId( '' );
+					navigate( 'applications', null, true );
+				}
+			},
 			}
 		);
-	}, [ confirmDelete, remove, __ ] );
+	}, [ confirmDelete, remove, __, selectedApplicationId, setSelectedApplicationId, navigate ] );
 
 	const columns = useMemo(
 		() => [
 			{
-				field: '_actions',
-				headerName: __( 'Actions', 'rest-api-firewall' ),
-				width: 80,
-				sortable: false,
-				filterable: false,
-				renderCell: ( params ) => (
-					<IconButton
-						size="small"
-						color="default"
-						onClick={ () =>
-							handleDeleteOne( params.row.id, params.row.title )
-						}
-					>
-						<DeleteOutlineIcon fontSize="small" />
-					</IconButton>
-				),
-			},
-			{
 				field: 'enabled',
-				headerName: __( 'Active', 'rest-api-firewall' ),
+				headerName: __( 'Status', 'rest-api-firewall' ),
 				width: 100,
 				renderCell: ( params ) =>
 					params.value ? (
@@ -128,9 +126,6 @@ export default function Applications() {
 					onClick={ ( e ) => { e.preventDefault(); navigate( 'applications', params.row.id ); } }
 				>
 					{ params.value }
-					<OpenInNewIcon
-						sx={ { fontSize: 13, color: 'primary.main' } }
-					/>
 				</a>
 				),
 			},
@@ -177,6 +172,24 @@ export default function Applications() {
 				headerName: __( 'Date Modified', 'rest-api-firewall' ),
 				width: 150,
 				renderCell: ( params ) => params.value || '-',
+			},
+			{
+				field: '_actions',
+				headerName: '',
+				width: 80,
+				sortable: false,
+				filterable: false,
+				renderCell: ( params ) => (
+					<IconButton
+						size="small"
+						color="default"
+						onClick={ () =>
+							handleDeleteOne( params.row.id, params.row.title )
+						}
+					>
+						<DeleteOutlineIcon fontSize="small" />
+					</IconButton>
+				),
 			},
 		],
 		[ hasValidLicense, handleDeleteOne, __ ]
@@ -282,6 +295,22 @@ export default function Applications() {
 				onCancel={ () => setConfirmDelete( { open: false, id: null, title: '' } ) }
 			/>
 			<Stack spacing={ 2 } p={ { xs: 2, sm: 4 } }>
+			{ rows.length === 0 && ! loading && (
+				<Alert severity="info" icon={ <InfoOutlinedIcon /> }>
+					{ __(
+						'No applications configured. REST API is accessible with global rate limiting and IP filtering only.',
+						'rest-api-firewall'
+					) }{ ' ' }
+					<Button
+						size="small"
+						variant="text"
+						onClick={ () => navigate( 'firewall_auth_rate', null, true ) }
+						sx={ { ml: 1 } }
+					>
+						{ __( 'Configure Global Settings', 'rest-api-firewall' ) }
+					</Button>
+				</Alert>
+			) }
 			<Toolbar disableGutters sx={ { gap: 2, flexWrap: 'wrap' } }>
 				<Button
 					variant="contained"
@@ -324,11 +353,14 @@ export default function Applications() {
 				onPaginationModelChange={ setPaginationModel }
 				sortModel={ sortModel }
 				onSortModelChange={ setSortModel }
-				checkboxSelection={ true }
 				disableRowSelectionOnClick={ true }
 				rowSelectionModel={ rowSelectionModel }
 				onRowSelectionModelChange={ setRowSelectionModel }
 				sx={ {
+					border: 'unset',
+					'& .MuiDataGrid-toolbar': {
+						border: 'unset',
+					},
 					'& .MuiDataGrid-cell': {
 						display: 'flex',
 						alignItems: 'center',

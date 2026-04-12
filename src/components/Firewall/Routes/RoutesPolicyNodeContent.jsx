@@ -15,6 +15,7 @@ import Typography from '@mui/material/Typography';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import RuleIcon from '@mui/icons-material/Rule';
+import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 
 import SettingsBackupRestoreOutlinedIcon from '@mui/icons-material/SettingsBackupRestoreOutlined';
 
@@ -23,11 +24,13 @@ import { TreeItem, TreeItemContent, treeItemClasses } from '@mui/x-tree-view/Tre
 import { useTreeItem } from '@mui/x-tree-view/useTreeItem';
 
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import CopyButton from '../../CopyButton';
+import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
+import CopyButton from '../../shared/CopyButton';
 import {
 	isNodeCustom,
 	countModifiedDescendants,
 	getAllDescendantMethodIds,
+	isPluginRoute,
 } from './routesPolicyUtils';
 
 const StyledTreeItem = styled( TreeItem )( ( { theme } ) => ( {
@@ -48,13 +51,14 @@ export const CustomTreeItem = forwardRef(
 			<StyledTreeItem
 				{ ...props }
 				ref={ ref }
+				data-route-path={ node?.path || node?.route }
 				slots={ { content: NodeContent } }
 				slotProps={ {
 					content: {
 						toggleNodeSetting: props.toggleNodeSetting,
 						overrideNodeSetting: props.overrideNodeSetting,
 						getNodeById: props.getNodeById,
-						openUsersPopover: props.openUsersPopover,
+						openSettingsDrawer: props.openSettingsDrawer,
 						toggleNodeCustom: props.toggleNodeCustom,
 						node,
 						enforce_auth: props.enforce_auth,
@@ -80,7 +84,7 @@ export function NodeContent( {
 	toggleNodeSetting,
 	overrideNodeSetting,
 	getNodeById,
-	openUsersPopover,
+	openSettingsDrawer,
 	toggleNodeCustom,
 	node,
 	enforce_auth,
@@ -135,7 +139,8 @@ export function NodeContent( {
 	const hasChildren = node.children && node.children.length > 0;
 	const modifiedCount = countModifiedDescendants( node );
 
-	const authIsGlobal = !! enforce_auth && ! isCustom;
+	const nodeIsPlugin = isPluginRoute( node );
+	const authIsGlobal = !! enforce_auth && ! isCustom && ! nodeIsPlugin;
 	const isAuthEnforced = authIsGlobal || nodeSettings.protect?.value;
 
 	const isUserRoute = !! (
@@ -352,47 +357,35 @@ export function NodeContent( {
 					</Tooltip>
 				) }
 
-			{ postTypeForRoute && onNavigate && (
-				<Tooltip disableInteractive title={ __( 'View model properties', 'rest-api-firewall' ) }>
-					<IconButton
-						size="small"
-						onClick={ ( e ) => {
-							e.stopPropagation();
-							onNavigate( 5 );
-						} }
-						sx={ { opacity: 0.5 } }
-					>
-						<RuleIcon fontSize="small" />
-					</IconButton>
-				</Tooltip>
-			) }
-			{ postTypeForMethod && onNavigate && (
-				<Tooltip disableInteractive title={ __( 'View model properties', 'rest-api-firewall' ) }>
-					<IconButton
-						size="small"
-						onClick={ ( e ) => {
-							e.stopPropagation();
-							onNavigate( 5 );
-						} }
-						sx={ { opacity: 0.5 } }
-					>
-						<RuleIcon fontSize="small" />
-					</IconButton>
-				</Tooltip>
-			) }
-			{ postTypeForMethod && onNavigate && (
-				<Tooltip disableInteractive title={ __( 'View model properties', 'rest-api-firewall' ) }>
-					<IconButton
-						size="small"
-						onClick={ ( e ) => {
-							e.stopPropagation();
-							onNavigate( 5 );
-						} }
-						sx={ { opacity: 0.5 } }
-					>
-						<RuleIcon fontSize="small" />
-					</IconButton>
-				</Tooltip>
+			{ ( postTypeForRoute || postTypeForMethod ) && onNavigate && (
+				<>
+					<Tooltip disableInteractive title={ __( 'View collection', 'rest-api-firewall' ) }>
+						<IconButton
+							size="small"
+							onClick={ ( e ) => {
+								e.stopPropagation();
+								const pt = postTypeForRoute || postTypeForMethod;
+								onNavigate( { panel: 'collections', subKey: pt.value } );
+							} }
+							sx={ { opacity: 0.5 } }
+						>
+							<ListAltOutlinedIcon fontSize="small" />
+						</IconButton>
+					</Tooltip>
+					<Tooltip disableInteractive title={ __( 'View model properties', 'rest-api-firewall' ) }>
+						<IconButton
+							size="small"
+							onClick={ ( e ) => {
+								e.stopPropagation();
+								const pt = postTypeForRoute || postTypeForMethod;
+								onNavigate( { panel: 'models-properties', subKey: pt.value } );
+							} }
+							sx={ { opacity: 0.5 } }
+						>
+							<RuleIcon fontSize="small" />
+						</IconButton>
+					</Tooltip>
+				</>
 			) }
 			</Stack>
 
@@ -467,26 +460,34 @@ export function NodeContent( {
 					</Tooltip>
 				) }
 
-				<Button
-					size="small"
-					variant="text"
-					disabled={ (isDisabled && node.isMethod) || ! isAuthEnforced || ! openUsersPopover }
-					onClick={ ( e ) => {
-						e.stopPropagation();
-						openUsersPopover( node.id, e.currentTarget );
-					} }
-					sx={ { 
-						textDecoration: 'underline',
-						textTransform: 'none',
-						'&:hover': { textDecoration: 'underline' } 
-					} }
+				<Tooltip
+					disableInteractive
+					title={
+						! hasValidLicense
+							? __( 'Pro version required', 'rest-api-firewall' )
+							: __( 'Access settings (users, IPs, origins)', 'rest-api-firewall' )
+					}
 				>
-					{ buttonUserCount > 0
-						? `${ buttonUserCount } user${
-								buttonUserCount > 1 ? 's' : ''
-							} set`
-						: __( 'Set users', 'rest-api-firewall' ) }
-				</Button>
+					<span>
+						<Button
+							size="small"
+							variant="text"
+							disabled={ ! hasValidLicense || ! openSettingsDrawer }
+							onClick={ ( e ) => {
+								e.stopPropagation();
+								openSettingsDrawer( node.id );
+							} }
+							startIcon={ <ManageAccountsOutlinedIcon fontSize="small" /> }
+							sx={ { textTransform: 'none', minWidth: 'auto' } }
+						>
+							{ buttonUserCount > 0
+								? `${ buttonUserCount } user${
+										buttonUserCount > 1 ? 's' : ''
+									}`
+								: __( 'Access', 'rest-api-firewall' ) }
+						</Button>
+					</span>
+				</Tooltip>
 
 				<Tooltip
 					disableInteractive

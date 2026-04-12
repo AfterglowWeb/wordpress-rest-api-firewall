@@ -9,7 +9,6 @@ import Switch from '@mui/material/Switch';
 import Button from '@mui/material/Button';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
-import Tooltip from '@mui/material/Tooltip';
 import Chip from '@mui/material/Chip';
 import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
@@ -23,10 +22,9 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import TuneIcon from '@mui/icons-material/Tune';
-import LockIcon from '@mui/icons-material/Lock';
 
-import CopyButton from '../CopyButton';
-import ObjectTypeSelect from '../ObjectTypeSelect';
+import CopyButton from '../shared/CopyButton';
+import ObjectTypeSelect from '../shared/ObjectTypeSelect';
 import GlobalProperties from './GlobalProperties';
 
 const TYPE_COLORS = {
@@ -49,6 +47,8 @@ function resolveGlobalFilterValue( filterKey, propName, globalForm ) {
 	switch ( filterKey ) {
 		case 'relative_url':
 			return !! globalForm.rest_models_relative_url_enabled;
+		case 'remove_uploads_path':
+			return !! globalForm.rest_models_relative_attachment_url_enabled;
 		case 'rendered':
 			return !! globalForm.rest_models_resolve_rendered_props;
 		case 'embed':
@@ -143,17 +143,21 @@ export function FiltersMenu( {
 		const local = localFilters.find( ( f ) => f.key === filter.key );
 		const checked = local ? !! local.value : false;
 
+		const relUrlLocal = localFilters.find( ( f ) => f.key === 'relative_url' );
+		const isDepDisabled = 'remove_uploads_path' === filter.key && ! ( relUrlLocal ? !! relUrlLocal.value : false );
+		const effectivelyDisabled = isFormDisabled || isDepDisabled;
+
 		return (
 			<MenuItem
 				key={ filter.key }
 				dense
 				sx={ { gap: 1 } }
-				onClick={ () => ! isFormDisabled && patchLocal( filter.key, ! checked ) }
+				onClick={ () => ! effectivelyDisabled && patchLocal( filter.key, ! checked ) }
 			>
 				<Checkbox
 					size="small"
 					checked={ checked }
-					disabled={ isFormDisabled }
+					disabled={ effectivelyDisabled }
 					tabIndex={ -1 }
 					disableRipple
 					sx={ { p: 0.25 } }
@@ -161,7 +165,7 @@ export function FiltersMenu( {
 				<Typography
 					variant="body2"
 					sx={ { flex: 1 } }
-					color={ isFormDisabled ? 'text.disabled' : 'text.primary' }
+					color={ effectivelyDisabled ? 'text.disabled' : 'text.primary' }
 				>
 					{ filter.tooltip || filter.label }
 				</Typography>
@@ -256,7 +260,7 @@ export function FiltersMenu( {
 				anchorOrigin={ { horizontal: 'right', vertical: 'bottom' } }
 			>
 				{ ( () => {
-					const BOOL_ORDER = [ 'embed', 'rendered', 'date_format' ];
+					const BOOL_ORDER = [ 'embed', 'rendered', 'date_format', 'relative_url', 'remove_uploads_path' ];
 					const boolFilters = [ ...localFilters ]
 						.filter( ( f ) => f.type !== 'search_replace' )
 						.sort( ( a, b ) => {
@@ -466,7 +470,10 @@ export function PropertyRow( {
 
 	const hasFilters =
 		Array.isArray( settings.filters ) && settings.filters.length > 0;
+
+	const MAX_PROPERTY_DEPTH = 2; // 0-indexed: root(0), sub(1), sub-sub(2) = 3 levels
 	const hasSubProperties =
+		depth < MAX_PROPERTY_DEPTH &&
 		subProperties &&
 		typeof subProperties === 'object' &&
 		! Array.isArray( subProperties ) &&
@@ -750,7 +757,7 @@ export function PropertyRow( {
 	);
 }
 
-function ModelProperties( { selectedObjectType, setField, globalForm } ) {
+export function ModelProperties( { selectedObjectType, setField, globalForm } ) {
 	const { __ } = wp.i18n || {};
 	const { hasValidLicense } = useLicense();
 	const { adminData } = useAdminData();

@@ -7,7 +7,6 @@ import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
 import FormControl from '@mui/material/FormControl';
-import FormHelperText from '@mui/material/FormHelperText';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import InputLabel from '@mui/material/InputLabel';
@@ -16,7 +15,7 @@ import CardContent from '@mui/material/CardContent';
 import CircularProgress from '@mui/material/CircularProgress';
 import Chip from '@mui/material/Chip';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import CopyButton from '../CopyButton';
+import CopyButton from '../shared/CopyButton';
 
 export default function WebhookTest( { hasSecret } ) {
 	const { adminData } = useAdminData();
@@ -62,16 +61,18 @@ export default function WebhookTest( { hasSecret } ) {
 	};
 
 	return (
-		<Stack spacing={ 2 } flex={ 1 } width={ '100%' } maxWidth={ 500 }>
-			<Typography variant="subtitle1" fontWeight={ 600 } sx={ { mb: 2 } }>
-				{ __( 'Test Webhook', 'rest-api-firewall' ) }
-			</Typography>
-			<FormHelperText sx={ { mb: 2 } }>
-				{ __(
-					'Send a test webhook request to verify your configuration.',
-					'rest-api-firewall'
-				) }
-			</FormHelperText>
+		<Stack width={ '100%' } maxWidth={ 500 }>
+			<Stack sx={ { mb: 2 } }>
+				<Typography variant="subtitle1" fontWeight={ 600 }>
+					{ __( 'Test Webhook', 'rest-api-firewall' ) }
+				</Typography>
+				<Typography variant="body2" color="textSecondary"	>
+					{ __(
+						'Send a test webhook request to verify your configuration.',
+						'rest-api-firewall'
+					) }
+				</Typography>
+			</Stack>
 
 			<Stack
 				direction={ { xs: 'column', sm: 'row' } }
@@ -123,7 +124,7 @@ export default function WebhookTest( { hasSecret } ) {
 				</Button>
 			</Stack>
 
-			{ testResult ? (
+			{ testResult && (
 				<Card variant="outlined" sx={ { mt: 2 } }>
 					<CardContent>
 						<Stack
@@ -300,6 +301,52 @@ export default function WebhookTest( { hasSecret } ) {
 							</Box>
 						) }
 
+						{ testResult.data?.response_headers && Object.keys( testResult.data.response_headers ).length > 0 && (
+							<Box sx={ { mb: 2 } }>
+								<Stack
+									direction="row"
+									alignItems="center"
+									spacing={ 1 }
+									sx={ { mb: 0.5 } }
+								>
+									<Typography
+										variant="body2"
+										color="text.secondary"
+									>
+										{ __(
+											'Response headers:',
+											'rest-api-firewall'
+										) }
+									</Typography>
+									<CopyButton
+										toCopy={ JSON.stringify(
+											testResult.data.response_headers,
+											null,
+											2
+										) }
+									/>
+								</Stack>
+								<Box
+									component="pre"
+									sx={ {
+										bgcolor: 'grey.100',
+										p: 1.5,
+										borderRadius: 1,
+										fontSize: '0.75rem',
+										overflow: 'scroll',
+										maxHeight: 150,
+										maxWidth: '100%',
+									} }
+								>
+									{ JSON.stringify(
+										testResult.data.response_headers,
+										null,
+										2
+									) }
+								</Box>
+							</Box>
+						) }
+
 						{ testResult.data?.response_body && (
 							<Box>
 								<Stack
@@ -340,20 +387,8 @@ export default function WebhookTest( { hasSecret } ) {
 						) }
 					</CardContent>
 				</Card>
-			) : (
-				<Card
-					variant="outlined"
-					height={ 300 }
-					sx={ { mt: 2, maxWidth: '100%' } }
-				/>
 			) }
 
-			<Alert severity="info" sx={ { maxWidth: '100%' } }>
-				{ __(
-					'You can edit the webhook payload by using the filter: "rest_api_firewall_webhook_payload"',
-					'rest-api-firewall'
-				) }
-			</Alert>
 		</Stack>
 	);
 }

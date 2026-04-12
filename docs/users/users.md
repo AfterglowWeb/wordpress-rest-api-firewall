@@ -8,6 +8,8 @@ In the **free tier**, users and rate limits are configured globally and apply ac
 
 In **Pro**, each [Application](/applications/applications) defines its own auth methods, allowed origins, allowed IPs, allowed HTTP methods, and user list. Users belong to an application and per-user settings can narrow — but never relax — the application-level defaults.
 
+For login form protection (separate from REST traffic quotas), see [Auth Hardening](/login-hardening/login-hardening).
+
 ---
 
 ## Free Tier
@@ -55,6 +57,16 @@ When the Auth &amp; Rate Limiting module is active for an application, the follo
 
 User-level settings can only be **more restrictive**, never more permissive.
 
+### HTTP Method Cascade
+
+Method control follows a 3-tier narrowing model:
+
+1. **Application blocked methods**: methods denied for everyone.
+2. **Application default methods**: max allowed set for authenticated users.
+3. **User allowed methods**: per-user subset.
+
+A user cannot gain a method that is not allowed at application level.
+
 ---
 
 ## Pro — Users List
@@ -85,6 +97,8 @@ Accessible from the users list, the user editor lets you configure per-user acce
 - **Allowed IPs** — narrow to one or more specific IPs.
 - **Allowed origins** — narrow to one or more specific origins.
 - **Rate limit** — override the application default with a lower quota. Rate limits can only be tightened at user level, not relaxed.
+
+Route-level access can be narrowed further from the [Routes](/routes/routes) access settings drawer.
 
 <figure>
   <img src="/wordpress-application-layer-user-editor.webp" alt="User Editor" />

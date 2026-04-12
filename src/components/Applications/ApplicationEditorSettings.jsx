@@ -1,3 +1,4 @@
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Checkbox from '@mui/material/Checkbox';
 import Divider from '@mui/material/Divider';
@@ -6,9 +7,10 @@ import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import MenuItem from '@mui/material/MenuItem';
 
-import AllowedIps from '../Firewall/IpFilter/AllowedIps';
-import AllowedOrigins from '../Firewall/IpFilter/AllowedOrigins';
+import AllowedIps from '../IpFilter/AllowedIps';
+import AllowedOrigins from '../IpFilter/AllowedOrigins';
 import HttpMethodsSelector from '../Firewall/Users/HttpMethodsSelector';
 import { RateLimitFields } from '../Firewall/Users/RateLimit';
 import { AUTH_METHODS } from '../Firewall/Users/AuthManager';
@@ -38,6 +40,25 @@ export default function ApplicationEditorSettings( {
 	setRateLimitBlacklistWindow,
 	rateLimitEnabled,
 	setRateLimitEnabled,
+	mailSmtpEnabled,
+	setMailSmtpEnabled,
+	mailSmtpHost,
+	setMailSmtpHost,
+	mailSmtpPort,
+	setMailSmtpPort,
+	mailSmtpEncryption,
+	setMailSmtpEncryption,
+	mailSmtpAuth,
+	setMailSmtpAuth,
+	mailSmtpUsername,
+	setMailSmtpUsername,
+	mailSmtpPassword,
+	setMailSmtpPassword,
+	mailSmtpFromEmail,
+	setMailSmtpFromEmail,
+	mailSmtpFromName,
+	setMailSmtpFromName,
+	hasUsers,
 } ) {
 	const { __ } = wp.i18n || {};
 
@@ -50,6 +71,7 @@ export default function ApplicationEditorSettings( {
 					value={ title }
 					onChange={ ( e ) => setTitle( e.target.value ) }
 					size="small"
+					inputProps={ { maxLength: 100 } }
 				/>
 				<TextField
 					label={ __( 'Description', 'rest-api-firewall' ) }
@@ -62,6 +84,7 @@ export default function ApplicationEditorSettings( {
 						'Optional notes about this application, its purpose, or linked services.',
 						'rest-api-firewall'
 					) }
+					inputProps={ { maxLength: 300 } }
 				/>
 			</Stack>
 
@@ -108,6 +131,11 @@ export default function ApplicationEditorSettings( {
 					<Typography variant="body2" color="text.secondary">
 						{ __( 'Auth methods available to users of this application. Users can only use methods enabled here.', 'rest-api-firewall' ) }
 					</Typography>
+					{ ! hasUsers && (
+						<Alert severity="info" sx={ { py: 0 } }>
+							{ __( 'Authentication methods have no effect until at least one user is assigned to this application.', 'rest-api-firewall' ) }
+						</Alert>
+					) }
 					<Stack direction="row" flexWrap="wrap" gap={ 1 }>
 						{ AUTH_METHODS.filter( ( m ) => m.value !== 'any' ).map( ( method ) => (
 							<FormControlLabel
@@ -190,6 +218,107 @@ export default function ApplicationEditorSettings( {
 							setters[ key ]?.( val );
 						} }
 					/>
+				</Stack>
+
+				<Divider />
+
+				<Stack spacing={ 3 }>
+					<Stack direction="row" alignItems="flex-start" justifyContent="space-between">
+						<Box>
+							<Typography variant="subtitle1" fontWeight={ 600 }>
+								{ __( 'Email SMTP Configuration', 'rest-api-firewall' ) }
+							</Typography>
+							<Typography variant="body2" color="text.secondary">
+								{ __( 'Configure SMTP settings for sending email notifications.', 'rest-api-firewall' ) }
+							</Typography>
+						</Box>
+						<FormControlLabel
+							control={
+								<Switch
+									size="small"
+									checked={ mailSmtpEnabled }
+									onChange={ ( e ) => setMailSmtpEnabled( e.target.checked ) }
+								/>
+							}
+							label={ __( 'Enable SMTP', 'rest-api-firewall' ) }
+						/>
+					</Stack>
+
+					{ mailSmtpEnabled && (
+						<Stack spacing={ 2 }>
+							<TextField
+								label={ __( 'SMTP Host', 'rest-api-firewall' ) }
+								value={ mailSmtpHost }
+								onChange={ ( e ) => setMailSmtpHost( e.target.value ) }
+								size="small"
+								placeholder="smtp.example.com"
+							/>
+							<Stack direction={{ xs: 'column', sm: 'row' }} spacing={ 2 }>
+								<TextField
+									label={ __( 'Port', 'rest-api-firewall' ) }
+									value={ mailSmtpPort }
+									onChange={ ( e ) => setMailSmtpPort( e.target.value ) }
+									size="small"
+									type="number"
+									sx={ { flex: 1 } }
+								/>
+								<TextField
+									select
+									label={ __( 'Encryption', 'rest-api-firewall' ) }
+									value={ mailSmtpEncryption }
+									onChange={ ( e ) => setMailSmtpEncryption( e.target.value ) }
+									size="small"
+									sx={ { flex: 1 } }
+								>
+									<MenuItem value="tls">{ __( 'TLS', 'rest-api-firewall' ) }</MenuItem>
+									<MenuItem value="ssl">{ __( 'SSL', 'rest-api-firewall' ) }</MenuItem>
+									<MenuItem value="">{ __( 'None', 'rest-api-firewall' ) }</MenuItem>
+								</TextField>
+							</Stack>
+							<FormControlLabel
+								control={
+									<Checkbox
+										size="small"
+										checked={ mailSmtpAuth }
+										onChange={ ( e ) => setMailSmtpAuth( e.target.checked ) }
+									/>
+								}
+								label={ <Typography variant="body2">{ __( 'Require Authentication', 'rest-api-firewall' ) }</Typography> }
+							/>
+							{ mailSmtpAuth && (
+								<Stack spacing={ 2 }>
+									<TextField
+										label={ __( 'Username', 'rest-api-firewall' ) }
+										value={ mailSmtpUsername }
+										onChange={ ( e ) => setMailSmtpUsername( e.target.value ) }
+										size="small"
+									/>
+									<TextField
+										label={ __( 'Password', 'rest-api-firewall' ) }
+										value={ mailSmtpPassword }
+										onChange={ ( e ) => setMailSmtpPassword( e.target.value ) }
+										size="small"
+										type="password"
+									/>
+								</Stack>
+							) }
+							<Divider sx={ { my: 1 } } />
+							<TextField
+								label={ __( 'From Email', 'rest-api-firewall' ) }
+								value={ mailSmtpFromEmail }
+								onChange={ ( e ) => setMailSmtpFromEmail( e.target.value ) }
+								size="small"
+								placeholder="noreply@example.com"
+							/>
+							<TextField
+								label={ __( 'From Name', 'rest-api-firewall' ) }
+								value={ mailSmtpFromName }
+								onChange={ ( e ) => setMailSmtpFromName( e.target.value ) }
+								size="small"
+								placeholder={ __( 'Your Site Name', 'rest-api-firewall' ) }
+							/>
+						</Stack>
+					) }
 				</Stack>
 
 			</Stack>

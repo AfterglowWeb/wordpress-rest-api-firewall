@@ -3,13 +3,14 @@ import { useLicense } from '../../../contexts/LicenseContext';
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import FormHelperText from '@mui/material/FormHelperText';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import Tooltip from '@mui/material/Tooltip';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 
-import ObjectTypeSelect from '../../ObjectTypeSelect';
+import ObjectTypeSelect from '../../shared/ObjectTypeSelect';
 import DisabledRouteResponse from './DisabledRouteResponse';
 
 const HTTP_METHODS = [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ];
@@ -42,21 +43,7 @@ export default function GlobalRoutesPolicy( { form, setField, proSettings, onPro
 						}
 						label={ __( 'Enforce Authentication on All Routes', 'rest-api-firewall' ) }
 					/>
-				</FormControl>
-
-				<FormControl>
-					<FormControlLabel
-						disabled={ ! isModuleEnabled }
-						control={
-							<Switch
-								checked={ hasValidLicense ? !! proSettings.enforce_rate_limit : !! form.enforce_rate_limit }
-								name="enforce_rate_limit"
-								size="small"
-								onChange={ hasValidLicense ? onProChange : setField }
-							/>
-						}
-						label={ __( 'Enforce Rate Limiting on All Routes', 'rest-api-firewall' ) }
-					/>
+					<FormHelperText>{ __( 'Applies to WordPress core routes only (wp, oembed, batch). Third-party plugin routes (e.g. WooCommerce) are not affected.', 'rest-api-firewall' ) }</FormHelperText>
 				</FormControl>
 
 
@@ -162,7 +149,7 @@ export default function GlobalRoutesPolicy( { form, setField, proSettings, onPro
 							</Typography>
 							<Typography variant="body2" color="text.secondary">
 								{ __(
-								'Disables an HTTP method globally across all routes.',
+								'Blocks an HTTP method for all traffic to this application — anonymous and authenticated alike.',
 									'rest-api-firewall'
 								) }
 	

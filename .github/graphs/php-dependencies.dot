@@ -1,0 +1,129 @@
+digraph "" {
+subgraph "cluster_Admin" {
+label="Admin"
+"Admin" [
+group="Admin"
+]
+}
+subgraph "cluster_Runtime" {
+label="Runtime"
+"Core" [
+group="Runtime"
+]
+"Security" [
+group="Runtime"
+]
+"Firewall" [
+group="Runtime"
+]
+"FirewallIpFilter" [
+group="Runtime"
+]
+"Policy" [
+group="Runtime"
+]
+}
+subgraph "cluster_Features" {
+label="Features"
+"Webhook" [
+group="Features"
+]
+"Collections" [
+group="Features"
+]
+"Models" [
+group="Features"
+]
+"Routes" [
+group="Features"
+]
+"GlobalSecurity" [
+group="Features"
+]
+}
+"Webhook" -> "Core" [
+label="22"
+]
+"GlobalSecurity" -> "Core" [
+label="41"
+]
+"Core" -> "FirewallIpFilter" [
+label="2"
+]
+"Core" -> "Firewall" [
+label="6"
+]
+"Core" -> "Routes" [
+label="2"
+]
+"Core" -> "Policy" [
+label="4"
+]
+"Core" -> "Webhook" [
+label="6"
+]
+"Core" -> "GlobalSecurity" [
+label="12"
+]
+"Core" -> "Security" [
+label="4"
+]
+"Core" -> "Collections" [
+label="6"
+]
+"Core" -> "Admin" [
+label="6"
+color="red"
+]
+"Security" -> "Core" [
+label="7"
+]
+"Security" -> "FirewallIpFilter" [
+label="4"
+]
+"Admin" -> "Core" [
+label="16"
+]
+"Admin" -> "Webhook" [
+label="3"
+]
+"Admin" -> "Models" [
+label="2"
+]
+"Models" -> "Core" [
+label="3"
+]
+"Firewall" -> "Core" [
+label="26"
+]
+"Firewall" -> "Policy" [
+label="3"
+]
+"Firewall" -> "FirewallIpFilter" [
+label="11"
+]
+"Collections" -> "Core" [
+label="10"
+]
+"Routes" -> "Core" [
+label="4"
+]
+"Routes" -> "Firewall" [
+label="9"
+color="red"
+]
+"Policy" -> "Core" [
+label="17"
+]
+"Policy" -> "Firewall" [
+label="3"
+]
+"Policy" -> "Routes" [
+label="3"
+color="red"
+]
+"FirewallIpFilter" -> "Firewall" [
+label="2"
+color="red"
+]
+}

@@ -1,10 +1,12 @@
 import { useCallback, useState } from '@wordpress/element';
 import { useAdminData } from '../contexts/AdminDataContext';
 import { useDialog, DIALOG_TYPES } from '../contexts/DialogContext';
+import { useLicense } from '../contexts/LicenseContext';
 
 export default function useSaveOptions() {
 	const { adminData, updateAdminData } = useAdminData();
 	const { openDialog, updateDialog } = useDialog();
+	const { proNonce } = useLicense();
 	const { __ } = wp.i18n || {};
 	const [ saving, setSaving ] = useState( false );
 
@@ -45,7 +47,7 @@ export default function useSaveOptions() {
 						},
 						body: new URLSearchParams( {
 							action,
-							nonce: adminData.nonce,
+							nonce: proNonce || adminData.nonce,
 							options: JSON.stringify( options ),
 						} ),
 					} );
@@ -117,7 +119,7 @@ export default function useSaveOptions() {
 				onConfirm: doSave,
 			} );
 		},
-		[ adminData, updateAdminData, openDialog, updateDialog, __ ]
+		[ adminData, proNonce, updateAdminData, openDialog, updateDialog, __ ]
 	);
 
 	return { save, saving };

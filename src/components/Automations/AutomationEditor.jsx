@@ -27,6 +27,7 @@ import CallSplitIcon from '@mui/icons-material/CallSplit';
 import WebhookIcon from '@mui/icons-material/Webhook';
 
 import JsonSchemaBuilder from '../shared/JsonSchemaBuilder';
+import ScheduleConfig from '../shared/ScheduleConfig';
 import useProActions from '../../hooks/useProActions';
 import formatDate from '../../utils/formatDate';
 import useRegisterToolbar from '../../hooks/useRegisterToolbar';
@@ -436,6 +437,7 @@ export default function AutomationEditor( { automation, onBack } ) {
 					onChange={ ( e ) => setTitle( e.target.value ) }
 					sx={ { maxWidth: 400 } }
 					required
+					inputProps={ { maxLength: 100 } }
 				/>
 				<TextField
 					size="small"
@@ -445,6 +447,7 @@ export default function AutomationEditor( { automation, onBack } ) {
 					multiline
 					rows={ 2 }
 					sx={ { maxWidth: 600 } }
+					inputProps={ { maxLength: 300 } }
 				/>
 
 				{ /* 1. Trigger Events — multi-select */ }
@@ -542,13 +545,22 @@ export default function AutomationEditor( { automation, onBack } ) {
 					<JsonSchemaBuilder value={ payloadMap } onChange={ setPayloadMap } availableBindings={ BASE_BINDINGS } />
 				</Paper>
 
+
+
 				{ /* 4. Actions — Outbound Webhooks */ }
 				<Paper variant="outlined" sx={ { p: 2 } }>
 					<Stack direction="row" alignItems="center" spacing={ 1 } sx={ { mb: 1.5 } }>
-						<Typography variant="caption" sx={ { textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' } }>
-							{ __( '4 · Send to Webhooks', 'rest-api-firewall' ) }
-						</Typography>
-						{ webhookIds.length > 0 && <Chip label={ webhookIds.length } size="small" color="primary" sx={ { height: 20 } } /> }
+						<Stack direction="row" flex={ 1 } alignItems="center" spacing={ 1 }>
+							<Typography variant="caption" sx={ { textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' } }>
+								{ __( '4 · Send to Webhooks', 'rest-api-firewall' ) }
+							</Typography>
+							{ webhookIds.length > 0 && <Chip label={ webhookIds.length } size="small" color="primary" sx={ { height: 20 } } /> }
+						</Stack>
+						{ webhooks.length === 0 && (
+							<Button size="small" variant="outlined">
+								{ __( 'Create →', 'rest-api-firewall' ) }
+							</Button>
+						) }
 					</Stack>
 					<ItemCheckList
 						items={ webhooks }
@@ -567,10 +579,17 @@ export default function AutomationEditor( { automation, onBack } ) {
 				{ /* 5. Actions — Emails */ }
 				<Paper variant="outlined" sx={ { p: 2 } }>
 					<Stack direction="row" alignItems="center" spacing={ 1 } sx={ { mb: 1.5 } }>
-						<Typography variant="caption" sx={ { textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' } }>
-							{ __( '5 · Send Email Notifications', 'rest-api-firewall' ) }
-						</Typography>
-						{ mailIds.length > 0 && <Chip label={ mailIds.length } size="small" color="secondary" sx={ { height: 20 } } /> }
+						<Stack direction="row" flex={ 1 } alignItems="center" spacing={ 1 }>
+							<Typography variant="caption" sx={ { textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' } }>
+								{ __( '5 · Send Email Notifications', 'rest-api-firewall' ) }
+							</Typography>
+							{ mailIds.length > 0 && <Chip label={ mailIds.length } size="small" color="secondary" sx={ { height: 20 } } /> }
+						</Stack>
+						{ mails.length === 0 && (
+							<Button size="small" variant="outlined">
+								{ __( 'Create →', 'rest-api-firewall' ) }
+							</Button>
+						) }
 					</Stack>
 					<ItemCheckList
 						items={ mails }
@@ -634,6 +653,16 @@ export default function AutomationEditor( { automation, onBack } ) {
 						) }
 					/>
 				</Paper>
+
+				{ /* 8. Schedule */ }
+				{ ! isNew && (
+					<ScheduleConfig
+						itemId={ automation.id }
+						itemType="automation"
+						nonce={ nonce }
+						adminData={ adminData }
+					/>
+				) }
 			</Stack>
 		</Stack>
 	);

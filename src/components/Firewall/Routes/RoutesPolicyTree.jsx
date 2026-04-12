@@ -34,10 +34,21 @@ import {
 	countAllCustomNodes,
 } from './routesPolicyUtils';
 import { CustomTreeItem } from './RoutesPolicyNodeContent';
-import RoutesPolicyUsersPopover from './RoutesPolicyUsersPopover';
+import RouteSettingsDrawer from './RouteSettingsDrawer';
 import TestPolicyPanel from './TestPolicyPanel';
 
-export default function RoutesPolicyTree( { form, setField, selectedApplicationId, onNavigate } ) {
+function collectAncestorIds( nodes, targetPath ) {
+	for ( const node of nodes ) {
+		if ( node.path === targetPath ) return [ node.id ];
+		if ( node.children?.length ) {
+			const sub = collectAncestorIds( node.children, targetPath );
+			if ( sub ) return [ node.id, ...sub ];
+		}
+	}
+	return null;
+}
+
+export default function RoutesPolicyTree( { form, setField, selectedApplicationId, onNavigate, focusRoute } ) {
 	const {
 		enforce_auth,
 		hide_user_routes,
@@ -58,13 +69,14 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 
 	const [ usersData, setUsersData ] = useState( null );
 	const [ usersLoading, setUsersLoading ] = useState( false );
-	const [ popoverAnchor, setPopoverAnchor ] = useState( null );
-	const [ popoverRouteIds, setPopoverRouteIds ] = useState( [] );
-	const [ popoverIsBulk, setPopoverIsBulk ] = useState( false );
+	const [ drawerNodeId, setDrawerNodeId ] = useState( null );
+	const [ drawerIsBulk, setDrawerIsBulk ] = useState( false );
+	const [ drawerRouteIds, setDrawerRouteIds ] = useState( [] );
 	const [ isDirty, setIsDirty ] = useState( false );
 	const [ saving, setSaving ] = useState( false );
 	const [ confirmSaveOpen, setConfirmSaveOpen ] = useState( false );
 	const [ testRoute, setTestRoute ] = useState( null );
+	const [ pendingFocusRoute, setPendingFocusRoute ] = useState( null );
 	const usersLoadedRef = useRef( false );
 	const treeLoadingRef = useRef( true );
 
@@ -140,6 +152,7 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 	);
 
 	const loadUsers = useCallback( async () => {
+		if ( ! hasValidLicense ) return;
 		if ( usersLoadedRef.current ) {
 			return;
 		}
@@ -166,29 +179,29 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 		} finally {
 			setUsersLoading( false );
 		}
-	}, [ adminData, nonce, selectedApplicationId ] );
+	}, [ hasValidLicense, adminData, nonce, selectedApplicationId ] );
 
-	const handleOpenUsersPopover = useCallback(
-		( nodeId, anchorEl ) => {
+	const handleOpenDrawer = useCallback(
+		( nodeId ) => {
 			loadUsers();
-			setPopoverAnchor( anchorEl );
 			const node = getNodeById( nodeId );
 			if ( node?.isMethod ) {
-				setPopoverRouteIds( [ nodeId ] );
-				setPopoverIsBulk( false );
+				setDrawerRouteIds( [ nodeId ] );
+				setDrawerIsBulk( false );
 			} else {
-				setPopoverRouteIds( getAllDescendantMethodIds( node ) );
-				setPopoverIsBulk( true );
+				setDrawerRouteIds( getAllDescendantMethodIds( node ) );
+				setDrawerIsBulk( true );
 			}
+			setDrawerNodeId( nodeId );
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[ loadUsers, nodes ]
 	);
 
-	const handleCloseUsersPopover = () => {
-		setPopoverAnchor( null );
-		setPopoverRouteIds( [] );
-		setPopoverIsBulk( false );
+	const handleCloseDrawer = () => {
+		setDrawerNodeId( null );
+		setDrawerRouteIds( [] );
+		setDrawerIsBulk( false );
 	};
 
 	const handleUserAccessChange = ( userId, routeIds, grant ) => {
@@ -254,6 +267,30 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 		setIsDirty( true );
 	}, [ nodes ] );
 
+	useEffect( () => {
+		if ( ! focusRoute || ! nodes?.length ) return;
+		const ids = collectAncestorIds( nodes, focusRoute );
+		if ( ! ids?.length ) return;
+		setExpandedItems( ( prev ) => {
+			const s = new Set( prev );
+			ids.forEach( ( id ) => s.add( id ) );
+			return [ ...s ];
+		} );
+		setPendingFocusRoute( focusRoute );
+	}, [ focusRoute, nodes ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
+	useEffect( () => {
+		if ( ! pendingFocusRoute ) return;
+		const route = pendingFocusRoute;
+		const timer = setTimeout( () => {
+			document
+				.querySelector( `[data-route-path="${ route }"]` )
+				?.scrollIntoView( { behavior: 'smooth', block: 'start' } );
+			setPendingFocusRoute( null );
+		}, 150 );
+		return () => clearTimeout( timer );
+	}, [ pendingFocusRoute ] );
+
 	if ( loading || ( ! loading && ! treeData ) ) {
 		return (
 			<Box
@@ -288,7 +325,6 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 				<TestPolicyPanel
 					route={ testRoute?.route || '' }
 					method={ testRoute?.method || 'GET' }
-					hasChildren={ testRoute?.hasChildren || false }
 					hasUsers={ testRoute?.hasUsers || false }
 					onClose={ () => setTestRoute( null ) }
 					onNavigate={ onNavigate }
@@ -350,8 +386,8 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 							toggleNodeSetting: handleToggle,
 							overrideNodeSetting: handleOverrideNode,
 							getNodeById,
-							openUsersPopover: hasValidLicense
-								? handleOpenUsersPopover
+							openSettingsDrawer: hasValidLicense
+								? handleOpenDrawer
 								: null,
 							toggleNodeCustom: handleToggleCustom,
 							enforce_auth,
@@ -372,16 +408,16 @@ export default function RoutesPolicyTree( { form, setField, selectedApplicationI
 					onExpandedItemsChange={ ( _e, ids ) => setExpandedItems( ids ) }
 				/>
 
-				<RoutesPolicyUsersPopover
-					open={ Boolean( popoverAnchor ) }
-					anchorEl={ popoverAnchor }
-					onClose={ handleCloseUsersPopover }
-					usersData={ usersData }
-					usersLoading={ usersLoading }
-					routeIds={ popoverRouteIds }
-					isBulk={ popoverIsBulk }
-					onUserAccessChange={ handleUserAccessChange }
-				/>
+				<RouteSettingsDrawer
+						open={ Boolean( drawerNodeId ) }
+						node={ drawerNodeId ? getNodeById( drawerNodeId ) : null }
+						usersData={ usersData }
+						usersLoading={ usersLoading }
+						routeIds={ drawerRouteIds }
+						isBulk={ drawerIsBulk }
+						onUserAccessChange={ handleUserAccessChange }
+						onClose={ handleCloseDrawer }
+					/>
 
 				<Dialog
 					open={ confirmSaveOpen }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { useLicense } from '../../contexts/LicenseContext';
+import { useApplication } from '../../contexts/ApplicationContext';
 import { useNavigation } from '../../contexts/NavigationContext';
 
 import { DataGrid } from '@mui/x-data-grid';
@@ -22,6 +23,7 @@ import useProActions from '../../hooks/useProActions';
 export default function Webhooks() {
 	const { adminData } = useAdminData();
 	const { hasValidLicense, proNonce } = useLicense();
+	const { applications } = useApplication();
 	const nonce = proNonce || adminData.nonce;
 	const { __ } = wp.i18n || {};
 

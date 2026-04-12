@@ -231,7 +231,7 @@ class CollectionOrderController {
 		$query = new \WP_Query(
 			array(
 				'post_type'      => $post_type,
-				'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future' ),
+				'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future', 'inherit' ),
 				'posts_per_page' => -1,
 				'fields'         => 'ids',
 				'no_found_rows'  => true,
@@ -257,7 +257,7 @@ class CollectionOrderController {
 		$query = new \WP_Query(
 			array(
 				'post_type'      => $post_type,
-				'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future' ),
+				'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future', 'inherit' ),
 				'posts_per_page' => count( $ids ),
 				'post__in'       => $ids,
 				'orderby'        => 'post__in',
@@ -277,10 +277,11 @@ class CollectionOrderController {
 						$taxonomies[ $tax_slug ] = $terms;
 					}
 				}
+				$label = get_the_title( $post );
 				return array(
 					'id'            => $post->ID,
 					'kind'          => 'post_type',
-					'label'         => get_the_title( $post ) ?: '#' . $post->ID,
+					'label'         => '' !== $label ? $label : '#' . $post->ID,
 					'status'        => $post->post_status,
 					'author_name'   => $author ? $author->display_name : '',
 					'date_created'  => get_the_date( '', $post ),
@@ -310,7 +311,7 @@ class CollectionOrderController {
 				return array(
 					'id'       => $term->term_id,
 					'kind'     => 'taxonomy',
-					'label'    => $term->name ?: '#' . $term->term_id,
+					'label'    => '' !== $term->name ? $term->name : '#' . $term->term_id,
 					'slug'     => $term->slug,
 					'count'    => (int) $term->count,
 					'position' => null,
@@ -335,7 +336,7 @@ class CollectionOrderController {
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		if ( ! $object_key ) {
-			$object_key = $post_type ?: $taxonomy;
+			$object_key = $post_type ? $post_type : $taxonomy;
 		}
 
 		if ( ! $object_kind ) {
@@ -395,7 +396,7 @@ class CollectionOrderController {
 		$count_query   = new \WP_Query(
 			array(
 				'post_type'      => $post_type,
-				'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future' ),
+				'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future', 'inherit' ),
 				'posts_per_page' => 1,
 				'no_found_rows'  => false,
 				'fields'         => 'ids',
@@ -422,10 +423,11 @@ class CollectionOrderController {
 						}
 					}
 
+					$label = get_the_title( $post );
 					return array(
 						'id'            => $post->ID,
 						'kind'          => 'post_type',
-						'label'         => get_the_title( $post ) ?: '#' . $post->ID,
+						'label'         => '' !== $label ? $label : '#' . $post->ID,
 						'status'        => $post->post_status,
 						'author_name'   => $author ? $author->display_name : '',
 						'date_created'  => get_the_date( '', $post ),
@@ -462,7 +464,7 @@ class CollectionOrderController {
 					return array(
 						'id'       => $term->term_id,
 						'kind'     => 'taxonomy',
-						'label'    => $term->name ?: '#' . $term->term_id,
+						'label'    => '' !== $term->name ? $term->name : '#' . $term->term_id,
 						'slug'     => $term->slug,
 						'count'    => (int) $term->count,
 						'position' => false !== $pos ? (int) $pos + 1 : null,
@@ -485,7 +487,7 @@ class CollectionOrderController {
 			$query       = new \WP_Query(
 				array(
 					'post_type'      => $post_type,
-					'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future' ),
+					'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future', 'inherit' ),
 					'posts_per_page' => count( $ordered_slice ),
 					'post__in'       => $ordered_slice,
 					'orderby'        => 'post__in',
@@ -509,7 +511,7 @@ class CollectionOrderController {
 			$query            = new \WP_Query(
 				array(
 					'post_type'      => $post_type,
-					'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future' ),
+					'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future', 'inherit' ),
 					'posts_per_page' => $unordered_needed,
 					'offset'         => $unordered_offset,
 					'post__not_in'   => $saved_order,
@@ -573,7 +575,7 @@ class CollectionOrderController {
 		$query = new \WP_Query(
 			array(
 				'post_type'      => $post_type,
-				'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future' ),
+				'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future', 'inherit' ),
 				'posts_per_page' => count( $saved_order ),
 				'post__in'       => $saved_order,
 				'orderby'        => 'post__in',
@@ -583,9 +585,10 @@ class CollectionOrderController {
 
 		return array_map(
 			static function ( $post ) {
+				$label = get_the_title( $post );
 				return array(
 					'id'    => $post->ID,
-					'label' => get_the_title( $post ) ?: '#' . $post->ID,
+					'label' => '' !== $label ? $label : '#' . $post->ID,
 				);
 			},
 			$query->posts
@@ -614,7 +617,7 @@ class CollectionOrderController {
 			static function ( $term ) {
 				return array(
 					'id'    => $term->term_id,
-					'label' => $term->name ?: '#' . $term->term_id,
+					'label' => '' !== $term->name ? $term->name : '#' . $term->term_id,
 				);
 			},
 			$terms

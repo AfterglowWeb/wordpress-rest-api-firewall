@@ -70,8 +70,8 @@ class WebhookService {
 			),
 			'type'            => array(
 				'type'    => 'string',
-				'default' => 'general',
-				'allowed' => array( 'general', 'notification', 'automation', 'data_sync', 'alert' ),
+				'default' => 'custom',
+				'allowed' => array( 'custom', 'slack', 'discord', 'n8n', 'zapier', 'make', 'teams', 'general', 'notification', 'automation', 'data_sync', 'alert' ),
 			),
 			'created_at'      => array(
 				'type'    => 'string',
@@ -451,20 +451,22 @@ class WebhookService {
 		 *
 		 * @var array $response
 		 * */
-		$response_code   = wp_remote_retrieve_response_code( $response['result'] );
-		$response_body   = wp_remote_retrieve_body( $response['result'] );
-		$is_remote_error = empty( $response_code ) || $response_code >= 400;
-		$endpoint        = isset( $response['endpoint'] ) ? $response['endpoint'] : $webhook_endpoint;
+		$response_code    = wp_remote_retrieve_response_code( $response['result'] );
+		$response_body    = wp_remote_retrieve_body( $response['result'] );
+		$response_headers = wp_remote_retrieve_headers( $response['result'] );
+		$is_remote_error  = empty( $response_code ) || $response_code >= 400;
+		$endpoint         = isset( $response['endpoint'] ) ? $response['endpoint'] : $webhook_endpoint;
 
 		wp_send_json_success(
 			array(
-				'type'          => $is_remote_error ? 'error' : 'success',
-				'payload'       => $payload,
-				'response_code' => $response_code,
-				'response_body' => $response_body,
-				'headers_sent'  => $headers_sent,
-				'duration'      => $duration,
-				'endpoint'      => $endpoint,
+				'type'             => $is_remote_error ? 'error' : 'success',
+				'payload'          => $payload,
+				'response_code'    => $response_code,
+				'response_body'    => $response_body,
+				'response_headers' => $response_headers ? (array) $response_headers : array(),
+				'headers_sent'     => $headers_sent,
+				'duration'         => $duration,
+				'endpoint'         => $endpoint,
 			)
 		);
 	}

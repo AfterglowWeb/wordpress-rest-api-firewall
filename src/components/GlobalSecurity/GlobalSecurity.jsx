@@ -1,19 +1,57 @@
-import { useState, useCallback, useEffect } from '@wordpress/element';
+import { useState, useCallback, useEffect, useMemo } from '@wordpress/element';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormHelperText from '@mui/material/FormHelperText';
+import InputLabel from '@mui/material/InputLabel';
 import LinearProgress from '@mui/material/LinearProgress';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
+import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 
 import { useAdminData } from '../../contexts/AdminDataContext';
+import { useApplication } from '../../contexts/ApplicationContext';
 import { useDialog, DIALOG_TYPES } from '../../contexts/DialogContext';
-import CopyButton from '../CopyButton';
+import useSaveOptions from '../../hooks/useSaveOptions';
+import CopyButton from '../shared/CopyButton';
+
+// Keys tracked in this panel's local form state.
+const SECURITY_FIELDS = [
+	'theme_disable_xmlrpc',
+	'theme_disable_comments',
+	'theme_disable_pingbacks',
+	'theme_disable_rss',
+	'theme_disable_sitemap',
+	'theme_enforce_wpconfig_permissions',
+	'theme_secure_uploads_dir',
+	'theme_secure_http_headers',
+	'theme_compression_http_headers',
+	'theme_wp_http_headers',
+	'theme_redirect_templates_enabled',
+	'theme_redirect_templates_preset_url',
+	'theme_redirect_templates_free_url_enabled',
+	'theme_redirect_templates_free_url',
+];
+
+const STRING_FIELDS = new Set( [
+	'theme_redirect_templates_preset_url',
+	'theme_redirect_templates_free_url',
+] );
+
+function pickSecurityFields( source ) {
+	return Object.fromEntries(
+		SECURITY_FIELDS.map( ( k ) => [
+			k,
+			STRING_FIELDS.has( k ) ? ( source?.[ k ] || '' ) : !! source?.[ k ],
+		] )
+	);
+}
 
 function FileActionSwitch( {
 	checked,
@@ -62,8 +100,6 @@ function FileActionSwitch( {
 	}, [ adminData, ajaxAction, __ ] );
 
 	const handleChange = ( e ) => {
-		onToggle( e );
-
 		if ( e.target.checked ) {
 			openDialog( {
 				type: DIALOG_TYPES.CONFIRM,
@@ -72,10 +108,12 @@ function FileActionSwitch( {
 				confirmLabel: __( 'Apply now', 'rest-api-firewall' ),
 				onConfirm: () => {
 					closeDialog();
+					onToggle( e );
 					runAction();
 				},
 			} );
 		} else {
+			onToggle( e );
 			setResult( null );
 		}
 	};
@@ -134,9 +172,46 @@ function FileActionSwitch( {
 	);
 }
 
-export default function GlobalSecurity( { form, setField } ) {
+export default function GlobalSecurity() {
 	const { __ } = wp.i18n || {};
 	const { adminData } = useAdminData();
+	const { setDirtyFlag } = useApplication();
+
+	const [ form, setFormState ] = useState( () => pickSecurityFields( adminData.admin_options ) );
+	const [ savedForm, setSavedForm ] = useState( () => pickSecurityFields( adminData.admin_options ) );
+
+	const isDirty = useMemo(
+		() => SECURITY_FIELDS.some( ( k ) => form[ k ] !== savedForm[ k ] ),
+		[ form, savedForm ]
+	);
+
+	const setField = useCallback( ( e ) => {
+		const { name, checked, value, type } = e.target;
+		const fieldValue = type === 'checkbox' ? Boolean( checked ) : value;
+		setFormState( ( prev ) => ( { ...prev, [ name ]: fieldValue } ) );
+	}, [] );
+
+	const { save, saving } = useSaveOptions();
+
+	const handleSave = useCallback( () => {
+		save(
+			Object.fromEntries( SECURITY_FIELDS.map( ( k ) => [ k, form[ k ] ] ) ),
+			{
+				confirmTitle: __( 'Save Security Settings', 'rest-api-firewall' ),
+				confirmMessage: __( 'Save global security settings?', 'rest-api-firewall' ),
+				successTitle: __( 'Global Security Saved', 'rest-api-firewall' ),
+				successMessage: __( 'Global security settings saved successfully.', 'rest-api-firewall' ),
+				onSuccess: () => setSavedForm( { ...form } ),
+			}
+		);
+	}, [ save, form, __ ] );
+
+	useEffect( () => {
+		setDirtyFlag( { has: isDirty, save: handleSave, saving } );
+	}, [ isDirty, handleSave, saving, setDirtyFlag ] );
+
+	// Clear dirty state when panel unmounts.
+	useEffect( () => () => setDirtyFlag( { has: false } ), [ setDirtyFlag ] );
 
 	const [ fileStatus, setFileStatus ] = useState( null );
 
@@ -152,9 +227,97 @@ export default function GlobalSecurity( { form, setField } ) {
 	}, [ adminData ] );
 
 	return (
+		<Stack flexGrow={ 1 } overflow="auto">
 		<Stack p={ 4 } flexGrow={ 1 } spacing={ 3 }>
 
 			<Stack spacing={ 3 } maxWidth={ 600 }>
+
+				<Stack spacing={ 3 }>
+					<Typography variant="subtitle1" fontWeight={ 600 }>
+						{ __( 'Redirect', 'rest-api-firewall' ) }
+					</Typography>
+
+					<FormControl>
+						<FormControlLabel
+							control={
+								<Switch
+									size="small"
+									checked={ !! form.theme_redirect_templates_enabled }
+									name="theme_redirect_templates_enabled"
+									onChange={ setField }
+								/>
+							}
+							label={ __( 'Enable Redirect', 'rest-api-firewall' ) }
+						/>
+					</FormControl>
+
+					<FormControl
+						sx={ { maxWidth: 300 } }
+						disabled={
+							! form.theme_redirect_templates_enabled ||
+							form.theme_redirect_templates_free_url_enabled
+						}
+					>
+						<InputLabel id="security-redirect-preset-url-label">
+							{ __( 'WordPress Pages', 'rest-api-firewall' ) }
+						</InputLabel>
+						<Select
+							labelId="security-redirect-preset-url-label"
+							name="theme_redirect_templates_preset_url"
+							value={ form.theme_redirect_templates_preset_url || 0 }
+							label={ __( 'WordPress Pages', 'rest-api-firewall' ) }
+							onChange={ setField }
+						>
+							<MenuItem value={ 0 }>
+								<em>{ __( 'Select a Page', 'rest-api-firewall' ) }</em>
+							</MenuItem>
+							{ ( adminData?.redirect_preset_url_options || [] ).map( ( opt ) =>
+								opt.value && opt.label ? (
+									<MenuItem key={ opt.value } value={ opt.value }>
+										{ opt.label }
+									</MenuItem>
+								) : null
+							) }
+						</Select>
+						<FormHelperText>
+							{ __( 'Redirect to front page, blog page, login page, or a custom URL.', 'rest-api-firewall' ) }
+						</FormHelperText>
+					</FormControl>
+
+					<FormControl disabled={ ! form.theme_redirect_templates_enabled }>
+						<FormControlLabel
+							control={
+								<Switch
+									size="small"
+									checked={ !! form.theme_redirect_templates_free_url_enabled }
+									name="theme_redirect_templates_free_url_enabled"
+									onChange={ setField }
+								/>
+							}
+							label={ __( 'Custom URL', 'rest-api-firewall' ) }
+						/>
+						<FormHelperText>
+							{ __( 'Redirect to a custom URL instead of a WordPress page.', 'rest-api-firewall' ) }
+						</FormHelperText>
+					</FormControl>
+
+					<TextField
+						label={ __( 'Custom URL', 'rest-api-firewall' ) }
+						type="url"
+						size="small"
+						helperText={ __( 'Full URL with protocol and domain (https://www.example.com)', 'rest-api-firewall' ) }
+						name="theme_redirect_templates_free_url"
+						value={ form.theme_redirect_templates_free_url }
+						onChange={ setField }
+						disabled={
+							! form.theme_redirect_templates_enabled ||
+							! form.theme_redirect_templates_free_url_enabled
+						}
+						fullWidth
+					/>
+				</Stack>
+
+				<Divider />
 
 				<Stack spacing={ 3 }>
 					<Typography variant="subtitle1" fontWeight={ 600 }>
@@ -388,6 +551,7 @@ export default function GlobalSecurity( { form, setField } ) {
 
 			</Stack>
 
+		</Stack>
 		</Stack>
 	);
 }
