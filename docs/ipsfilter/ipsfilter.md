@@ -2,12 +2,12 @@
 
 # IP Filtering (Per-Application)
 
-Per-application IP Filtering is a Pro feature that adds application-scoped blocking on top of the [Global IP Filtering](/global-ip-filtering/global-ip-filtering) layer. Because applications themselves are a Pro concept, this module is only available with a Pro licence.
+Per-application IP Filtering is a Pro feature that adds application-scoped blocking on top of the [Global IP Filtering](/global-ip-filtering/global-ip-filtering) layer. Because applications themselves are a Pro concept, this module is only available with a Pro license.
 
 | Layer | Scope | Tier | Doc |
 |---|---|---|---|
 | **Global IP Filtering** | Shared across all applications — runs before application resolution | Free + Pro | [→ Global IP Filtering](/global-ip-filtering/global-ip-filtering) |
-| **Per-Application IP Filtering** | Additional blocks scoped to one application — runs after application resolution | **Pro only** | This page |
+| **Per-Application IP Filtering** | Additional blocks scoped to one application — runs after application resolution | **Pro-only** | This page |
 
 Use Global IP Filtering for shared threats such as known bots, scrapers, and unwanted geographies. Use per-application IP Filtering for rules that only apply to one specific application. An IP that passes the global check can still be blocked here for a specific application.
 
@@ -52,4 +52,8 @@ Yes. Both IPv4 and IPv6 are supported via CIDR notation.
 
 **What happens to blocked IPs when an application is deleted?**
 
-IP entries scoped to a deleted application are removed alongside it. Global entries are unaffected.
+Application-scoped entries are detached from that application and no longer enforced there. Global entries are unaffected.
+
+**Can I keep one strict global policy and still allow variation per app?**
+
+Yes. Keep broad controls in [Global IP Filtering](/global-ip-filtering/global-ip-filtering) and add stricter, app-specific rules here.
