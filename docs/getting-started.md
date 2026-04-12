@@ -27,7 +27,7 @@ yarn build
 
 Go to **WordPress Admin → Plugins** and activate **WordPress Application Layer**.
 
-## First-Run Checklist
+## Start Here: First-Run Checklist
 
 After activation, use this order in the admin UI:
 
@@ -37,7 +37,7 @@ After activation, use this order in the admin UI:
 4. Open **Properties** and apply global transforms (relative URLs, embedded fields, flattening).
 5. Open **Webhook** if you need outbound event delivery.
 
-## Pro First-Run Checklist
+## Go Pro: First-Run Checklist
 
 1. Activate your license in **License Management**.
 2. Create your first **Application**.
@@ -45,7 +45,7 @@ After activation, use this order in the admin UI:
 4. Link users in **Users** and refine route access in **Routes**.
 5. If running headless only, configure **WordPress Mode**.
 
-## Architecture Checks (Recommended)
+## Keep It Safe: Architecture Checks (Recommended)
 
 Run these before major refactors:
 

@@ -1,8 +1,12 @@
 # What is WordPress Application Layer?
 
-WordPress Application Layer is a plugin that sits between the WordPress REST API and your client applications. It lets you control exactly what data is exposed, who can access it, how it is shaped, and at what rate — without touching WordPress core or your theme.
+WordPress Application Layer sits between the WordPress REST API and your client applications.
 
-Beyond REST API responses, the plugin can **drive your front-end entirely through webhooks**: WordPress events (post publish, user register, WooCommerce order, custom CRON…) push data to your application in real time using the same schema as the REST API. You can combine both approaches or rely solely on webhooks to feed your application.
+It lets you control what data is exposed, who can access it, how it is shaped, and at what rate, without touching WordPress core or your theme.
+
+Beyond REST API responses, it can also **drive your front-end through webhooks**. WordPress events (post publish, user register, WooCommerce order, custom CRON...) can push data to your application in real time using the same schema as the REST API.
+
+You can combine both approaches, or rely on webhooks only.
 
 It is designed for:
 - **Headless WordPress** architectures (Next.js, Nuxt, SvelteKit, React, Vue, mobile apps)
@@ -12,7 +16,7 @@ It is designed for:
 
 ---
 
-## Architecture
+## Understand the Architecture
 
 The plugin operates exclusively within REST API contexts. Admin-authenticated requests are forwarded untouched, so it never interferes with the WordPress admin or other plugins.
 
@@ -101,7 +105,7 @@ External Service (Stripe, GitHub, CRM, IoT, …)
 
 ---
 
-## Free Features
+## Explore Free Features
 
 | Feature | Description |
 |---|---|
@@ -114,7 +118,7 @@ External Service (Stripe, GitHub, CRM, IoT, …)
 | **Webhook** | Single outbound webhook with event triggers |
 | **Hooks API** | Every option exposes a WordPress filter for customisation |
 
-## Pro Features
+## Explore Pro Features
 
 | Feature | Description |
 |---|---|

@@ -2,11 +2,15 @@
 
 ![Routes explorer and per-route settings](docs/public/wordpress-application-layer-routes.webp)
 
-📖 **[Documentation](https://wordpress-application-layer.abc-plugins.com)**
+📖 **[Documentation](https://wal.abc-plugins.com)**
 
-WordPress Application Layer is a plugin that sits between the WordPress REST API and your client applications. It lets you control exactly what data is exposed, who can access it, how it is shaped, and at what rate — without touching WordPress core or your theme.
+WordPress Application Layer sits between the WordPress REST API and your client applications.
 
-Beyond REST API responses, the plugin can **drive your front-end entirely through webhooks**: WordPress events (post publish, user register, WooCommerce order, custom CRON…) push data to your application in real time using the same schema as the REST API. You can combine both approaches or rely solely on webhooks to feed your application.
+It lets you control what data is exposed, who can access it, how it is shaped, and at what rate, without touching WordPress core or your theme.
+
+Beyond REST API responses, it can also **drive your front-end through webhooks**. WordPress events (post publish, user register, WooCommerce order, custom CRON...) can push data to your application in real time using the same schema as the REST API.
+
+You can combine both approaches, or rely on webhooks only.
 
 Designed for **headless WordPress** architectures, **multi-application** setups, **event-driven** delivery, and sites that need **REST API security hardening**.
 
@@ -69,7 +73,7 @@ Designed for **headless WordPress** architectures, **multi-application** setups,
 | Email Templates | — | ✅ |
 | Request Logs & Audit Trail | — | ✅ |
 
-## How does it work?
+## See How It Works
 
 WordPress Application Layer operates exclusively within REST API contexts. Admin-authenticated requests are forwarded untouched, so it never interferes with the WordPress admin or other plugins.
 
@@ -114,7 +118,7 @@ Alongside this pipeline, webhooks and email notifications run independently. Any
 - WordPress 6.0+
 - PHP 7.4+
 
-## Installation
+## Install in 4 Steps
 
 ### 1. Download or clone this repository into your `wp-content/plugins/` directory
 

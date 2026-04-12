@@ -8,7 +8,7 @@ You can create as many applications as you need. Each one is independent.
 
 ---
 
-## Applications List
+## Manage Applications
 
 The list view is the entry point for managing all your applications.
 
@@ -29,7 +29,7 @@ When at least one application is enabled, unmatched requests are handled by rout
 
 ---
 
-## Application Editor
+## Configure an Application
 
 Each application has its own editor with two areas:
 
@@ -39,7 +39,7 @@ Each application has its own editor with two areas:
 - **Description** — optional notes for your own reference.
 - **Enabled** — activate or deactivate the application without deleting it.
 
-### Modules Tab
+### Control Modules
 
 The Modules tab gives a compact overview and per-module toggle entry points.
 
@@ -75,13 +75,13 @@ Each module can be toggled on or off at the application level. A module must als
 
 ---
 
-## Auth & Rate Limiting Module
+## Configure Auth & Rate Limiting
 
 See the dedicated [Auth & Rate Limiting](/users/users) page for full documentation of application-level defaults, the users list, and the user editor.
 
 ---
 
-## IP Filtering Module
+## Configure IP Filtering
 
 Manages application-scoped IP blocking, layered on top of the [Global IP Filtering](/global-ip-filtering/global-ip-filtering) module. Entries here only apply to this application.
 
@@ -93,7 +93,7 @@ See the dedicated [IP Filtering](/ipsfilter/ipsfilter) page for full documentati
 
 ---
 
-## Applications Only Mode
+## Harden with Applications Only Mode
 
 If enabled in [WordPress Mode](/wordpress-mode/wordpress-mode), the installation behaves as application-first:
 
@@ -104,7 +104,7 @@ Use this mode when WordPress is strictly an API backend and you want non-applica
 
 ---
 
-## Application Lifecycle Notes
+## Plan Application Lifecycle Changes
 
 - Disabling an application preserves all settings and entries.
 - Deleting an application removes app ownership but can preserve related records for later reassignment workflows.

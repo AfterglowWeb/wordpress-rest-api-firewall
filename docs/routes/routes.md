@@ -6,7 +6,7 @@ The Routes panel gives you visibility and control over every REST API endpoint W
 
 ---
 
-## Global Options
+## Set Global Defaults
 
 Global settings apply to every route and can be overridden per-route in Pro.
 
@@ -16,7 +16,7 @@ Global settings apply to every route and can be overridden per-route in Pro.
 </figure>
 
 <details>
-<summary>Auth. &amp; Rate Limiting</summary>
+<summary>Auth &amp; Rate Limiting Defaults</summary>
 
 <p><strong>Enforce Authentication on All Routes</strong> — requires a valid authenticated request on WordPress core REST endpoints. Unauthenticated requests are rejected with <code>401</code> before reaching WordPress. Third-party plugin routes are left open in the free tier, as exempting individual plugin sub-routes to avoid breakage requires the per-route control available in Pro.</p>
 <p><strong>Enforce Rate Limiting on All Routes</strong> — applies the global rate-limiting quota (configured in the Auth &amp; Rate Limiting panel) to every route, including third-party plugin routes.</p>
@@ -68,7 +68,7 @@ Global settings apply to every route and can be overridden per-route in Pro.
 
 ---
 
-## Per Route Settings <span style="display:inline-block;padding:1px 6px;border-radius:3px;background:#1565c0;color:#fff;font-size:10px;font-weight:600">PRO</span>
+## Fine-Tune Per-Route Settings <span style="display:inline-block;padding:1px 6px;border-radius:3px;background:#1565c0;color:#fff;font-size:10px;font-weight:600">PRO</span>
 
 The per-route tree lists every registered REST route and lets you apply settings at any level — a top-level namespace, a route path, or an individual HTTP method. Child nodes inherit from their parent unless explicitly overridden.
 
@@ -87,7 +87,7 @@ The per-route tree lists every registered REST route and lets you apply settings
 </details>
 
 <details>
-<summary>Per-Route Overrides</summary>
+<summary>Apply Per-Route Overrides</summary>
 
 <p>Click the settings icon on any node to activate a custom override for that route. Once activated, three toggles appear:</p>
 <ul>
@@ -100,7 +100,7 @@ The per-route tree lists every registered REST route and lets you apply settings
 </details>
 
 <details>
-<summary>Access Settings Drawer</summary>
+<summary>Use the Access Settings Drawer</summary>
 
 <p>Per-route access is managed in a drawer opened from the route/method node. It replaces the old per-node user popover pattern.</p>
 <p>The drawer groups access controls into three areas:</p>
