@@ -16,6 +16,18 @@ It is designed for:
 
 ---
 
+## Core Capabilities
+
+**Secure Your WordPress** — The first REST API firewall purpose-built for WordPress. IP filtering, rate limiting, login hardening, XML-RPC protection, file security, HTTP security headers. One unified security layer for the REST API and the entire WordPress platform.
+
+**Isolate Multiple Applications** — Serve 10 different clients from one WordPress backend. Each application gets its own authentication context, custom data view, isolated webhooks, and independent rate limits. Complete isolation. True multi-tenancy.
+
+**Shape Data Your Way** — Design custom REST API responses without code. Drag-and-drop property controls inspired by Firebase. Rename, resolve, remove, and remap fields. Free for global transforms; Pro adds unlimited per-property control and fully custom JSON schemas.
+
+**Automate Everything End-to-End** — Chain complex workflows: WordPress events → automations → webhooks → external services → incoming webhooks → WordPress. No code required, no external services needed.
+
+---
+
 ## Understand the Architecture
 
 The plugin centers on REST API policy and response control, and also includes WordPress-wide protections such as global IP filtering and login hardening. Admin-authenticated requests are forwarded untouched where relevant, so normal WordPress administration workflows remain intact.
@@ -109,30 +121,35 @@ External Service (Stripe, GitHub, CRM, IoT, …)
 
 | Feature | Description |
 |---|---|
-| **Authentication** | WordPress Application Password (hardened to a single authorized user) and JWT |
-| **Rate Limiting** | Global request quotas with configurable time windows |
-| **Global IP Filtering** | Shared blocklist that runs before application resolution. Manual IPv4 blacklisting. Auto-blacklist from rate limit violations. Read-only GeoIP stats. CIDR ranges and country blocking require Pro |
-| **Routes** | Enforce auth and rate limiting globally. Disable the default `/users` routes to prevent user enumeration |
-| **Properties & Models** | Apply sitewide response transforms: resolve attachments, terms & authors, flatten rendered fields, remove domain from URLs. Rules apply globally across all routes — individual property control (disable, rename, remap) requires Pro |
-| **WordPress Security** | Disable XML-RPC, comments, RSS. Secure files, security headers |
-| **Webhook** | Single outbound webhook with event triggers |
-| **Hooks API** | Every option exposes a WordPress filter for customisation |
+| **Authentication** | JWT and hardened WordPress Application Passwords (scoped to single authorized user) |
+| **Per-User Rate Limiting** | Configurable request quotas with auto-blacklist on violations |
+| **Auth Hardening** | Login form protection: rate limiting, brute-force prevention, configurable lockout |
+| **Global IP Filtering** | Manual IPv4/IPv6 blacklisting, auto-blacklist on rate limit violations, read-only GeoIP stats |
+| **Routes Control** | Enforce authentication globally, disable sensitive routes (`/users`, `/settings`), explore all routes with per-route test buttons |
+| **Response Transforms** | Sitewide rules: resolve embedded data, flatten rendered fields, strip WordPress domain from URLs |
+| **WordPress Security** | Disable XML-RPC, comments, pingbacks, RSS; enforce security headers; secure file permissions |
+| **Webhook** | Single outbound webhook with customizable event triggers |
+| **Hooks & Filters API** | Extend every feature with WordPress filters for customization |
 
 ## Explore Pro Features
 
 | Feature | Description |
 |---|---|
-| **Applications** | Isolate all settings per client — auth, routes, data, webhooks |
-| **Global IP Filtering (Pro additions)** | CIDR range support, country blocking via GeoIP, and configurable retention time on top of the free blocklist |
-| **Per-App IP Filtering** | Application-scoped blocking layered on top of the global check (Pro only — requires Applications) |
-| **Collections** | Enforce per-page limits and drag-and-drop sort order |
-| **Routes Policy** | Per-route method control, user assignment, rate limiting and redirections. Safely disable any route with fine-grained per-application rules (avoids breaking unrelated plugin requests) |
-| **Properties & Models** | Disable, rename or remap any individual property. Remove empty properties to lighten responses. Build fully custom JSON schemas from scratch — map existing fields and add new static ones |
-| **Automations** | Event-driven workflows with conditions and chained actions |
-| **Multiple Webhooks** | Unlimited outbound webhooks, scoped per application. Incoming webhooks let external services trigger automations via a signed endpoint |
-| **Email Templates** | Transactional email templates with SMTP configuration, scoped per application |
-| **Settings Route** | Schema editor for `/wp/v2/settings` — include ACF options pages and resolved WordPress menus, shaped with per-property control or custom schema |
-| **Logs** | Full request history and audit trail |
+| **Multi-Application Isolation** | Serve multiple clients with independent auth contexts, IP rules, webhooks, and logs |
+| **Unlimited Users per Application** | No user limits per application instance |
+| **WordPress Mode** | "Application Only Mode" enforces headless-only access; trusted IPs bypass restrictions; emergency reset token enables lockout recovery |
+| **Advanced IP Filtering** | CIDR ranges, country-level blocking (GeoIP), configurable retention, per-application IP whitelisting and origin restrictions |
+| **Per-Route Policies** | Control each route individually: restrict by HTTP method, user, IP, or origin; set custom responses; disable without breaking other plugins |
+| **Per-Route Test Buttons** | Explore and debug each route with request/response inspection |
+| **Per-Property Control** | Disable, rename, or remap individual JSON properties; remove empty properties; strip embedded data |
+| **Custom JSON Schemas** | Build completely custom response schemas from scratch; map existing fields or add static data |
+| **Settings Route Editor** | Customize `/wp/v2/settings` to include ACF options pages, WordPress menus, and custom fields |
+| **Event-Driven Automations** | Chain WordPress events (post transitions, WooCommerce orders, security events) with conditions and multiple webhook/email actions |
+| **Unlimited Webhooks** | Unlimited outbound webhooks per application; incoming webhook endpoints trigger automations via HMAC-signed requests |
+| **Email Templates & SMTP** | Transactional email templates with per-application SMTP configuration |
+| **Collections** | Enforce per-page limits, customize sort order, and organize content per application |
+| **Request Logs & Audit Trail** | Full queryable logs with graphs and data exports |
+| **Import & Export** | Backup and replicate application settings across environments |
 
 ---
 
