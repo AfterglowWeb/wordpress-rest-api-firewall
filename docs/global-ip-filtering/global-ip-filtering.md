@@ -2,9 +2,8 @@
 
 # Global IP Filtering
 
-Global IP Filtering is a network-level firewall layer that runs **before application resolution**. Every incoming REST request is evaluated against the global blocklist regardless of which application it targets. A blocked IP or country never reaches application-specific logic.
+Global IP Filtering is a WordPress-level firewall layer that runs **before application resolution**. Every incoming REST request is evaluated against the global blocklist regardless of which application it targets. A blocked IP or country never reaches application-specific logic.
 
-This complements the [Per-Application IP Filtering](/ipsfilter/ipsfilter) module (Pro only), which adds application-scoped rules on top. Use Global IP Filtering for shared threats — known bots, attack infrastructure, unwanted geographies. Use per-application IP Filtering for rules specific to one application.
 
 ---
 
@@ -35,7 +34,7 @@ Admin-authenticated requests are exempt from this layer for operational safety.
 
 ### Manual Blocklist
 
-Add IPv4 addresses to the global blocklist manually. Blocked IPs receive a `403` response immediately.
+Add IPv4 or IPv6 addresses to the global blocklist manually. Blocked IPs receive a `403` response immediately.
 
 ### GeoIP Statistics
 
@@ -77,37 +76,3 @@ The IP list shows all active global entries. For each entry:
 
 Entries show the IP address, source (manual or auto-detected), detected country, and — in Pro — the expiry time.
 
----
-
-## Relationship to Per-Application IP Filtering
-
-| Layer | Tier | Scope | Runs at |
-|---|---|---|---|
-| Global IP Filtering | Free + Pro | All applications | Before application resolution |
-| Per-Application IP Filtering | **Pro only** | One application | After application resolution |
-
-An IP that passes the global check can still be blocked at the per-application level. An IP blocked globally never reaches application logic.
-
----
-
-## FAQ
-
-**Does the global blocklist affect admin users?**
-
-No. Requests from logged-in administrators bypass the global check.
-
-**Can I use Global IP Filtering without Pro?**
-
-Yes. Manual IPv4 blocking is available in the free tier. CIDR ranges, country blocking, and retention time require Pro.
-
-**Where do auto-blacklisted IPs from rate limiting go?**
-
-Rate-limit auto-blacklisting writes to the global list.
-
-**Should I use only global or only per-application filtering?**
-
-Use both: global for shared threats, per-application for client-specific restrictions.
-
-**What HTTP status does a blocked request receive?**
-
-`403 Forbidden` with a JSON error body.
