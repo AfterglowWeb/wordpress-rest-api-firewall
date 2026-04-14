@@ -26,7 +26,6 @@ export default defineConfig({
           { text: 'Settings Route', link: '/settings/settings' },
           { text: 'Routes & Exposure', link: '/routes/routes' },
           { text: 'Global IP Filtering', link: '/global-ip-filtering/global-ip-filtering' },
-          { text: 'IP Filtering (per-application)', link: '/ipsfilter/ipsfilter' },
           { text: 'Collections', link: '/collections/collections' },
           { text: 'Automations', link: '/automations/automations' },
           { text: 'Webhooks', link: '/webhooks/webhooks' },
