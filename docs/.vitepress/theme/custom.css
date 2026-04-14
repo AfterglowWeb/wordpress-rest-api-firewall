@@ -30,28 +30,3 @@
   font-weight: 600;
   text-decoration: underline;
 }
-
-/* ── Hero image ─────────────────────────────────────────────────── */
-.VPHero .image-container {
-  max-width: 680px !important;
-  width: 100% !important;
-}
-
-.VPHero .image-bg,
-.VPHero .image-src {
-  max-width: 680px !important;
-  width: 100% !important;
-  height: auto !important;
-}
-
-/* ── Sidebar slide animation ────────────────────────────────────── */
-/* Use !important to override VitePress scoped-style specificity.    */
-.VPSidebar {
-  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              transform 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-.VPSidebar.open {
-  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-              transform 0.4s cubic-bezier(0.19, 1, 0.22, 1) !important;
-}

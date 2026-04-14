@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: "WordPress Application Layer"
-  text: "WordPress as a modern application backend."
-  tagline: "Decide what data is exposed, who can access it, and how it is shaped. Self-hosted, open-source, built for developers who are done rebuilding the same things from scratch."
+  text: "Full security and data management for your headless WordPress backend."
+  tagline: "Control authentication, data exposure, and request flow. Build multi-tenant applications with isolated clients. Automate complex workflows. Harden your WordPress install. Self-hosted, open-source, built for developers done with SaaS."
   image:
     src: /wordpress-application-layer-routes.webp
     alt: WordPress Application Layer admin interface
@@ -18,43 +18,31 @@ hero:
 
 features:
   - icon: 🔐
-    title: Authentication & Rate Limiting
-    details: Authenticate clients with WordPress Application Password (hardened to a single authorized user) or JWT. Set per-user request quotas with configurable time windows. Auto-blacklist IPs that exceed thresholds — no third-party service required.
+    title: Full Security & Data Management for the WordPress REST API
+    details: "Validate clients with JWT or WordPress Application Passwords. Enforce per-user rate limits with auto-blacklist on violations. Block malicious IPs. Audit every REST route and control what is exposed. Free tier covers essentials; Pro adds CIDR ranges, country blocking, per-route policies, and origin restrictions."
     link: /users/users
     linkText: Learn more
 
-  - icon: 🗂️
-    title: Properties & Models
-    details: Apply sitewide response transforms for free — resolve embedded terms, authors & attachments, flatten rendered fields, strip domain from URLs. Pro adds per-property disable, rename and remap, plus fully custom JSON schemas.
+  - icon: 📦
+    title: Schema Builder & Multi-Application Backend
+    details: "Transform REST responses with sitewide or per-property rules — resolve embeds, flatten fields, strip URLs, rename properties, remap data. Free tier offers global transforms; Pro adds fully custom JSON schemas, per-property control, and settings route editor. Serve multiple applications from one WordPress install, each isolated."
     link: /models/models
     linkText: Learn more
 
-  - icon: 🔍
-    title: Routes & Exposure Control
-    details: Browse every REST API route and its schema from the admin. Globally disable HTTP methods, post types, or taxonomies from the API. Pro adds per-route policy — disable or redirect individual routes, restrict them to specific users, and apply fine-grained rate limits per endpoint.
-    link: /routes/routes
+  - icon: ⚡
+    title: Complex Automations to Feed Your Applications
+    details: "Chain event-driven workflows triggered by WordPress events (post transitions, WooCommerce orders, security events) or external webhooks. Define conditions, fire multiple webhooks and emails per automation, queue or schedule them, automate Git API triggers for front-end deployments. Build powerful integrations without code."
+    link: /automations/automations
     linkText: Learn more
 
-  - icon: 🛡️
-    title: WordPress Security Hardening
-    details: Disable XML-RPC, comments, pingbacks, RSS feeds, and the theme editor. Secure file permissions, protect the uploads directory, and enforce HTTP security headers — all in one place.
+  - icon: 🔒
+    title: Extended Security for Your WordPress Install
+    details: "Harden WordPress-wide surfaces beyond REST API: login form rate limiting and hardening, disable XML-RPC/comments/pingbacks/RSS, enforce HTTP security headers, secure file permissions, protect uploads directory. Control what is exposed and defend against abuse at every layer."
     link: /global-security/global-security
     linkText: Learn more
-
-  - icon: 📦
-    title: Multi-Application Isolation
-    details: Serve a corporate website, a mobile app, and an e-commerce store from one WordPress installation — each with its own authentication context, data view, rate limit, and webhook configuration.
-    link: /applications/applications
-    linkText: Learn more (Pro)
-
-  - icon: ⚡
-    title: Event-Driven Automations
-    details: Chain actions on WordPress lifecycle events — send emails, trigger webhooks, fire custom hooks — with optional conditions. No code required, no external automation service needed.
-    link: /automations/automations
-    linkText: Learn more (Pro)
 ---
 
-<div class="vp-doc home-extra">
+<div class="vp-doc home-intro">
 
 ## Own your stack. Own your data.
 
@@ -62,45 +50,100 @@ SaaS CMSes are convenient until they are not — pricing changes, data lives on 
 
 Authentication, data shaping, API scoping, event automation, security hardening: the features you have been assembling from a dozen plugins on every project, now in one coherent layer — with a clean admin UI, a full hooks API, and zero vendor lock-in.
 
+</div>
+
+<div class="vp-doc home-extra">
+
+## How It Works
+
+### Request Flow & Application Matching
+
+Every incoming REST request passes through a security pipeline that controls access before responses are sent. Here's what happens:
+
+**Application Matching (Pro):** The first layer determines which application owns the request. Two modes available:
+
+- **Application Only Mode (Pro):** Requests that don't match any application are rejected by default. All non-REST endpoints (theme, sitemap, RSS feeds) are disabled, redirected (301), or return custom error codes. You can fine-tune which plugin routes are accessible, or disable them entirely. This mode creates a locked-down REST-only backend.
+
+- **Normal Mode:** REST API remains accessible if the request doesn't match an application. You can still disable theme access, RSS feeds, and other endpoints globally, but unmatched requests reach WordPress normally. Application-matched requests follow the same security pipeline.
+
+**WordPress Install Security:** Regardless of mode, your WordPress installation is protected by:
+- Request rate limiting and IP auto-blacklisting
+- Login form rate limiting and hardening
+- HTTP security headers (preventing XSS, clickjacking, etc.)
+- Disabled XML-RPC, comments, pingbacks, RSS (configurable)
+- Secure file permissions and upload directory protection
+
+**The Security Pipeline:**
+
+```
+Incoming REST request
+       │
+       ▼
+┌──────────────────────────────┐
+│ 1. IP Filtering & Blocklist  │  ← IPs, CIDRs (Pro), countries (Pro)
+└──────────┬───────────────────┘
+           │ blocked → 403
+           ▼
+┌──────────────────────────────┐
+│ 2. Application Matching      │  ← Route to app or reject (Pro)
+└──────────┬───────────────────┘
+           │ (depending on mode)
+           ▼
+┌──────────────────────────────┐
+│ 3. Authentication            │  ← JWT / WP App Passwords
+└──────────┬───────────────────┘
+           │ invalid → 401
+           ▼
+┌──────────────────────────────┐
+│ 4. Rate Limiting             │  ← Per-user quotas
+└──────────┬───────────────────┘
+           │ exceeded → 429
+           ▼
+┌──────────────────────────────┐
+│ 5. Routes Policy             │  ← Global or per-route (Pro)
+└──────────┬───────────────────┘
+           │ disabled/restricted
+           ▼
+┌──────────────────────────────┐
+│ WordPress REST API           │  ← Native WP handler
+└──────────┬───────────────────┘
+           ▼
+┌──────────────────────────────┐
+│ 6. Properties Transform      │  ← Sitewide or per-property (Pro)
+└──────────┬───────────────────┘
+           ▼
+       REST Response
+```
+
 ---
 
-## Built for real development workflows
+### Event-Driven Automations
 
-<div class="pillars-grid">
+Automations power your applications by reacting to WordPress events or external triggers. Build workflows without code.
 
-<div class="pillar-card">
+**Event Sources:**
 
-### Control what you expose
+- **WordPress Events:** Post/page/custom post type creation, updates, deletion, status transitions. Taxonomy term create/update/delete. Media attachment upload/delete. WooCommerce orders, payments, customer actions. User registration, login, role changes. Security events from this firewall (rate limit violations, IP blocks, auth failures). Custom plugin hooks and your own application events.
 
-WordPress exposes a lot by default — user data, internal meta, raw field structures. Application Layer lets you audit every route, globally disable HTTP methods, post types or taxonomies, and in Pro, decide field by field what leaves your server.
+- **External Webhooks:** External services (Stripe, GitHub, CRM, IoT devices) can POST signed requests to trigger automations. Each webhook endpoint is unique and HMAC-protected.
 
-</div>
+**Automation Steps:**
 
-<div class="pillar-card">
+1. **Define event source(s):** One or multiple WordPress hooks, or an external webhook endpoint.
 
-### Shape data for your front-end
+2. **Set conditions (optional):** Use a visual conditional logic builder to fire the automation only when specific data matches (e.g., "only for posts with category X" or "if order total > $100").
 
-Stop massaging responses client-side. Apply sitewide transforms for free: resolve embedded terms, flatten rendered wrappers, strip domain from URLs. Pro adds per-property rename, remap, and fully custom schemas.
+3. **Configure actions:** Queue or schedule the automation. Chain multiple actions:
+   - Send **N webhooks** (each with its own payload mapping and retry logic)
+   - Send **N emails** (using per-application SMTP servers with custom email templates)
+   - Trigger **Git API integration** to deploy front-end applications (trigger builds on repository events)
+   - Fire custom WordPress hooks for your own plugins to extend further
 
-</div>
+4. **Chain automations:** One automation can trigger another, creating complex multi-step workflows.
 
-<div class="pillar-card">
+**Webhook Protection:** All webhooks are HMAC-signed. You control read/write keys, and can rotate them at any time.
 
-### Isolate clients from each other
-
-One WordPress installation. Multiple applications — each with its own auth method, data view, rate limit, and secret. The same content, safely served to different consumers.
-
-</div>
-
-<div class="pillar-card">
-
-### Self-host with confidence
-
-No subscription required for the core feature set. No telemetry. No external dependency. Your WordPress, your server, your rules.
-
-</div>
-
-</div>
+**SMTP Configuration:** Set up one SMTP server per application, so each client gets isolated email delivery.
 
 ---
 
@@ -146,28 +189,90 @@ Serve content in multiple languages across separate websites or applications, ea
 
 ## Free vs Pro
 
+<div class="tier-comparison">
+
+<div class="tier-card tier-free">
+
+### ✅ Free Tier
+
+Fully explore and secure your REST API with authentication, rate limiting, and response shaping.
+
+- **Authentication (JWT, App Passwords)** + user rate limits
+- **Global IP blocking** with auto-blacklist on violations
+- **Explore all routes** with per-route test buttons
+- **Shape responses** globally: resolve, flatten
+- **Hardened login** protection and WordPress security (XML-RPC, RSS, file permissions)
+- **Single webhook** for event triggers
+
+</div>
+
+<div class="tier-card tier-pro">
+
+### 🚀 Pro Tier
+
+Serve multiple applications with per-client isolation, advanced security, and automation.
+
+- **Multi-application isolation:** Unlimited users per app with independent auth, IP rules, and webhooks
+- **Advanced IP control:** CIDR ranges, country blocking, origin restrictions, "Application Only Mode"
+- **Per-route & per-property control:** Fine-grained policies, custom schemas, and per-route test buttons
+- **Automations & webhooks:** Event-driven workflows with chained actions, unlimited webhooks, incoming webhook triggers
+- **Complete audit trail:** Request logs, email templates with SMTP, collections with sort order
+
+</div>
+
+</div>
+
+### Core Pillars
+
 | Feature | Free | Pro |
 |---|:---:|:---:|
+| **Authentication & Rate Limiting** | | |
+| Authentication (JWT & App Passwords) | ✅ | ✅ |
+| Per-user (1 Free) rate limit quotas | ✅ | ✅ |
+| Auto-blacklist on violations | ✅ | ✅ |
+| Serve multiple applications | - | ✅ |
+| Unlimited users | - | ✅ |
+| Custom headers per application | — | ✅ |
+| **IP Filtering & Security** | | |
+| Global IP blocklist (manual IPv4 & IPv6) | ✅ | ✅ |
+| Auto-blacklist from rate limits | ✅ | ✅ |
+| Read-only GeoIP stats | ✅ | ✅ |
+| Managed blocked IPs | ✅ | ✅ |
+| Per-application IP whitelisting | — | ✅ |
+| Per-application origin | — | ✅ |
+| Per-application custom headers control | — | ✅ |
+| CIDR ranges support | — | ✅ |
+| Country-level blocking (GeoIP) | — | ✅ |
+| **Routes & Exposure Control** | | |
 | REST API route explorer | ✅ | ✅ |
-| Authentication & Rate Limiting | ✅ | ✅ |
-| Properties & Models (sitewide transforms) | ✅ | ✅ |
-| Routes: global method / post-type / taxonomy disable | ✅ | ✅ |
-| WordPress Security Hardening | ✅ | ✅ |
-| Webhook (single, post lifecycle events) | ✅ | ✅ |
+| Enforce Auth on all WordPress core routes | ✅ | ✅ |
+| Disable security data exposed | ✅ | ✅ |
+| Global method disable (GET, POST, PUT, PATCH, DELETE) | - | ✅ |
+| Global post-type / taxonomy disable | - | ✅ |
+| Per-app x Per-route policy (disable, redirect) | — | ✅ |
+| Per-app x Per-route user / IP / origin restriction | — | ✅ |
+| Custom disabled route response (404, 410, 301, empty) | — | ✅ |
+| Per-app x Route test button | — | ✅ |
+| **Properties & Data Shaping** | | |
+| Resolve embedded data (terms, authors, attachments) | ✅ | ✅ |
+| Flatten rendered fields | ✅ | ✅ |
+| Relative URLs (strip domain) | ✅ | ✅ |
+| Remove empty properties | — | ✅ |
+| Per-property disable / rename / remap | — | ✅ |
+| Custom JSON schemas | — | ✅ |
+| Settings route schema editor | — | ✅ |
+
+### Automation Features
+
+| Feature | Free | Pro |
+|---|:---:|:---:|
+| Webhooks (single, post lifecycle events) | ✅ | ✅ |
 | Hooks & Filters API | ✅ | ✅ |
-| Multiple Applications | — | ✅ |
-| Global IP Filtering (shared blocklist, runs before app resolution) | ✅ | ✅ |
-| Global IP Filtering: CIDR ranges + country blocking | — | ✅ |
-| Per-Application IP Filtering (additional app-scoped blocks) | ✅ | ✅ |
-| Per-Application IP Filtering: CIDR + country blocking + retention time | — | ✅ |
-| Collections & Sort Order | — | ✅ |
-| Properties & Models (per-property control + custom schemas) | — | ✅ |
-| Settings Route schema editor (ACF options, menus) | — | ✅ |
-| Per-Route Policy (per-route disable, redirect, user restriction) | — | ✅ |
-| Automations | — | ✅ |
-| Multiple Webhooks (unlimited, per application) | — | ✅ |
-| Email Templates | — | ✅ |
-| Request Logs & Audit Trail | — | ✅ |
+| Multiple webhooks (unlimited per app) | — | ✅ |
+| Incoming webhooks (external triggers) | — | ✅ |
+| Email templates & SMTP config | — | ✅ |
+| Automations (event & schedule workflows) | — | ✅ |
+| Request logs & audit trail | — | ✅ |
 
 ---
 
@@ -289,6 +394,108 @@ An optional encryption layer for sensitive data stored in `wp_options` and custo
 </div>
 
 <style>
+.VPHero .text {
+  font-size: 2.5rem !important;
+  line-height: 2.8rem !important;
+}
+
+.tier-comparison {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin: 28px 0;
+}
+
+.tier-card {
+  border: 2px solid var(--vp-c-divider);
+  border-radius: 10px;
+  padding: 16px 18px;
+  position: relative;
+}
+
+.tier-card h3 {
+  font-size: 1.05rem;
+  margin: 0 0 12px 0;
+  border: none;
+  padding: 0;
+  color: var(--vp-c-text-1);
+  font-weight: 700;
+}
+
+.tier-free {
+  background: linear-gradient(135deg, rgba(46, 125, 50, 0.05) 0%, rgba(76, 175, 80, 0.05) 100%);
+  border-color: #4caf50;
+}
+
+.tier-free h3 {
+  color: #2e7d32;
+}
+
+.tier-pro {
+  background: linear-gradient(135deg, rgba(21, 101, 192, 0.05) 0%, rgba(33, 150, 243, 0.05) 100%);
+  border-color: #1565c0;
+  box-shadow: 0 4px 12px rgba(21, 101, 192, 0.15);
+}
+
+.tier-pro h3 {
+  color: #1565c0;
+}
+
+.tier-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tier-card li {
+  padding: 5px 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--vp-c-text-2);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.tier-card li:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.tier-card strong {
+  color: var(--vp-c-text-1);
+  font-weight: 600;
+}
+
+.tier-card > p {
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0 0 10px 0;
+  color: var(--vp-c-text-2);
+}
+
+.home-intro {
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.home-intro h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+
+.home-intro > p {
+  font-size: 16px;
+  color: var(--vp-c-text-2);
+  max-width: 700px;
+  line-height: 1.8;
+  margin: 0;
+}
+
+.home-intro strong {
+  color: var(--vp-c-text-1);
+}
+
 .home-extra {
   max-width: 1152px;
   margin: 0 auto;
@@ -407,5 +614,13 @@ An optional encryption layer for sensitive data stored in `wp_options` and custo
   font-weight: 600;
   vertical-align: middle;
   margin-left: 4px;
+}
+
+.VPHero .image img {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 </style>
