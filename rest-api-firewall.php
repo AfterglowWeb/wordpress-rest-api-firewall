@@ -1,21 +1,20 @@
 <?php namespace cmk\RestApiFirewall;
 
 /**
- * Application Layer
+ * WordPress Application Layer
  *
- * @package Application Layer
+ * @package WordPress Application Layer
  * @author  Cédric Moris Kelly
  *
  * @wordpress-plugin
- * Plugin Name:       WP Application Layer
- * Version:           0.1.0-alpha.8
- * Description:       Secure REST API endpoints through authentication, rate limiting and much more. Set application Webhook with authentication to trigger external front-end application routines.
- * Tags:              firewall, rest, api, application, webhook
- * Plugin URI:        https://www.abc-plugins.com/wordpress-rest-api-firewall
+ * Plugin Name:       WordPress Application Layer
+ * Version:           0.1.0-alpha.9
+ * Description:       Full security and data management for your headless WordPress backend.
+ * Tags:              headless, rest, api, application, security, webhook, automation 
+ * Plugin URI:        https://wal.abc-plugins.com
  * Author:            Cédric Moris Kelly
  * Author URI:        https://www.moriskelly.com
- * Update URI:        https://www.abc-plugins.com/wordpress-rest-api-firewall
- * Text Domain:       rest-api-firewall
+ * Update URI:        https://wal.abc-plugins.com
  * Domain Path:       /languages
  * Requires PHP:      7.4
  * Requires at least: 6.0
@@ -26,7 +25,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'REST_API_FIREWALL_VERSION', '0.1.0-alpha.8' );
+define( 'REST_API_FIREWALL_VERSION', '0.1.0-alpha.9' );
 define( 'REST_API_FIREWALL_DIR', plugin_dir_path( __FILE__ ) );
 define( 'REST_API_FIREWALL_URL', plugin_dir_url( __FILE__ ) );
 define( 'REST_API_FIREWALL_FILE', __FILE__ );

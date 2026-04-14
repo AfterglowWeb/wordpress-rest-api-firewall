@@ -48,32 +48,56 @@ export default defineConfig({
         ],
       },
       {
-        text: 'Free',
+        text: 'Core Pillars',
         items: [
-          { text: 'Auth & Rate Limiting', link: '/users/users' },
-          { text: 'Auth Hardening', link: '/login-hardening/login-hardening' },
-          { text: 'Properties & Models', link: '/models/models' },
-          { text: 'Routes & Exposure Control', link: '/routes/routes' },
-          { text: 'Global IP Filtering', link: '/global-ip-filtering/global-ip-filtering' },
-          { text: 'Global Security', link: '/global-security/global-security' },
-          { text: 'Hooks & Filters', link: '/hooks' },
+          {
+            text: 'Authentication & Rate Limiting',
+            items: [
+              { text: 'Auth & Rate Limiting', link: '/users/users' },
+              { text: 'Auth Hardening', link: '/login-hardening/login-hardening' },
+            ],
+          },
+          {
+            text: 'IP Filtering & Security',
+            items: [
+              { text: 'Global IP Filtering', link: '/global-ip-filtering/global-ip-filtering' },
+              { text: 'Per-Application IP Filtering (Pro)', link: '/ipsfilter/ipsfilter' },
+              { text: 'Global Security', link: '/global-security/global-security' },
+            ],
+          },
+          {
+            text: 'Routes & Exposure Control',
+            items: [
+              { text: 'Routes & Exposure Control', link: '/routes/routes' },
+              { text: 'Per-Route Policy (Pro)', link: '/routes/routes' },
+            ],
+          },
+          {
+            text: 'Properties & Data Shaping',
+            items: [
+              { text: 'Properties & Models', link: '/models/models' },
+              { text: 'Settings Route (Pro)', link: '/settings/settings' },
+              { text: 'Collections (Pro)', link: '/collections/collections' },
+            ],
+          },
         ],
       },
       {
-        text: 'Pro',
+        text: 'Multi-Application & Infrastructure',
         items: [
-          { text: 'Applications', link: '/applications/applications' },
-          { text: 'WordPress Mode', link: '/wordpress-mode/wordpress-mode' },
-          { text: 'Migration & Fallback', link: '/migration/migration' },
-          { text: 'Auth & Rate Limiting', link: '/users/users' },
-          { text: 'IP Filtering (per-application)', link: '/ipsfilter/ipsfilter' },
-          { text: 'Routes Policy (per-route)', link: '/routes/routes' },
-          { text: 'Settings Route', link: '/settings/settings' },
-          { text: 'Collections', link: '/collections/collections' },
-          { text: 'Automations', link: '/automations/automations' },
-          { text: 'Webhooks', link: '/webhooks/webhooks' },
-          { text: 'Emails', link: '/mails/mails' },
-          { text: 'Theme', link: '/theme/theme' },
+          { text: 'Applications (Pro)', link: '/applications/applications' },
+          { text: 'WordPress Mode (Pro)', link: '/wordpress-mode/wordpress-mode' },
+          { text: 'Migration & Fallback (Pro)', link: '/migration/migration' },
+        ],
+      },
+      {
+        text: 'Advanced Features',
+        items: [
+          { text: 'Automations (Pro)', link: '/automations/automations' },
+          { text: 'Webhooks (Pro)', link: '/webhooks/webhooks' },
+          { text: 'Emails (Pro)', link: '/mails/mails' },
+          { text: 'Hooks & Filters API', link: '/hooks' },
+          { text: 'Theme (Pro)', link: '/theme/theme' },
         ],
       },
     ],
