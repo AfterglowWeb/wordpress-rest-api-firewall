@@ -35,7 +35,7 @@ Admin-authenticated requests are exempt from this layer for operational safety.
 
 ### Manual Blocklist
 
-Add IPv4 addresses to the global blocklist manually. Blocked IPs receive a `403` response immediately.
+Add IPv4 or IPv6 addresses to the global blocklist manually. Blocked IPs receive a `403` response immediately.
 
 ### GeoIP Statistics
 
